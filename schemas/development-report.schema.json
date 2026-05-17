@@ -1,0 +1,75 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://brain.pipadacapital.com/engineering-os/schemas/development-report.schema.json",
+  "title": "Development Report (Stage 3 — per builder)",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "req_id",
+    "actor_persona",
+    "track_id",
+    "ts",
+    "skills_loaded",
+    "paradigm",
+    "files_touched",
+    "tests_added",
+    "verification",
+    "handoff_signal"
+  ],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "req_id": { "type": "string" },
+    "actor_persona": { "enum": ["vikram", "ananya", "karan", "maya"] },
+    "track_id": { "type": "string" },
+    "ts": { "type": "string", "format": "date-time" },
+    "skills_loaded": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "paradigm": { "enum": ["sql", "ml", "haiku", "sonnet"] },
+    "decisions": { "type": "array", "items": { "type": "string" } },
+    "files_touched": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["path", "kind"],
+        "properties": {
+          "path": { "type": "string" },
+          "kind": { "enum": ["added", "modified", "deleted"] },
+          "lines_added": { "type": "integer" },
+          "lines_removed": { "type": "integer" }
+        }
+      }
+    },
+    "tests_added": {
+      "type": "object",
+      "properties": {
+        "unit": { "type": "integer" },
+        "integration": { "type": "integer" },
+        "contract": { "type": "integer" },
+        "e2e": { "type": "integer" },
+        "coverage_pct_new_code": { "type": "number" }
+      }
+    },
+    "definition_of_done_in_lane": {
+      "type": "object",
+      "description": "Self-check before posting handoff signal."
+    },
+    "open_questions": { "type": "array", "items": { "type": "string" } },
+    "verification": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["command", "actual_output_snippet", "expected", "passed"],
+        "properties": {
+          "command": { "type": "string" },
+          "actual_output_snippet": { "type": "string" },
+          "expected": { "type": "string" },
+          "passed": { "type": "boolean" }
+        }
+      }
+    },
+    "handoff_signal": { "enum": ["READY-FOR-SECURITY", "READY-FOR-QA", "BLOCKED", "BOUNCE-TO-ARCHITECT"] },
+    "blocker_detail": { "type": "string" }
+  },
+  "additionalProperties": false
+}

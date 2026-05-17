@@ -1,0 +1,55 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://brain.pipadacapital.com/engineering-os/schemas/agent-registry.schema.json",
+  "title": "Agent Registry",
+  "description": "The 10 named agents in the Brain Engineering OS, with persona, skills, stage(s), and authority.",
+  "type": "object",
+  "required": ["schema_version", "generated_at", "agents"],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "agents": {
+      "type": "array",
+      "minItems": 10,
+      "items": {
+        "type": "object",
+        "required": ["id", "role", "persona", "stages", "owned_skills", "veto_authority", "journal_path"],
+        "properties": {
+          "id": { "type": "string", "description": "Slug used in agents/ filename." },
+          "role": { "type": "string", "description": "Human-readable role." },
+          "persona": { "type": ["string", "null"], "description": "Named persona; null for shadow CTO Advisor." },
+          "stages": {
+            "type": "array",
+            "items": { "type": "integer", "minimum": 1, "maximum": 8 }
+          },
+          "owned_skills": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Skill IDs auto-loaded by this agent."
+          },
+          "shared_skills": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "decision_rights": {
+            "type": "object",
+            "properties": {
+              "can_decide_alone": { "type": "array", "items": { "type": "string" } },
+              "cannot_decide_alone": { "type": "array", "items": { "type": "string" } }
+            }
+          },
+          "veto_authority": {
+            "type": "object",
+            "properties": {
+              "has_veto": { "type": "boolean" },
+              "scope": { "type": "string" }
+            }
+          },
+          "journal_path": { "type": "string" },
+          "system_prompt_path": { "type": "string" }
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

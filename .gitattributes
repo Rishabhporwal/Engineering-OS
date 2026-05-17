@@ -1,0 +1,24 @@
+# Engineering OS — git attributes
+# Append-only files use merge=union so simultaneous appends from different
+# operators auto-merge without manual conflict resolution.
+
+# Per-agent journals (append-only)
+.engineering-os/memory/agents/*.journal.md merge=union
+
+# Per-feature journals (append-only)
+.engineering-os/memory/features/*.md merge=union
+
+# Decision log (append-only, JSONL — one event per line)
+.engineering-os/decision-log/**/*.jsonl merge=union
+
+# Registry (append-only by convention)
+.engineering-os/state/registry.json merge=union
+
+# Tasks-pending log (append-only)
+.engineering-os/memory/tasks-pending.log merge=union
+
+# Handoff-attempts log (append-only)
+.engineering-os/memory/handoff-attempts.log merge=union
+
+# Shell scripts executable on checkout (best-effort)
+hooks/*.sh text eol=lf

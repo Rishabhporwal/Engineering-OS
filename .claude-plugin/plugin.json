@@ -1,0 +1,45 @@
+{
+  "name": "brain-engineering-os",
+  "version": "0.1.0",
+  "description": "Brain Engineering Operating System — an AI engineering team delivered as a Claude Code plugin. Orchestrates CTO Advisor, Architect, Backend/Frontend/Mobile devs, Security, QA, and DevOps agents through an 8-stage requirement-to-release pipeline grounded in the Brain canon (Requirements/BRAIN_BUSINESS.md, BRAIN_TECHNICAL.md, and 54 curated skills).",
+  "author": {
+    "name": "Brain (Pipada Capital)",
+    "email": "founder@brain.pipadacapital.com"
+  },
+  "homepage": "https://brain.pipadacapital.com",
+  "license": "UNLICENSED",
+  "keywords": [
+    "engineering-os",
+    "agentic",
+    "brain",
+    "d2c-commerce",
+    "ai-team"
+  ],
+  "components": {
+    "agents": "./agents",
+    "skills": "./plugin-skills",
+    "commands": "./commands",
+    "hooks": "./hooks/hooks.json"
+  },
+  "engineering-os": {
+    "shared-state-dir": ".engineering-os",
+    "memory-model": "git-committed append-only journals",
+    "canon-roots": [
+      "Requirements/BRAIN_BUSINESS.md",
+      "Requirements/BRAIN_TECHNICAL.md",
+      "Requirements/skills"
+    ],
+    "team": {
+      "cto-advisor": "Rishabh (Founder/CTO) — shadow CTO Advisor agent supports him",
+      "architect": "Aryan",
+      "backend-developer": "Vikram",
+      "frontend-web-developer": "Ananya",
+      "mobile-developer": "Karan",
+      "intelligence-engineer": "Maya",
+      "security-reviewer": "Shreya",
+      "qa-agent": "Tanvi",
+      "platform-devops": "Jatin",
+      "product-manager": "Priya"
+    }
+  }
+}

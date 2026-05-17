@@ -1,0 +1,83 @@
+# Brain Engineering OS — Founder approval flow.
+# Mechanics for the Stage 7 human gate.
+
+name: founder-approval-flow
+schema_version: 1
+
+trigger:
+  event: status-transition
+  from: final-review
+  to: awaiting-founder
+
+inputs_to_founder:
+  - artifact: 11-final-review.md
+    purpose: CTO Advisor's recommendation + sub-reviews
+  - artifact: 02-cto-advisor-review.md
+    purpose: Original intake analysis (drift check)
+  - artifact: 06-architecture-plan.md
+    purpose: What was promised
+  - artifact: 09-security-review.md
+    purpose: Shreya's PASS evidence
+  - artifact: 10-qa-review.md
+    purpose: Tanvi's PASS evidence
+  - reference: decision-log
+    purpose: Last 30 days of decisions for trend context
+
+actions_available_to_founder:
+  - command: /approve <req-id> [note]
+    effect: status → approved → Jatin runs Stage 8
+  - command: /reject <req-id> <reason>
+    effect: status → rejected → CTOA re-routes based on reason
+
+founder_required_fields:
+  approve:
+    - actor: rishabh
+    - decision: approved
+    - ts: now
+    - note: optional
+  reject:
+    - actor: rishabh
+    - decision: rejected
+    - ts: now
+    - reason: required  # rejection without rationale is forbidden
+
+notifications:
+  on_awaiting_founder:
+    channels:
+      - in-cli  # always
+      - slack   # if SLACK_WEBHOOK_URL env var set
+    template: |
+      [engineering-os] Awaiting your approval: {{req_id}} — {{title}}
+      Final review: {{final_review_recommendation}}
+      Run folder: {{run_dir}}
+      Approve: /approve {{req_id}}
+      Reject:  /reject {{req_id}} <reason>
+
+  on_approved:
+    channels: [in-cli, slack]
+    template: |
+      [engineering-os] {{req_id}} approved by {{actor}} at {{ts}}.
+      Jatin starting Stage 8 (deploy).
+
+  on_rejected:
+    channels: [in-cli, slack]
+    template: |
+      [engineering-os] {{req_id}} rejected by {{actor}} at {{ts}}.
+      Reason: {{reason}}
+      CTOA re-routing.
+
+audit:
+  every_action_writes:
+    - decision_log_entry: { type: decision, actor: rishabh }
+    - state_active_json_update: { status, stage }
+    - artifact: 12-founder-decision.json
+
+# When the Founder is "wrong"
+founder_wrong_protocol: |
+  The team can push back on the Founder (anti-blind-agreement rule).
+  When the team challenges and the Founder still says "approve":
+    1. Founder's approval lands.
+    2. Team logs the challenge AND the Founder's override in the decision log.
+    3. Override creates a tech-debt item with owner + date.
+    4. Stage 8 proceeds.
+  This preserves accountability while honoring Founder authority.

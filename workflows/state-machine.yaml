@@ -1,0 +1,99 @@
+# Brain Engineering OS — status state machine.
+# Defines every status a requirement can have and the legal transitions.
+# Mirrored in docs/operating-system.md §Status Lifecycle.
+
+name: status-state-machine
+schema_version: 1
+
+states:
+  intake:
+    description: Founder submitted; not yet picked up.
+    transitions_to: [cto-review, killed]
+
+  cto-review:
+    description: CTOA + 3 personas active.
+    transitions_to: [architect, challenged-back, killed]
+
+  challenged-back:
+    description: CTOA pushed back to Founder.
+    transitions_to: [cto-review, killed]
+
+  architect:
+    description: Aryan designing.
+    transitions_to: [dev-parallel, cto-review]  # back to CTOA if requirement unworkable
+
+  dev-parallel:
+    description: Builders active.
+    transitions_to: [security-review, dev-blocked, architect]
+
+  dev-blocked:
+    description: A builder is blocked; surfaces in /status.
+    transitions_to: [dev-parallel, architect, cto-review]
+
+  security-review:
+    description: Shreya reviewing.
+    transitions_to: [qa-review, security-bounced]
+
+  security-bounced:
+    description: Shreya found CRITICAL/HIGH or compliance gap; back to dev.
+    transitions_to: [dev-parallel]
+
+  qa-review:
+    description: Tanvi running tests + verification.
+    transitions_to: [final-review, qa-bounced]
+
+  qa-bounced:
+    description: Coverage gap, smoke failed, parity broken; back to dev.
+    transitions_to: [dev-parallel]
+
+  final-review:
+    description: CTOA final pass.
+    transitions_to: [awaiting-founder, final-bounced]
+
+  final-bounced:
+    description: CTOA bouncing to specific earlier stage.
+    transitions_to: [architect, dev-parallel, security-review, qa-review]
+
+  awaiting-founder:
+    description: Founder gate.
+    transitions_to: [approved, rejected]
+
+  rejected:
+    description: Founder rejected; archived with reason. (Terminal until CTOA re-routes.)
+    transitions_to: [cto-review, architect, dev-parallel]  # CTOA picks based on reason
+
+  approved:
+    description: Founder approved; DevOps takes over.
+    transitions_to: [deploying-staging]
+
+  deploying-staging:
+    description: CI passed; staging deploy in flight.
+    transitions_to: [awaiting-prod-deploy, staging-failed]
+
+  staging-failed:
+    description: Staging verification failed.
+    transitions_to: [dev-parallel, security-review]  # triage
+
+  awaiting-prod-deploy:
+    description: Staging green; ready for prod push.
+    transitions_to: [deploying-prod]
+
+  deploying-prod:
+    description: Production deploy in flight.
+    transitions_to: [monitoring, rolled-back]
+
+  monitoring:
+    description: Production live; 48h watch.
+    transitions_to: [shipped, rolled-back]
+
+  rolled-back:
+    description: Auto-rollback fired or manual rollback.
+    transitions_to: [security-review, dev-parallel]  # re-enter for triage
+
+  shipped:
+    description: 48h post-deploy with no incidents. (Terminal happy path.)
+    transitions_to: []
+
+  killed:
+    description: Archived before any work. (Terminal.)
+    transitions_to: []

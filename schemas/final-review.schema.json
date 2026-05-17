@@ -1,0 +1,52 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://brain.pipadacapital.com/engineering-os/schemas/final-review.schema.json",
+  "title": "Final CTO Advisor Review (Stage 6)",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "req_id",
+    "actor",
+    "ts",
+    "verdict",
+    "subreviews",
+    "recommendation_to_founder"
+  ],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "req_id": { "type": "string" },
+    "actor": { "type": "string", "const": "cto-advisor" },
+    "ts": { "type": "string", "format": "date-time" },
+    "verdict": { "enum": ["PASS", "BOUNCE"] },
+    "subreviews": {
+      "type": "object",
+      "required": [
+        "requirement_alignment",
+        "paradigm_audit",
+        "architecture_quality",
+        "code_quality",
+        "security_pass_through",
+        "qa_pass_through",
+        "observability_complete",
+        "cost_estimate_held"
+      ],
+      "properties": {
+        "requirement_alignment": { "enum": ["PASS", "FAIL"] },
+        "paradigm_audit": { "enum": ["PASS", "FAIL"] },
+        "architecture_quality": { "enum": ["PASS", "FAIL"] },
+        "code_quality": { "enum": ["PASS", "FAIL"] },
+        "security_pass_through": { "enum": ["PASS", "FAIL"] },
+        "qa_pass_through": { "enum": ["PASS", "FAIL"] },
+        "observability_complete": { "type": "boolean" },
+        "cost_estimate_held": { "type": "boolean" }
+      }
+    },
+    "risks_remaining": { "type": "array", "items": { "type": "string" } },
+    "production_readiness_assessment": { "type": "string" },
+    "recommendation_to_founder": { "enum": ["APPROVE", "APPROVE-WITH-CAVEATS", "REJECT"] },
+    "founder_caveats": { "type": "array", "items": { "type": "string" } },
+    "bounce_target_stage": { "type": "integer", "minimum": 1, "maximum": 8 },
+    "bounce_rationale": { "type": "string" }
+  },
+  "additionalProperties": false
+}

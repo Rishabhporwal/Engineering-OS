@@ -1,0 +1,72 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://brain.pipadacapital.com/engineering-os/schemas/deployment.schema.json",
+  "title": "Deployment Report (Stage 8)",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "req_id",
+    "actor",
+    "ts",
+    "ci_run",
+    "staging_deploy",
+    "production_deploy",
+    "monitor_48h"
+  ],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "req_id": { "type": "string" },
+    "actor": { "type": "string", "const": "platform-devops" },
+    "actor_persona": { "type": "string", "const": "jatin" },
+    "ts": { "type": "string", "format": "date-time" },
+    "ci_run": {
+      "type": "object",
+      "required": ["pipeline", "url", "outcome"],
+      "properties": {
+        "pipeline": { "type": "string" },
+        "url": { "type": "string" },
+        "outcome": { "enum": ["passed", "failed"] },
+        "lint": { "enum": ["passed", "failed", "skipped"] },
+        "typecheck": { "enum": ["passed", "failed", "skipped"] },
+        "test": { "enum": ["passed", "failed", "skipped"] },
+        "build": { "enum": ["passed", "failed", "skipped"] },
+        "image_push": { "enum": ["passed", "failed", "skipped"] }
+      }
+    },
+    "staging_deploy": {
+      "type": "object",
+      "required": ["argocd_sync", "smoke", "metric_parity"],
+      "properties": {
+        "argocd_sync": { "enum": ["synced", "failed"] },
+        "smoke": { "enum": ["passed", "failed"] },
+        "metric_parity": { "enum": ["passed", "failed"] },
+        "dashboard_sanity": { "enum": ["passed", "failed"] },
+        "alarm_sanity": { "enum": ["passed", "failed"] }
+      }
+    },
+    "production_deploy": {
+      "type": "object",
+      "required": ["argocd_sync", "strategy"],
+      "properties": {
+        "argocd_sync": { "enum": ["synced", "failed"] },
+        "strategy": { "enum": ["all-at-once", "canary-10", "canary-25", "canary-50"] },
+        "canary_promoted_at": { "type": "string", "format": "date-time" }
+      }
+    },
+    "monitor_48h": {
+      "type": "object",
+      "required": ["status", "rollback_triggered"],
+      "properties": {
+        "status": { "enum": ["clean", "alarm-fired", "rolled-back", "in-progress"] },
+        "rollback_triggered": { "type": "boolean" },
+        "rollback_reason": { "type": "string" },
+        "p95_latency_observed_ms": { "type": "number" },
+        "error_rate_observed_pct": { "type": "number" }
+      }
+    },
+    "release_notes": { "type": "string" },
+    "dashboard_url": { "type": "string" },
+    "runbook_link": { "type": "string" }
+  },
+  "additionalProperties": false
+}

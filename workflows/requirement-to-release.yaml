@@ -1,0 +1,146 @@
+# Brain Engineering OS — the canonical 8-stage pipeline as data.
+# Read by hooks, slash commands, and documentation generators.
+
+name: requirement-to-release
+description: >
+  The 8-stage pipeline every Brain feature flows through, from Founder
+  submission to production deploy.
+schema_version: 1
+
+# Personas — must match agents/ filenames and .engineering-os/memory/agents/ paths.
+personas:
+  cto_advisor: { agent: cto-advisor, journal: cto-advisor.journal.md }
+  dynamic_persona: { agent: dynamic-persona-generator, journal: null }
+  architect:
+    persona_name: Aryan
+    agent: architect
+    journal: architect.journal.md
+  backend_developer:
+    persona_name: Vikram
+    agent: backend-developer
+    journal: backend.journal.md
+  frontend_web_developer:
+    persona_name: Ananya
+    agent: frontend-web-developer
+    journal: frontend-web.journal.md
+  mobile_developer:
+    persona_name: Karan
+    agent: mobile-developer
+    journal: frontend-mobile.journal.md
+  intelligence_engineer:
+    persona_name: Maya
+    agent: intelligence-engineer
+    journal: intelligence.journal.md
+  security_reviewer:
+    persona_name: Shreya
+    agent: security-reviewer
+    journal: security.journal.md
+  qa_agent:
+    persona_name: Tanvi
+    agent: qa-agent
+    journal: qa.journal.md
+  platform_devops:
+    persona_name: Jatin
+    agent: platform-devops
+    journal: platform.journal.md
+  product_manager:
+    persona_name: Priya
+    agent: product-manager
+    journal: product.journal.md
+  founder:
+    persona_name: Rishabh
+    agent: null  # human
+
+stages:
+  - id: 1
+    name: cto-advisor-intake
+    owner: cto_advisor
+    inputs: [requirement_template]
+    outputs: [cto_advisor_review, dynamic_persona_reviews]
+    spawns_subagents: [dynamic_persona_generator x 3]
+    gate: G1
+    next_on_advance: 2
+    on_challenge_back: founder
+    on_kill: archive
+
+  - id: 2
+    name: architect
+    owner: architect
+    inputs: [cto_advisor_review, dynamic_persona_reviews]
+    outputs: [architecture_plan, tracks_tagged]
+    gate: G2
+    next_on_advance: 3
+    on_bounce: 1
+
+  - id: 3
+    name: parallel-development
+    owners_dynamic: tracks_tagged  # any subset of {backend, web, mobile, intelligence}
+    inputs: [architecture_plan]
+    outputs: [developer_report_per_builder]
+    gate: G3
+    next_on_advance: 4
+    on_bounce: 2
+
+  - id: 4
+    name: security-review
+    owner: security_reviewer
+    inputs: [developer_reports]
+    outputs: [security_review]
+    gate: G4
+    veto: true
+    next_on_pass: 5
+    on_fail: 3
+
+  - id: 5
+    name: qa
+    owner: qa_agent
+    inputs: [developer_reports, security_review]
+    outputs: [qa_review]
+    gate: G5
+    veto: true
+    next_on_pass: 6
+    on_fail: 3
+
+  - id: 6
+    name: cto-advisor-final-review
+    owner: cto_advisor
+    inputs: [all_prior_artifacts]
+    outputs: [final_review]
+    gate: G6
+    veto: true
+    next_on_pass: 7
+    on_bounce_target: dynamic  # CTOA chooses
+
+  - id: 7
+    name: founder-approval
+    owner: founder
+    human_gate: true
+    inputs: [final_review, full_run_artifacts]
+    outputs: [founder_decision]
+    gate: G7
+    next_on_approve: 8
+    on_reject: 6  # CTOA re-routes
+
+  - id: 8
+    name: platform-devops
+    owner: platform_devops
+    inputs: [founder_decision]
+    outputs: [deployment_report]
+    gate: [G8, G9]
+    auto_rollback_triggers:
+      - p95_latency_ms_above: 2000
+        for_minutes: 5
+      - error_rate_pct_above: 1.0
+        for_minutes: 5
+      - health_check_failures_consecutive: 2
+    next_on_clean_48h: shipped
+    on_rollback: 4
+
+terminal_states:
+  - shipped
+  - rejected
+  - killed
+  - rolled_back  # transient — re-enters Stage 4
+
+gates_doc: ../docs/quality-gates.md
+escalation_doc: ../docs/escalation-rules.md

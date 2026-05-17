@@ -1,0 +1,83 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://brain.pipadacapital.com/engineering-os/schemas/security-review.schema.json",
+  "title": "Security Review (Stage 4)",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "req_id",
+    "actor",
+    "ts",
+    "verdict",
+    "gates",
+    "findings",
+    "scan_results"
+  ],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "req_id": { "type": "string" },
+    "actor": { "type": "string", "const": "security-reviewer" },
+    "actor_persona": { "type": "string", "const": "shreya" },
+    "ts": { "type": "string", "format": "date-time" },
+    "verdict": { "enum": ["PASS", "BOUNCE"] },
+    "gates": {
+      "type": "object",
+      "required": [
+        "no_critical",
+        "no_high",
+        "no_india_compliance_violation",
+        "mutation_endpoints_guarded",
+        "mcp_tools_tenant_checked",
+        "connectors_token_encrypted",
+        "pii_not_in_logs"
+      ],
+      "properties": {
+        "no_critical": { "type": "boolean" },
+        "no_high": { "type": "boolean" },
+        "no_india_compliance_violation": { "type": "boolean" },
+        "mutation_endpoints_guarded": { "type": "boolean" },
+        "mcp_tools_tenant_checked": { "type": "boolean" },
+        "connectors_token_encrypted": { "type": "boolean" },
+        "pii_not_in_logs": { "type": "boolean" }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["severity", "title", "evidence", "recommended_remediation"],
+        "properties": {
+          "id": { "type": "string" },
+          "severity": { "enum": ["critical", "high", "medium", "low", "info"] },
+          "title": { "type": "string" },
+          "category": {
+            "enum": [
+              "auth", "authorization", "input-validation", "secrets",
+              "multitenancy", "xss", "csrf", "rate-limiting",
+              "india-compliance-dlt", "india-compliance-ncpr", "india-compliance-dnd",
+              "india-compliance-calling-hours", "india-compliance-recording",
+              "owasp-top10", "masvs-l1", "masvs-l2", "supply-chain", "other"
+            ]
+          },
+          "evidence": { "type": "string" },
+          "recommended_remediation": { "type": "string" },
+          "responsible_persona": { "enum": ["vikram", "ananya", "karan", "maya", "aryan", "jatin"] },
+          "bounce_target_stage": { "type": "integer", "minimum": 1, "maximum": 8 }
+        }
+      }
+    },
+    "scan_results": {
+      "type": "object",
+      "properties": {
+        "pnpm_audit": { "type": "string" },
+        "snyk": { "type": "string" },
+        "bandit": { "type": "string" },
+        "safety": { "type": "string" },
+        "pip_audit": { "type": "string" },
+        "trivy": { "type": "string" },
+        "owasp_dep_check": { "type": "string" }
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://brain.pipadacapital.com/engineering-os/schemas/requirement.schema.json",
+  "title": "Requirement",
+  "description": "A Founder-submitted requirement entering the Engineering OS pipeline at Stage 1.",
+  "type": "object",
+  "required": ["schema_version", "req_id", "title", "raw_text", "submitted_by", "submitted_at"],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "req_id": {
+      "type": "string",
+      "pattern": "^(feat|fix|chore|spike|exp)-[a-z0-9-]+$",
+      "description": "Kebab-cased identifier, prefixed by kind."
+    },
+    "title": { "type": "string", "minLength": 4, "maxLength": 120 },
+    "raw_text": { "type": "string", "minLength": 1 },
+    "submitted_by": { "type": "string", "description": "Who submitted (typically 'rishabh')." },
+    "submitted_at": { "type": "string", "format": "date-time" },
+    "tier_impact": {
+      "type": "array",
+      "items": { "enum": ["small", "mid-market", "enterprise", "founding-cohort"] }
+    },
+    "region_impact": {
+      "type": "array",
+      "items": { "enum": ["in", "ae", "sa", "us", "eu", "lat", "sea", "afr"] }
+    },
+    "problem_statement": { "type": "string" },
+    "target_user": {
+      "type": "string",
+      "description": "Persona + tier (e.g., 'Founder of Mid-Market brand', 'CFO of Enterprise')."
+    },
+    "success_metric": { "type": "string", "description": "How we'll know it worked." },
+    "constraints": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Cost, time, regulatory, technical."
+    },
+    "non_goals": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Explicitly out of scope."
+    },
+    "linked_runs": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Run folder paths if this requirement has prior runs."
+    }
+  },
+  "additionalProperties": false
+}

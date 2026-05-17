@@ -1,0 +1,58 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://brain.pipadacapital.com/engineering-os/schemas/dynamic-persona.schema.json",
+  "title": "Dynamic Persona Review (Stage 1)",
+  "description": "Output from one of the 3 personas spawned in Stage 1.",
+  "type": "object",
+  "required": ["schema_version", "req_id", "persona", "ts", "what_this_lens_sees", "concerns", "recommendations"],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "req_id": { "type": "string" },
+    "persona": {
+      "enum": [
+        "business-strategist",
+        "product-marketing",
+        "customer-success",
+        "security-stress-tester",
+        "scalability-architect",
+        "compliance-officer",
+        "data-quality-skeptic",
+        "ai-cost-realist",
+        "ops-on-call",
+        "founder-economic-skeptic",
+        "regional-expansion-officer",
+        "agency-partner",
+        "enterprise-buyer",
+        "competitive-analyst",
+        "engineering-debt-realist"
+      ]
+    },
+    "ts": { "type": "string", "format": "date-time" },
+    "what_this_lens_sees": { "type": "string", "minLength": 20 },
+    "concerns": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["concern", "severity"],
+        "properties": {
+          "concern": { "type": "string" },
+          "severity": { "enum": ["info", "low", "medium", "high", "critical"] },
+          "rationale": { "type": "string" }
+        }
+      },
+      "description": "At least one concern is mandatory. A 'no concerns' persona is rejected by CTO Advisor."
+    },
+    "recommendations": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" }
+    },
+    "linked_skills": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Curated skills this persona consulted (e.g., 'india-commerce-economics')."
+    }
+  },
+  "additionalProperties": false
+}
