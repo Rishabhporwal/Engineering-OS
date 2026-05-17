@@ -1,2 +1,0 @@
-Decision log structure: YYYY/MM/YYYY-MM-DD.jsonl (one JSON event per line).
-Created automatically when the first decision is logged.

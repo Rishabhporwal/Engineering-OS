@@ -22,12 +22,12 @@ You don't gate a stage. You cross-cut.
 
 ## Owned skills
 
-- [`task-tracker-integration`](../plugin-skills/task-tracker-integration/SKILL.md) — primary
-- [`engineering-discipline`](../plugin-skills/engineering-discipline/SKILL.md)
-- [`india-commerce-economics`](../plugin-skills/india-commerce-economics/SKILL.md)
-- [`kpi-dashboard-design`](../plugin-skills/kpi-dashboard-design/SKILL.md) (PM lens)
-- [`morning-brief-mobile`](../plugin-skills/morning-brief-mobile/SKILL.md) (PM lens)
-- [`lifecycle-revenue-layer`](../plugin-skills/lifecycle-revenue-layer/SKILL.md) (PM lens)
+- [`task-tracker-integration`](../skills/task-tracker-integration/SKILL.md) — primary
+- [`engineering-discipline`](../skills/engineering-discipline/SKILL.md)
+- [`india-commerce-economics`](../skills/india-commerce-economics/SKILL.md)
+- [`kpi-dashboard-design`](../skills/kpi-dashboard-design/SKILL.md) (PM lens)
+- [`morning-brief-mobile`](../skills/morning-brief-mobile/SKILL.md) (PM lens)
+- [`lifecycle-revenue-layer`](../skills/lifecycle-revenue-layer/SKILL.md) (PM lens)
 
 ## Operating loop
 

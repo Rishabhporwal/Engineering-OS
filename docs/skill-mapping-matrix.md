@@ -52,60 +52,60 @@ This document is the **authoritative skill-to-role binding** for the Brain Engin
 
 | # | Skill | Domain | Primary | Shared with | Exposed as `/skill` |
 |---|-------|--------|---------|-------------|---------------------|
-| 1 | [`access-control-rbac`](../plugin-skills/access-control-rbac/SKILL.md) | SEC | SEC | ARC, BE, AIE | yes |
-| 2 | [`agentic-design`](../plugin-skills/agentic-design/SKILL.md) | AI | AIE | ARC, CTOA | yes |
-| 3 | [`api-contract-testing`](../plugin-skills/api-contract-testing/SKILL.md) | TEST | QA | BE, AIE, ARC | yes |
-| 4 | [`api-pagination`](../plugin-skills/api-pagination/SKILL.md) | BE | BE | AIE, FEW, FEM | yes |
-| 5 | [`api-rate-limiting`](../plugin-skills/api-rate-limiting/SKILL.md) | BE | BE | OPS, SEC | yes |
-| 6 | [`api-versioning-strategy`](../plugin-skills/api-versioning-strategy/SKILL.md) | ARCH | ARC | BE, AIE, CTOA | yes |
-| 7 | [`app-store-deployment`](../plugin-skills/app-store-deployment/SKILL.md) | OPS | OPS | FEM | yes |
-| 8 | [`architecture-patterns`](../plugin-skills/architecture-patterns/SKILL.md) | ARCH | ARC | CTOA, BE, AIE | yes |
-| 9 | [`backend-fastify-trpc-grpc`](../plugin-skills/backend-fastify-trpc-grpc/SKILL.md) | BE | BE | ARC | yes |
-| 10 | [`claude-api`](../plugin-skills/claude-api/SKILL.md) | AI | AIE | ARC, OPS (cost monitoring) | yes |
-| 11 | [`clickhouse-olap`](../plugin-skills/clickhouse-olap/SKILL.md) | DATA | AIE | BE, ARC | yes |
-| 12 | [`code-review`](../plugin-skills/code-review/SKILL.md) | DISC | CTOA | QA, ARC, all devs | yes (`/review` already) |
-| 13 | [`cost-routing-paradigms`](../plugin-skills/cost-routing-paradigms/SKILL.md) | DISC + AI | CTOA, AIE | all devs, QA, OPS | yes |
-| 14 | [`database-design`](../plugin-skills/database-design/SKILL.md) | DATA | ARC | BE, AIE, SEC | yes |
-| 15 | [`defense-in-depth-validation`](../plugin-skills/defense-in-depth-validation/SKILL.md) | SEC | SEC | BE, AIE, QA | yes |
-| 16 | [`devops-aws`](../plugin-skills/devops-aws/SKILL.md) | OPS | OPS | ARC | yes |
-| 17 | [`engineering-discipline`](../plugin-skills/engineering-discipline/SKILL.md) | DISC | CTOA | **ALL** roles | yes |
-| 18 | [`event-driven-kafka`](../plugin-skills/event-driven-kafka/SKILL.md) | DATA + BE | BE | AIE, ARC, OPS | yes |
-| 19 | [`forecasting-prophet`](../plugin-skills/forecasting-prophet/SKILL.md) | AI | AIE | — | yes |
-| 20 | [`frontend-mobile`](../plugin-skills/frontend-mobile/SKILL.md) | FE-M | FEM | ARC, QA | yes |
-| 21 | [`frontend-web`](../plugin-skills/frontend-web/SKILL.md) | FE-W | FEW | ARC, QA | yes |
-| 22 | [`grpc-buf`](../plugin-skills/grpc-buf/SKILL.md) | BE | BE | AIE, ARC | yes |
-| 23 | [`health-check-endpoints`](../plugin-skills/health-check-endpoints/SKILL.md) | OBS + OPS | OPS | BE, AIE | yes |
-| 24 | [`idempotency-handling`](../plugin-skills/idempotency-handling/SKILL.md) | BE | BE | AIE, QA | yes |
-| 25 | [`india-commerce-economics`](../plugin-skills/india-commerce-economics/SKILL.md) | PROD | CTOA | **ALL** roles (it's the moat) | yes |
-| 26 | [`integration-connectors`](../plugin-skills/integration-connectors/SKILL.md) | INTG | AIE (ingestion-service is Python) | BE, ARC | yes |
-| 27 | [`kpi-dashboard-design`](../plugin-skills/kpi-dashboard-design/SKILL.md) | FE-W + PROD | FEW | FEM, PM | yes |
-| 28 | [`lifecycle-revenue-layer`](../plugin-skills/lifecycle-revenue-layer/SKILL.md) | AI + PROD | AIE | BE, SEC (compliance engine) | yes |
-| 29 | [`logging-best-practices`](../plugin-skills/logging-best-practices/SKILL.md) | OBS | OPS | BE, AIE | yes |
-| 30 | [`mcp-protocol`](../plugin-skills/mcp-protocol/SKILL.md) | AI + ARCH | AIE | ARC, BE | yes |
-| 31 | [`mobile-offline-support`](../plugin-skills/mobile-offline-support/SKILL.md) | FE-M | FEM | — | yes |
-| 32 | [`morning-brief-mobile`](../plugin-skills/morning-brief-mobile/SKILL.md) | FE-M + AI + PROD | FEM | AIE, FEW (parity), PM | yes |
-| 33 | [`mutation-testing`](../plugin-skills/mutation-testing/SKILL.md) | TEST | QA | BE, AIE | yes |
-| 34 | [`oauth-implementation`](../plugin-skills/oauth-implementation/SKILL.md) | SEC + INTG | AIE | BE, SEC | yes |
-| 35 | [`observability`](../plugin-skills/observability/SKILL.md) | OBS | OPS | **ALL** roles | yes |
-| 36 | [`operational-readiness`](../plugin-skills/operational-readiness/SKILL.md) | OPS + DISC | OPS, QA | all devs, CTOA | yes |
-| 37 | [`push-notification-setup`](../plugin-skills/push-notification-setup/SKILL.md) | FE-M | FEM | BE (notifications-service) | yes |
-| 38 | [`python-services`](../plugin-skills/python-services/SKILL.md) | BE | AIE | BE (parity), ARC | yes |
-| 39 | [`root-cause-tracing`](../plugin-skills/root-cause-tracing/SKILL.md) | DISC | all devs, QA, SEC | — | yes |
-| 40 | [`security-baseline`](../plugin-skills/security-baseline/SKILL.md) | SEC | SEC | **ALL** roles (every build passes this gate) | yes |
-| 41 | [`session-management`](../plugin-skills/session-management/SKILL.md) | SEC | SEC | BE, FEW, FEM | yes |
-| 42 | [`sql-query-optimization`](../plugin-skills/sql-query-optimization/SKILL.md) | PERF + DATA | BE, AIE | ARC | yes |
-| 43 | [`supabase-postgres-best-practices`](../plugin-skills/supabase-postgres-best-practices/SKILL.md) | DATA | BE | AIE, ARC, SEC | yes |
-| 44 | [`systematic-debugging`](../plugin-skills/systematic-debugging/SKILL.md) | DISC | all devs, QA | CTOA | yes |
-| 45 | [`task-tracker-integration`](../plugin-skills/task-tracker-integration/SKILL.md) | DISC + OPS | PM | OPS, CTOA | yes |
-| 46 | [`tech-stack-evaluation`](../plugin-skills/tech-stack-evaluation/SKILL.md) | ARCH | ARC | CTOA | yes (rarely used) |
-| 47 | [`testing-tdd`](../plugin-skills/testing-tdd/SKILL.md) | TEST | QA | all devs | yes |
-| 48 | [`turborepo`](../plugin-skills/turborepo/SKILL.md) | OPS | OPS | BE, FEW, FEM | yes |
-| 49 | [`verification-before-completion`](../plugin-skills/verification-before-completion/SKILL.md) | DISC | **ALL** roles | — | yes |
-| 50 | [`vulnerability-scanning`](../plugin-skills/vulnerability-scanning/SKILL.md) | SEC | SEC | OPS | yes |
-| 51 | [`web-performance-audit`](../plugin-skills/web-performance-audit/SKILL.md) | PERF | FEW | QA, OPS | yes |
-| 52 | [`web-performance-optimization`](../plugin-skills/web-performance-optimization/SKILL.md) | PERF + FE-W | FEW | ARC | yes |
-| 53 | [`writing-plans`](../plugin-skills/writing-plans/SKILL.md) | DISC | PM, ARC | **ALL** roles (every plan-emitting agent) | yes |
-| 54 | [`xss-prevention`](../plugin-skills/xss-prevention/SKILL.md) | SEC + FE-W | SEC | FEW, FEM | yes |
+| 1 | [`access-control-rbac`](../skills/access-control-rbac/SKILL.md) | SEC | SEC | ARC, BE, AIE | yes |
+| 2 | [`agentic-design`](../skills/agentic-design/SKILL.md) | AI | AIE | ARC, CTOA | yes |
+| 3 | [`api-contract-testing`](../skills/api-contract-testing/SKILL.md) | TEST | QA | BE, AIE, ARC | yes |
+| 4 | [`api-pagination`](../skills/api-pagination/SKILL.md) | BE | BE | AIE, FEW, FEM | yes |
+| 5 | [`api-rate-limiting`](../skills/api-rate-limiting/SKILL.md) | BE | BE | OPS, SEC | yes |
+| 6 | [`api-versioning-strategy`](../skills/api-versioning-strategy/SKILL.md) | ARCH | ARC | BE, AIE, CTOA | yes |
+| 7 | [`app-store-deployment`](../skills/app-store-deployment/SKILL.md) | OPS | OPS | FEM | yes |
+| 8 | [`architecture-patterns`](../skills/architecture-patterns/SKILL.md) | ARCH | ARC | CTOA, BE, AIE | yes |
+| 9 | [`backend-fastify-trpc-grpc`](../skills/backend-fastify-trpc-grpc/SKILL.md) | BE | BE | ARC | yes |
+| 10 | [`claude-api`](../skills/claude-api/SKILL.md) | AI | AIE | ARC, OPS (cost monitoring) | yes |
+| 11 | [`clickhouse-olap`](../skills/clickhouse-olap/SKILL.md) | DATA | AIE | BE, ARC | yes |
+| 12 | [`code-review`](../skills/code-review/SKILL.md) | DISC | CTOA | QA, ARC, all devs | yes (`/review` already) |
+| 13 | [`cost-routing-paradigms`](../skills/cost-routing-paradigms/SKILL.md) | DISC + AI | CTOA, AIE | all devs, QA, OPS | yes |
+| 14 | [`database-design`](../skills/database-design/SKILL.md) | DATA | ARC | BE, AIE, SEC | yes |
+| 15 | [`defense-in-depth-validation`](../skills/defense-in-depth-validation/SKILL.md) | SEC | SEC | BE, AIE, QA | yes |
+| 16 | [`devops-aws`](../skills/devops-aws/SKILL.md) | OPS | OPS | ARC | yes |
+| 17 | [`engineering-discipline`](../skills/engineering-discipline/SKILL.md) | DISC | CTOA | **ALL** roles | yes |
+| 18 | [`event-driven-kafka`](../skills/event-driven-kafka/SKILL.md) | DATA + BE | BE | AIE, ARC, OPS | yes |
+| 19 | [`forecasting-prophet`](../skills/forecasting-prophet/SKILL.md) | AI | AIE | — | yes |
+| 20 | [`frontend-mobile`](../skills/frontend-mobile/SKILL.md) | FE-M | FEM | ARC, QA | yes |
+| 21 | [`frontend-web`](../skills/frontend-web/SKILL.md) | FE-W | FEW | ARC, QA | yes |
+| 22 | [`grpc-buf`](../skills/grpc-buf/SKILL.md) | BE | BE | AIE, ARC | yes |
+| 23 | [`health-check-endpoints`](../skills/health-check-endpoints/SKILL.md) | OBS + OPS | OPS | BE, AIE | yes |
+| 24 | [`idempotency-handling`](../skills/idempotency-handling/SKILL.md) | BE | BE | AIE, QA | yes |
+| 25 | [`india-commerce-economics`](../skills/india-commerce-economics/SKILL.md) | PROD | CTOA | **ALL** roles (it's the moat) | yes |
+| 26 | [`integration-connectors`](../skills/integration-connectors/SKILL.md) | INTG | AIE (ingestion-service is Python) | BE, ARC | yes |
+| 27 | [`kpi-dashboard-design`](../skills/kpi-dashboard-design/SKILL.md) | FE-W + PROD | FEW | FEM, PM | yes |
+| 28 | [`lifecycle-revenue-layer`](../skills/lifecycle-revenue-layer/SKILL.md) | AI + PROD | AIE | BE, SEC (compliance engine) | yes |
+| 29 | [`logging-best-practices`](../skills/logging-best-practices/SKILL.md) | OBS | OPS | BE, AIE | yes |
+| 30 | [`mcp-protocol`](../skills/mcp-protocol/SKILL.md) | AI + ARCH | AIE | ARC, BE | yes |
+| 31 | [`mobile-offline-support`](../skills/mobile-offline-support/SKILL.md) | FE-M | FEM | — | yes |
+| 32 | [`morning-brief-mobile`](../skills/morning-brief-mobile/SKILL.md) | FE-M + AI + PROD | FEM | AIE, FEW (parity), PM | yes |
+| 33 | [`mutation-testing`](../skills/mutation-testing/SKILL.md) | TEST | QA | BE, AIE | yes |
+| 34 | [`oauth-implementation`](../skills/oauth-implementation/SKILL.md) | SEC + INTG | AIE | BE, SEC | yes |
+| 35 | [`observability`](../skills/observability/SKILL.md) | OBS | OPS | **ALL** roles | yes |
+| 36 | [`operational-readiness`](../skills/operational-readiness/SKILL.md) | OPS + DISC | OPS, QA | all devs, CTOA | yes |
+| 37 | [`push-notification-setup`](../skills/push-notification-setup/SKILL.md) | FE-M | FEM | BE (notifications-service) | yes |
+| 38 | [`python-services`](../skills/python-services/SKILL.md) | BE | AIE | BE (parity), ARC | yes |
+| 39 | [`root-cause-tracing`](../skills/root-cause-tracing/SKILL.md) | DISC | all devs, QA, SEC | — | yes |
+| 40 | [`security-baseline`](../skills/security-baseline/SKILL.md) | SEC | SEC | **ALL** roles (every build passes this gate) | yes |
+| 41 | [`session-management`](../skills/session-management/SKILL.md) | SEC | SEC | BE, FEW, FEM | yes |
+| 42 | [`sql-query-optimization`](../skills/sql-query-optimization/SKILL.md) | PERF + DATA | BE, AIE | ARC | yes |
+| 43 | [`supabase-postgres-best-practices`](../skills/supabase-postgres-best-practices/SKILL.md) | DATA | BE | AIE, ARC, SEC | yes |
+| 44 | [`systematic-debugging`](../skills/systematic-debugging/SKILL.md) | DISC | all devs, QA | CTOA | yes |
+| 45 | [`task-tracker-integration`](../skills/task-tracker-integration/SKILL.md) | DISC + OPS | PM | OPS, CTOA | yes |
+| 46 | [`tech-stack-evaluation`](../skills/tech-stack-evaluation/SKILL.md) | ARCH | ARC | CTOA | yes (rarely used) |
+| 47 | [`testing-tdd`](../skills/testing-tdd/SKILL.md) | TEST | QA | all devs | yes |
+| 48 | [`turborepo`](../skills/turborepo/SKILL.md) | OPS | OPS | BE, FEW, FEM | yes |
+| 49 | [`verification-before-completion`](../skills/verification-before-completion/SKILL.md) | DISC | **ALL** roles | — | yes |
+| 50 | [`vulnerability-scanning`](../skills/vulnerability-scanning/SKILL.md) | SEC | SEC | OPS | yes |
+| 51 | [`web-performance-audit`](../skills/web-performance-audit/SKILL.md) | PERF | FEW | QA, OPS | yes |
+| 52 | [`web-performance-optimization`](../skills/web-performance-optimization/SKILL.md) | PERF + FE-W | FEW | ARC | yes |
+| 53 | [`writing-plans`](../skills/writing-plans/SKILL.md) | DISC | PM, ARC | **ALL** roles (every plan-emitting agent) | yes |
+| 54 | [`xss-prevention`](../skills/xss-prevention/SKILL.md) | SEC + FE-W | SEC | FEW, FEM | yes |
 
 ---
 

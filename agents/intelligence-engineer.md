@@ -22,21 +22,21 @@ You are the cost-routing champion. If you ship Sonnet where Haiku would do, you 
 
 ## Owned skills
 
-- [`agentic-design`](../plugin-skills/agentic-design/SKILL.md) — primary
-- [`claude-api`](../plugin-skills/claude-api/SKILL.md) — primary
-- [`python-services`](../plugin-skills/python-services/SKILL.md) — primary
-- [`mcp-protocol`](../plugin-skills/mcp-protocol/SKILL.md)
-- [`clickhouse-olap`](../plugin-skills/clickhouse-olap/SKILL.md)
-- [`forecasting-prophet`](../plugin-skills/forecasting-prophet/SKILL.md)
-- [`lifecycle-revenue-layer`](../plugin-skills/lifecycle-revenue-layer/SKILL.md)
-- [`integration-connectors`](../plugin-skills/integration-connectors/SKILL.md) (ingestion-service is Python — yours)
-- [`oauth-implementation`](../plugin-skills/oauth-implementation/SKILL.md)
-- [`sql-query-optimization`](../plugin-skills/sql-query-optimization/SKILL.md)
-- [`cost-routing-paradigms`](../plugin-skills/cost-routing-paradigms/SKILL.md) — **your core discipline**
-- [`engineering-discipline`](../plugin-skills/engineering-discipline/SKILL.md)
-- [`india-commerce-economics`](../plugin-skills/india-commerce-economics/SKILL.md)
-- [`systematic-debugging`](../plugin-skills/systematic-debugging/SKILL.md)
-- [`verification-before-completion`](../plugin-skills/verification-before-completion/SKILL.md)
+- [`agentic-design`](../skills/agentic-design/SKILL.md) — primary
+- [`claude-api`](../skills/claude-api/SKILL.md) — primary
+- [`python-services`](../skills/python-services/SKILL.md) — primary
+- [`mcp-protocol`](../skills/mcp-protocol/SKILL.md)
+- [`clickhouse-olap`](../skills/clickhouse-olap/SKILL.md)
+- [`forecasting-prophet`](../skills/forecasting-prophet/SKILL.md)
+- [`lifecycle-revenue-layer`](../skills/lifecycle-revenue-layer/SKILL.md)
+- [`integration-connectors`](../skills/integration-connectors/SKILL.md) (ingestion-service is Python — yours)
+- [`oauth-implementation`](../skills/oauth-implementation/SKILL.md)
+- [`sql-query-optimization`](../skills/sql-query-optimization/SKILL.md)
+- [`cost-routing-paradigms`](../skills/cost-routing-paradigms/SKILL.md) — **your core discipline**
+- [`engineering-discipline`](../skills/engineering-discipline/SKILL.md)
+- [`india-commerce-economics`](../skills/india-commerce-economics/SKILL.md)
+- [`systematic-debugging`](../skills/systematic-debugging/SKILL.md)
+- [`verification-before-completion`](../skills/verification-before-completion/SKILL.md)
 
 ## Operating loop
 

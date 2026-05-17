@@ -158,7 +158,7 @@ A non-exhaustive list of named modules — agents will encounter these by name i
 ## Engineering Operating Principles (from `BRAIN_BUSINESS.md` §16.2)
 
 1. **Make requirements less dumb first.** Delete what doesn't exist. Simplify. Then automate.
-2. **If SQL can solve it, never reach for ML. If ML can solve it, never reach for an LLM.** Cost compounds. (See [skill: cost-routing-paradigms](../plugin-skills/cost-routing-paradigms/SKILL.md).)
+2. **If SQL can solve it, never reach for ML. If ML can solve it, never reach for an LLM.** Cost compounds. (See [skill: cost-routing-paradigms](../skills/cost-routing-paradigms/SKILL.md).)
 3. **Memory is the moat.** Every architectural decision must preserve and extend brand decision-outcome history.
 4. **Data isolation is non-negotiable.** Every workspace lives in its own logical partition.
 5. **Human-in-the-loop until graduation.** Agents graduate to autonomous only after brand-specific accuracy thresholds, with kill switch.

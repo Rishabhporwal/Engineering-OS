@@ -42,7 +42,7 @@
 
 {{PARADIGM_JUSTIFICATION}}
 
-> Reminder: SQL > ML > Haiku >> Sonnet. See [skill: cost-routing-paradigms](../plugin-skills/cost-routing-paradigms/SKILL.md).
+> Reminder: SQL > ML > Haiku >> Sonnet. See [skill: cost-routing-paradigms](../skills/cost-routing-paradigms/SKILL.md).
 
 ---
 
@@ -64,7 +64,7 @@
 - {{BREAKING_1}}
 
 ### Versioning strategy
-*(See [`api-versioning-strategy`](../plugin-skills/api-versioning-strategy/SKILL.md).)*
+*(See [`api-versioning-strategy`](../skills/api-versioning-strategy/SKILL.md).)*
 
 {{VERSIONING_STRATEGY}}
 
@@ -203,7 +203,7 @@
 
 Dependencies: {{TRACK_1_DEPS}}
 
-Tasks (2–5 min each, per [`writing-plans`](../plugin-skills/writing-plans/SKILL.md) discipline):
+Tasks (2–5 min each, per [`writing-plans`](../skills/writing-plans/SKILL.md) discipline):
 1. {{TASK_1_1}}
 2. {{TASK_1_2}}
 3. {{TASK_1_3}}

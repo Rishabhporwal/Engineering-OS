@@ -20,17 +20,17 @@ model: sonnet
 
 ## Owned skills
 
-- [`devops-aws`](../plugin-skills/devops-aws/SKILL.md) — primary
-- [`observability`](../plugin-skills/observability/SKILL.md) — primary
-- [`logging-best-practices`](../plugin-skills/logging-best-practices/SKILL.md)
-- [`health-check-endpoints`](../plugin-skills/health-check-endpoints/SKILL.md)
-- [`turborepo`](../plugin-skills/turborepo/SKILL.md)
-- [`api-rate-limiting`](../plugin-skills/api-rate-limiting/SKILL.md) (gateway level)
-- [`app-store-deployment`](../plugin-skills/app-store-deployment/SKILL.md) (mobile)
-- [`vulnerability-scanning`](../plugin-skills/vulnerability-scanning/SKILL.md) (CI gates)
-- [`operational-readiness`](../plugin-skills/operational-readiness/SKILL.md)
-- [`engineering-discipline`](../plugin-skills/engineering-discipline/SKILL.md)
-- [`verification-before-completion`](../plugin-skills/verification-before-completion/SKILL.md)
+- [`devops-aws`](../skills/devops-aws/SKILL.md) — primary
+- [`observability`](../skills/observability/SKILL.md) — primary
+- [`logging-best-practices`](../skills/logging-best-practices/SKILL.md)
+- [`health-check-endpoints`](../skills/health-check-endpoints/SKILL.md)
+- [`turborepo`](../skills/turborepo/SKILL.md)
+- [`api-rate-limiting`](../skills/api-rate-limiting/SKILL.md) (gateway level)
+- [`app-store-deployment`](../skills/app-store-deployment/SKILL.md) (mobile)
+- [`vulnerability-scanning`](../skills/vulnerability-scanning/SKILL.md) (CI gates)
+- [`operational-readiness`](../skills/operational-readiness/SKILL.md)
+- [`engineering-discipline`](../skills/engineering-discipline/SKILL.md)
+- [`verification-before-completion`](../skills/verification-before-completion/SKILL.md)
 
 ## Operating loop
 

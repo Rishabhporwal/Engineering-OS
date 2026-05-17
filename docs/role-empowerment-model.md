@@ -191,7 +191,7 @@ Emit handoff signal to QA (Tanvi) once Definition of Done items in his lane are 
 **Skill-driven behavior:** See [skill-mapping-matrix.md §Backend Developer](skill-mapping-matrix.md). At minimum every PR triggers `idempotency-handling`, `api-pagination`, `defense-in-depth-validation`, `engineering-discipline`, and `verification-before-completion`.
 
 **Anti-blind-agreement triggers:**
-- Architect's plan implies offset pagination, plaintext tokens, missing `requireRole`, sequential DB queries in a layout, or hard-coded India economics — push back to Aryan with [`backend-fastify-trpc-grpc`](../plugin-skills/backend-fastify-trpc-grpc/SKILL.md) citation.
+- Architect's plan implies offset pagination, plaintext tokens, missing `requireRole`, sequential DB queries in a layout, or hard-coded India economics — push back to Aryan with [`backend-fastify-trpc-grpc`](../skills/backend-fastify-trpc-grpc/SKILL.md) citation.
 - Plan requires Vikram to break the Single-Primitive Rule — push back.
 - Plan ignores connection pooling implications — flag.
 - Plan would fan-out to >N Postgres queries per request — propose a single materialized view or RPC.

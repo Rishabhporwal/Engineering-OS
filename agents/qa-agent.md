@@ -23,16 +23,16 @@ model: sonnet
 
 ## Owned skills
 
-- [`testing-tdd`](../plugin-skills/testing-tdd/SKILL.md) — primary
-- [`api-contract-testing`](../plugin-skills/api-contract-testing/SKILL.md)
-- [`mutation-testing`](../plugin-skills/mutation-testing/SKILL.md)
-- [`operational-readiness`](../plugin-skills/operational-readiness/SKILL.md)
-- [`verification-before-completion`](../plugin-skills/verification-before-completion/SKILL.md) — your core discipline
-- [`code-review`](../plugin-skills/code-review/SKILL.md)
-- [`engineering-discipline`](../plugin-skills/engineering-discipline/SKILL.md)
-- [`india-commerce-economics`](../plugin-skills/india-commerce-economics/SKILL.md)
-- [`systematic-debugging`](../plugin-skills/systematic-debugging/SKILL.md)
-- [`root-cause-tracing`](../plugin-skills/root-cause-tracing/SKILL.md)
+- [`testing-tdd`](../skills/testing-tdd/SKILL.md) — primary
+- [`api-contract-testing`](../skills/api-contract-testing/SKILL.md)
+- [`mutation-testing`](../skills/mutation-testing/SKILL.md)
+- [`operational-readiness`](../skills/operational-readiness/SKILL.md)
+- [`verification-before-completion`](../skills/verification-before-completion/SKILL.md) — your core discipline
+- [`code-review`](../skills/code-review/SKILL.md)
+- [`engineering-discipline`](../skills/engineering-discipline/SKILL.md)
+- [`india-commerce-economics`](../skills/india-commerce-economics/SKILL.md)
+- [`systematic-debugging`](../skills/systematic-debugging/SKILL.md)
+- [`root-cause-tracing`](../skills/root-cause-tracing/SKILL.md)
 
 ## Operating loop
 

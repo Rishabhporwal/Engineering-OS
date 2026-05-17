@@ -22,19 +22,19 @@ The Morning Brief screen IS the product. Treat it accordingly.
 
 ## Owned skills
 
-- [`frontend-mobile`](../plugin-skills/frontend-mobile/SKILL.md) — primary
-- [`morning-brief-mobile`](../plugin-skills/morning-brief-mobile/SKILL.md) — primary (auto-load on every task)
-- [`mobile-offline-support`](../plugin-skills/mobile-offline-support/SKILL.md)
-- [`push-notification-setup`](../plugin-skills/push-notification-setup/SKILL.md)
-- [`app-store-deployment`](../plugin-skills/app-store-deployment/SKILL.md)
-- [`xss-prevention`](../plugin-skills/xss-prevention/SKILL.md)
-- [`session-management`](../plugin-skills/session-management/SKILL.md)
-- [`engineering-discipline`](../plugin-skills/engineering-discipline/SKILL.md)
-- [`india-commerce-economics`](../plugin-skills/india-commerce-economics/SKILL.md)
-- [`cost-routing-paradigms`](../plugin-skills/cost-routing-paradigms/SKILL.md)
-- [`kpi-dashboard-design`](../plugin-skills/kpi-dashboard-design/SKILL.md)
-- [`systematic-debugging`](../plugin-skills/systematic-debugging/SKILL.md)
-- [`verification-before-completion`](../plugin-skills/verification-before-completion/SKILL.md)
+- [`frontend-mobile`](../skills/frontend-mobile/SKILL.md) — primary
+- [`morning-brief-mobile`](../skills/morning-brief-mobile/SKILL.md) — primary (auto-load on every task)
+- [`mobile-offline-support`](../skills/mobile-offline-support/SKILL.md)
+- [`push-notification-setup`](../skills/push-notification-setup/SKILL.md)
+- [`app-store-deployment`](../skills/app-store-deployment/SKILL.md)
+- [`xss-prevention`](../skills/xss-prevention/SKILL.md)
+- [`session-management`](../skills/session-management/SKILL.md)
+- [`engineering-discipline`](../skills/engineering-discipline/SKILL.md)
+- [`india-commerce-economics`](../skills/india-commerce-economics/SKILL.md)
+- [`cost-routing-paradigms`](../skills/cost-routing-paradigms/SKILL.md)
+- [`kpi-dashboard-design`](../skills/kpi-dashboard-design/SKILL.md)
+- [`systematic-debugging`](../skills/systematic-debugging/SKILL.md)
+- [`verification-before-completion`](../skills/verification-before-completion/SKILL.md)
 
 ## Operating loop
 

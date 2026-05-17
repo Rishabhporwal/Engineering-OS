@@ -2,160 +2,172 @@
 
 An **AI engineering team** delivered as a Claude Code plugin. Orchestrates a 10-role agent pipeline that takes a requirement from intake to production for **[Brain](https://brain.pipadacapital.com)** — Pipada Capital's AI-native commerce operating system for D2C brands.
 
-This is not a generic "AI assistant." Every agent is grounded in the Brain canon — `Requirements/BRAIN_BUSINESS.md`, `Requirements/BRAIN_TECHNICAL.md`, and 54 curated skills that define exactly how Brain thinks about commerce, India-native economics, agentic design, and engineering discipline.
+Every agent is grounded in the Brain canon — 54 curated skills + a business primer + a technical primer (all shipped inside the plugin). When you install the plugin in your Brain product repo, the agents come with you.
 
 ---
 
-## Quick start
+## Distribution model
 
-1. **Clone the repo.** Everyone on the team works in the same git repo. The plugin code, the Brain canon, and the shared agent memory all live here.
-   ```sh
-   git clone <your-repo-url> brain-engineering-os
-   cd brain-engineering-os
-   ```
+| What | Where |
+|---|---|
+| The plugin itself (agents, skills, hooks, canon, prompts, workflows) | Lives in `~/.claude/plugins/brain-engineering-os/` after `/plugin install`. **Not in your Brain product repo.** |
+| Your Brain product repo | You clone it from wherever Brain's source lives. Contains Brain's code + a `.engineering-os/` directory (shared agent memory). |
+| Shared agent memory (`.engineering-os/`) | Committed to your **Brain product repo**, not the plugin. Every teammate who runs `git pull` receives the full memory of every prior run. |
 
-2. **Open in Claude Code.** The plugin is auto-detected at the repo root (`.claude-plugin/plugin.json`).
+The plugin is repo-decoupled. You install it once; you use it across any Brain product repo.
 
-3. **Submit a requirement.** Use one of the entry commands (see *Commands* below) and the team takes over from there:
-   ```
-   /requirement Add abandoned-cart recovery for COD orders in the GCC region
-   ```
+---
 
-4. **Approve at the gate.** You (the Founder/CTO) are Stage 7 — final approval before deployment. Everything before that is fully agentic with audit trails.
+## Setup (per teammate, one-time)
+
+### 1. Add the marketplace and install the plugin
+
+In Claude Code:
+
+```
+/plugin marketplace add github:Rishabhporwal/Engineering-OS
+/plugin install brain-engineering-os
+```
+
+The plugin lands in `~/.claude/plugins/brain-engineering-os/`. You will not need to look at it.
+
+### 2. Open your Brain product repo in Claude Code
+
+```sh
+git clone <your-brain-product-repo>
+code <your-brain-product-repo>  # or however you open it
+```
+
+### 3. (First-time setup of a Brain repo) Run `/eos init`
+
+If this is the **first time** the Engineering OS is being used in this particular Brain repo, run:
+
+```
+/eos init
+```
+
+This scaffolds `.engineering-os/` and `.gitattributes` into the repo. Commit them. Push. Now every teammate who pulls this repo gets the shared memory baseline.
+
+If you cloned an existing Brain repo that already has `.engineering-os/`, **skip this step** — it's already wired up.
+
+---
+
+## Daily use
+
+```
+/requirement Add abandoned cart recovery for COD orders in GCC
+/status                                       # what's in flight
+/recall feat-abandoned-cart-recovery-gcc      # full history of one feature
+/approve feat-abandoned-cart-recovery-gcc     # Founder gate (Stage 7)
+/reject feat-... <reason>                     # Founder rejection
+/deploy feat-...                              # Stage 8 deploy
+/rollback feat-... <reason>                   # manual rollback
+/skill <skill-name>                           # invoke a curated skill ad-hoc
+/persona <persona-type> <question>            # spawn one persona for a quick check
+```
+
+You never see the agent prompts, the 54 skill internals, the workflow YAMLs, the hook scripts. You see slash commands, status, and rendered artifacts.
 
 ---
 
 ## The 10-role team
 
-| # | Role | Persona | Stage in pipeline |
-|---|------|---------|-------------------|
-| 1 | CTO Advisor (shadow CTO) | *Rishabh's shadow* | 1, 6 |
-| 2 | Dynamic Persona Generator | *Runtime-spawned* | 1 |
-| 3 | Architect | **Aryan** | 2 |
-| 4 | Backend Developer | **Vikram** | 3 |
-| 5 | Frontend (Web) Developer | **Ananya** | 3 |
-| 6 | Mobile Developer | **Karan** | 3 |
-| 7 | Intelligence Engineer (AI/ML/Agents) | **Maya** | 3 |
-| 8 | Security Reviewer | **Shreya** | 4 |
-| 9 | QA Agent | **Tanvi** | 5 |
-| 10 | Platform/DevOps | **Jatin** | 8 |
-| — | Founder/CTO (you) | **Rishabh** | 7 |
+| Role | Persona | Pipeline stage(s) |
+|------|---------|-------------------|
+| CTO Advisor (shadow CTO) | *Rishabh's shadow* | 1, 6 |
+| Dynamic Persona Generator | *Runtime-spawned ×3 in Stage 1* | 1 |
+| Architect | **Aryan** | 2 |
+| Backend Developer | **Vikram** | 3 |
+| Frontend (Web) Developer | **Ananya** | 3 |
+| Mobile Developer | **Karan** | 3 |
+| Intelligence Engineer (AI/ML/Agents) | **Maya** | 3 |
+| Security Reviewer (VETO) | **Shreya** | 4 |
+| QA Agent (VETO) | **Tanvi** | 5 |
+| Platform/DevOps | **Jatin** | 8 |
+| Product Manager | **Priya** | cross-cuts |
+| Founder/CTO (you) | **Rishabh** | 7 |
 
-> Names match the personas referenced throughout the 53 curated skills in `Requirements/skills/`. They are continuous across runs and across teammates — Vikram is always Vikram, with the same memory, no matter who is operating the plugin.
+Names are continuous across runs and across teammates. Vikram is always Vikram, with the same memory, no matter who is operating the plugin.
 
 ---
 
 ## The 8-stage pipeline
 
 ```
-1. CTO Advisor (intake) ──┐
-   + 3 dynamic personas   │
-2. Architect (Aryan)      │
-3. Parallel Development   │   Vikram (BE) ∥ Ananya (FE) ∥ Karan (Mobile) ∥ Maya (AI)
-4. Security (Shreya)      │── on fail, bounces back to responsible dev
-5. QA (Tanvi)             │── on fail, bounces back to responsible dev
-6. CTO Advisor (final)    │
-7. Founder Approval (you) │── HUMAN GATE
-8. Platform/DevOps (Jatin)│
+1. CTO Advisor (intake) + 3 dynamic personas
+2. Architect (Aryan)
+3. Parallel Development — Vikram (BE) ∥ Ananya (FE) ∥ Karan (Mobile) ∥ Maya (AI)
+4. Security (Shreya) — VETO on CRITICAL/HIGH + India compliance
+5. QA (Tanvi) — VETO on missing verification
+6. CTO Advisor (final review)
+7. Founder Approval (you) — HUMAN GATE
+8. Platform/DevOps (Jatin) — CI → staging → prod → 48h auto-rollback
 ```
 
-Quality gates between every stage. Anti-blind-agreement enforced — every agent can (and must) push back when the requirement is unclear, risky, low-value, or technically expensive. See [docs/operating-system.md](docs/operating-system.md) for the full operating manual.
+Bounces between stages happen automatically when gate conditions fail. Anti-blind-agreement is enforced — every agent must push back on weak requirements.
 
 ---
 
 ## Shared, git-synced memory (the "agents never forget" guarantee)
 
-All agent memory lives in [.engineering-os/](.engineering-os/) at the repo root. **It is committed to git.** When a teammate runs `git pull`, they receive the full state of every prior run: decisions, reviews, artifacts, journal entries — everything.
+When a teammate finishes a feature and pushes, the next teammate who pulls receives the full state: decisions, reviews, artifacts, journal entries — everything. This is delivered by three primitives in your Brain product repo:
 
 ```
-.engineering-os/
-├── memory/
-│   ├── agents/          # per-agent append-only journal (architect.journal.md, etc.)
-│   └── features/        # per-feature append-only journal (feat-<slug>.md)
-├── state/               # current workflow state per active requirement
-├── decision-log/        # immutable per-day JSONL log of every decision/recommendation
-├── artifacts/           # generated plans, reviews, schemas, code stubs
-└── runs/                # full timestamped run logs (one folder per run, no collisions)
+<your-brain-product-repo>/
+├── (your Brain source code)
+├── .engineering-os/                    # committed to git
+│   ├── memory/
+│   │   ├── agents/                     # per-agent append-only journals
+│   │   └── features/                   # per-feature append-only journals
+│   ├── state/
+│   │   ├── active.json                 # currently in-flight requirements
+│   │   └── registry.json               # canonical list of every req_id
+│   ├── decision-log/                   # YYYY/MM/YYYY-MM-DD.jsonl
+│   ├── artifacts/                      # optional per-req cross-links
+│   └── runs/                           # per-run timestamped artifact bundles
+└── .gitattributes                      # merge=union rules for append-only files
 ```
 
-**Conflict-resistant by design:**
-- Per-run folders use `YYYY-MM-DDTHH-MM-SSZ__<feature-slug>__<operator>` → no two operators ever write to the same path.
-- Journals are append-only. Merge-conflict surface is essentially zero.
-- State files (the small "what is in flight right now" set) use last-write-wins; agents always re-read before acting.
-
-See [docs/memory-and-git-sync.md](docs/memory-and-git-sync.md) for the full model.
+**Conflict-resistant by design.** Append-only files use `merge=union`, so simultaneous appends auto-merge. Per-run folders carry a timestamp + operator suffix → no two teammates ever collide on the same path. The only file with last-write-wins is `state/active.json`, which agents always re-read before acting.
 
 ---
 
-## Commands
+## What's inside the plugin (you don't need to look)
 
-| Command | What it does |
-|---------|--------------|
-| `/requirement <text>` | Submit a new requirement → kicks off Stage 1 (CTO Advisor + 3 personas) |
-| `/status [<req-id>]` | Show the state of all in-flight requirements (or one specific) |
-| `/recall <feature-slug>` | Print everything every agent has done on a feature so far |
-| `/handoff <req-id> <stage>` | Manually move a requirement to a stage (escape hatch) |
-| `/approve <req-id>` | Founder approval (Stage 7 → Stage 8) |
-| `/reject <req-id> <reason>` | Founder rejection — bounces back with reason |
-| `/deploy <req-id>` | Run Stage 8 (Platform/DevOps) — staging deploy + production with auto-rollback |
-| `/rollback <req-id>` | Trigger rollback of a deployed change |
-| `/skill <skill-name>` | Manually invoke a curated skill (e.g. `/skill security-baseline`) |
-| `/persona <topic>` | Manually spawn a dynamic persona (e.g. `/persona regulatory`) |
+If you're curious: `~/.claude/plugins/brain-engineering-os/` contains agents, skills, commands, hooks, the Brain canon, workflows, schemas, templates, and the operating manual. It's all plain markdown. Plugins distributed via Claude Code are not cryptographically protected — they're out of your daily workflow, but technically readable if you go looking.
 
----
-
-## Repository layout
-
-```
-.
-├── .claude-plugin/
-│   └── plugin.json                # plugin manifest
-├── agents/                        # 10 subagent definitions (md + frontmatter)
-├── plugin-skills/                 # 54 curated skills (mirrored from Requirements/skills/)
-├── commands/                      # slash commands listed above
-├── hooks/                         # plugin hooks (memory rehydration on session start, etc.)
-├── docs/                          # operating manual + architecture docs
-├── prompts/                       # system prompt + anti-blind-agreement + challenge framework
-├── workflows/                     # state machine + approval flow (YAML)
-├── schemas/                       # JSON schemas for every artifact type
-├── templates/                     # markdown templates for every artifact type
-├── Requirements/                  # SOURCE OF TRUTH — Brain canon
-│   ├── BRAIN_BUSINESS.md
-│   ├── BRAIN_TECHNICAL.md
-│   └── skills/                    # 53 curated skill folders
-├── .engineering-os/               # SHARED STATE (git-committed)
-└── claude_prompt.md               # original team-build prompt (preserved for reference)
-```
-
----
-
-## Documents to read next
-
-- [docs/operating-system.md](docs/operating-system.md) — the complete operating manual
-- [docs/folder-context-summary.md](docs/folder-context-summary.md) — what was discovered in `Requirements/`
-- [docs/business-context.md](docs/business-context.md) — Brain business primer for every agent
-- [docs/technical-context.md](docs/technical-context.md) — Brain technical primer for every agent
-- [docs/skill-mapping-matrix.md](docs/skill-mapping-matrix.md) — which skill belongs to which role
-- [docs/role-empowerment-model.md](docs/role-empowerment-model.md) — how each agent uses its skills
-- [docs/workflow.md](docs/workflow.md) — the 8-stage pipeline stage-by-stage
-- [docs/quality-gates.md](docs/quality-gates.md) — what must be true to advance each stage
-- [docs/escalation-rules.md](docs/escalation-rules.md) — when to bounce back, when to escalate to Founder
-- [docs/plugin-architecture.md](docs/plugin-architecture.md) — how the plugin itself is built
-- [docs/memory-and-git-sync.md](docs/memory-and-git-sync.md) — shared-memory model details
-- [ROADMAP.md](ROADMAP.md) — MVP / V2 / V3 build sequence with one end-to-end walkthrough
+For implementation details, see [docs/plugin-architecture.md](docs/plugin-architecture.md) and [docs/memory-and-git-sync.md](docs/memory-and-git-sync.md) (visible to plugin maintainers; teammates don't need them).
 
 ---
 
 ## Principles (non-negotiable)
 
-1. **No blind agreement.** Every agent must respectfully challenge a weak requirement.
+1. **No blind agreement.** Every agent challenges weak requirements.
 2. **Memory is the moat.** Decision Log and per-feature journals are append-only forever.
-3. **Cost-routed paradigms.** SQL > ML > Haiku > Sonnet. Every feature passes the Q1–Q4 cost-routing audit.
-4. **Single-Primitive Rule.** Every cross-cutting concern (audiences, consent, decision log, attribution, identity, notifications) is built once and consumed N times.
-5. **Multi-tenant `workspace_id` discipline.** Enforced at 4 layers (JWT → service-side → DB RLS → Kafka envelope).
-6. **India compliance is P0.** DND, NCPR, DLT, calling hours, GST — zero violations.
-7. **Goal-driven verification.** Every "done" claim runs a verification command and captures real output.
+3. **Cost-routed paradigms.** SQL > ML > Haiku > Sonnet.
+4. **Single-Primitive Rule.** Every cross-cutting concern is built once, consumed N times.
+5. **Multi-tenant `workspace_id` discipline.** Enforced at 4 layers.
+6. **India compliance is P0.** DND, NCPR, DLT, calling hours — zero violations.
+7. **Goal-driven verification.** Every "done" claim runs a real command and captures real output.
 
 ---
+
+## Versioning & updates
+
+When the plugin updates, teammates run:
+
+```
+/plugin update brain-engineering-os
+```
+
+No code changes in their Brain product repo. The plugin in `~/.claude/plugins/` refreshes; the agents have new capabilities; their memory in `.engineering-os/` carries forward.
+
+---
+
+## Support
+
+For the Founder: see [ROADMAP.md](ROADMAP.md) for V1/V2/V3 scope and the end-to-end walkthrough.
+For maintainers: see [docs/](docs/) for the full operating manual.
+For teammates: there is no support to ask for. Submit a `/requirement` and the team takes over.
 
 *This plugin is the engineering team. Use it like one.*

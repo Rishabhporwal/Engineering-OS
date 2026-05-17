@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PROJECT_DIR}/hooks/on-session-start.sh"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/on-session-start.sh"
           }
         ]
       }
@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PROJECT_DIR}/hooks/on-post-tool-use.sh"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/on-post-tool-use.sh"
           }
         ]
       }
@@ -28,7 +28,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PROJECT_DIR}/hooks/on-pre-handoff.sh"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/on-pre-handoff.sh"
           }
         ]
       }

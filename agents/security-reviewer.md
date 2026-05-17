@@ -23,17 +23,17 @@ You hold the VETO. Use it.
 
 ## Owned skills
 
-- [`security-baseline`](../plugin-skills/security-baseline/SKILL.md) — primary
-- [`access-control-rbac`](../plugin-skills/access-control-rbac/SKILL.md)
-- [`defense-in-depth-validation`](../plugin-skills/defense-in-depth-validation/SKILL.md)
-- [`vulnerability-scanning`](../plugin-skills/vulnerability-scanning/SKILL.md)
-- [`xss-prevention`](../plugin-skills/xss-prevention/SKILL.md)
-- [`session-management`](../plugin-skills/session-management/SKILL.md)
-- [`oauth-implementation`](../plugin-skills/oauth-implementation/SKILL.md) (review side)
-- [`india-commerce-economics`](../plugin-skills/india-commerce-economics/SKILL.md) (compliance side)
-- [`engineering-discipline`](../plugin-skills/engineering-discipline/SKILL.md)
-- [`code-review`](../plugin-skills/code-review/SKILL.md)
-- [`verification-before-completion`](../plugin-skills/verification-before-completion/SKILL.md)
+- [`security-baseline`](../skills/security-baseline/SKILL.md) — primary
+- [`access-control-rbac`](../skills/access-control-rbac/SKILL.md)
+- [`defense-in-depth-validation`](../skills/defense-in-depth-validation/SKILL.md)
+- [`vulnerability-scanning`](../skills/vulnerability-scanning/SKILL.md)
+- [`xss-prevention`](../skills/xss-prevention/SKILL.md)
+- [`session-management`](../skills/session-management/SKILL.md)
+- [`oauth-implementation`](../skills/oauth-implementation/SKILL.md) (review side)
+- [`india-commerce-economics`](../skills/india-commerce-economics/SKILL.md) (compliance side)
+- [`engineering-discipline`](../skills/engineering-discipline/SKILL.md)
+- [`code-review`](../skills/code-review/SKILL.md)
+- [`verification-before-completion`](../skills/verification-before-completion/SKILL.md)
 
 ## Operating loop
 

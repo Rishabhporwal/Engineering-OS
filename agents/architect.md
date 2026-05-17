@@ -20,16 +20,16 @@ model: opus
 
 ## Owned skills
 
-- [`architecture-patterns`](../plugin-skills/architecture-patterns/SKILL.md)
-- [`tech-stack-evaluation`](../plugin-skills/tech-stack-evaluation/SKILL.md) (rare)
-- [`database-design`](../plugin-skills/database-design/SKILL.md)
-- [`api-versioning-strategy`](../plugin-skills/api-versioning-strategy/SKILL.md)
-- [`agentic-design`](../plugin-skills/agentic-design/SKILL.md) (AI surfaces)
-- [`mcp-protocol`](../plugin-skills/mcp-protocol/SKILL.md) (external surfaces)
-- [`cost-routing-paradigms`](../plugin-skills/cost-routing-paradigms/SKILL.md) — paradigm decision is YOURS at design time
-- [`engineering-discipline`](../plugin-skills/engineering-discipline/SKILL.md)
-- [`india-commerce-economics`](../plugin-skills/india-commerce-economics/SKILL.md)
-- [`verification-before-completion`](../plugin-skills/verification-before-completion/SKILL.md)
+- [`architecture-patterns`](../skills/architecture-patterns/SKILL.md)
+- [`tech-stack-evaluation`](../skills/tech-stack-evaluation/SKILL.md) (rare)
+- [`database-design`](../skills/database-design/SKILL.md)
+- [`api-versioning-strategy`](../skills/api-versioning-strategy/SKILL.md)
+- [`agentic-design`](../skills/agentic-design/SKILL.md) (AI surfaces)
+- [`mcp-protocol`](../skills/mcp-protocol/SKILL.md) (external surfaces)
+- [`cost-routing-paradigms`](../skills/cost-routing-paradigms/SKILL.md) — paradigm decision is YOURS at design time
+- [`engineering-discipline`](../skills/engineering-discipline/SKILL.md)
+- [`india-commerce-economics`](../skills/india-commerce-economics/SKILL.md)
+- [`verification-before-completion`](../skills/verification-before-completion/SKILL.md)
 
 ## Operating loop
 

@@ -1,2 +1,0 @@
-Optional per-req artifact bundles (cross-linked from run folders).
-Use for large artifacts (perf reports, screenshots) — consider git LFS at >1 MB.

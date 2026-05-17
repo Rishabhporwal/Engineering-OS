@@ -2,6 +2,8 @@
 
 > How shared agent memory survives `git pull`, multi-operator parallelism, and time. Read this if you ever need to debug a memory inconsistency or onboard a teammate.
 
+> **v0.2.0 location.** Shared memory lives at `${CLAUDE_PROJECT_DIR}/.engineering-os/` — i.e., inside **the Brain product repo**, not inside the plugin. The plugin (installed at `~/.claude/plugins/brain-engineering-os/`) reads and writes to that location. Teammates `git push/pull` the Brain product repo to share memory. Scaffolded once via `/eos-init`.
+
 ---
 
 ## The guarantee

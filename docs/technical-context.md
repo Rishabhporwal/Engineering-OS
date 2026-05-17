@@ -27,7 +27,7 @@
 | **LLMs** | Claude **Sonnet 4.6** (synthesis) + Claude **Haiku 4.5** (bounded NL) |
 | **Mobile build** | EAS Build + EAS Submit + EAS Update (OTA for JS-only) |
 
-> Stack is **LOCKED.** Use [`tech-stack-evaluation`](../plugin-skills/tech-stack-evaluation/SKILL.md) *only* when adding a new layer not in the stack (e.g., picking the AI calling vendor — Bolna vs Vapi vs native).
+> Stack is **LOCKED.** Use [`tech-stack-evaluation`](../skills/tech-stack-evaluation/SKILL.md) *only* when adding a new layer not in the stack (e.g., picking the AI calling vendor — Bolna vs Vapi vs native).
 
 ---
 
@@ -122,7 +122,7 @@ Schemas: `raw.*` (infinite retention), `agg.*` (materialized aggregations).
 **Enforcement:**
 - Every code path declares `@paradigm("sql"|"ml"|"haiku"|"sonnet")` decorator.
 - CI rejects PRs missing the decorator or with a wrong-paradigm declaration.
-- Every PR passes the Q1–Q4 cost-routing audit (see [`cost-routing-paradigms`](../plugin-skills/cost-routing-paradigms/SKILL.md)).
+- Every PR passes the Q1–Q4 cost-routing audit (see [`cost-routing-paradigms`](../skills/cost-routing-paradigms/SKILL.md)).
 - Per-brand token cap: **soft throttle at 70%** (lower-priority features pause), **hard throttle at 100%** (only critical-path LLM features). System never breaks; it gets quieter.
 
 ### Agentic design
@@ -338,7 +338,7 @@ A change is **Done** only when **all** of these are true:
 
 ### Ops (Jatin)
 - [ ] Health endpoints respond.
-- [ ] Pre-handoff checklist (see [`operational-readiness`](../plugin-skills/operational-readiness/SKILL.md)) all green.
+- [ ] Pre-handoff checklist (see [`operational-readiness`](../skills/operational-readiness/SKILL.md)) all green.
 - [ ] Dashboard added/updated if a new metric is emitted.
 - [ ] Alarm registered if a new SLO is implied.
 
@@ -371,7 +371,7 @@ These are *explicitly* called out in `BRAIN_TECHNICAL.md` and are caught at desi
 
 ## Verification before completion (Iron Law #5)
 
-Every "done"/"ready"/"tests pass"/"should work" claim runs a verification command and captures real output. See [`verification-before-completion`](../plugin-skills/verification-before-completion/SKILL.md).
+Every "done"/"ready"/"tests pass"/"should work" claim runs a verification command and captures real output. See [`verification-before-completion`](../skills/verification-before-completion/SKILL.md).
 
 A run is **not complete** until the agent posts:
 1. The exact command(s) executed.

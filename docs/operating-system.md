@@ -18,11 +18,11 @@ Multiple teammates can use the plugin simultaneously. **All agent memory lives i
 
 1. **Memory is the moat.** The Decision Log and per-feature journals are append-only forever. Agents never forget.
 2. **No blind agreement.** Every agent must respectfully challenge a weak requirement using the [challenge framework](../prompts/challenge-framework.md).
-3. **Cost-routed paradigms.** SQL > ML > Haiku > Sonnet. Every feature passes the Q1–Q4 cost-routing audit. (See [skill: cost-routing-paradigms](../plugin-skills/cost-routing-paradigms/SKILL.md).)
+3. **Cost-routed paradigms.** SQL > ML > Haiku > Sonnet. Every feature passes the Q1–Q4 cost-routing audit. (See [skill: cost-routing-paradigms](../skills/cost-routing-paradigms/SKILL.md).)
 4. **Single-Primitive Rule.** Every cross-cutting concern is built once and consumed N times. (See [business-context.md §Single-Primitive Rule](business-context.md#the-single-primitive-rule-from-brain_businessmd-165).)
 5. **Multi-tenant `workspace_id` discipline.** Enforced at 4 layers (JWT → service-side → DB RLS → Kafka envelope).
 6. **India compliance is P0.** DND, NCPR, DLT, calling hours, GST — zero violations.
-7. **Goal-driven verification.** Every "done" claim runs a verification command and captures real output. (See [skill: verification-before-completion](../plugin-skills/verification-before-completion/SKILL.md).)
+7. **Goal-driven verification.** Every "done" claim runs a verification command and captures real output. (See [skill: verification-before-completion](../skills/verification-before-completion/SKILL.md).)
 
 ---
 
@@ -338,7 +338,7 @@ A requirement moves through these statuses. (See [workflows/state-machine.yaml](
 
 ## Plugin Architecture (one-paragraph summary; full design in `plugin-architecture.md`)
 
-The plugin lives at the repo root (`.claude-plugin/plugin.json`). It exposes **10 agents** (via `agents/`), **53 skills** (mirrored from `Requirements/skills/` into `plugin-skills/`), ~**10 slash commands** (via `commands/`), and **hooks** that on session start auto-rehydrate the agent personas + load the current state of all active requirements from `.engineering-os/state/`. All persistent memory — journals, state, decision log, run artifacts — lives in `.engineering-os/` at the repo root, committed to git. Append-only conventions and per-run timestamped folders make merge conflicts nearly impossible.
+The plugin lives at the repo root (`.claude-plugin/plugin.json`). It exposes **10 agents** (via `agents/`), **53 skills** (mirrored from `Requirements/skills/` into `skills/`), ~**10 slash commands** (via `commands/`), and **hooks** that on session start auto-rehydrate the agent personas + load the current state of all active requirements from `.engineering-os/state/`. All persistent memory — journals, state, decision log, run artifacts — lives in `.engineering-os/` at the repo root, committed to git. Append-only conventions and per-run timestamped folders make merge conflicts nearly impossible.
 
 See [plugin-architecture.md](plugin-architecture.md) for the full design.
 

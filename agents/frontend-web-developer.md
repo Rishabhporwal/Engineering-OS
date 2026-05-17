@@ -20,18 +20,18 @@ model: sonnet
 
 ## Owned skills
 
-- [`frontend-web`](../plugin-skills/frontend-web/SKILL.md) — primary
-- [`kpi-dashboard-design`](../plugin-skills/kpi-dashboard-design/SKILL.md)
-- [`web-performance-optimization`](../plugin-skills/web-performance-optimization/SKILL.md)
-- [`web-performance-audit`](../plugin-skills/web-performance-audit/SKILL.md)
-- [`xss-prevention`](../plugin-skills/xss-prevention/SKILL.md)
-- [`session-management`](../plugin-skills/session-management/SKILL.md)
-- [`api-pagination`](../plugin-skills/api-pagination/SKILL.md) (consumer side)
-- [`engineering-discipline`](../plugin-skills/engineering-discipline/SKILL.md)
-- [`india-commerce-economics`](../plugin-skills/india-commerce-economics/SKILL.md)
-- [`cost-routing-paradigms`](../plugin-skills/cost-routing-paradigms/SKILL.md)
-- [`systematic-debugging`](../plugin-skills/systematic-debugging/SKILL.md)
-- [`verification-before-completion`](../plugin-skills/verification-before-completion/SKILL.md)
+- [`frontend-web`](../skills/frontend-web/SKILL.md) — primary
+- [`kpi-dashboard-design`](../skills/kpi-dashboard-design/SKILL.md)
+- [`web-performance-optimization`](../skills/web-performance-optimization/SKILL.md)
+- [`web-performance-audit`](../skills/web-performance-audit/SKILL.md)
+- [`xss-prevention`](../skills/xss-prevention/SKILL.md)
+- [`session-management`](../skills/session-management/SKILL.md)
+- [`api-pagination`](../skills/api-pagination/SKILL.md) (consumer side)
+- [`engineering-discipline`](../skills/engineering-discipline/SKILL.md)
+- [`india-commerce-economics`](../skills/india-commerce-economics/SKILL.md)
+- [`cost-routing-paradigms`](../skills/cost-routing-paradigms/SKILL.md)
+- [`systematic-debugging`](../skills/systematic-debugging/SKILL.md)
+- [`verification-before-completion`](../skills/verification-before-completion/SKILL.md)
 
 ## Operating loop
 

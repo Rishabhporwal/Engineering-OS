@@ -2,6 +2,8 @@
 
 > How the Brain Engineering OS plugin itself is built. Read this if you need to extend the plugin, debug a behaviour, or hand it off to a teammate.
 
+> **v0.2.0 model (current).** The plugin is **installable via Claude Code marketplace**, not cloned into a project. It lives in `~/.claude/plugins/brain-engineering-os/`. Brain product repos receive only a `.engineering-os/` scaffold (via `/eos-init`) for shared memory. See [README.md](../README.md) for distribution + setup. The historical "single repo" layout described below was used during the green-field build and reorganised in v0.2.0.
+
 ---
 
 ## Architectural choice: it is a Claude Code plugin
@@ -24,7 +26,7 @@ A future companion (Slack notifier, GitHub Action) can be added later — the pl
 | Plugin primitive | Brain use | Lives in |
 |------------------|-----------|----------|
 | **Subagents** | The 10 named agents (CTO Advisor, Aryan, Vikram, Ananya, Karan, Maya, Shreya, Tanvi, Jatin, Priya) | [`agents/`](../agents/) |
-| **Skills** | The 53 curated Brain skills, mirrored | [`plugin-skills/`](../plugin-skills/) |
+| **Skills** | The 53 curated Brain skills, mirrored | [`skills/`](../skills/) |
 | **Slash commands** | `/requirement`, `/status`, `/recall`, `/handoff`, `/approve`, `/reject`, `/deploy`, `/rollback`, `/skill`, `/persona` | [`commands/`](../commands/) |
 | **Hooks** | Session-start memory rehydration; post-tool-use journal append; pre-handoff gate check | [`hooks/`](../hooks/) |
 | **Plugin manifest** | Declares everything above | [`.claude-plugin/plugin.json`](../.claude-plugin/plugin.json) |
@@ -55,7 +57,7 @@ Engineering OS/
 │   ├── platform-devops.md                   (Jatin)
 │   └── product-manager.md                   (Priya)
 │
-├── plugin-skills/                           # mirror of Requirements/skills/ (53 SKILL.md)
+├── skills/                           # mirror of Requirements/skills/ (53 SKILL.md)
 │   ├── access-control-rbac/
 │   ├── agentic-design/
 │   └── ... (53 total)
@@ -224,7 +226,7 @@ Why this structure: Claude Code loads each subagent into its own sub-conversatio
 
 ## Skill design (53 mirrored from `Requirements/skills/`)
 
-The 53 curated skills under `Requirements/skills/` are mirrored into `plugin-skills/` so that Claude Code can auto-load them as plugin skills.
+The 53 curated skills under `Requirements/skills/` are mirrored into `skills/` so that Claude Code can auto-load them as plugin skills.
 
 **Mirroring options considered:**
 
@@ -320,12 +322,12 @@ The plugin can integrate with external systems via opt-in env vars:
 |--------|---------|-----------------|
 | GitHub | `GITHUB_TOKEN` | DevOps (Jatin) opens PRs; QA (Tanvi) attaches test output as PR comments |
 | Slack | `SLACK_WEBHOOK_URL` | Stage 7 sends Founder a notification; rollback alerts; daily digest |
-| ClickUp / Linear / Jira | `CLICKUP_TOKEN` / `LINEAR_API_KEY` / `JIRA_TOKEN` | Priya syncs the plan to tasks (see [`task-tracker-integration`](../plugin-skills/task-tracker-integration/SKILL.md)) |
+| ClickUp / Linear / Jira | `CLICKUP_TOKEN` / `LINEAR_API_KEY` / `JIRA_TOKEN` | Priya syncs the plan to tasks (see [`task-tracker-integration`](../skills/task-tracker-integration/SKILL.md)) |
 | Anthropic API | `ANTHROPIC_API_KEY` | (Already required by Claude Code; agents inherit) |
 | AWS CDK | `AWS_PROFILE` | Jatin runs `cdk diff` / `cdk deploy` (Stage 8) |
 | Sentry | `SENTRY_AUTH_TOKEN` | Release tagging |
 
-If a token is missing, the corresponding workflow gracefully degrades: actions are logged to `.engineering-os/memory/tasks-pending.log` and the pipeline continues. (Pattern from [`task-tracker-integration`](../plugin-skills/task-tracker-integration/SKILL.md).)
+If a token is missing, the corresponding workflow gracefully degrades: actions are logged to `.engineering-os/memory/tasks-pending.log` and the pipeline continues. (Pattern from [`task-tracker-integration`](../skills/task-tracker-integration/SKILL.md).)
 
 ---
 

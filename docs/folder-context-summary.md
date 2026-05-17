@@ -10,18 +10,20 @@ This document satisfies the prompt's mandate: *"Start by showing your work."*
 
 Discovered at the repo root `/Users/rishabhporwal/Desktop/Engineering OS/`:
 
-| Path | Type | Size | Relevant? | Notes |
+> **Note (post-v0.2.0 refactor):** the workspace is now organised as an installable Claude Code plugin. The Brain canon (`BRAIN_BUSINESS.md`, `BRAIN_TECHNICAL.md`) lives in `canon/` inside the plugin. The 54 skills live in `skills/`. There is no longer a `Requirements/` directory and no seeded `.engineering-os/` in this plugin repo — `.engineering-os/` is scaffolded into the Brain product repo by the `/eos-init` command. This Section reflects what was discovered during the initial green-field build; the layout described below was reorganised in the v0.2.0 refactor (see [plugin-architecture.md](plugin-architecture.md)).
+
+| Path (original layout, pre-v0.2.0) | Type | Size | Relevant? | Notes |
 |------|------|------|-----------|-------|
 | `claude_prompt.md` | file | 11 KB / 206 lines | **yes (build spec)** | The team-building prompt. Preserved verbatim as the contract for this deliverable. |
-| `Requirements/BRAIN_BUSINESS.md` | file | 87 KB / 1,226 lines | **yes (canon)** | Authoritative business + product source of truth. |
-| `Requirements/BRAIN_TECHNICAL.md` | file | 229 KB / 4,557 lines | **yes (canon)** | Authoritative technical source of truth. |
-| `Requirements/skills/` | dir | 54 folders | **yes (canon)** | 54 curated skills. Each folder contains a `SKILL.md` with YAML frontmatter (`name`, `description`) and a detailed body. Two folders (`devops-aws/`, `security-baseline/`) also contain a `references/` subdirectory. |
+| `Requirements/BRAIN_BUSINESS.md` (now `canon/BRAIN_BUSINESS.md`) | file | 87 KB / 1,226 lines | **yes (canon)** | Authoritative business + product source of truth. |
+| `Requirements/BRAIN_TECHNICAL.md` (now `canon/BRAIN_TECHNICAL.md`) | file | 229 KB / 4,557 lines | **yes (canon)** | Authoritative technical source of truth. |
+| `Requirements/skills/` (now `skills/`) | dir | 54 folders | **yes (canon)** | 54 curated skills. Each folder contains a `SKILL.md` with YAML frontmatter (`name`, `description`) and a detailed body. Two folders (`devops-aws/`, `security-baseline/`) also contain a `references/` subdirectory. |
 
-**Nothing else exists at the repo root prior to this build.** No prior plugin, no prior `.engineering-os/` state, no prior `docs/`. This is a green-field implementation grounded in the canon.
+**Nothing else existed at the repo root prior to the initial build.** No prior plugin, no prior `.engineering-os/` state, no prior `docs/`. This was a green-field implementation grounded in the canon.
 
 ---
 
-## 2. All 54 curated skills (extracted from `Requirements/skills/`)
+## 2. All 54 curated skills (now in `skills/`, originally extracted from `Requirements/skills/`)
 
 Every folder name is exactly the skill ID. The one-line description below was extracted from each `SKILL.md`'s `description:` YAML frontmatter.
 

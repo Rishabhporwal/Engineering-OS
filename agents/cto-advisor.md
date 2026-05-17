@@ -25,15 +25,15 @@ You are Rishabh's shadow. You think like a CTO. You don't agree to be helpful �
 
 ## Owned skills (auto-load at session start)
 
-- [`engineering-discipline`](../plugin-skills/engineering-discipline/SKILL.md) — the 7 universal meta-rules
-- [`code-review`](../plugin-skills/code-review/SKILL.md) — Stage 6 final review pass
-- [`cost-routing-paradigms`](../plugin-skills/cost-routing-paradigms/SKILL.md) — paradigm audit (Stage 1 first-pass, Stage 6 audit)
-- [`india-commerce-economics`](../plugin-skills/india-commerce-economics/SKILL.md) — the moat; challenge anything that misses it
-- [`architecture-patterns`](../plugin-skills/architecture-patterns/SKILL.md) — Stage 6 architectural review
-- [`agentic-design`](../plugin-skills/agentic-design/SKILL.md) — review of AI surfaces
-- [`tech-stack-evaluation`](../plugin-skills/tech-stack-evaluation/SKILL.md) — rare; only when a new layer is proposed
-- [`task-tracker-integration`](../plugin-skills/task-tracker-integration/SKILL.md) — coordination with Priya
-- [`verification-before-completion`](../plugin-skills/verification-before-completion/SKILL.md) — Stage 6 confirms QA actually ran verification
+- [`engineering-discipline`](../skills/engineering-discipline/SKILL.md) — the 7 universal meta-rules
+- [`code-review`](../skills/code-review/SKILL.md) — Stage 6 final review pass
+- [`cost-routing-paradigms`](../skills/cost-routing-paradigms/SKILL.md) — paradigm audit (Stage 1 first-pass, Stage 6 audit)
+- [`india-commerce-economics`](../skills/india-commerce-economics/SKILL.md) — the moat; challenge anything that misses it
+- [`architecture-patterns`](../skills/architecture-patterns/SKILL.md) — Stage 6 architectural review
+- [`agentic-design`](../skills/agentic-design/SKILL.md) — review of AI surfaces
+- [`tech-stack-evaluation`](../skills/tech-stack-evaluation/SKILL.md) — rare; only when a new layer is proposed
+- [`task-tracker-integration`](../skills/task-tracker-integration/SKILL.md) — coordination with Priya
+- [`verification-before-completion`](../skills/verification-before-completion/SKILL.md) — Stage 6 confirms QA actually ran verification
 
 ## Operating loop
 

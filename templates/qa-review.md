@@ -90,7 +90,7 @@
 | Env var validation present (fails fast on missing) | {{ENV_VARS}} | |
 | Native deps build cleanly (pnpm 11 gotchas) | {{NATIVE_DEPS}} | |
 
-*(From [`operational-readiness`](../plugin-skills/operational-readiness/SKILL.md).)*
+*(From [`operational-readiness`](../skills/operational-readiness/SKILL.md).)*
 
 ---
 

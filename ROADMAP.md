@@ -24,7 +24,7 @@
 **Explicitly out of MVP** (deferred to V2):
 - Auto-merge PRs after Founder approval.
 - Active gate enforcement in pre-handoff hook (V2 makes it actually block).
-- Automated mirror script for `Requirements/skills/` → `plugin-skills/` (MVP refreshes manually).
+- Automated mirror script for `Requirements/skills/` → `skills/` (MVP refreshes manually).
 - `/digest` weekly summary slash command.
 - Per-feature graphs of stage-time and bounce-count.
 - Slack/Discord/email notifications at gate transitions.
@@ -40,7 +40,7 @@
   - `pre-commit` secret-scanning hook.
   - `on-session-start` surfaces stuck items (>2 days in same stage) with recommended action.
 - **Mirror automation:**
-  - Hook runs `rsync --delete Requirements/skills/ plugin-skills/` on session start.
+  - Hook runs `rsync --delete Requirements/skills/ skills/` on session start.
   - CI fails if any skill is in one place but not the other.
 - **`/digest` slash command:** weekly Friday summary aggregating decision log: features shipped, gates fired (PASS/FAIL), average time-in-stage, top bounce causes.
 - **External integrations** (opt-in via env vars):
@@ -135,7 +135,7 @@ Follow this order to derisk the dependency graph.
 | Two teammates collide on same requirement | Medium | Low | Per-run folders never collide; `state/active.json` last-write-wins with surfaced conflict; agents re-read state before acting |
 | `state/active.json` corruption | Low | High | `.bak.<ts>` written on every save; plugin refuses to start if corrupt and surfaces recovery |
 | Pre-handoff hook lets through a gate failure | Medium (MVP) | Medium | MVP best-effort; V2 makes it actually block; reviewers catch it at next gate anyway |
-| Skill drift between `Requirements/skills/` and `plugin-skills/` | Medium | Low | V2 automated mirror + CI check; MVP manual refresh + matrix doc |
+| Skill drift between `Requirements/skills/` and `skills/` | Medium | Low | V2 automated mirror + CI check; MVP manual refresh + matrix doc |
 | Founder forgets to `/approve` or `/reject`, work stalls | Medium | Low | `/status` surfaces stuck items; V2 sends Slack reminder after 24h |
 | Memory file balloons over years | Low | Low | Plain markdown + JSONL is cheap; V2 archive at 365 days |
 | Secrets accidentally committed in journals | Medium | High | `on-post-tool-use.sh` redacts known patterns; V2 pre-commit hook scans |

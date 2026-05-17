@@ -20,24 +20,24 @@ model: sonnet
 
 ## Owned skills
 
-- [`backend-fastify-trpc-grpc`](../plugin-skills/backend-fastify-trpc-grpc/SKILL.md) — primary
-- [`grpc-buf`](../plugin-skills/grpc-buf/SKILL.md)
-- [`supabase-postgres-best-practices`](../plugin-skills/supabase-postgres-best-practices/SKILL.md)
-- [`database-design`](../plugin-skills/database-design/SKILL.md) (shared with Aryan)
-- [`event-driven-kafka`](../plugin-skills/event-driven-kafka/SKILL.md)
-- [`api-pagination`](../plugin-skills/api-pagination/SKILL.md)
-- [`api-rate-limiting`](../plugin-skills/api-rate-limiting/SKILL.md)
-- [`idempotency-handling`](../plugin-skills/idempotency-handling/SKILL.md)
-- [`oauth-implementation`](../plugin-skills/oauth-implementation/SKILL.md) (Node-side flows)
-- [`sql-query-optimization`](../plugin-skills/sql-query-optimization/SKILL.md)
-- [`health-check-endpoints`](../plugin-skills/health-check-endpoints/SKILL.md)
-- [`defense-in-depth-validation`](../plugin-skills/defense-in-depth-validation/SKILL.md)
-- [`engineering-discipline`](../plugin-skills/engineering-discipline/SKILL.md)
-- [`india-commerce-economics`](../plugin-skills/india-commerce-economics/SKILL.md)
-- [`cost-routing-paradigms`](../plugin-skills/cost-routing-paradigms/SKILL.md)
-- [`systematic-debugging`](../plugin-skills/systematic-debugging/SKILL.md)
-- [`root-cause-tracing`](../plugin-skills/root-cause-tracing/SKILL.md)
-- [`verification-before-completion`](../plugin-skills/verification-before-completion/SKILL.md)
+- [`backend-fastify-trpc-grpc`](../skills/backend-fastify-trpc-grpc/SKILL.md) — primary
+- [`grpc-buf`](../skills/grpc-buf/SKILL.md)
+- [`supabase-postgres-best-practices`](../skills/supabase-postgres-best-practices/SKILL.md)
+- [`database-design`](../skills/database-design/SKILL.md) (shared with Aryan)
+- [`event-driven-kafka`](../skills/event-driven-kafka/SKILL.md)
+- [`api-pagination`](../skills/api-pagination/SKILL.md)
+- [`api-rate-limiting`](../skills/api-rate-limiting/SKILL.md)
+- [`idempotency-handling`](../skills/idempotency-handling/SKILL.md)
+- [`oauth-implementation`](../skills/oauth-implementation/SKILL.md) (Node-side flows)
+- [`sql-query-optimization`](../skills/sql-query-optimization/SKILL.md)
+- [`health-check-endpoints`](../skills/health-check-endpoints/SKILL.md)
+- [`defense-in-depth-validation`](../skills/defense-in-depth-validation/SKILL.md)
+- [`engineering-discipline`](../skills/engineering-discipline/SKILL.md)
+- [`india-commerce-economics`](../skills/india-commerce-economics/SKILL.md)
+- [`cost-routing-paradigms`](../skills/cost-routing-paradigms/SKILL.md)
+- [`systematic-debugging`](../skills/systematic-debugging/SKILL.md)
+- [`root-cause-tracing`](../skills/root-cause-tracing/SKILL.md)
+- [`verification-before-completion`](../skills/verification-before-completion/SKILL.md)
 
 ## Operating loop
 
