@@ -25,7 +25,7 @@ The plugin is repo-decoupled. You install it once; you use it across any Brain p
 In Claude Code:
 
 ```
-/plugin marketplace add github:Rishabhporwal/Engineering-OS
+/plugin marketplace add Rishabhporwal/Engineering-OS
 /plugin install brain-engineering-os
 ```
 
