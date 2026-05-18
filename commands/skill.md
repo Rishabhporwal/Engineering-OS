@@ -1,10 +1,7 @@
 ---
 name: skill
 description: Manually invoke a curated skill outside the pipeline.
-arguments:
-  - name: skill_name
-    description: One of the 54 skill IDs (e.g., security-baseline, india-commerce-economics).
-    required: true
+argument-hint: "<skill-name>"
 ---
 
 Manually invoke a curated skill. Used when you (the operator) want the skill's discipline applied to ad-hoc work, outside the pipeline.

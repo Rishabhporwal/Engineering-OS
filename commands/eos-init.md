@@ -1,10 +1,7 @@
 ---
 name: eos-init
 description: One-time scaffold of the Brain Engineering OS shared memory into the current Brain product repo. Run once per Brain project.
-arguments:
-  - name: confirm
-    description: Optional confirmation flag (e.g., 'yes') to skip the safety prompt.
-    required: false
+argument-hint: "[yes]"
 ---
 
 Initialize the Brain Engineering OS shared memory in the current project.

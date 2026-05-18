@@ -1,10 +1,7 @@
 ---
 name: requirement
 description: Submit a new requirement to the Engineering OS pipeline (Stage 1).
-arguments:
-  - name: text
-    description: The requirement text in natural language.
-    required: true
+argument-hint: "<requirement text in natural language>"
 ---
 
 You are processing a new requirement submission from the Founder.

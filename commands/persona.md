@@ -1,13 +1,7 @@
 ---
 name: persona
 description: Manually spawn a dynamic persona for an open question.
-arguments:
-  - name: persona_type
-    description: One of the 15 persona types in the catalog (e.g., compliance-officer, ai-cost-realist).
-    required: true
-  - name: question
-    description: What you want the persona to stress-test.
-    required: true
+argument-hint: "<persona-type> <question>"
 ---
 
 Manually spawn a dynamic persona to stress-test a question or proposal — outside the normal Stage 1 flow.

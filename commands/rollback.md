@@ -1,13 +1,7 @@
 ---
 name: rollback
 description: Manually trigger rollback of a deployed change.
-arguments:
-  - name: req_id
-    description: The requirement to roll back.
-    required: true
-  - name: reason
-    description: Why we're rolling back. Required.
-    required: true
+argument-hint: "<req-id> <reason>"
 ---
 
 Manually trigger rollback. Use when the auto-rollback didn't fire (slow regression, customer-reported issue, security flag) but human judgment says revert.

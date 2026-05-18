@@ -1,10 +1,7 @@
 ---
 name: deploy
 description: Run Stage 8 (Platform/DevOps) — CI + staging + production with auto-rollback.
-arguments:
-  - name: req_id
-    description: The requirement to deploy. Must be in status=approved.
-    required: true
+argument-hint: "<req-id>"
 ---
 
 Run Stage 8 for `$ARGUMENTS`. Normally invoked automatically after `/approve`, but available manually as an escape hatch.

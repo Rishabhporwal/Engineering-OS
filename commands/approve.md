@@ -1,13 +1,7 @@
 ---
 name: approve
 description: Founder approval (Stage 7 → Stage 8).
-arguments:
-  - name: req_id
-    description: The requirement to approve.
-    required: true
-  - name: note
-    description: Optional approval note (caveats, strategic context).
-    required: false
+argument-hint: "<req-id> [note]"
 ---
 
 **This is the Founder gate.** Only run when you are the Founder (Rishabh).

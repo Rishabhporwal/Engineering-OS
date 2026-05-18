@@ -1,10 +1,7 @@
 ---
 name: recall
 description: Print the full per-feature journal so a teammate gets caught up instantly.
-arguments:
-  - name: feature_slug
-    description: The req_id or feature slug (e.g., feat-abandoned-cart-recovery-gcc).
-    required: true
+argument-hint: "<feature-slug>"
 ---
 
 Print everything every agent has done on feature `$ARGUMENTS`.

@@ -1,10 +1,7 @@
 ---
 name: status
 description: Show the state of every in-flight requirement (or one specific by req_id).
-arguments:
-  - name: req_id
-    description: Optional. If provided, show detail for this one requirement.
-    required: false
+argument-hint: "[req-id]"
 ---
 
 Show the current state of the Brain Engineering OS pipeline.
