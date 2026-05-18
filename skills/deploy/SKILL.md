@@ -1,6 +1,7 @@
 ---
 name: deploy
 description: Run Stage 8 (Platform/DevOps) — CI + staging + production with auto-rollback.
+disable-model-invocation: true
 ---
 
 Run Stage 8 for `$ARGUMENTS`. Normally invoked automatically after `/approve`, but available manually as an escape hatch.

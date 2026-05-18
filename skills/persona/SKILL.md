@@ -1,6 +1,7 @@
 ---
 name: persona
 description: Manually spawn a dynamic persona for an open question.
+disable-model-invocation: true
 ---
 
 Manually spawn a dynamic persona to stress-test a question or proposal — outside the normal Stage 1 flow.

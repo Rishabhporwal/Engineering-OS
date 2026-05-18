@@ -1,6 +1,7 @@
 ---
 name: handoff
 description: Manually move a requirement to a stage (escape hatch).
+disable-model-invocation: true
 ---
 
 **Use sparingly.** This is the manual escape hatch. Normal flow uses the per-stage agent handoff signals (READY-FOR-SECURITY, etc.) and goes through the gate checks.

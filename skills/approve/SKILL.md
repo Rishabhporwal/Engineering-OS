@@ -1,6 +1,7 @@
 ---
 name: approve
 description: Founder approval (Stage 7 → Stage 8).
+disable-model-invocation: true
 ---
 
 **This is the Founder gate.** Only run when you are the Founder (Rishabh).

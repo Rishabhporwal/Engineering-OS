@@ -1,6 +1,7 @@
 ---
 name: rollback
 description: Manually trigger rollback of a deployed change.
+disable-model-invocation: true
 ---
 
 Manually trigger rollback. Use when the auto-rollback didn't fire (slow regression, customer-reported issue, security flag) but human judgment says revert.

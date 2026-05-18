@@ -1,6 +1,7 @@
 ---
 name: status
 description: Show the state of every in-flight requirement (or one specific by req_id).
+disable-model-invocation: true
 ---
 
 Show the current state of the Brain Engineering OS pipeline.

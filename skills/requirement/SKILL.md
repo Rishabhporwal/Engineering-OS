@@ -1,6 +1,7 @@
 ---
 name: requirement
 description: Submit a new requirement to the Engineering OS pipeline (Stage 1).
+disable-model-invocation: true
 ---
 
 You are processing a new requirement submission from the Founder.

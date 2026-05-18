@@ -1,6 +1,7 @@
 ---
 name: recall
 description: Print the full per-feature journal so a teammate gets caught up instantly.
+disable-model-invocation: true
 ---
 
 Print everything every agent has done on feature `$ARGUMENTS`.

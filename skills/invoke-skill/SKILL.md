@@ -1,6 +1,7 @@
 ---
 name: invoke-skill
 description: Manually invoke a curated skill outside the pipeline.
+disable-model-invocation: true
 ---
 
 Manually invoke a curated skill. Used when you (the operator) want the skill's discipline applied to ad-hoc work, outside the pipeline.
