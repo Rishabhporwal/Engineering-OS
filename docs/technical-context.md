@@ -1,6 +1,6 @@
 # Brain — Technical Context (Agent Primer)
 
-**Read this before writing code, designing a service, or reviewing a PR.** Every agent loads this at the start of every task. Condensed, load-bearing extract from `Requirements/BRAIN_TECHNICAL.md` (4,557 lines). When in doubt, the original document wins.
+**Read this before writing code, designing a service, or reviewing a PR.** Every agent loads this at the start of every task. Condensed, load-bearing extract from `canon/BRAIN_TECHNICAL.md` (4,557 lines). When in doubt, the original document wins.
 
 ---
 
@@ -383,7 +383,7 @@ A run is **not complete** until the agent posts:
 ## When in doubt
 
 1. **Re-read this primer.**
-2. **Open `Requirements/BRAIN_TECHNICAL.md`** — source of truth; this is the curated summary.
+2. **Open `canon/BRAIN_TECHNICAL.md`** — source of truth; this is the curated summary.
 3. **Open the relevant curated skill** (see [skill-mapping-matrix.md](skill-mapping-matrix.md)).
 4. **Escalate to Aryan (Architect)** if it's an architectural call.
 5. **Escalate to Shreya** for a security call.

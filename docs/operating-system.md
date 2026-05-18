@@ -8,7 +8,7 @@
 
 The Brain Engineering Operating System (Engineering OS) is an **AI engineering team delivered as a Claude Code plugin**. It takes a Founder's requirement and runs it through an 8-stage pipeline — CTO Advisor → Architect → Parallel Development → Security → QA → Final Review → Founder Approval → DevOps — producing production-grade code, audited and journaled, every time.
 
-It exists so that **Brain (Pipada Capital)** can ship the AI-native commerce OS for D2C brands **without hiring a large engineering team early**. The plugin is the team: 10 named agents grounded in the Brain canon (`Requirements/BRAIN_BUSINESS.md`, `Requirements/BRAIN_TECHNICAL.md`, 53 curated skills).
+It exists so that **Brain (Pipada Capital)** can ship the AI-native commerce OS for D2C brands **without hiring a large engineering team early**. The plugin is the team: 10 named agents grounded in the Brain canon (`canon/BRAIN_BUSINESS.md`, `canon/BRAIN_TECHNICAL.md`, 54 curated skills).
 
 Multiple teammates can use the plugin simultaneously. **All agent memory lives in `.engineering-os/` at the repo root and is committed to git.** When a teammate runs `git pull`, they receive the full state of every prior run.
 
@@ -42,7 +42,7 @@ Multiple teammates can use the plugin simultaneously. **All agent memory lives i
 
 ## Team Structure
 
-10 agents + 1 human (Founder/CTO). Names match the personas already used in the curated skills in `Requirements/skills/`.
+10 agents + 1 human (Founder/CTO). Names match the personas already used in the curated skills in `skills/`.
 
 | # | Role | Persona | Pipeline stage(s) |
 |---|------|---------|-------------------|
@@ -338,7 +338,7 @@ A requirement moves through these statuses. (See [workflows/state-machine.yaml](
 
 ## Plugin Architecture (one-paragraph summary; full design in `plugin-architecture.md`)
 
-The plugin lives at the repo root (`.claude-plugin/plugin.json`). It exposes **10 agents** (via `agents/`), **53 skills** (mirrored from `Requirements/skills/` into `skills/`), ~**10 slash commands** (via `commands/`), and **hooks** that on session start auto-rehydrate the agent personas + load the current state of all active requirements from `.engineering-os/state/`. All persistent memory — journals, state, decision log, run artifacts — lives in `.engineering-os/` at the repo root, committed to git. Append-only conventions and per-run timestamped folders make merge conflicts nearly impossible.
+The plugin lives at the repo root (`.claude-plugin/plugin.json`). It exposes **10 agents** (via `agents/`), **54 skills** (mirrored from `skills/` into `skills/`), ~**10 slash commands** (via `commands/`), and **hooks** that on session start auto-rehydrate the agent personas + load the current state of all active requirements from `.engineering-os/state/`. All persistent memory — journals, state, decision log, run artifacts — lives in `.engineering-os/` at the repo root, committed to git. Append-only conventions and per-run timestamped folders make merge conflicts nearly impossible.
 
 See [plugin-architecture.md](plugin-architecture.md) for the full design.
 

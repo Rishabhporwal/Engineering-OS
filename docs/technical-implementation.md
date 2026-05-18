@@ -328,7 +328,7 @@ In practice: agents check `state/active.json` immediately after pulling, and the
 | Need | How |
 |------|-----|
 | Add an 11th agent | Create `agents/<role>.md`; add to skill matrix; update RACI; create `.engineering-os/memory/agents/<role>.journal.md` starter |
-| Add a 54th skill | Drop `Requirements/skills/<name>/SKILL.md`; rerun `hooks/on-session-start.sh` to sync mirror; add to `skill-mapping-matrix.md` |
+| Add a 54th skill | Drop `skills/<name>/SKILL.md`; rerun `hooks/on-session-start.sh` to sync mirror; add to `skill-mapping-matrix.md` |
 | Add an 11th command | Create `commands/<cmd>.md` |
 | Add a hook | Append to `hooks/hooks.json`; create the script; make executable |
 | Change a quality gate | Edit `docs/quality-gates.md`; update gate-check logic in `hooks/on-pre-handoff.sh`; update agent prompts that cite the gate |

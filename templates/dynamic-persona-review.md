@@ -45,7 +45,7 @@
 
 ## Skills consulted
 
-*Curated skills from `Requirements/skills/` that this persona referenced.*
+*Curated skills from `skills/` that this persona referenced.*
 
 - `{{SKILL_1}}`
 - `{{SKILL_2}}`

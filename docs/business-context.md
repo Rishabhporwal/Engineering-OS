@@ -1,6 +1,6 @@
 # Brain — Business Context (Agent Primer)
 
-**Read this before doing anything for Brain.** Every agent loads this at the start of every task. It is a condensed, load-bearing extract from `Requirements/BRAIN_BUSINESS.md` (1,226 lines). When in doubt, the original document wins; this primer is what you must always remember.
+**Read this before doing anything for Brain.** Every agent loads this at the start of every task. It is a condensed, load-bearing extract from `canon/BRAIN_BUSINESS.md` (1,226 lines). When in doubt, the original document wins; this primer is what you must always remember.
 
 ---
 
@@ -213,7 +213,7 @@ Not "one big AI" — three specialists with clear domains. They recommend togeth
 ## When in doubt
 
 1. **Re-read this primer.**
-2. **Open `Requirements/BRAIN_BUSINESS.md`** — it is the source of truth; this primer is the curated summary.
+2. **Open `canon/BRAIN_BUSINESS.md`** — it is the source of truth; this primer is the curated summary.
 3. **Check the relevant curated skill** (see [skill-mapping-matrix.md](skill-mapping-matrix.md) for the role-to-skill map).
 4. **Escalate to CTO Advisor** if business intent is ambiguous.
 5. **Escalate to Founder/Rishabh** if the business model itself is being touched.

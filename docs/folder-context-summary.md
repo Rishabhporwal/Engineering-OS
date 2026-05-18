@@ -15,15 +15,15 @@ Discovered at the repo root `/Users/rishabhporwal/Desktop/Engineering OS/`:
 | Path (original layout, pre-v0.2.0) | Type | Size | Relevant? | Notes |
 |------|------|------|-----------|-------|
 | `claude_prompt.md` | file | 11 KB / 206 lines | **yes (build spec)** | The team-building prompt. Preserved verbatim as the contract for this deliverable. |
-| `Requirements/BRAIN_BUSINESS.md` (now `canon/BRAIN_BUSINESS.md`) | file | 87 KB / 1,226 lines | **yes (canon)** | Authoritative business + product source of truth. |
-| `Requirements/BRAIN_TECHNICAL.md` (now `canon/BRAIN_TECHNICAL.md`) | file | 229 KB / 4,557 lines | **yes (canon)** | Authoritative technical source of truth. |
-| `Requirements/skills/` (now `skills/`) | dir | 54 folders | **yes (canon)** | 54 curated skills. Each folder contains a `SKILL.md` with YAML frontmatter (`name`, `description`) and a detailed body. Two folders (`devops-aws/`, `security-baseline/`) also contain a `references/` subdirectory. |
+| `canon/BRAIN_BUSINESS.md` (now `canon/BRAIN_BUSINESS.md`) | file | 87 KB / 1,226 lines | **yes (canon)** | Authoritative business + product source of truth. |
+| `canon/BRAIN_TECHNICAL.md` (now `canon/BRAIN_TECHNICAL.md`) | file | 229 KB / 4,557 lines | **yes (canon)** | Authoritative technical source of truth. |
+| `skills/` (now `skills/`) | dir | 54 folders | **yes (canon)** | 54 curated skills. Each folder contains a `SKILL.md` with YAML frontmatter (`name`, `description`) and a detailed body. Two folders (`devops-aws/`, `security-baseline/`) also contain a `references/` subdirectory. |
 
 **Nothing else existed at the repo root prior to the initial build.** No prior plugin, no prior `.engineering-os/` state, no prior `docs/`. This was a green-field implementation grounded in the canon.
 
 ---
 
-## 2. All 54 curated skills (now in `skills/`, originally extracted from `Requirements/skills/`)
+## 2. All 54 curated skills (now in `skills/`, originally extracted from `skills/`)
 
 Every folder name is exactly the skill ID. The one-line description below was extracted from each `SKILL.md`'s `description:` YAML frontmatter.
 
@@ -84,7 +84,7 @@ Every folder name is exactly the skill ID. The one-line description below was ex
 | 53 | `writing-plans` | Discipline for breaking work into 2–5 minute tasks with concrete file paths and verification steps. Used by Priya (PM), by Aryan (Architect), and by any agent producing a TODO list. |
 | 54 | `xss-prevention` | Output encoding, DOMPurify, CSP nonce, URL allowlisting, safe React patterns. |
 
-**Total: 54 skills.** No skills were skipped or invented. All names match the folder names in `Requirements/skills/` exactly. The full skill-to-role mapping is in [skill-mapping-matrix.md](skill-mapping-matrix.md).
+**Total: 54 skills.** No skills were skipped or invented. All names match the folder names in `skills/` exactly. The full skill-to-role mapping is in [skill-mapping-matrix.md](skill-mapping-matrix.md).
 
 ---
 
@@ -92,7 +92,7 @@ Every folder name is exactly the skill ID. The one-line description below was ex
 
 - **Business primer extracted** → [business-context.md](business-context.md). Brain = AI-native commerce OS for D2C brands worldwide, India-first. AICMO/AICOO/AICFO. GMV-linked pricing. Memory Layer = moat. 0.5% founding cohort (20 brands), 1.0%/0.5% tiers. Phases 0–5+ from India → GCC → US/EU → Capital/Retail.
 - **Technical primer extracted** → [technical-context.md](technical-context.md). Six microservices (api-gateway, core, ingestion, analytics, intelligence, notifications) + lifecycle-service. TS (Fastify + tRPC + Prisma) + Python (FastAPI + asyncpg + clickhouse-driver). Supabase Postgres + ClickHouse Cloud + MSK Kafka + Redis + S3. EKS + Karpenter + ArgoCD on AWS, CDK IaC. Claude Sonnet 4.6 + Haiku 4.5.
-- **Curated skills extracted** → 53 listed above; categorized in [skill-mapping-matrix.md](skill-mapping-matrix.md).
+- **Curated skills extracted** → 54 listed above; categorized in [skill-mapping-matrix.md](skill-mapping-matrix.md).
 - **Roles inferred from skill bodies** → Aryan (Architect), Vikram (Backend), Ananya (Frontend Web), Karan (Mobile), Maya (Intelligence/AI), Shreya (Security — VETO authority), Tanvi (QA), Jatin (DevOps), Priya (PM). The CTO Advisor is a new role (shadow CTO for Rishabh).
 
 ---
@@ -125,9 +125,9 @@ If any assumption is wrong, flag it and we update the affected agent/doc only �
 
 ---
 
-## 6. Recommended additional skills (NOT sourced from `Requirements/skills/` — clearly labeled)
+## 6. Recommended additional skills (NOT sourced from `skills/` — clearly labeled)
 
-The 53 curated skills cover ~95% of what the agents need. The following are recommended additions, clearly marked as **not currently in `Requirements/skills/`**:
+The 54 curated skills cover ~95% of what the agents need. The following are recommended additions, clearly marked as **not currently in `skills/`**:
 
 | Suggested skill | Why | Owner if added |
 |-----------------|-----|----------------|

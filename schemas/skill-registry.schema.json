@@ -16,7 +16,7 @@
         "type": "object",
         "required": ["id", "description", "domain", "primary_roles", "shared_with"],
         "properties": {
-          "id": { "type": "string", "description": "Folder name in Requirements/skills/." },
+          "id": { "type": "string", "description": "Folder name in skills/." },
           "description": { "type": "string" },
           "domain": {
             "enum": [

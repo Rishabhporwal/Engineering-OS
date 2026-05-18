@@ -26,7 +26,7 @@ A future companion (Slack notifier, GitHub Action) can be added later — the pl
 | Plugin primitive | Brain use | Lives in |
 |------------------|-----------|----------|
 | **Subagents** | The 10 named agents (CTO Advisor, Aryan, Vikram, Ananya, Karan, Maya, Shreya, Tanvi, Jatin, Priya) | [`agents/`](../agents/) |
-| **Skills** | The 53 curated Brain skills, mirrored | [`skills/`](../skills/) |
+| **Skills** | The 54 curated Brain skills | [`skills/`](../skills/) |
 | **Slash commands** | `/requirement`, `/status`, `/recall`, `/handoff`, `/approve`, `/reject`, `/deploy`, `/rollback`, `/skill`, `/persona` | [`commands/`](../commands/) |
 | **Hooks** | Session-start memory rehydration; post-tool-use journal append; pre-handoff gate check | [`hooks/`](../hooks/) |
 | **Plugin manifest** | Declares everything above | [`.claude-plugin/plugin.json`](../.claude-plugin/plugin.json) |
@@ -57,10 +57,10 @@ Engineering OS/
 │   ├── platform-devops.md                   (Jatin)
 │   └── product-manager.md                   (Priya)
 │
-├── skills/                           # mirror of Requirements/skills/ (53 SKILL.md)
+├── skills/                           # mirror of skills/ (54 SKILL.md)
 │   ├── access-control-rbac/
 │   ├── agentic-design/
-│   └── ... (53 total)
+│   └── ... (54 total)
 │
 ├── commands/                                # slash commands
 │   ├── requirement.md
@@ -128,10 +128,10 @@ Engineering OS/
 │   ├── final-review.md
 │   └── deployment-report.md
 │
-├── Requirements/                            # SOURCE OF TRUTH — Brain canon (unchanged)
+├── canon/                                   # SOURCE OF TRUTH — Brain canon (ships with plugin)
 │   ├── BRAIN_BUSINESS.md
 │   ├── BRAIN_TECHNICAL.md
-│   └── skills/                              # 53 curated skill folders (originals)
+│   └── skills/                              # 54 curated skill folders (originals)
 │
 ├── .engineering-os/                         # SHARED STATE — git-committed
 │   ├── memory/
@@ -183,9 +183,9 @@ Already created. Key fields:
     "shared-state-dir": ".engineering-os",
     "memory-model": "git-committed append-only journals",
     "canon-roots": [
-      "Requirements/BRAIN_BUSINESS.md",
-      "Requirements/BRAIN_TECHNICAL.md",
-      "Requirements/skills"
+      "canon/BRAIN_BUSINESS.md",
+      "canon/BRAIN_TECHNICAL.md",
+      "skills"
     ],
     "team": { ... 10 personas ... }
   }
@@ -224,9 +224,9 @@ Why this structure: Claude Code loads each subagent into its own sub-conversatio
 
 ---
 
-## Skill design (53 mirrored from `Requirements/skills/`)
+## Skill design (54 mirrored from `skills/`)
 
-The 53 curated skills under `Requirements/skills/` are mirrored into `skills/` so that Claude Code can auto-load them as plugin skills.
+The 54 curated skills under `skills/` are mirrored into `skills/` so that Claude Code can auto-load them as plugin skills.
 
 **Mirroring options considered:**
 
@@ -378,7 +378,7 @@ Events are realized as: an entry in the decision log + a status update in `state
 | External token missing | Logs to `tasks-pending.log`; pipeline continues; notifies Founder at next status check |
 | Git merge conflict on a journal | Append-only conflicts are auto-resolved by `git merge -X ours` for whitespace; substantive conflicts surface to user with reconciliation steps |
 | State JSON corrupted | Plugin refuses to start; surfaces backup recovery from `.engineering-os/state/active.json.bak.<ts>` (created on each write) |
-| Skill missing | Falls back to a `Read` of the original `Requirements/skills/<name>/SKILL.md` if mirror has drifted; warns user to re-sync |
+| Skill missing | Falls back to a `Read` of the original `skills/<name>/SKILL.md` if mirror has drifted; warns user to re-sync |
 
 ---
 

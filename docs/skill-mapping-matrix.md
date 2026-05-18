@@ -1,6 +1,6 @@
 # Section 2.1 — Skill Mapping Matrix
 
-This document is the **authoritative skill-to-role binding** for the Brain Engineering OS. Every one of the 53 curated skills in [`Requirements/skills/`](../Requirements/skills/) is mapped to:
+This document is the **authoritative skill-to-role binding** for the Brain Engineering OS. Every one of the 54 curated skills in [`skills/`](../skills/) is mapped to:
 
 - A **domain category** (one of 14).
 - One or more **primary role owners** (which agent must auto-load it).
@@ -48,7 +48,7 @@ This document is the **authoritative skill-to-role binding** for the Brain Engin
 
 ---
 
-## The matrix (all 53 skills)
+## The matrix (all 54 skills)
 
 | # | Skill | Domain | Primary | Shared with | Exposed as `/skill` |
 |---|-------|--------|---------|-------------|---------------------|
@@ -125,7 +125,7 @@ This document is the **authoritative skill-to-role binding** for the Brain Engin
 - `verification-before-completion` (always)
 
 ### Dynamic Persona Generator (`dynamic-persona-generator`)
-*No fixed skills — selects 3 personas at runtime based on the requirement. May invoke any of the 53 skills indirectly via the spawned persona.*
+*No fixed skills — selects 3 personas at runtime based on the requirement. May invoke any of the 54 skills indirectly via the spawned persona.*
 
 ### Architect — Aryan (`architect`)
 - `architecture-patterns` (primary)
@@ -269,7 +269,7 @@ Some skills are so foundational that **every role auto-loads them**. These are l
 
 ---
 
-## Recommended additional skills (NOT sourced from `Requirements/skills/` — see [folder-context-summary.md](folder-context-summary.md))
+## Recommended additional skills (NOT sourced from `skills/` — see [folder-context-summary.md](folder-context-summary.md))
 
 Four candidate skills are flagged but not implemented in this build:
 
@@ -304,7 +304,7 @@ A few mappings deserve explicit explanation:
    - When a developer agent picks up a task, it auto-loads its owned skills + any skills whose **description** matches keywords in the requirement.
    - The **Shared with** column tells an agent when to request peer review even if no failing gate triggers.
 
-The matrix is rebuilt whenever a new skill is added to `Requirements/skills/`. A CI check ([`hooks/`](../hooks/)) detects new skill folders and fails CI until this matrix is updated.
+The matrix is rebuilt whenever a new skill is added to `skills/`. A CI check ([`hooks/`](../hooks/)) detects new skill folders and fails CI until this matrix is updated.
 
 ---
 
