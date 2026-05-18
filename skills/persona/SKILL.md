@@ -1,7 +1,6 @@
 ---
 name: persona
 description: Manually spawn a dynamic persona for an open question.
-argument-hint: "<persona-type> <question>"
 ---
 
 Manually spawn a dynamic persona to stress-test a question or proposal — outside the normal Stage 1 flow.

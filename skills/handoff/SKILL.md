@@ -1,7 +1,6 @@
 ---
 name: handoff
 description: Manually move a requirement to a stage (escape hatch).
-argument-hint: "<req-id> <target-stage>"
 ---
 
 **Use sparingly.** This is the manual escape hatch. Normal flow uses the per-stage agent handoff signals (READY-FOR-SECURITY, etc.) and goes through the gate checks.

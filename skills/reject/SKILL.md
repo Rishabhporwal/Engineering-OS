@@ -1,7 +1,6 @@
 ---
 name: reject
 description: Founder rejection (Stage 7) — bounces back with a reason.
-argument-hint: "<req-id> <reason>"
 ---
 
 **This is the Founder gate.** Only run when you are the Founder (Rishabh).

@@ -1,7 +1,6 @@
 ---
 name: recall
 description: Print the full per-feature journal so a teammate gets caught up instantly.
-argument-hint: "<feature-slug>"
 ---
 
 Print everything every agent has done on feature `$ARGUMENTS`.

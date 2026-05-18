@@ -1,7 +1,6 @@
 ---
-name: skill
+name: invoke-skill
 description: Manually invoke a curated skill outside the pipeline.
-argument-hint: "<skill-name>"
 ---
 
 Manually invoke a curated skill. Used when you (the operator) want the skill's discipline applied to ad-hoc work, outside the pipeline.

@@ -38,12 +38,12 @@ git clone <your-brain-product-repo>
 code <your-brain-product-repo>  # or however you open it
 ```
 
-### 3. (First-time setup of a Brain repo) Run `/eos init`
+### 3. (First-time setup of a Brain repo) Run `/brain-engineering-os:eos-init`
 
 If this is the **first time** the Engineering OS is being used in this particular Brain repo, run:
 
 ```
-/eos init
+/brain-engineering-os:eos-init
 ```
 
 This scaffolds `.engineering-os/` and `.gitattributes` into the repo. Commit them. Push. Now every teammate who pulls this repo gets the shared memory baseline.
@@ -54,19 +54,25 @@ If you cloned an existing Brain repo that already has `.engineering-os/`, **skip
 
 ## Daily use
 
+All plugin-provided commands are invokable via Claude Code's plugin namespace:
+
 ```
-/requirement Add abandoned cart recovery for COD orders in GCC
-/status                                       # what's in flight
-/recall feat-abandoned-cart-recovery-gcc      # full history of one feature
-/approve feat-abandoned-cart-recovery-gcc     # Founder gate (Stage 7)
-/reject feat-... <reason>                     # Founder rejection
-/deploy feat-...                              # Stage 8 deploy
-/rollback feat-... <reason>                   # manual rollback
-/skill <skill-name>                           # invoke a curated skill ad-hoc
-/persona <persona-type> <question>            # spawn one persona for a quick check
+/brain-engineering-os:requirement Add abandoned cart recovery for COD orders in GCC
+/brain-engineering-os:status                              # what's in flight
+/brain-engineering-os:recall feat-abandoned-cart-recovery-gcc   # full history of one feature
+/brain-engineering-os:approve feat-abandoned-cart-recovery-gcc  # Founder gate (Stage 7)
+/brain-engineering-os:reject feat-... <reason>            # Founder rejection
+/brain-engineering-os:deploy feat-...                     # Stage 8 deploy
+/brain-engineering-os:rollback feat-... <reason>          # manual rollback
+/brain-engineering-os:invoke-skill <skill-name>           # invoke a curated skill ad-hoc
+/brain-engineering-os:persona <persona-type> <question>   # spawn one persona for a quick check
+/brain-engineering-os:handoff <req-id> <stage>            # manual stage move (escape hatch)
+/brain-engineering-os:eos-init                            # one-time per Brain project scaffolder
 ```
 
-You never see the agent prompts, the 54 skill internals, the workflow YAMLs, the hook scripts. You see slash commands, status, and rendered artifacts.
+> **Tip:** type `/` in Claude Code and start typing `brain` — autocomplete will surface every available command. You don't have to remember the exact names.
+
+You never see the agent prompts, the 54 Brain canon skills' internals, the workflow YAMLs, or the hook scripts. You see invokable skills, status, and rendered artifacts.
 
 ---
 
