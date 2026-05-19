@@ -10,6 +10,77 @@ This document defines each gate's:
 
 ---
 
+## G0 — Pre-flight dependency check (new in v0.3.1)
+
+**Owner:** CTO Advisor (Stage 1 — runs BEFORE any persona spawn or "less dumb first" pass).
+
+**Condition:**
+- [ ] If this requirement is a child of a meta-tracker, its `blocks` field has been read from the parent's `proposed_children[]`.
+- [ ] Every blocker in `blocks` has `status == "shipped"` OR `status == "founder-override-of-dependency-rule"` in `state/active.json`.
+- [ ] If any blocker is unshipped: CTOA REFUSES to proceed past G0 and surfaces to Founder.
+
+**Evidence:**
+- Decision-log event: `{"actor":"cto-advisor","type":"dependency-precheck","req_id":"...","blockers":[...],"all_blockers_shipped":<bool>}`.
+- On violation: a `pending-founder-attention.md` artifact in the run folder explaining the unshipped blocker(s).
+
+**Bounce target on fail:** No bounce — work is REFUSED, not bounced. State becomes `blocked-on-dependency` with `current_owner=founder`. Founder either waits for blocker to ship or invokes `/brain-engineering-os:override-dependency-rule` with a written rationale (which becomes a logged audit-trail entry).
+
+**Why this exists:** observed process violation in monitor — child #4 (`turborepo-monorepo`) shipped while child #3 (`metric-registry-ts`, its declared blocker) was orphaned at Stage 1. The CTOA approved it on Founder's behalf without flagging the violation. G0 makes the check mechanical.
+
+---
+
+## Stage 4 skip exception (new in v0.3.1)
+
+**Default:** Stage 4 (Security / Shreya) runs on every requirement.
+
+**Exception — "Stage 4 fast-pass":** Skipping Stage 4 is permitted IF AND ONLY IF **all** of these are true:
+
+- [ ] The staged file set contains ONLY files with these extensions: `.md`, `.txt`, `.json`, `.yaml`, `.yml`.
+- [ ] NO file under `apps/`, `backend/src/`, `frontend/src/`, `services/`, `packages/`, `pylibs/`, `protos/`, `prisma/`, `mobile/` is touched.
+- [ ] NO `.env`, `.env.example`, lockfile (`package-lock.json`, `pnpm-lock.yaml`, `yarn.lock`, `uv.lock`), or root manifest (`package.json`, `pyproject.toml`, `tsconfig.json`) is touched.
+- [ ] NO file in the auth/secret-relevant set is touched (any file matching the regex `secret|password|token|key|credential|auth` in path).
+- [ ] An explicit `stage_4_skip_rationale` field is filled in `06-architecture-plan.md` § "Security considerations".
+
+**On qualified skip:**
+- Architect (Stage 2) writes the `stage_4_skip_rationale` and routes the handoff to dev with `next_after_dev = qa-agent` (not `security-reviewer`).
+- Security agent, when invoked anyway, may emit `type: stage-4-fast-pass` decision-log event with a one-line confirmation and advance immediately.
+- QA agent (Stage 5) MUST re-run a minimal version of the skipped Stage 4 verification herself (per the W13 protocol below).
+
+**On unqualified skip attempt:** Stage 4 runs full review. The mere presence of a `.env`, lockfile, code file, or auth-relevant file in the staged set is enough to disqualify fast-pass — no human judgment needed.
+
+**Why this exists:** observed in monitor — Aryan skipped Stage 4 on child #1 (pure docs) with judgment but no codified rule. The pattern would have rotted into "skip whenever convenient." This rule lets the skip happen safely AND mechanically.
+
+---
+
+## W13 — Mandatory upstream-skip re-run (new in v0.3.1, codifies field-notes W13)
+
+**Owner:** QA Agent (Tanvi) at Stage 5.
+
+**Condition:**
+- [ ] If Stage 4 was marked SKIPPED or FAST-PASS, QA agent MUST re-run a minimal version of the Stage 4 verification herself.
+- [ ] At minimum: `git diff --cached | grep -iE 'password|secret|api[_-]?key|bearer|aws_|sk-[a-zA-Z0-9]+|ghp_'` on the staged diff. Capture output.
+- [ ] Result is recorded in `10-qa-review.md` under a new "Stage 4 skip acknowledgment" section.
+
+**Why this exists:** anti-blind-agreement applied across stage boundaries. The QA agent doesn't trust upstream skips blindly; she re-verifies. Observed in monitor — Tanvi did this herself on child #1 without prompting (W13). Now codified as required protocol.
+
+---
+
+## W14 — Mandatory Stage-5 gate re-run at final review (new in v0.3.1, codifies field-notes W14)
+
+**Owner:** CTO Advisor at Stage 6.
+
+**Condition:**
+- [ ] CTOA spot-re-runs at least 3 of Tanvi's Stage 5 verification gates with captured output.
+- [ ] Common picks: G1 app-code-diff sentinel, G3 provenance/discipline gate, G4 parity round-trip.
+- [ ] Result is recorded in `11-final-review.md` under "Re-verified Stage 5 gates" section, with the exact command + actual output.
+- [ ] If CTOA cannot replicate Tanvi's PASS: BOUNCE to Stage 5 with the finding.
+
+**Why this exists:** Stage 6 must not rubber-stamp. Observed in monitor — Rohan independently re-ran G1, G3, G4 on child #1 without prompting (W14). Now codified.
+
+---
+
+---
+
 ## G1 — Intake → Architecture
 
 **Owner:** CTO Advisor.

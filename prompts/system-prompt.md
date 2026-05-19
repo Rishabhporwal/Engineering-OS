@@ -92,6 +92,19 @@ If `${CLAUDE_PROJECT_DIR}/.engineering-os/` does not exist when you try to read 
 
 ---
 
+## Timestamp discipline (durable rule, adopted 2026-05-19)
+
+All timestamps in journal entries, decision-log events, run folder names, state files, and artifact metadata MUST be derived from `date -u +%Y-%m-%dT%H:%M:%SZ` at the time of action.
+
+- Always UTC. Always Z-suffix. Never IST in stored timestamps.
+- Do NOT infer timestamps from prior artifacts ("the last run was 14:30, so this is 15:00") — those drift.
+- Do NOT use timezone-less ISO strings (no `2026-05-19T14:30:00` — must be `2026-05-19T14:30:00Z`).
+- Run folder names use the slugged form (colons → hyphens, dot → dot or omit): `2026-05-19T14-30-00Z__<hex6>__<req-id>__<operator>/` where `<hex6>` is 6 random hex chars (e.g., `a3f201`) to prevent same-second collisions when multiple intakes happen close together.
+
+To get a fresh timestamp at action time, run `date -u +%Y-%m-%dT%H:%M:%SZ` via Bash. To generate the hex suffix, run `openssl rand -hex 3` or `printf '%06x\n' $((RANDOM<<8|RANDOM))`.
+
+Observed in monitor: children #3 and #4 had run folders with identical `2026-05-19T14-30-00Z` prefix; agent was using a logical clock that drifted from real time by ~4 hours. This rule eliminates both classes of bug.
+
 ## Plan-first + Self-review discipline (durable rule, adopted 2026-05-19)
 
 Every agent owns three responsibilities for every invocation:

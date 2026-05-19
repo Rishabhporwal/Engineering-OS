@@ -36,8 +36,24 @@ SAFE=$(echo "$PAYLOAD" | sed -E \
   -e 's/AKIA[0-9A-Z]{16}/[REDACTED-aws-access-key]/g' \
   -e 's/ghp_[A-Za-z0-9]{36}/[REDACTED-github-token]/g')
 
-# Surmise the active agent from env (if Claude Code sets it) — else "unknown"
-AGENT="${CLAUDE_AGENT_NAME:-unknown}"
+# Surmise the active agent from env. Order of preference:
+#   1. CLAUDE_AGENT_NAME — explicit subagent name (most reliable when set)
+#   2. CLAUDE_SUBAGENT_TYPE — Claude Code 2.x may set this for nested agents
+#   3. CLAUDE_CONTEXT_AGENT — alternative name some versions set
+#   4. Parse subagent name from the JSON payload's 'agent' field if present
+#   5. Fall back to "auto" (not "unknown") so the file is clearly noise-only.
+AGENT="${CLAUDE_AGENT_NAME:-${CLAUDE_SUBAGENT_TYPE:-${CLAUDE_CONTEXT_AGENT:-}}}"
+if [ -z "$AGENT" ]; then
+  # Try to extract from payload
+  AGENT=$(echo "$SAFE" | jq -r '.context.agent // .agent // .subagent_type // empty' 2>/dev/null)
+fi
+[ -z "$AGENT" ] && AGENT="auto"
+
+# IMPORTANT: this is a safety-net file. Real agents author their own structured
+# journal entries in their named file (architect.journal.md, etc.). The file
+# produced here is gitignored per .gitignore in the consuming Brain repo
+# (see Brain repo's commit ba8b7f41). If AGENT resolves to "auto" repeatedly,
+# investigate Claude Code's subagent env-var convention for the current version.
 JOURNAL_FILE="$EOS_DIR/memory/agents/${AGENT}.journal.md"
 [ -d "$EOS_DIR/memory/agents" ] || mkdir -p "$EOS_DIR/memory/agents"
 
