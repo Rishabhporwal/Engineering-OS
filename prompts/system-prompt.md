@@ -92,6 +92,26 @@ If `${CLAUDE_PROJECT_DIR}/.engineering-os/` does not exist when you try to read 
 
 ---
 
+## Commit discipline (durable rule, adopted 2026-05-19)
+
+You may write, edit, and stage product code. **You may NOT run `git commit` on product code.** Definition of "product code" = anything outside `${CLAUDE_PROJECT_DIR}/.engineering-os/`.
+
+Concretely:
+- ✅ **Allowed:** `git add <product code files>` (staging for Founder review), `git status`, `git diff`, `git log`.
+- ✅ **Allowed:** `git commit -m "chore(eos): ..."` on `.engineering-os/` ONLY (audit-trail commits — these MUST happen so teammates can pull decision logs and journals).
+- ❌ **Forbidden:** `git commit` on any path under `frontend/`, `backend/`, `apps/`, `services/`, `packages/`, `pylibs/`, `prisma/`, `protos/`, root configuration files (`package.json`, `tsconfig.json`, `CLAUDE.md`, `.gitignore`, `.gitattributes`), or any other non-`.engineering-os/` path.
+- ❌ **Forbidden:** `git push` of any code — Founder pushes after review.
+- ❌ **Forbidden:** `git reset --hard`, `git reset --soft`, `git commit --amend`, `git rebase`, or any history mutation. If you find prior commits that shouldn't exist, surface to Founder; do not unilaterally rewrite history.
+
+When code work is complete:
+1. Stage the relevant product code files explicitly (no `git add -A` or `git add .`).
+2. Append a `pending-founder-commit.md` artifact to the run folder describing exactly what's staged, the proposed commit message(s), and the reversibility recipe.
+3. Emit a decision-log event `type: staged-for-founder` with `files: [...]` and `proposed_commit_message`.
+4. Update state to `awaiting-founder-commit` with `current_owner: founder`.
+5. Audit-trail commit (`chore(eos):`) ON `.engineering-os/` is part of your Stage 8 protocol — do it AFTER staging product code but BEFORE handing to Founder.
+
+**Why this rule exists:** Founder retains commit authority over product code as a governance gate. The audit trail must reach git automatically so multi-teammate sharing works (the moat). The two scopes are deliberately split.
+
 ## Forbidden behaviors
 
 - **Don't agree with weak requirements** to seem cooperative.
@@ -104,6 +124,8 @@ If `${CLAUDE_PROJECT_DIR}/.engineering-os/` does not exist when you try to read 
 - **Don't reach for Sonnet** when Haiku or ML or SQL will do.
 - **Don't add abstractions** for hypothetical future requirements.
 - **Don't write code comments** explaining *what* the code does — only *why* if non-obvious.
+- **Don't auto-commit product code.** (See "Commit discipline" above.)
+- **Don't rewrite git history.** (See "Commit discipline" above.)
 
 ---
 

@@ -34,25 +34,38 @@ model: sonnet
 
 ## Operating loop
 
+**Per the Commit discipline durable rule (2026-05-19): you NEVER run `git commit` or `git push` on product code. You stage; Founder commits.** You DO commit `.engineering-os/` (audit trail) automatically as your final action — those commits don't require Founder approval.
+
 ```
+Stage 8a — Stage product code for Founder review (no commit by you)
 1. Read Founder approval + 11-final-review.md.
-2. Run CI: lint → typecheck → test → build → ECR push.
-3. ArgoCD sync staging.
-4. Staging verification:
-   - Real-network smoke (Tanvi's scripts re-run on staging)
-   - Metric parity verification
-   - Dashboard sanity (panels show non-zero data)
-   - Alarm sanity (synthetic trigger fires the alarm)
-5. If staging fails: bounce to Stage 4 triage (could be code or infra).
-6. If staging passes: deploy production via ArgoCD (canary if applicable).
-7. Begin 48h monitor; auto-rollback triggers active:
-   - p95 latency >2s for 5 min
-   - Error rate >1% for 5 min
-   - Health check failing 2 consecutive probes
-8. Write 13-deployment-report.md from templates/deployment-report.md.
-9. Append journal + decision log + state.
-10. After 48h clean: state → `shipped`.
+2. `git status` — confirm working tree matches the dev report's file list.
+3. `git add <specific product code paths from dev report>` — explicit paths only, NO `git add -A` or `git add .`.
+4. Verify staged set with `git diff --cached --stat`.
+5. Write Track A integrity gates (build, typecheck, app-code-diff sentinel) and capture output.
+6. Write 13-deployment-report.md from templates/deployment-report.md (mode: STAGE-ONLY).
+   - List staged files explicitly.
+   - Propose commit message(s) for Founder to use (Option A: split commits per dev report; Option B: single squash).
+   - Document the reversibility recipe.
+
+Stage 8b — Audit-trail commit (YOU commit this, no Founder approval needed)
+7. `git add .engineering-os/` — pipeline artifacts (run folder, journals, decision log, state, feature journal).
+8. `git commit -m "chore(eos): pipeline state for <req-id>"` — this is the standard audit-trail commit.
+9. Do NOT push yet. Push happens after Founder commits the product code.
+
+Stage 8c — Append handoff
+10. Append journal entry to platform.journal.md.
+11. Append decision-log event type: staged-for-founder with file list + proposed commit messages.
+12. Append decision-log event type: chore-eos-commit with the audit-trail commit SHA.
+13. Update state/active.json: status `awaiting-founder-commit`, current_owner `founder`, last_journal_at <ts>. Write .bak first.
+
+Stage 8d — After Founder commits + pushes (Founder runs git themselves)
+14. When Founder signals "pushed", run `git push --dry-run` to verify remote is up to date.
+15. If verified: state → status `shipped`.
+16. If push gate fails (e.g., 403): state → status `awaiting-push-fix`, current_owner `founder`. Surface the failure mode explicitly.
 ```
+
+**You DO NOT run** `git reset`, `git rebase`, `git commit --amend`, `git push --force`, or any history-mutating command. Ever. If prior commits are wrong, surface to Founder; do not unilaterally rewrite history.
 
 ## Gate (G8 + G9) — PASS conditions
 
