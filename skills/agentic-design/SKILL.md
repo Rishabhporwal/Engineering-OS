@@ -5,9 +5,9 @@ description: Brain's product-internal agent pattern — the 15 AICMO/AICOO/AICFO
 
 # Agentic Design — Brain's Product-Internal AI Agents
 
-This skill covers **Brain's product-internal AI agents** — the 15 AICMO/AICOO/AICFO recommenders Brain ships (TECH/14). These are product features, NOT engineering team members. Maya implements them; Aryan reviews the contracts.
+This skill covers **Brain's product-internal AI agents** — the 15 AICMO/AICOO/AICFO recommenders Brain ships (see canon/BRAIN_TECHNICAL.md). These are product features, NOT engineering team members. Maya implements them; Aryan reviews the contracts.
 
-**Canonical doc:** `docs/TECH/14_agent_roster.md`. This skill is operational.
+**Canonical doc:** `canon/BRAIN_TECHNICAL.md`. This skill is operational.
 
 ## The 15 agents
 
@@ -20,9 +20,9 @@ This skill covers **Brain's product-internal AI agents** — the 15 AICMO/AICOO/
 **AICFO (Financial Intelligence) — 3:**
 - AICFO-Conversion · AICFO-Cashflow · AICFO-Pricing-Margin
 
-Phase mapping (TECH/14 §7): Phase 1–2 ship NO agents — wedge features only. Phase 3 W23–36 ships them progressively, alert-only at first. Phase 4 = first auto-execute graduations.
+Phase mapping (canon/BRAIN_TECHNICAL.md §7): Phase 1–2 ship NO agents — wedge features only. Phase 3 W23–36 ships them progressively, alert-only at first. Phase 4 = first auto-execute graduations.
 
-## Universal agent pattern (TECH/14 §1, §8)
+## Universal agent pattern (canon/BRAIN_TECHNICAL.md §1, §8)
 
 ```python
 # apps/intelligence-service/src/agents/_base/agent.py
@@ -80,7 +80,7 @@ class AICMOMeta(Agent):
         ...
 ```
 
-## Daily Tick Orchestration (TECH/14 §8)
+## Daily Tick Orchestration (canon/BRAIN_TECHNICAL.md §8)
 
 ```
 06:55 IST — daily_tick.py fires
@@ -103,7 +103,7 @@ notifications-service receives ai.morning_brief.generated.v1 → push at 07:00 I
 
 **The Morning Brief Synthesizer is the only Frontier-LLM call in the daily loop.** Everything upstream is paradigm 1 or 2.
 
-## Memory Layer (TECH/05 — Maya owns the schema)
+## Memory Layer (canon/BRAIN_TECHNICAL.md — Maya owns the schema)
 
 ```sql
 -- Brand Fingerprint: one vector per brand per day
@@ -139,7 +139,7 @@ async def query_brand_fingerprint(workspace_id, as_of, k=5, cross_brand=False):
     """, workspace_id, as_of, k)
 ```
 
-## Graduation framework (TECH/14 §6)
+## Graduation framework (canon/BRAIN_TECHNICAL.md §6)
 
 Per-agent, per-tool, per-brand. 90-day rolling window.
 
@@ -175,7 +175,7 @@ class Recommendation:
     paradigm: str                       # which @paradigm produced this
 ```
 
-## Cross-agent choreography (TECH/14 §5)
+## Cross-agent choreography (canon/BRAIN_TECHNICAL.md §5)
 
 ```
 AICMO-Meta detects creative fatigue (ML)
@@ -217,10 +217,10 @@ Includes:
 
 ## References
 
-- `docs/TECH/14_agent_roster.md` — canonical roster + graduation framework
-- `docs/TECH/05_intelligence_layer.md` — Memory Layer + Plan Module + AI Chat
-- `docs/TECH/13_mcp_protocol.md` — MCP tool registration + Decision Log
-- `docs/TECH/12_cost_routing_compute.md` — paradigm decorator
+- `canon/BRAIN_TECHNICAL.md` — canonical roster + graduation framework
+- `canon/BRAIN_TECHNICAL.md` — Memory Layer + Plan Module + AI Chat
+- `canon/BRAIN_TECHNICAL.md` — MCP tool registration + Decision Log
+- `canon/BRAIN_TECHNICAL.md` — paradigm decorator
 - `skills/cost-routing-paradigms/SKILL.md` — the four-paradigm gate
 - `skills/forecasting-prophet/SKILL.md` — Prophet for AICMO-Festival, AICOO-Inventory, AICFO-Cashflow
 - `skills/mcp-protocol/SKILL.md` — agent.invoke + tool schemas

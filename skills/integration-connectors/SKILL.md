@@ -5,9 +5,9 @@ description: Brain's connector patterns for Shopify, Meta Ads, Google Ads, Shipr
 
 # Integration Connectors — Brain's Ingestion Patterns
 
-The Sahil-owned layer. Source → canonical events → Kafka → downstream.
+The Maya-owned layer. Source → canonical events → Kafka → downstream.
 
-**Canonical doc:** `docs/TECH/02_integrations.md`. This skill is operational.
+**Canonical doc:** `canon/BRAIN_TECHNICAL.md`. This skill is operational.
 
 ## Universal connector flow
 
@@ -42,7 +42,7 @@ Persist cursor to Postgres connector_cursor table
 | TikTok Ads | OAuth | `report.read, audience.read, ad.read` |
 | Snapchat Ads | OAuth | `ads.basic, audience.read` |
 
-**Tokens written to `core-service.integrations_oauth_tokens` (Postgres), envelope-encrypted with AWS KMS.** Sahil never persists plaintext tokens; he asks core-service per poll, refreshes if expired, discards from memory.
+**Tokens written to `core-service.integrations_oauth_tokens` (Postgres), envelope-encrypted with AWS KMS.** The ingestion-service never persists plaintext tokens; it asks core-service per poll, refreshes if expired, discards from memory.
 
 ## Idempotency keys per source
 
@@ -79,7 +79,7 @@ async def publish_canonical_event(topic: str, workspace_id: str, event_id: str, 
 
 Compression: zstd. Retention: infinite (MSK tiered storage to S3).
 
-## Backfill discipline (TECH/02 §SLA)
+## Backfill discipline (canon/BRAIN_TECHNICAL.md)
 
 - 2-year window in **< 2 hours**
 - Chunk size tuned per source:
@@ -118,7 +118,7 @@ Per-source overrides:
 - Google: gracefully handles `RESOURCE_EXHAUSTED`
 - Shiprocket: simple exponential backoff
 
-## Late-data handling (TECH/02)
+## Late-data handling (canon/BRAIN_TECHNICAL.md)
 
 Refunds and RTO updates arrive late. Patterns:
 
@@ -189,8 +189,8 @@ Gzipped JSON. Lifecycle policy: Intelligent-Tiering after 30 days; Glacier after
 
 ## References
 
-- `docs/TECH/02_integrations.md` — canonical
-- `docs/TECH/01_data_architecture.md` §raw-event-store — raw table patterns
+- `canon/BRAIN_TECHNICAL.md` — canonical
+- `canon/BRAIN_TECHNICAL.md` §raw-event-store — raw table patterns
 - `skills/event-driven-kafka/SKILL.md` — MSK + Glue + Avro
 - `skills/clickhouse-olap/SKILL.md` — raw_* table patterns
 - `skills/python-services/SKILL.md` — asyncio + httpx + aiokafka

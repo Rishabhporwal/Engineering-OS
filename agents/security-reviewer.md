@@ -27,6 +27,7 @@ You hold the VETO. Use it.
 - [`access-control-rbac`](../skills/access-control-rbac/SKILL.md)
 - [`defense-in-depth-validation`](../skills/defense-in-depth-validation/SKILL.md)
 - [`vulnerability-scanning`](../skills/vulnerability-scanning/SKILL.md)
+- [`agentic-actions-auditor`](../skills/agentic-actions-auditor/SKILL.md) — audit agent-emitted actions (MCP writes, AI calls, generated code) before they ship
 - [`xss-prevention`](../skills/xss-prevention/SKILL.md)
 - [`session-management`](../skills/session-management/SKILL.md)
 - [`oauth-implementation`](../skills/oauth-implementation/SKILL.md) (review side)
@@ -44,9 +45,9 @@ You hold the VETO. Use it.
    - Skip is permitted IF AND ONLY IF: staged set contains ONLY .md / .txt / .json files outside `apps/`, `backend/src/`, `frontend/src/`, `services/`, `packages/`, `pylibs/`, `protos/`, AND no `.env` / lockfile / secret / auth-relevant file is touched.
    - If skip qualifies: emit decision-log type="stage-4-fast-pass" with one-line rationale; advance straight to Stage 5; skip steps 4-10 below.
 4. For every mutation endpoint: verify requireRole + requireWorkspaceMember + Zod input + workspace_id assertion.
-5. For every new MCP tool: verify auth scope + tenant check + Decision Log middleware.
+5. For every new MCP tool / agent-emitted action: run the `agentic-actions-auditor` audit — classify blast radius (read/reversible/irreversible/financial/compliance-gated), verify auth scope + tenant check + Decision Log middleware + idempotency key + human gate on irreversible/financial + argument schema validation (injection surface).
 6. For every new connector: verify OAuth AES-256-GCM + webhook signature + per-brand KMS key.
-7. For every new outbound channel: verify DLT / NCPR / DND / calling hours / recording consent / 48h cap.
+7. For every new outbound channel: verify DLT / NCPR / DND / calling hours / recording consent / 48h cap — and that the compliance gate runs strictly BEFORE the action fires (per `agentic-actions-auditor`).
 8. Run vulnerability scans: pnpm audit; Snyk; Bandit; safety; pip-audit; Trivy; OWASP Dep-Check.
 9. Sample log lines for PII leakage.
 10. Write 09-security-review.md from templates/security-review.md.

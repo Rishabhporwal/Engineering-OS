@@ -5,7 +5,7 @@ description: Brain's Node backend stack. Auto-load whenever editing apps/api-gat
 
 # Backend (Node) — Fastify + tRPC + Prisma + gRPC
 
-The Node-side stack for **api-gateway, core-service, notifications-service, lifecycle-service (Node orchestration)**. Owned by Vikram. Stack is locked by `docs/BRAIN_TECHNICAL_DOCUMENTATION.md` §4 — no NestJS, no Apollo, no GraphQL.
+The Node-side stack for **api-gateway, core-service, notifications-service, lifecycle-service (Node orchestration)**. Owned by Vikram. Stack is locked by `canon/BRAIN_TECHNICAL.md` §4 — no NestJS, no Apollo, no GraphQL.
 
 ## Stack invariants
 
@@ -15,14 +15,14 @@ The Node-side stack for **api-gateway, core-service, notifications-service, life
 | Framework | **Fastify** | 5K+ RPS per pod; smaller surface than Express; better TS DX |
 | Edge API | **tRPC** | Type-safe end-to-end (web + mobile); no codegen step |
 | Internal API | **gRPC** via `@grpc/grpc-js` + protos from `protos/` via `buf generate` | Strong typing, multiplexing, deadlines, streaming |
-| MCP surface | Inside api-gateway, sharing auth + multi-tenancy + rate-limit | TECH/13 |
+| MCP surface | Inside api-gateway, sharing auth + multi-tenancy + rate-limit | canon/BRAIN_TECHNICAL.md |
 | ORM | **Prisma 5** | Type-safe queries; reliable migrations; Supabase Postgres-compatible |
 | Validation | **Zod** | tRPC + MCP input + DTO + env validation |
 | Kafka | **KafkaJS** + Avro via `@kafkajs/confluent-schema-registry` → AWS Glue | Async backbone |
 | Cache | Redis via `ioredis` | Rate limits, idempotency keys, hot metric cache |
 | Email | `@aws-sdk/client-sesv2` | AWS SES |
 | Push | `expo-server-sdk` | Expo Push API (APNS + FCM) |
-| WhatsApp | Direct HTTP to Cloud API (Gupshup BSP) | TECH/11 |
+| WhatsApp | Direct HTTP to Cloud API (Gupshup BSP) | canon/BRAIN_TECHNICAL.md |
 | PDF | Playwright headless Chromium + S3 | Investor reports |
 | Logs | **pino** JSON | → Fluent Bit → OpenSearch + CloudWatch |
 | Errors | `@sentry/node` | Trace + breadcrumb correlation |
@@ -212,10 +212,10 @@ export async function publishOperationsEvent(topic: string, event: any) {
 
 ## References
 
-- `docs/TECH/06_api_contracts.md` — full gRPC + tRPC + MCP contract details
-- `docs/TECH/13_mcp_protocol.md` — MCP server design
-- `docs/TECH/01_data_architecture.md` — Postgres + RLS + Debezium
-- `docs/TECH/02_integrations.md` — Kafka topology
+- `canon/BRAIN_TECHNICAL.md` — full gRPC + tRPC + MCP contract details
+- `canon/BRAIN_TECHNICAL.md` — MCP server design
+- `canon/BRAIN_TECHNICAL.md` — Postgres + RLS + Debezium
+- `canon/BRAIN_TECHNICAL.md` — Kafka topology
 - `skills/grpc-buf/SKILL.md` — proto codegen workflow
 - `skills/mcp-protocol/SKILL.md` — tool naming + auth scopes + Decision Log
 - `skills/event-driven-kafka/SKILL.md` — MSK + Glue + Avro patterns

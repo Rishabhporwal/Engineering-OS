@@ -115,7 +115,7 @@ GET /brain-logs-*/_search
 }
 ```
 
-## Cross-service tracing in Brain (TECH/09)
+## Cross-service tracing in Brain (canon/BRAIN_TECHNICAL.md)
 
 Brain runs **a single correlation ID** across web BFF → api-gateway → gRPC → service → Kafka → consumer. Use it.
 
@@ -169,7 +169,7 @@ for i in {1..20}; do pnpm test:e2e --spec cypress/e2e/morning-brief.cy.ts || ech
 **Root cause:** `JWT_SECRET` was both shorter than 32 chars (Shreya's HIGH finding) AND being mutated in a test setup that broke parallel test isolation.
 
 **Fix at source:**
-- Layer 1: fail-fast on missing JWT_SECRET (was in ADR-006)
+- Layer 1: fail-fast on missing JWT_SECRET
 - Layer 2: **fail-fast on JWT_SECRET < 32 bytes** (Shreya's add) — entropy floor
 - Layer 3: tests use a fresh per-test secret + a hermetic JWT verifier instance
 - Layer 4: Decision Log row on `session.invalidate_all` so cross-test pollution shows up
@@ -192,9 +192,9 @@ Stop at "I'll bump the secret length" and the parallel-test pollution bug surviv
 
 | Concern | Owner | Reference |
 |---|---|---|
-| Single correlation ID across all surfaces | **Vikram** + **Jatin** | TECH/09 §"Correlation" |
-| Cross-service trace (X-Ray) | **Jatin** | TECH/09 |
+| Single correlation ID across all surfaces | **Vikram** + **Jatin** | canon/BRAIN_TECHNICAL.md (correlation) |
+| Cross-service trace (X-Ray) | **Jatin** | canon/BRAIN_TECHNICAL.md |
 | Service-internal tracing | each builder | service-specific skill |
-| Postmortem trace template | **Aarav** | `blueprints/postmortem.md` |
+| Postmortem trace template | **Jatin** | `blueprints/postmortem.md` |
 
 Related Brain skills: `systematic-debugging` (the 4-phase wrapper), `defense-in-depth-validation` (what to do at the source once you find it), `observability` (where the logs/traces live).

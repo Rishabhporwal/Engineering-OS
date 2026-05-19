@@ -191,10 +191,10 @@ React Native doesn't render HTML by default; the XSS surface is:
 
 | Concern | Owner | Reference |
 |---|---|---|
-| Web XSS surface | **Ananya** | TECH/07 §"Frontend security" |
+| Web XSS surface | **Ananya** | canon/BRAIN_TECHNICAL.md (frontend security) |
 | CSP config | **Ananya** + **Shreya** | this skill + `security-baseline` |
 | Sanitizer in `packages/ui` | **Ananya** | shared lib |
-| Mobile WebView usage | **Karan** | TECH/10 (avoid where possible) |
+| Mobile WebView usage | **Karan** | canon/BRAIN_TECHNICAL.md (avoid where possible) |
 | PR-time XSS test | **Tanvi** | Cypress payload assertions |
 
 Related Brain skills: `security-baseline` (broader OWASP), `defense-in-depth-validation` (treat AI output as untrusted), `session-management` (httpOnly cookies — separate concern), `frontend-web`.

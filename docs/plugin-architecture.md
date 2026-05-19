@@ -25,10 +25,10 @@ A future companion (Slack notifier, GitHub Action) can be added later — the pl
 
 | Plugin primitive | Brain use | Lives in |
 |------------------|-----------|----------|
-| **Subagents** | The 10 named agents (CTO Advisor, Aryan, Vikram, Ananya, Karan, Maya, Shreya, Tanvi, Jatin, Priya) | [`agents/`](../agents/) |
-| **Skills** | The 54 curated Brain skills | [`skills/`](../skills/) |
-| **Slash commands** | `/requirement`, `/status`, `/recall`, `/handoff`, `/approve`, `/reject`, `/deploy`, `/rollback`, `/skill`, `/persona` | [`commands/`](../commands/) |
-| **Hooks** | Session-start memory rehydration; post-tool-use journal append; pre-handoff gate check | [`hooks/`](../hooks/) |
+| **Subagents** | The 10 named agents (Rohan, Aryan, Vikram, Ananya, Karan, Maya, Shreya, Tanvi, Jatin, Priya) + the runtime dynamic-persona-generator | [`agents/`](../agents/) |
+| **Skills** | The Brain skill library (58 domain skills + 14 command-skills) | [`skills/`](../skills/) |
+| **Slash commands** | `/requirement`, `/status`, `/recall`, `/handoff`, `/approve`, `/reject`, `/deploy`, `/rollback`, `/persona`, `/invoke-skill`, `/eos-init`, `/propose-rule`, `/adopt-rule`, `/reject-rule` | command-skills in [`skills/`](../skills/) (`disable-model-invocation: true`) |
+| **Hooks** | Session-start memory rehydration; post-tool-use journal append; pre-handoff handoff-event logging | [`hooks/`](../hooks/) |
 | **Plugin manifest** | Declares everything above | [`.claude-plugin/plugin.json`](../.claude-plugin/plugin.json) |
 | **Persistent state** | Shared memory, decision log, run artifacts — git-committed | [`.engineering-os/`](../.engineering-os/) |
 | **Reference docs** | Operating manual, business/technical primer, skill matrix, role empowerment, this file | [`docs/`](../docs/) |
@@ -57,22 +57,12 @@ Engineering OS/
 │   ├── platform-devops.md                   (Jatin)
 │   └── product-manager.md                   (Priya)
 │
-├── skills/                           # mirror of skills/ (54 SKILL.md)
-│   ├── access-control-rbac/
+├── skills/                                  # all skills: domain skills + command-skills
+│   ├── access-control-rbac/                 # domain skill (model-auto-loaded)
 │   ├── agentic-design/
-│   └── ... (54 total)
-│
-├── commands/                                # slash commands
-│   ├── requirement.md
-│   ├── status.md
-│   ├── recall.md
-│   ├── handoff.md
-│   ├── approve.md
-│   ├── reject.md
-│   ├── deploy.md
-│   ├── rollback.md
-│   ├── skill.md
-│   └── persona.md
+│   ├── requirement/                         # command-skill (disable-model-invocation: true)
+│   ├── approve/                             # command-skill
+│   └── ...
 │
 ├── hooks/
 │   ├── hooks.json                           # hook registry
@@ -82,7 +72,6 @@ Engineering OS/
 │
 ├── docs/                                    # this directory — operating manual
 │   ├── operating-system.md
-│   ├── folder-context-summary.md
 │   ├── business-context.md
 │   ├── technical-context.md
 │   ├── skill-mapping-matrix.md
@@ -130,8 +119,7 @@ Engineering OS/
 │
 ├── canon/                                   # SOURCE OF TRUTH — Brain canon (ships with plugin)
 │   ├── BRAIN_BUSINESS.md
-│   ├── BRAIN_TECHNICAL.md
-│   └── skills/                              # 54 curated skill folders (originals)
+│   └── BRAIN_TECHNICAL.md
 │
 ├── .engineering-os/                         # SHARED STATE — git-committed
 │   ├── memory/
@@ -159,8 +147,7 @@ Engineering OS/
 │       └── 2026-05-17T14-22-31Z__feat-<slug>__<operator>/
 │
 ├── ROADMAP.md                               # MVP / V2 / V3 + end-to-end walkthrough
-├── README.md                                # user-facing landing
-└── claude_prompt.md                         # original team-build prompt (preserved)
+└── README.md                                # user-facing landing
 ```
 
 ---
@@ -196,7 +183,7 @@ The `engineering-os` block is a Brain-specific extension (Claude Code ignores fi
 
 ---
 
-## Subagent design (the 10 agents)
+## Subagent design (the 11 agents)
 
 Each agent is a markdown file with YAML frontmatter, following Claude Code's subagent format:
 
@@ -224,47 +211,36 @@ Why this structure: Claude Code loads each subagent into its own sub-conversatio
 
 ---
 
-## Skill design (54 mirrored from `skills/`)
+## Skill design
 
-The 54 curated skills under `skills/` are mirrored into `skills/` so that Claude Code can auto-load them as plugin skills.
+Skills live in `skills/<name>/SKILL.md`. Claude Code auto-discovers them from the plugin — there is no mirror, copy, or build step. Two kinds:
 
-**Mirroring options considered:**
+- **Domain skills** (model-auto-loaded): frontmatter is `name` + `description`. An agent loads its owned domain skills (per [`skill-mapping-matrix.md`](skill-mapping-matrix.md)) plus any whose description matches the task at hand.
+- **Command-skills** (human-triggered): frontmatter adds `disable-model-invocation: true` (+ optional `argument-hint`). These ARE the slash commands — they run only when a person types `/brain-engineering-os:<name>`.
 
-| Option | Pros | Cons | Decision |
-|--------|------|------|----------|
-| **Symlinks** | Single source of truth | macOS/Linux only; portability headaches; some git clients dislike | NO |
-| **File copies** | Portable; simple | Two places to update | NO |
-| **Generated mirror** | Single source of truth; CI-validated | Slight build complexity | **YES** |
-
-The mirror is created and kept in sync by a small script invoked on session start (`hooks/on-session-start.sh`) and validated by a CI check that fails if a skill exists in one place but not the other.
-
-For now, **MVP simplification:** the mirror is the same content, refreshed manually when skills change. V2 adds the automated sync.
+See [`skill-authoring-guide.md`](skill-authoring-guide.md) for when to author a full skill vs. inline a rule.
 
 ---
 
 ## Slash command design
 
-Each command is a markdown file with YAML frontmatter:
+Each slash command is a command-skill: `skills/<name>/SKILL.md` with `disable-model-invocation: true`.
 
 ```markdown
 ---
 name: requirement
 description: Submit a new requirement to the Engineering OS pipeline (Stage 1)
-args:
-  - name: text
-    description: The requirement text in natural language
-    required: true
+disable-model-invocation: true
+argument-hint: <requirement text in natural language>
 ---
 
-[command body: detailed instructions for how to interpret args and route to the CTO Advisor subagent]
+[skill body: how to interpret $ARGUMENTS and route to the cto-advisor subagent]
 ```
 
-When the user types `/requirement <text>`, Claude Code:
-1. Reads the command body.
+When the user types `/brain-engineering-os:requirement <text>`, Claude Code:
+1. Reads the skill body.
 2. Substitutes `$ARGUMENTS` with the user's input.
 3. Invokes the body as a prompt — typically delegating to the `cto-advisor` subagent.
-
-The full list of 10 commands is in [`commands/`](../commands/) (built in Section 7).
 
 ---
 
@@ -374,11 +350,11 @@ Events are realized as: an entry in the decision log + a status update in `state
 | Error class | Plugin behaviour |
 |-------------|------------------|
 | Agent runs out of context | Falls back to "read journal first, then act" pattern; surfaces "I lost context — re-read journal" to user |
-| Gate check fails (hook blocks handoff) | Hook returns non-zero; surfaces missing-evidence list to user; pipeline pauses, not crashes |
+| Gate fails at a handoff | The receiving agent (Shreya / Tanvi / Rohan) bounces with a structured note naming the missing evidence; the pipeline pauses at that stage, not crashes. (Enforcement is in the agents; the pre-handoff hook only logs the event.) |
 | External token missing | Logs to `tasks-pending.log`; pipeline continues; notifies Founder at next status check |
 | Git merge conflict on a journal | Append-only conflicts are auto-resolved by `git merge -X ours` for whitespace; substantive conflicts surface to user with reconciliation steps |
 | State JSON corrupted | Plugin refuses to start; surfaces backup recovery from `.engineering-os/state/active.json.bak.<ts>` (created on each write) |
-| Skill missing | Falls back to a `Read` of the original `skills/<name>/SKILL.md` if mirror has drifted; warns user to re-sync |
+| Skill missing | Agent surfaces the missing skill to the user and proceeds with its remaining owned skills + canon; no silent skip |
 
 ---
 

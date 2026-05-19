@@ -1,7 +1,7 @@
 # AWS Security Services — GuardDuty, Security Hub, Config, Inspector
 
 The AWS-native security stack. Enable all four at the org level for any
-production workload. Used by Shreya during reviews and Aarav during incidents.
+production workload. Used by Shreya during reviews and Jatin during incidents.
 
 ## GuardDuty (threat detection)
 

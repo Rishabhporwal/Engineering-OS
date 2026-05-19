@@ -7,7 +7,7 @@ description: Brain's India-native economics — RTO, COD, GST, pincode reliabili
 
 Every Western DTC tool assumes prepaid orders, mail returns, no COD, consistent delivery, simple tax. **None are true in India.** Brain's India-native economics are the moat — anyone can rebuild dashboards, but reproducing this domain knowledge takes years.
 
-**Canonical doc:** `docs/TECH/04_regional_adapters.md`. This skill is operational.
+**Canonical doc:** `canon/BRAIN_TECHNICAL.md`. This skill is operational.
 
 ## The seven India realities
 
@@ -32,7 +32,7 @@ def extract_net_revenue(gross_minor: int, gst_rate: float = 0.18) -> int:
 
 Every revenue / margin formula on India workspaces applies this. Forgetting it = 18% inflated margin = trust-killing dashboard bug.
 
-## RTO cost (TECH/04)
+## RTO cost (canon/BRAIN_TECHNICAL.md)
 
 ```python
 def rto_cost(order: Order, shipment: Shipment) -> int:
@@ -121,7 +121,7 @@ now_ist = datetime.now(IST)
 
 Never store UTC + display IST in a way that breaks DST boundaries (India doesn't observe DST, so this is simpler than US — but always store TZ-aware datetimes).
 
-## Compliance hard-codes (TECH/11 §6 — NON-NEGOTIABLE)
+## Compliance hard-codes (canon/BRAIN_TECHNICAL.md — NON-NEGOTIABLE)
 
 | Rule | Enforcement |
 |---|---|
@@ -182,7 +182,7 @@ class ShippingProvider(ABC):
     def extract_ndr_code(self, raw_status): ...   # provider-specific mapping
 ```
 
-## RegionAdapter interface (TECH/04)
+## RegionAdapter interface (canon/BRAIN_TECHNICAL.md)
 
 ```python
 class RegionAdapter(ABC):
@@ -218,10 +218,10 @@ Adding US / EU = implementing this interface. No change to metric engine.
 
 ## References
 
-- `docs/TECH/04_regional_adapters.md` — canonical RegionAdapter interface + India implementation
-- `docs/TECH/11_lifecycle_revenue_layer.md` §6 — compliance engine
-- `docs/TECH/02_integrations.md` §shiprocket — NDR / RTO flow
-- `docs/BRAIN_REQUIREMENTS.md` §1.7 (current India support) + §market-realities
+- `canon/BRAIN_TECHNICAL.md` — canonical RegionAdapter interface + India implementation
+- `canon/BRAIN_TECHNICAL.md` §6 — compliance engine
+- `canon/BRAIN_TECHNICAL.md` §shiprocket — NDR / RTO flow
+- `canon/BRAIN_BUSINESS.md` §1.7 (current India support) + §market-realities
 - `skills/integration-connectors/SKILL.md` §shiprocket — NDR codes, RTO state machine
 - `skills/lifecycle-revenue-layer/SKILL.md` — DLT + NCPR + DND
 - `skills/clickhouse-olap/SKILL.md` §india-tables — pincode_reliability_local schema

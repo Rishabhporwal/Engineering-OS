@@ -20,9 +20,9 @@ For Brain, the priority paths for mutation testing are the ones where wrong-but-
 
 | Module | Score target | Owner |
 |---|---|---|
-| `packages/lib-metrics` (TS metric registry) | **90%+** | Kabir + Tanvi |
-| `pylibs/brain_metrics` (Python metric registry, parity-critical) | **90%+** | Kabir + Tanvi |
-| `lifecycle-service` compliance engine (calling hours, NCPR, 48h cap) | **95%+** | Neel + Shreya |
+| `packages/lib-metrics` (TS metric registry) | **90%+** | Maya + Tanvi |
+| `pylibs/brain_metrics` (Python metric registry, parity-critical) | **90%+** | Maya + Tanvi |
+| `lifecycle-service` compliance engine (calling hours, NCPR, 48h cap) | **95%+** | Maya + Shreya |
 | `core-service` Decision Log writer | **90%+** | Vikram |
 | `api-gateway` JWT + RLS-context middleware | **90%+** | Vikram + Shreya |
 | Service-internal business logic | **80%+** | each builder |
@@ -93,7 +93,7 @@ test('computes CM2 correctly', () => {
 });
 ```
 
-## Python / mutmut (Sahil, Kabir, Maya, Neel-Python-side)
+## Python / mutmut (Maya)
 
 ### Installation
 
@@ -212,10 +212,10 @@ PR-time check: `pnpm dlx stryker run --incremental` against the diff, fail if sc
 
 | Concern | Owner | Reference |
 |---|---|---|
-| Metric registry parity (TS + Python) | **Kabir** + **Tanvi** | TECH/03 §"Metric registry" |
-| India compliance engine | **Neel** + **Shreya** | TECH/11 §6 |
-| Decision Log write integrity | **Vikram** | TECH/05 §"Decision Log" |
-| JWT + RLS middleware | **Vikram** + **Shreya** | `session-management`, TECH/09 |
+| Metric registry parity (TS + Python) | **Maya** + **Tanvi** | canon/BRAIN_TECHNICAL.md (metric registry) |
+| India compliance engine | **Maya** + **Shreya** | canon/BRAIN_TECHNICAL.md |
+| Decision Log write integrity | **Vikram** | canon/BRAIN_TECHNICAL.md (Decision Log) |
+| JWT + RLS middleware | **Vikram** + **Shreya** | `session-management`, canon/BRAIN_TECHNICAL.md |
 | Nightly mutation CI | **Jatin** + **Tanvi** | |
 
 Related Brain skills: `testing-tdd` (the test stack — Vitest for Node, pytest for Python via `python-services`), `verification-before-completion` (PASS discipline), `code-review` (mutation score is a `/review` discussion input).

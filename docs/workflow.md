@@ -40,8 +40,8 @@ These three responsibilities together = **smooth autonomous flow**. The pipeline
 
 ## Stage 1 — CTO Advisor (intake & brainstorm)
 
-**Owner:** CTO Advisor (shadow agent).
-**Dynamic personas spawned:** 3 (chosen from the catalog in [role-empowerment-model.md §Dynamic Persona Generator](role-empowerment-model.md#2-dynamic-persona-generator--dynamic-persona-generator)).
+**Owner:** Rohan (CTO Advisor).
+**Dynamic personas spawned:** 0–2, by complexity (chosen from the catalog in [role-empowerment-model.md §Dynamic Persona Generator](role-empowerment-model.md#2-dynamic-persona-generator--dynamic-persona-generator)).
 
 ### Inputs
 - Founder's `/requirement <text>` invocation.
@@ -53,7 +53,7 @@ These three responsibilities together = **smooth autonomous flow**. The pipeline
 3. Load `docs/business-context.md` + `docs/technical-context.md` + the CTO Advisor's owned skills.
 4. Read the raw requirement.
 5. **Run "Make requirements less dumb first"** (from `engineering-discipline`): Can we delete? Simplify? Defer?
-6. Pick 3 dynamic personas. Spawn them in parallel via the `Agent` tool. Each persona writes a [`templates/dynamic-persona-review.md`](../templates/dynamic-persona-review.md) artifact.
+6. Decide the persona count (0/1/2 by complexity) and spawn that many in parallel via the `Agent` tool. Each spawned persona writes a [`templates/dynamic-persona-review.md`](../templates/dynamic-persona-review.md) artifact.
 7. Synthesize persona inputs + own analysis into a [`templates/cto-advisor-review.md`](../templates/cto-advisor-review.md) artifact.
 8. Decide: **ADVANCE** (Stage 2), **CHALLENGE-BACK** (to Founder with structured challenge), or **KILL** (archive with reason).
 9. Append entry to:
@@ -78,7 +78,7 @@ These three responsibilities together = **smooth autonomous flow**. The pipeline
 
 ### Exit gate (G1)
 - All 5 sections of `cto-advisor-review.md` are filled.
-- All 3 persona reviews include at least one concern (a "looks good, no concerns" persona is rejected).
+- The persona-count decision (0/1/2) is recorded, and every spawned persona review includes at least one concern (a "looks good, no concerns" persona is rejected).
 - Decision is recorded in the decision log.
 
 ---
@@ -276,7 +276,7 @@ These three responsibilities together = **smooth autonomous flow**. The pipeline
 **Owner:** CTO Advisor — **VETO** authority.
 
 ### Inputs
-- Every artifact from this run: CTOA intake, 3 persona reviews, architecture plan, developer reports, security review, QA review.
+- Every artifact from this run: CTOA intake, the 0–2 persona reviews, architecture plan, developer reports, security review, QA review.
 
 ### What happens
 1. Re-read the original requirement (verify alignment).
@@ -400,7 +400,7 @@ Slash commands let a human operator override the pipeline when needed:
 
 - `/handoff <req-id> <stage>` — manually move a requirement to a stage (e.g., when an emergency requires skipping Stage 4 — but Shreya's veto still applies on the next normal review).
 - `/recall <feature-slug>` — print the full per-feature journal so a teammate gets caught up instantly.
-- `/skill <skill-name>` — manually invoke a skill outside the pipeline.
+- `/invoke-skill <skill-name>` — manually invoke a skill outside the pipeline.
 - `/persona <topic>` — spawn an extra persona for an open question.
 
-See [commands/](../commands/) for the full list.
+See the command-skills in [`skills/`](../skills/) (those with `disable-model-invocation: true`) for the full list.

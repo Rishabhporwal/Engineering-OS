@@ -1,9 +1,16 @@
 ---
 name: security-baseline
-description: Brain's security baseline — OWASP Top 10; Supabase Auth + JWT; multi-tenant `workspace_id` enforcement on Postgres (RLS) + ClickHouse (query gateway) + Kafka envelopes + MCP tool tenant check; MCP auth scopes (TECH/13 §5); AWS IAM/VPC/WAF/Secrets Manager; threat modeling (STRIDE); mobile MASVS Level 1 + Level 2; cert pinning rotation discipline; India compliance gates (DLT, NCPR, DND, 48h frequency cap, calling hours, recording consent, GST). Shreya VETO on CRITICAL/HIGH and any India compliance violation.
+description: Brain's security baseline — OWASP Top 10; Supabase Auth + JWT; multi-tenant `workspace_id` enforcement on Postgres (RLS) + ClickHouse (query gateway) + Kafka envelopes + MCP tool tenant check; MCP auth scopes (canon/BRAIN_TECHNICAL.md); AWS IAM/VPC/WAF/Secrets Manager; threat modeling (STRIDE); mobile MASVS Level 1 + Level 2; cert pinning rotation discipline; India compliance gates (DLT, NCPR, DND, 48h frequency cap, calling hours, recording consent, GST). Shreya VETO on CRITICAL/HIGH and any India compliance violation.
 ---
 
 # Security Baseline — Brain
+
+This skill is the **security index + Shreya's review gate**. It owns the OWASP map, the Brain-specific security controls (Supabase Auth, OAuth token storage, India compliance VETO, MASVS, AWS baseline, STRIDE) and the verdict format. The two deep dives it links to:
+
+- **`access-control-rbac`** — OWASP A01 (Broken Access Control) in depth: the Owner/Admin/Analyst/Viewer role model, JWT-claim + RLS enforcement, MCP tool roles, agency multi-workspace.
+- **`defense-in-depth-validation`** — multi-tenant `workspace_id` isolation as the four-layer (entry → business → environment/RLS → audit) pattern, and the structural "make the bug impossible" approach.
+
+Don't duplicate those here — gate against them.
 
 ## OWASP Top 10 (applied to Brain)
 
@@ -20,55 +27,13 @@ description: Brain's security baseline — OWASP Top 10; Supabase Auth + JWT; mu
 | A09 | Logging Failures | Auth events logged to OpenSearch with correlation IDs; PII/secret redaction at logger + Fluent Bit Lua script; never log tokens |
 | A10 | SSRF | Whitelist allowed URLs in ingestion-service (only Shopify/Meta/Google/Shiprocket endpoints); no arbitrary URL fetches |
 
-## Multi-Tenant Isolation — defense in depth
+## Multi-Tenant Isolation (the Brain invariant) — gate, don't re-explain
 
-The Brain invariant. Four layers, all mandatory.
+`workspace_id` isolation is enforced as a four-layer defense-in-depth pattern (JWT claim → service-side gRPC check → Postgres RLS + ClickHouse query gateway → Kafka envelope + Decision Log audit). The full layer-by-layer walkthrough, the `brain_clickhouse` predicate guard, and the cross-workspace-403 verification snippets live in **`defense-in-depth-validation`** — Shreya's review confirms all four layers are present, citing that skill. Role-level access (who within a workspace can do what) is in **`access-control-rbac`**.
 
-### Layer 1 — JWT claim
-Every authenticated request carries `active_workspace_id` in the JWT. api-gateway extracts on every request, propagates via gRPC metadata.
+Shreya's tenant-isolation gate (every review): cross-workspace read returns `403`; the ClickHouse gateway rejects any unscoped query; every new workspace-scoped table has an RLS policy; every MCP write tool declares a scope.
 
-### Layer 2 — Service-side check
-Every gRPC handler asserts `request.workspace_id === metadata.workspace_id` (or member-of for cross-workspace orgs). Reject mismatches.
-
-### Layer 3 — Database enforcement
-
-**Postgres** — RLS policies on every workspace-scoped table:
-```sql
-CREATE POLICY tenant_isolation ON <table>
-  USING (workspace_id = current_setting('app.workspace_id')::uuid);
-```
-Connection pool sets `app.workspace_id` on acquisition (Vikram's `pg.setRoleAndTenant()`; Python `asyncpg` pool's `setup=set_tenant_context`).
-
-**ClickHouse** — primary key first column always `workspace_id`. Every query through `pylibs/brain_clickhouse.query()`:
-```python
-WORKSPACE_PREDICATE = re.compile(r"workspace_id\s*=", re.IGNORECASE)
-
-async def query(sql: str, params: dict):
-    if not WORKSPACE_PREDICATE.search(sql):
-        raise ClickHouseQueryError("CH query missing workspace_id predicate")
-    return await client.execute(sql, params)
-```
-
-### Layer 4 — Kafka envelope
-Every event carries `workspace_id` in payload and is partitioned by `workspace_id`. Consumers extract and assert on join.
-
-### Verification snippet (per security review)
-
-```typescript
-it('workspace A cannot read workspace B', async () => {
-  const response = await request.post('/trpc/orders.list')
-    .set('Authorization', `Bearer ${WORKSPACE_A_JWT}`)
-    .send({ workspace_id: 'workspace-b' });
-  expect(response.status).toBe(403);
-});
-
-it('CH query gateway rejects unscoped', async () => {
-  await expect(query("SELECT * FROM orders_local", {}))
-    .rejects.toThrow(/workspace_id/);
-});
-```
-
-## Supabase Auth (TECH/09)
+## Supabase Auth (canon/BRAIN_TECHNICAL.md)
 
 - Access token: short-lived JWT (~1h)
 - Refresh token (web): httpOnly + secure + sameSite=lax cookie — **never** in JS
@@ -97,7 +62,7 @@ export async function verifyToken(token: string) {
 }
 ```
 
-## MCP Auth Scopes (TECH/13 §5)
+## MCP Auth Scopes (canon/BRAIN_TECHNICAL.md)
 
 Every MCP tool declares a required scope:
 
@@ -116,6 +81,8 @@ Default new external API key: `brain:analytics:read + brain:memory:read`. Higher
 
 Verification: a `*:read` scoped key returns 403 on `*:write` tool calls.
 
+This is the canonical scope **catalog**. How each MCP tool *declares* its `requiredScope` + `requiredRole`, and how the server middleware enforces both, is in **`access-control-rbac`** (MCP tool scopes section).
+
 ## OAuth Token Storage
 
 Tokens go to `core-service.integrations_oauth_tokens` (Postgres). Envelope-encrypted with AWS KMS via:
@@ -133,9 +100,9 @@ async function encryptToken(plaintext: string): Promise<string> {
 }
 ```
 
-Sahil (ingestion) asks core-service for a fresh-decrypted token per poll, refreshes if expired, **discards from memory immediately**. Plaintext tokens never live long-lived in Python services.
+Maya (ingestion) asks core-service for a fresh-decrypted token per poll, refreshes if expired, **discards from memory immediately**. Plaintext tokens never live long-lived in Python services.
 
-## India Compliance (TECH/11 §6) — VETO authority
+## India Compliance (canon/BRAIN_TECHNICAL.md) — VETO authority
 
 Hard-coded into every calling / messaging path. Never feature-flagged.
 
@@ -151,7 +118,7 @@ Hard-coded into every calling / messaging path. Never feature-flagged.
 
 Test matrix mandatory for any lifecycle-service touch (see `testing-tdd` skill).
 
-## Mobile MASVS (TECH/10 §11) — Shreya pairs with Karan
+## Mobile MASVS (canon/BRAIN_TECHNICAL.md) — Shreya pairs with Karan
 
 Brain targets MASVS Level 1 + key Level 2:
 
@@ -176,7 +143,7 @@ Brain targets MASVS Level 1 + key Level 2:
 
 Kill-switch endpoint (HTTP, NO pinning) for emergency pin fetch on cert errors.
 
-## AWS Security Baseline (TECH/09)
+## AWS Security Baseline (canon/BRAIN_TECHNICAL.md)
 
 ```
 VPC:    All services in private subnets; ALB only in public
@@ -235,11 +202,10 @@ Accepted by: <Founder / Shreya> on <YYYY-MM-DD>
 - **Cert pinning rotation skipped one-week pre-rotation** — bricks app. Use kill-switch + coordinate with Jatin.
 - **India compliance toggle** — never feature-flag calling hours / DLT / 48h cap.
 
-## References
+## See also (the security trio + canon)
 
-- `docs/TECH/09_security_observability.md` — canonical IAM + audit + log spine
-- `docs/TECH/13_mcp_protocol.md` §5 — MCP auth scopes
-- `docs/TECH/11_lifecycle_revenue_layer.md` §6 — India compliance hard-codes
-- `docs/TECH/10_mobile_architecture.md` §11 — MASVS + cert pinning
-- `skills/india-commerce-economics/SKILL.md` §compliance — DLT + NCPR + DND patterns
+- `skills/access-control-rbac/SKILL.md` — OWASP A01: role model + JWT/RLS + MCP tool roles + agency multi-workspace
+- `skills/defense-in-depth-validation/SKILL.md` — multi-tenant `workspace_id` four-layer isolation pattern
+- `skills/india-commerce-economics/SKILL.md` — DLT + NCPR + DND compliance patterns
+- `canon/BRAIN_TECHNICAL.md` — canonical IAM + audit + log spine, MCP auth scopes, India compliance hard-codes, MASVS + cert pinning
 - `blueprints/threat-model.md` — STRIDE template

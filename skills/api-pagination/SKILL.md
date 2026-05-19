@@ -73,7 +73,7 @@ const q = `
 
 Use this for high-write tables where multiple rows can share a `created_at` value (decision_log, raw events).
 
-## ClickHouse pagination (Kabir)
+## ClickHouse pagination (Maya)
 
 For ClickHouse, cursors are cheap when the `ORDER BY` matches the primary key.
 
@@ -90,7 +90,7 @@ For drill-downs returning more than 5k rows, ClickHouse will read multiple parts
 
 ## MCP tool pagination
 
-MCP tools (TECH/13) that return lists follow the same shape; the cursor is in the response envelope:
+MCP tools (see canon/BRAIN_TECHNICAL.md) that return lists follow the same shape; the cursor is in the response envelope:
 
 ```typescript
 // MCP tool: integrations.list_orders
@@ -146,10 +146,10 @@ const { data, fetchNextPage, hasNextPage } = useInfiniteQuery({
 
 | Concern | Owner | Reference |
 |---|---|---|
-| tRPC list endpoints | **Vikram** | TECH/06 §"List endpoints" |
-| MCP tool list responses | **Vikram** + **Maya** | TECH/13 |
-| ClickHouse drill-down pagination | **Kabir** | TECH/01 + `clickhouse-olap` |
-| TanStack Query `useInfiniteQuery` consumption | **Ananya** | TECH/07 |
-| Mobile infinite scroll | **Karan** | TECH/10 |
+| tRPC list endpoints | **Vikram** | canon/BRAIN_TECHNICAL.md (list endpoints) |
+| MCP tool list responses | **Vikram** + **Maya** | canon/BRAIN_TECHNICAL.md |
+| ClickHouse drill-down pagination | **Maya** | canon/BRAIN_TECHNICAL.md + `clickhouse-olap` |
+| TanStack Query `useInfiniteQuery` consumption | **Ananya** | canon/BRAIN_TECHNICAL.md |
+| Mobile infinite scroll | **Karan** | canon/BRAIN_TECHNICAL.md |
 
 Related Brain skills: `sql-query-optimization` (cursor needs the right index), `database-design` (schema decisions), `mcp-protocol` (tool response envelopes).

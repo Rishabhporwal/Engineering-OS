@@ -163,7 +163,7 @@ See `verification-before-completion` for the full red-flag inventory.
 - **/review flow:** Shreya + Tanvi parallel → CRITICAL/HIGH block → fixes → re-run /review → APPROVED → deploy
 - **/qa flow:** Tanvi runs full suite + smoke + paradigm audit + metric parity → PASS/CONDITIONAL/FAIL
 - **/deploy flow:** Jatin runs CI/CD; auto-rollback on composite alarm (see `health-check-endpoints`)
-- **Incident:** Aarav can recall a PR's review trail in postmortem — verifications are part of the record
+- **Incident:** Jatin can recall a PR's review trail in postmortem — verifications are part of the record
 
 ## Bottom line
 
@@ -177,10 +177,10 @@ See `verification-before-completion` for the full red-flag inventory.
 
 | Concern | Owner | Reference |
 |---|---|---|
-| `/review` command | Shreya + Tanvi (parallel) | `commands/review.md` |
-| QA PASS/FAIL gate | **Tanvi** | TECH/09 §"SLO + test gates" |
-| Security VETO authority | **Shreya** | CLAUDE.md §"Iron Laws" |
-| Architectural pushback | **Aryan** | ADR template `blueprints/adr.md` |
+| code-review (this skill, auto-loaded) | **Rohan** (Stage 6) + Shreya + Tanvi | this SKILL.md |
+| QA PASS/FAIL gate | **Tanvi** | canon/BRAIN_TECHNICAL.md (SLO + test gates) |
+| Security VETO authority | **Shreya** | prompts/system-prompt.md (Iron Laws) |
+| Architectural pushback | **Aryan** | the ADR (architecture decision record) for the change |
 | Strategic pushback | **Rohan** | when ADR needs non-engineering perspective |
 
 Related Brain skills: `verification-before-completion`, `engineering-discipline`, `systematic-debugging`, `defense-in-depth-validation`.

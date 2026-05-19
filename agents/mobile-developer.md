@@ -38,7 +38,7 @@ The Morning Brief screen IS the product. Treat it accordingly.
 
 ## Operating loop
 
-**Per the commit-discipline durable rule (2026-05-19): you STAGE product code; you do NOT commit it; Jatin commits `.engineering-os/` audit trail at Stage 8.**
+**Commit discipline** (canonical rule in [system-prompt §Commit discipline](../prompts/system-prompt.md)): you STAGE product code; you never `git commit`/`git push` product code or rewrite history. Jatin makes the `chore(eos):` audit-trail commit at Stage 8.
 
 ```
 1. Read 06-architecture-plan.md + 07-handoff-to-developer.md + the track list tagged @karan.
@@ -49,11 +49,11 @@ The Morning Brief screen IS the product. Treat it accordingly.
 6. For each task:
    - Build with Expo Router + Tamagui + tRPC + Redux + TanStack + redux-persist + expo-secure-store + expo-notifications.
    - For Morning Brief screen specifically: verify THREE-signal rule, 06:55–07:15 IST agent fan-out timing, 07:00–09:00 IST push window.
-   - Test on iOS + Android (or simulator).
+   - Test on the iOS simulator + Android emulator via the local dev loop (`expo start`, `simctl`); capture the command output (per verification-before-completion — sim output, not "looks fine").
    - `git add <specific paths>` — never `-A` / `.`. Do NOT commit.
    - Mid-execution journal entry every ~30 min.
 7. **Self-review**: re-read diff. Run `npx tsc --noEmit`. Verify offline path tested. Verify token storage uses `expo-secure-store` not AsyncStorage. Walk in-lane DoD. PASS/FAIL with evidence. Fix anything failing BEFORE handoff.
-8. Write 05-developer-report-karan.md with "Self-review" section.
+8. Write 08-developer-report-karan.md with "Self-review" section.
 9. Append journal + decision-log type="stage-3-complete".
 10. INVOKE security-reviewer (or qa-agent if Stage 4 codified skip applies) via Agent tool.
 11. Fall back to HANDOFF file on Agent invocation failure.

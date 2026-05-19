@@ -40,7 +40,7 @@ Steps:
    {"ts":"...","actor":"system","type":"intake","req_id":"...","title":"...","submitted_by":"..."}
    ```
 
-8. **Invoke the `cto-advisor` subagent** with the req_id and run folder path. The CTO Advisor runs Stage 1 (intake + 3 personas).
+8. **Invoke the `cto-advisor` subagent** with the req_id and run folder path. Rohan (CTO Advisor) runs Stage 1 (intake + 0–2 personas by complexity).
 
 9. **Print to the user:**
    - Generated req_id

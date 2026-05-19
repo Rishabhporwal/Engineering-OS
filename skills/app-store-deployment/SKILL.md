@@ -9,7 +9,7 @@ Brain ships mobile via **EAS Build + EAS Submit + EAS Update** (Expo's managed p
 
 ## Why this matters for Brain
 
-- **Brain is mobile-first** (TECH/10) — the Morning Brief depends on a working mobile binary
+- **Brain is mobile-first** (see canon/BRAIN_TECHNICAL.md) — the Morning Brief depends on a working mobile binary
 - **OTA is the fast path** — a JS-only fix can ship in 1 hour vs 1–7 days through store review
 - **Native changes are the slow path** — anything that bumps the native build (new permission, new native module, SDK upgrade) requires App Store / Play Store review
 - **EAS is the locked stack** — no raw `xcodebuild` or `gradle` workflows; the team standardizes on `eas` CLI
@@ -200,12 +200,12 @@ eas update:view production --limit 5
 
 | Concern | Owner | Reference |
 |---|---|---|
-| EAS Build configuration | **Karan** + **Jatin** | TECH/10 §"Build pipeline" |
-| Native release flow | **Karan** | TECH/10 |
+| EAS Build configuration | **Karan** + **Jatin** | canon/BRAIN_TECHNICAL.md (build pipeline) |
+| Native release flow | **Karan** | canon/BRAIN_TECHNICAL.md |
 | OTA decision + dispatch | **Karan** + **Tanvi** | this skill |
 | Store submission + assets | **Karan** + Founder | App Store Connect + Play Console |
-| Privacy nutrition label | **Shreya** + Karan | TECH/09 §"Privacy" |
-| Sentry post-release watch | **Aarav** + **Karan** | `observability` |
+| Privacy nutrition label | **Shreya** + Karan | canon/BRAIN_TECHNICAL.md (privacy) |
+| Sentry post-release watch | **Jatin** + **Karan** | `observability` |
 | Decision Log row per release | **Karan** | Decision Log |
 
 Related Brain skills: `frontend-mobile` (broader RN + Expo playbook), `morning-brief-mobile` (the surface this releases), `verification-before-completion` (Founder approval gate), `observability` (post-release watch), `devops-aws` (the API side this app talks to).

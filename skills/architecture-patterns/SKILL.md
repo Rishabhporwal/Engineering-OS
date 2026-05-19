@@ -10,13 +10,13 @@ description: Brain's architecture patterns — Microservices + Monorepo + Event-
 - **Microservices on monorepo** — 7 backend services + web + mobile
 - **Event-driven (Kafka primary)** — MSK + Glue Schema Registry; `integrations.*.v1` with infinite retention
 - **BFF at the edge** — api-gateway aggregates downstream via gRPC; serves tRPC to web + mobile
-- **MCP server inside api-gateway** — same auth + multi-tenancy as tRPC (TECH/13)
+- **MCP server inside api-gateway** — same auth + multi-tenancy as tRPC (see canon/BRAIN_TECHNICAL.md)
 - **OLTP / OLAP split** — Supabase Postgres + ClickHouse Cloud
 - **CDC** — Debezium on MSK Connect for Postgres → Kafka where downstream wants recent OLTP mirror
 
-**Pattern is locked.** Don't re-evaluate; reference `ADR-001-stack` + `ADR-002-microservices` and add a new ADR if you're proposing a change.
+**Pattern is locked.** Don't re-evaluate; see canon/BRAIN_TECHNICAL.md and raise an explicit architecture decision if you're proposing a change.
 
-## The Single-Primitive Rule (NON-NEGOTIABLE — TECH/11 §1)
+## The Single-Primitive Rule (NON-NEGOTIABLE — see canon/BRAIN_TECHNICAL.md)
 
 > Every cross-cutting concern is built **once** and consumed by every channel, every agent, every workflow.
 
@@ -91,7 +91,7 @@ Each service:
 - Has its own EKS deployment
 - Has its own Postgres schema (where applicable)
 - Has its own Kafka consumer group(s)
-- Has its own designated engineer-owner (CLAUDE.md ownership matrix)
+- Has its own designated engineer-owner (see canon/BRAIN_TECHNICAL.md ownership matrix)
 
 ## Why microservices + monorepo (TECH §2)
 
@@ -152,7 +152,7 @@ Brain agents (intelligence-service)  →  api-gateway MCP server  →  gRPC to b
 
 See `skills/mcp-protocol/SKILL.md`.
 
-## Quarterly streamlining audit (TECH/12 §6)
+## Quarterly streamlining audit (see canon/BRAIN_TECHNICAL.md)
 
 Every quarter:
 - Review codebase for anti-pattern drift
@@ -171,10 +171,7 @@ Every quarter:
 When Aryan designs, he invokes peers as personas:
 
 - **Vikram (Node backend):** "Does this stay under 100ms p95? Can tRPC fan-out hit all downstreams without serial waits?"
-- **Sahil (ingestion):** "Where does this enter Kafka? What's the idempotency key? Replay-safe?"
-- **Kabir (analytics):** "Metric registry entry? `workspace_id`-first MV? Freshness SLA?"
-- **Maya (intelligence):** "Which paradigm — really? Token budget? Fallback when budget breaks?"
-- **Neel (lifecycle):** "Audience? Channel router? Compliance gate? 48h frequency cap?"
+- **Maya (ingestion / analytics / intelligence / lifecycle):** "Where does this enter Kafka? What's the idempotency key? Replay-safe? Metric registry entry, `workspace_id`-first MV, freshness SLA? Which paradigm, token budget, fallback when budget breaks? Audience, channel router, compliance gate, 48h frequency cap?"
 - **Ananya (web):** "Drill-down path? Empty / loading / error states? Mobile responsive — or desktop-only territory?"
 - **Karan (mobile):** "Morning Brief impact? Push notification? Deep link? Tamagui token coverage?"
 - **Jatin (platform):** "Pod sizing? MSK partition count? Cost delta? Auto-rollback alarm? New ArgoCD app?"
@@ -182,7 +179,7 @@ When Aryan designs, he invokes peers as personas:
 
 ## Common failure modes
 
-- **Re-evaluating a locked pattern** — Aryan opens a "should we use microservices?" debate. Reference `ADR-001-stack`; don't re-litigate without a new ADR.
+- **Re-evaluating a locked pattern** — Aryan opens a "should we use microservices?" debate. The stack is locked (see canon/BRAIN_TECHNICAL.md); don't re-litigate without an explicit architecture decision.
 - **Per-channel forks (Single-Primitive violation)** — block at code review.
 - **Sync-via-Kafka antipattern** — using Kafka for request/response. Use gRPC for synchronous, Kafka for state changes.
 - **Cross-service DB reads** — service A queries service B's database directly. Always go through gRPC or published events.
@@ -191,10 +188,7 @@ When Aryan designs, he invokes peers as personas:
 
 ## References
 
-- `docs/BRAIN_TECHNICAL_DOCUMENTATION.md` — service map + scale design
-- `docs/TECH/11_lifecycle_revenue_layer.md` §1 — Single-Primitive Rule canonical
-- `docs/TECH/12_cost_routing_compute.md` §6 — quarterly streamlining audit
-- `docs/TECH/13_mcp_protocol.md` — MCP topology
+- `canon/BRAIN_TECHNICAL.md` — service map + scale design, Single-Primitive Rule, quarterly streamlining audit, MCP topology
 - `skills/grpc-buf/SKILL.md` — gRPC + proto patterns
 - `skills/event-driven-kafka/SKILL.md` — Kafka topology
 - `skills/mcp-protocol/SKILL.md` — MCP server design

@@ -5,9 +5,9 @@ description: Brain's Morning Brief — THE primary product surface. Three signal
 
 # Morning Brief — Brain's Defining Surface
 
-The Morning Brief **is** the product (TECH/10 mandate revision). Three signals at coffee time, approve / reject / edit, three-minute commitment. Mobile-first; web has a parallel "Daily" view but mobile leads.
+The Morning Brief **is** the product (canon/BRAIN_TECHNICAL.md mandate revision). Three signals at coffee time, approve / reject / edit, three-minute commitment. Mobile-first; web has a parallel "Daily" view but mobile leads.
 
-**Canonical docs:** `docs/TECH/10_mobile_architecture.md` §morning-brief, `docs/TECH/14_agent_roster.md` §morning-brief-synthesizer.
+**Canonical docs:** `canon/BRAIN_TECHNICAL.md` §morning-brief, `canon/BRAIN_TECHNICAL.md` §morning-brief-synthesizer.
 
 ## Operational SLO (non-negotiable — from architecture review 2026-05-16)
 
@@ -19,14 +19,14 @@ The Brief synthesis window is **06:55–07:15 IST**. Push delivers into the **07
 
 - A scheduled job runs in staging at 06:50 IST every day that exercises the full daily-tick pipeline against a synthetic workspace (`workspace_id=__canary__`): ingestion sync → fingerprint build → memory query → agent fan-out → Sonnet synthesis → notifications-service → Expo push receipt.
 - The canary asserts each phase completes within its 5-min budget AND the final push receipt is acknowledged by Expo within 60s of synthesis completion.
-- Any phase missing its budget pages **Aarav (P2)** AND **Maya** within 60 seconds — we want to know at 06:52 that prod is broken, not at 07:25 from a missed-coffee operator.
+- Any phase missing its budget pages **Jatin (P2)** AND **Maya** within 60 seconds — we want to know at 06:52 that prod is broken, not at 07:25 from a missed-coffee operator.
 - If three canaries miss in 7 days, the next morning's prod Brief auto-fails-over to the previous day's Brief with a "stale since <date>" banner (mobile-offline-support pattern) rather than ship no Brief at all.
 
 See `memory/decisions/ADR-DRAFT-2026-05-16-stack-review.md` §Recommendations #3, and `skills/health-check-endpoints/SKILL.md` for the canary primitive.
 
 ## The shape (NON-NEGOTIABLE)
 
-- **Three signals max.** Synthesizer picks top three by priority score across all 15 agents (TECH/14). Not five, not seven.
+- **Three signals max.** Synthesizer picks top three by priority score across all 15 agents (see canon/BRAIN_TECHNICAL.md). Not five, not seven.
 - **One-thumb operation.** Swipe between cards. Tap approve / reject. Long-press to edit (magnitude slider).
 - **Three-minute total commitment.** If reading takes longer, the Synthesizer output is too verbose — flag for Maya.
 - **Each signal is ONE sentence:** action + magnitude + outcome + safety check.
@@ -35,7 +35,7 @@ See `memory/decisions/ADR-DRAFT-2026-05-16-stack-review.md` §Recommendations #3
 - **Reject → logged** (Decision Log state `rejected`) → next signal.
 - **Edit → magnitude slider modal** → save returns to approve flow → Decision Log captures both original and edited values.
 
-## The daily tick (TECH/14 §8)
+## The daily tick (canon/BRAIN_TECHNICAL.md)
 
 ```
 06:55 IST — orchestration/daily_tick.py
@@ -81,7 +81,7 @@ Constraints:
 - No preamble, no closing
 ```
 
-System prompt cached. Per-brand context cached separately. Token budget 2000 (TECH/12 §4 Layer 2).
+System prompt cached. Per-brand context cached separately. Token budget 2000 (canon/BRAIN_TECHNICAL.md Layer 2).
 
 ## Token budget enforcement
 
@@ -123,7 +123,7 @@ export default function MorningBriefScreen() {
 
 Each `SignalCard` exposes `data-testid` for Detox flows.
 
-## Push delivery (TECH/10 §7)
+## Push delivery (canon/BRAIN_TECHNICAL.md)
 
 - Channel: `digests` (Android); priority default
 - Title: `"☀️ Today's Brief — {brand_name}"`
@@ -182,7 +182,7 @@ Web doesn't compete with mobile here — it's a *Monday review* surface, not a d
 - **Median time-to-first-action:** < 90 seconds
 - **Approve rate** across all agents over rolling 30 days (feeds graduation)
 - **Reading time** (PostHog `morning_brief.signal_viewed_at` → `signal_actioned_at`): median < 60s per signal
-- **Push open rate** (TECH/10): > 40%
+- **Push open rate** (canon/BRAIN_TECHNICAL.md): > 40%
 
 ## Common failure modes
 
@@ -195,10 +195,10 @@ Web doesn't compete with mobile here — it's a *Monday review* surface, not a d
 
 ## References
 
-- `docs/TECH/10_mobile_architecture.md` §morning-brief — UX spec
-- `docs/TECH/14_agent_roster.md` §morning-brief-synthesizer — orchestration
-- `docs/TECH/12_cost_routing_compute.md` — token budget + fallback
-- `docs/TECH/13_mcp_protocol.md` — write-back tools fired on approve
+- `canon/BRAIN_TECHNICAL.md` §morning-brief — UX spec
+- `canon/BRAIN_TECHNICAL.md` §morning-brief-synthesizer — orchestration
+- `canon/BRAIN_TECHNICAL.md` — token budget + fallback
+- `canon/BRAIN_TECHNICAL.md` — write-back tools fired on approve
 - `skills/frontend-mobile/SKILL.md` — RN + Tamagui implementation
 - `skills/agentic-design/SKILL.md` — daily-tick orchestration
 - `skills/cost-routing-paradigms/SKILL.md` — Synthesizer is the only paradigm-4 call

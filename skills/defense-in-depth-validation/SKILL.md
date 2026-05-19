@@ -11,7 +11,7 @@ When you fix a bug caused by invalid data, adding validation in one place feels 
 
 ## Why this matters for Brain (the slice-3 lesson)
 
-The `memory/lessons.md` slice-3 entry calls out a real CVE-class bug Brain almost shipped: `brand_id` was being read from the request body on `/ads/spend`, allowing a cross-tenant write. The fix wasn't "validate brand_id once." The fix was four layers:
+The `.engineering-os/lessons-learned.md` slice-3 entry calls out a real CVE-class bug Brain almost shipped: `brand_id` was being read from the request body on `/ads/spend`, allowing a cross-tenant write. The fix wasn't "validate brand_id once." The fix was four layers:
 
 1. **Entry validation** — Zod rejects any body containing `brand_id` / `brandId` (the field doesn't belong there)
 2. **JWT-derived source of truth** — `workspace_id` comes from `app_metadata.workspace_id`, set as `app.workspace_id` Postgres GUC for RLS
@@ -33,7 +33,7 @@ Any single layer alone would have a path around it. Together, the cross-tenant w
 
 ### Layer 1 — Entry validation (Zod / Pydantic)
 
-Reject obviously invalid input at the boundary. For Brain this is the tRPC procedure input schema (Vikram) or the FastAPI Pydantic model (Sahil / Kabir / Maya).
+Reject obviously invalid input at the boundary. For Brain this is the tRPC procedure input schema (Vikram) or the FastAPI Pydantic model (Maya).
 
 ```typescript
 // tRPC: /ads/spend.adjust
@@ -86,7 +86,7 @@ CREATE POLICY rls_ad_spend ON ad_spend
   USING (workspace_id = current_setting('app.workspace_id')::uuid);
 ```
 
-For ClickHouse (Kabir), there's no native RLS — instead, every query goes through `pylibs/brain_clickhouse` which rejects any query without a `workspace_id =` predicate. Same intent: structural, not policy.
+For ClickHouse (Maya), there's no native RLS — instead, every query goes through `pylibs/brain_clickhouse` which rejects any query without a `workspace_id =` predicate. Same intent: structural, not policy.
 
 For service-to-service gRPC, the metadata carries `workspace_id` AND the receiving server cross-checks against the JWT used to issue the call. Mismatches are blocked + audit-logged.
 
@@ -119,7 +119,7 @@ The Stripe-grade test is: **can you write a malicious curl that bypasses Layers 
 | Surface | L1 — entry | L2 — business | L3 — environment | L4 — audit |
 |---|---|---|---|---|
 | Every tRPC mutation | Zod `.strict()` schema | Service assertions | Postgres RLS | `ai.decision_log` row |
-| Every MCP write tool (TECH/13) | Tool input schema | MCP auth scope check | RLS + scope check | Decision Log + MCP-specific audit |
+| Every MCP write tool (canon/BRAIN_TECHNICAL.md) | Tool input schema | MCP auth scope check | RLS + scope check | Decision Log + MCP-specific audit |
 | ClickHouse insert path | Avro schema (Glue Schema Registry) | brain_clickhouse query gateway | Materialized view dedup | Kafka offset + ClickHouse `INSERT_TIME` |
 | Every outbound message (call/SMS/WhatsApp) | Channel payload validator | India compliance engine (calling hours, DLT, NCPR, 48h cap) | Per-vendor rate limit | `lifecycle.outbound_log` |
 | Auth refresh | Zod refresh-token shape | Supabase signature check | Refresh rate limit | session.refreshed audit |
@@ -136,14 +136,14 @@ The Stripe-grade test is: **can you write a malicious curl that bypasses Layers 
 
 | Concern | Owner | Reference |
 |---|---|---|
-| tRPC `.strict()` + Zod schemas | **Vikram** + **Ananya** (input shape) | TECH/06 §"Input validation" |
-| MCP tool schemas | **Vikram** + **Maya** | TECH/13 |
-| Postgres RLS policy review | **Shreya** + Aryan | TECH/09 §"Multi-tenancy" |
-| ClickHouse query gateway | **Kabir** | TECH/01 §"OLAP discipline" |
-| Decision Log row spec | **Aryan** + Vikram | TECH/05 §"Decision Log" |
-| India compliance engine guards | **Neel** + Shreya | TECH/11 §6 |
+| tRPC `.strict()` + Zod schemas | **Vikram** + **Ananya** (input shape) | canon/BRAIN_TECHNICAL.md (input validation) |
+| MCP tool schemas | **Vikram** + **Maya** | canon/BRAIN_TECHNICAL.md |
+| Postgres RLS policy review | **Shreya** + Aryan | canon/BRAIN_TECHNICAL.md (multi-tenancy) |
+| ClickHouse query gateway | **Maya** | canon/BRAIN_TECHNICAL.md (OLAP discipline) |
+| Decision Log row spec | **Aryan** + Vikram | canon/BRAIN_TECHNICAL.md (Decision Log) |
+| India compliance engine guards | **Maya** + Shreya | canon/BRAIN_TECHNICAL.md |
 
-Related Brain skills: `security-baseline`, `session-management` (`workspace_id` from JWT), `idempotency-handling` (Layer 1 for retries), `mcp-protocol`.
+Related Brain skills (security trio): `security-baseline` (the index + Shreya's gate — this skill is its multi-tenant deep dive), `access-control-rbac` (role-level access: who within a workspace can do what). Also: `session-management` (`workspace_id` from JWT), `idempotency-handling` (Layer 1 for retries), `mcp-protocol`.
 
 ## The key insight
 

@@ -11,11 +11,11 @@ Build the Brain mobile app to work on **Indian metro network reality**: 4G that 
 
 | Surface | Requirement |
 |---|---|
-| Morning Brief (Karan, TECH/10) | The push lands at 07:00 IST. The user opens it at 07:12 in a moving Ola. App MUST render the synthesized brief from cache while the freshness check happens in background. |
+| Morning Brief (Karan) | The push lands at 07:00 IST. The user opens it at 07:12 in a moving Ola. App MUST render the synthesized brief from cache while the freshness check happens in background. |
 | Audience builder edits | Founder tweaks a segment in transit. The save MUST queue locally, sync when connectivity returns, and the queued state MUST survive an app kill. |
 | Approve / reject / edit signals | These are Decision Log writes — server-authoritative. Conflict resolution is "server wins on conflict, but the user's intent survives as a pending action they can retry." |
 
-## Storage layers (per Brain mobile architecture, TECH/10)
+## Storage layers (per Brain mobile architecture, canon/BRAIN_TECHNICAL.md)
 
 | What | Where | Why |
 |---|---|---|
@@ -172,9 +172,9 @@ export function OfflineBanner() {
 
 | Concern | Owner | Reference |
 |---|---|---|
-| Mobile app offline UX | **Karan** | TECH/10 §"Offline-first" |
+| Mobile app offline UX | **Karan** | canon/BRAIN_TECHNICAL.md (offline-first) |
 | Server-side idempotency for queued mutations | **Vikram** | `idempotency-handling` |
-| Decision Log conflict semantics | **Aryan** + **Vikram** | TECH/13 §"Decision Log discipline" |
+| Decision Log conflict semantics | **Aryan** + **Vikram** | canon/BRAIN_TECHNICAL.md (Decision Log discipline) |
 | Detox tests for offline flows | **Tanvi** | |
 
 Related Brain skills: `morning-brief-mobile`, `frontend-mobile`, `idempotency-handling`, `security-baseline` (token storage).

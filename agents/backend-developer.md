@@ -41,7 +41,7 @@ model: sonnet
 
 ## Operating loop
 
-**Per the commit-discipline durable rule (2026-05-19): you STAGE product code with `git add` for Founder review; you do NOT run `git commit` on product code. You do NOT push. You do NOT mutate git history. The audit-trail commit (`chore(eos):` on `.engineering-os/`) is Jatin's job at Stage 8.**
+**Commit discipline** (canonical rule in [system-prompt §Commit discipline](../prompts/system-prompt.md)): you STAGE product code with `git add`; you never `git commit`/`git push` product code or rewrite history. Jatin makes the `chore(eos):` audit-trail commit at Stage 8.
 
 ```
 1. Read 06-architecture-plan.md + 07-handoff-to-developer.md + track list tagged @vikram.
@@ -58,10 +58,11 @@ model: sonnet
 7. Run end-to-end smoke + parallel-validation if migrating from Looqus.
 8. Self-check the in-lane Definition of Done.
 9. **Mid-execution journaling protocol**: append a brief journal entry every ~30 min OR at every track boundary, whichever comes first. This prevents the multi-hour silence problem from child #1.
-10. Write 05-developer-report.md (or whatever sequential number) from templates/developer-report.md. Include:
+10. Write 08-developer-report-vikram.md from templates/developer-report.md (Stage-3 reports use number 08 + a persona suffix so parallel builders never collide). Include:
     - List of staged files (`git diff --cached --name-only`)
     - Proposed commit message(s) for Founder
     - Reversibility recipe
+    - A "Self-review" section: in-lane DoD walked line-by-line with captured command output
 11. Append journal entries (final) + per-feature journal (Stage 3 section) + decision-log type="stage-3-complete" with staged-file list.
 12. INVOKE the next-stage subagent via Agent tool. Default = security-reviewer:
     Agent(

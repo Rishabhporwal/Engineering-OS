@@ -5,9 +5,9 @@ description: Brain's Plan Module forecasting — Prophet for trend + seasonality
 
 # Forecasting — Prophet + Isotonic + Probabilistic Models
 
-The Plan Module (TECH/05) is Brain's forecasting engine. Phase 1: simple aMER bucketing (paradigm 1 SQL + percentile). Phase 2: Prophet (paradigm 2 ML). All forecasting is paradigm 1 or 2 — **never LLM.**
+The Plan Module (canon/BRAIN_TECHNICAL.md) is Brain's forecasting engine. Phase 1: simple aMER bucketing (paradigm 1 SQL + percentile). Phase 2: Prophet (paradigm 2 ML). All forecasting is paradigm 1 or 2 — **never LLM.**
 
-**Canonical doc:** `docs/TECH/05_intelligence_layer.md` §plan-module. This skill is operational.
+**Canonical doc:** `canon/BRAIN_TECHNICAL.md` §plan-module. This skill is operational.
 
 ## Phase 1 forecast (W7+ wedge) — paradigm 1, SQL + percentile
 
@@ -158,7 +158,7 @@ CREATE TABLE ai.forecast_accuracy (
 );
 ```
 
-**Phase 3 exit criterion: 30-day MAPE < 15% across active workspaces** (TECH/14 §7 + BRAIN_IMPLEMENTATION_PLAN.md Phase 3).
+**Phase 3 exit criterion: 30-day MAPE < 15% across active workspaces** (see canon/BRAIN_TECHNICAL.md, Phase 3).
 
 ## Anomaly detection — z-score with festival baseline
 
@@ -198,9 +198,9 @@ Don't run Prophet on < 18 months — overfits seasonal patterns.
 
 ## References
 
-- `docs/TECH/05_intelligence_layer.md` §plan-module — Plan Module spec
-- `docs/TECH/14_agent_roster.md` §AICMO-Festival + §AICOO-Inventory + §AICFO-Cashflow — agents that use these models
-- `docs/TECH/04_regional_adapters.md` — festival calendar source
+- `canon/BRAIN_TECHNICAL.md` §plan-module — Plan Module spec
+- `canon/BRAIN_TECHNICAL.md` §AICMO-Festival + §AICOO-Inventory + §AICFO-Cashflow — agents that use these models
+- `canon/BRAIN_TECHNICAL.md` — festival calendar source
 - `skills/cost-routing-paradigms/SKILL.md` — forecasting is paradigm 2; never paradigm 4
 - `skills/agentic-design/SKILL.md` — wiring forecasts into agent daily ticks
 - `skills/python-services/SKILL.md` — Prophet / sklearn / statsmodels / lifelines patterns

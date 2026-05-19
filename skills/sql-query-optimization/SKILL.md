@@ -5,17 +5,17 @@ description: Query optimization for Supabase Postgres (OLTP) and ClickHouse (OLA
 
 # SQL Query Optimization
 
-Brain's API queries MUST hit pre-aggregated tables in **<100ms p95** (CLAUDE.md §"Engineering invariants"). When a query is slow, the answer is almost always one of: missing/wrong index, sequential scan over the primary key, `OFFSET` pagination, or aggregating in the request path instead of materializing upstream. This skill covers both Postgres (OLTP — orders, members, integrations, consent, decision_log) and ClickHouse (OLAP — events, rollups, cohort, waterfall).
+Brain's API queries MUST hit pre-aggregated tables in **<100ms p95** (canon/BRAIN_TECHNICAL.md, engineering invariants). When a query is slow, the answer is almost always one of: missing/wrong index, sequential scan over the primary key, `OFFSET` pagination, or aggregating in the request path instead of materializing upstream. This skill covers both Postgres (OLTP — orders, members, integrations, consent, decision_log) and ClickHouse (OLAP — events, rollups, cohort, waterfall).
 
 ## Why this matters for Brain
 
 | Surface | Budget | Owner |
 |---|---|---|
-| Dashboard tRPC reads (web) | 100ms p95 | Vikram + Kabir |
+| Dashboard tRPC reads (web) | 100ms p95 | Vikram + Maya |
 | MCP tool queries (`memory.*`, `analytics.*`) | 200ms p95 | Vikram + Maya |
 | Morning Brief synthesis inputs (intelligence) | <1s for all signal fetches combined | Maya |
-| ClickHouse materialized-view refresh | configurable cadence; never >5s lag | Kabir |
-| ClickHouse drill-down queries | 500ms p95 | Kabir |
+| ClickHouse materialized-view refresh | configurable cadence; never >5s lag | Maya |
+| ClickHouse drill-down queries | 500ms p95 | Maya |
 
 ---
 
@@ -138,7 +138,7 @@ Look for:
 
 ### 3. Materialized views, not request-path aggregations
 
-Never compute aggregates in API handlers. **Brain's golden rule (TECH/01 §"Compute close to data"):**
+Never compute aggregates in API handlers. **Brain's golden rule (canon/BRAIN_TECHNICAL.md — compute close to data):**
 
 ```sql
 -- The materialized view does the work overnight (or every N minutes)
@@ -160,7 +160,7 @@ API queries hit `orders_daily_mv` — sub-millisecond reads instead of multi-sec
 
 ### 4. ReplacingMergeTree for idempotent ingestion
 
-Sahil's ingestion-service inserts the same event on retry (see `idempotency-handling`). ClickHouse handles dedup at merge time:
+Maya's ingestion-service inserts the same event on retry (see `idempotency-handling`). ClickHouse handles dedup at merge time:
 
 ```sql
 CREATE TABLE orders_raw (...)
@@ -194,7 +194,7 @@ For Supabase, use the **transaction pooler** (port 6543) for short queries from 
 
 ---
 
-## Production checklist (Vikram / Kabir before any new endpoint)
+## Production checklist (Vikram / Maya before any new endpoint)
 
 - [ ] Index includes `workspace_id` first
 - [ ] EXPLAIN ANALYZE result attached to PR (Postgres) OR EXPLAIN PIPELINE (ClickHouse)
@@ -209,9 +209,9 @@ For Supabase, use the **transaction pooler** (port 6543) for short queries from 
 
 | Concern | Owner | Reference |
 |---|---|---|
-| Postgres OLTP query review | **Vikram** + Aryan | TECH/01 §"OLTP design" |
-| ClickHouse OLAP + MVs | **Kabir** | TECH/01 §"OLAP design", `clickhouse-olap` skill |
-| Metric engine query patterns | **Kabir** | TECH/03 §"Metric registry" |
-| Connection pool config (EKS) | **Jatin** | TECH/09 |
+| Postgres OLTP query review | **Vikram** + Aryan | canon/BRAIN_TECHNICAL.md (OLTP design) |
+| ClickHouse OLAP + MVs | **Maya** | canon/BRAIN_TECHNICAL.md (OLAP design), `clickhouse-olap` skill |
+| Metric engine query patterns | **Maya** | canon/BRAIN_TECHNICAL.md (metric registry) |
+| Connection pool config (EKS) | **Jatin** | canon/BRAIN_TECHNICAL.md |
 
 Related Brain skills: `clickhouse-olap` (OLAP-specific patterns), `database-design` (schema decisions), `api-pagination` (cursor pattern).

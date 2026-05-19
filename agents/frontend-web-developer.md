@@ -11,7 +11,7 @@ model: sonnet
 
 ## Mission
 
-**Ship a Next.js 14 dashboard that loads in <100 ms p95, renders KPIs from the canonical metric registry, handles India numbering / festivals / RAG, and never reinvents a primitive.**
+**Ship a Next.js 14 dashboard that feels instant (LCP < 2.5s, INP < 200ms) on top of <100 ms p95 API reads, renders KPIs from the canonical metric registry, handles India numbering / festivals / RAG, and never reinvents a primitive.**
 
 ## Authority
 
@@ -22,8 +22,7 @@ model: sonnet
 
 - [`frontend-web`](../skills/frontend-web/SKILL.md) — primary
 - [`kpi-dashboard-design`](../skills/kpi-dashboard-design/SKILL.md)
-- [`web-performance-optimization`](../skills/web-performance-optimization/SKILL.md)
-- [`web-performance-audit`](../skills/web-performance-audit/SKILL.md)
+- [`web-performance`](../skills/web-performance/SKILL.md) — audit gate + optimization techniques
 - [`xss-prevention`](../skills/xss-prevention/SKILL.md)
 - [`session-management`](../skills/session-management/SKILL.md)
 - [`api-pagination`](../skills/api-pagination/SKILL.md) (consumer side)
@@ -35,7 +34,7 @@ model: sonnet
 
 ## Operating loop
 
-**Per the commit-discipline durable rule (2026-05-19): you STAGE product code; you do NOT commit it; Jatin commits `.engineering-os/` audit trail at Stage 8.**
+**Commit discipline** (canonical rule in [system-prompt §Commit discipline](../prompts/system-prompt.md)): you STAGE product code; you never `git commit`/`git push` product code or rewrite history. Jatin makes the `chore(eos):` audit-trail commit at Stage 8.
 
 ```
 1. Read 06-architecture-plan.md + 07-handoff-to-developer.md + track list tagged @ananya.
@@ -53,7 +52,7 @@ model: sonnet
    - `git add <specific paths>` — never `-A` / `.`. Do NOT commit.
    - Mid-execution journal entry every ~30 min or per track boundary.
 7. **Self-review**: re-read your diff. Re-run `npm run build` and Lighthouse. Walk in-lane DoD line-by-line; PASS/FAIL with evidence. Fix anything failing BEFORE handoff.
-8. Write 05-developer-report-ananya.md (or sequential number) with "Self-review" section + Lighthouse output.
+8. Write 08-developer-report-ananya.md with "Self-review" section + Lighthouse output.
 9. Append journal + per-feature journal (Stage 3 section) + decision-log type="stage-3-complete" with staged file list.
 10. INVOKE next stage via Agent tool. Default: security-reviewer.
     Agent(

@@ -5,7 +5,7 @@ description: Structured JSON logging with request_id + workspace_id correlation,
 
 # Logging Best Practices
 
-Brain's observability stack (TECH/09): **Fluent Bit → OpenSearch (logs) + CloudWatch Metrics + AWS X-Ray (traces) + Sentry (errors) + PostHog (product)**. Logs are the most expensive observability surface — if you log too much or log the wrong things, you simultaneously blow the budget and hide the signal.
+Brain's observability stack (canon/BRAIN_TECHNICAL.md): **Fluent Bit → OpenSearch (logs) + CloudWatch Metrics + AWS X-Ray (traces) + Sentry (errors) + PostHog (product)**. Logs are the most expensive observability surface — if you log too much or log the wrong things, you simultaneously blow the budget and hide the signal.
 
 This skill is the operational depth behind the `observability` skill — what good logs *look like* at the call site.
 
@@ -179,7 +179,7 @@ Pino's `redact` config (above) covers the structured case. The `sanitize()` help
 
 ## Cost discipline
 
-OpenSearch storage cost is real. For high-volume topics (raw events from Sahil's ingestion), don't ship every event to logs — Kafka itself is the log of record. Log only the *batch summary* (start, end, count, errors).
+OpenSearch storage cost is real. For high-volume topics (raw events from Maya's ingestion), don't ship every event to logs — Kafka itself is the log of record. Log only the *batch summary* (start, end, count, errors).
 
 ```typescript
 // BAD — 5,000 log lines per poll
@@ -217,10 +217,10 @@ log().info(
 
 | Concern | Owner | Reference |
 |---|---|---|
-| Node services log standard (pino) | **Vikram** | TECH/09 §"Logs" |
-| Python services log standard (structlog) | **Sahil / Kabir / Maya** | TECH/09 |
-| Fluent Bit → OpenSearch shipping | **Jatin** | TECH/09 §"Log shipping" |
+| Node services log standard (pino) | **Vikram** | canon/BRAIN_TECHNICAL.md (logs) |
+| Python services log standard (structlog) | **Maya** | canon/BRAIN_TECHNICAL.md |
+| Fluent Bit → OpenSearch shipping | **Jatin** | canon/BRAIN_TECHNICAL.md (log shipping) |
 | Retention policy + cost | **Jatin** | |
-| PII redaction policy | **Shreya** | TECH/09 §"Privacy" |
+| PII redaction policy | **Shreya** | canon/BRAIN_TECHNICAL.md (privacy) |
 
 Related Brain skills: `observability` (the broader stack), `root-cause-tracing` (logs are the trail), `security-baseline` (PII + secrets).

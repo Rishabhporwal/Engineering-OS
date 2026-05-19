@@ -9,9 +9,9 @@ Brain has three contract surfaces:
 
 1. **gRPC** between services (`.proto` files compiled via `buf` to TS + Python — see `grpc-buf` skill)
 2. **tRPC** for the web/mobile BFF (Zod-inferred end-to-end types)
-3. **MCP tools** for agent inter-comms + external partners (TECH/13)
+3. **MCP tools** for agent inter-comms + external partners (see canon/BRAIN_TECHNICAL.md)
 
-A breaking change in any of these silently propagates: Sahil ships a new `OrderEvent.timestamp_field` rename, Kabir's analytics-service stops materializing, the dashboard MER value drops to zero, and the Founder notices three days later. Contract testing is the structural alternative to "we'll review carefully."
+A breaking change in any of these silently propagates: Maya ships a new `OrderEvent.timestamp_field` rename, the analytics-service stops materializing, the dashboard MER value drops to zero, and the Founder notices three days later. Contract testing is the structural alternative to "we'll review carefully."
 
 ## Key concepts
 
@@ -63,7 +63,7 @@ The remaining gap: when the **same procedure** changes its output shape between 
 - **Removing/renaming fields:** treat as a breaking change. Add the new field, deploy both, wait one release, then remove.
 - **`.strict()` on inputs only.** Outputs should be `.passthrough()` (extra fields are OK; missing required is a bug).
 
-### 3. MCP tool contracts (TECH/13)
+### 3. MCP tool contracts (canon/BRAIN_TECHNICAL.md)
 
 MCP tools are versioned via the tool name + schema version. External partners (Anthropic Claude native, Enterprise tier customers) consume these.
 
@@ -90,7 +90,7 @@ For breaking changes to MCP tool inputs/outputs, **never edit in place** — reg
 
 ## Pact (consumer-driven contracts) for cross-language service calls
 
-When Sahil's Python `ingestion-service` calls Vikram's Node `core-service` over gRPC, the `.proto` covers the wire format but NOT the *semantic contract* ("when I call `CreateOrder` with `currency=INR`, you store `gst_excluded = round(amount * 100/118)`"). Pact captures that.
+When Maya's Python `ingestion-service` calls Vikram's Node `core-service` over gRPC, the `.proto` covers the wire format but NOT the *semantic contract* ("when I call `CreateOrder` with `currency=INR`, you store `gst_excluded = round(amount * 100/118)`"). Pact captures that.
 
 ```typescript
 // Consumer test (core-service consumer of intelligence-service)
@@ -180,10 +180,10 @@ Brain's external API surface is mostly tRPC + MCP. For partner integrations that
 
 | Concern | Owner | Reference |
 |---|---|---|
-| `.proto` contracts + `buf` | **Aryan** + Vikram | TECH/06 §"Contracts", `grpc-buf` skill |
-| Pact broker config | **Jatin** | TECH/09 |
-| MCP tool versioning | **Vikram** + **Maya** + Aryan | TECH/13 §"Tool registry" |
+| `.proto` contracts + `buf` | **Aryan** + Vikram | canon/BRAIN_TECHNICAL.md (contracts), `grpc-buf` skill |
+| Pact broker config | **Jatin** | canon/BRAIN_TECHNICAL.md |
+| MCP tool versioning | **Vikram** + **Maya** + Aryan | canon/BRAIN_TECHNICAL.md (tool registry) |
 | Cross-language semantic checks | **Tanvi** | metric-registry parity etc. |
-| External OpenAPI doc | **Vikram** | TECH/06 |
+| External OpenAPI doc | **Vikram** | canon/BRAIN_TECHNICAL.md |
 
 Related Brain skills: `grpc-buf` (the proto stack), `mcp-protocol` (tool catalogue + auth scopes), `testing-tdd`, `verification-before-completion`.

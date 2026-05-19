@@ -11,10 +11,10 @@ Ensure operations produce identical results regardless of execution count. **In 
 
 | Surface | Why idempotency is mandatory |
 |---|---|
-| `ingestion-service` (Sahil, TECH/02) | Shopify/Meta/Google/Shiprocket webhooks **retry on any non-2xx**. Same order delivered twice → revenue counted twice → CM2 wrong → Founder loses trust in the entire MER number. |
-| `api-gateway` MCP write tools (Vikram, TECH/13) | Every MCP write writes a Decision Log entry. An agent retrying its own tool call on transient failure must NOT produce two log rows. |
-| `lifecycle-service` outbound (Neel, TECH/11) | An AI call placed twice = compliance violation (48h frequency cap) AND a customer complaint. The call dispatcher MUST dedupe by `(customer_id, campaign_id, scheduled_at)` before queuing. |
-| `notifications-service` (Vikram, TECH/08) | A push notification sent twice into the 06:55–07:15 Morning Brief window destroys the product experience. |
+| `ingestion-service` (Maya) | Shopify/Meta/Google/Shiprocket webhooks **retry on any non-2xx**. Same order delivered twice → revenue counted twice → CM2 wrong → Founder loses trust in the entire MER number. |
+| `api-gateway` MCP write tools (Vikram) | Every MCP write writes a Decision Log entry. An agent retrying its own tool call on transient failure must NOT produce two log rows. |
+| `lifecycle-service` outbound (Maya) | An AI call placed twice = compliance violation (48h frequency cap) AND a customer complaint. The call dispatcher MUST dedupe by `(customer_id, campaign_id, scheduled_at)` before queuing. |
+| `notifications-service` (Vikram) | A push notification sent twice into the 06:55–07:15 Morning Brief window destroys the product experience. |
 
 ## Idempotency Key Pattern (Fastify + ElastiCache)
 
@@ -126,7 +126,7 @@ async function processOnce<T>(
 }
 ```
 
-## Connector-side idempotency (Sahil's pattern for TECH/02)
+## Connector-side idempotency (Maya's ingestion pattern)
 
 For ingestion, the idempotency key is **derived from the source event**, not supplied by client:
 
@@ -139,7 +139,7 @@ def make_key(event: ShopifyOrderEvent) -> str:
 
 For Meta/Google ad-spend pulls (polling, not webhook), the key is `(account_id, date, campaign_id)`. Re-pulling the same day must converge — never increment.
 
-For ClickHouse inserts (Kabir, TECH/01), idempotency is handled by `ReplacingMergeTree` keyed on `(workspace_id, event_id)`. Insert the same event twice and the merge collapses to one — but ONLY query through `FINAL` or a deduplicated materialized view, otherwise you'll see both during the merge window.
+For ClickHouse inserts (Maya), idempotency is handled by `ReplacingMergeTree` keyed on `(workspace_id, event_id)`. Insert the same event twice and the merge collapses to one — but ONLY query through `FINAL` or a deduplicated materialized view, otherwise you'll see both during the merge window.
 
 ## When NOT to require an idempotency key
 
@@ -172,10 +172,10 @@ Brain runs this hourly via pg_cron in Supabase. Alert if row count > 10M (someth
 
 | Concern | Owner | Reference |
 |---|---|---|
-| Ingestion connectors (Shopify/Meta/Google/Shiprocket/Klaviyo) | **Sahil** | TECH/02 §"Idempotent UPSERT" |
-| MCP write tools | **Vikram** | TECH/13 §"Decision Log discipline" |
-| Lifecycle outbound (calls, WhatsApp, SMS, email) | **Neel** | TECH/11 §"Frequency cap + dedup" |
-| Notifications fan-out | **Vikram** | TECH/08 |
-| ClickHouse insert dedup | **Kabir** | TECH/01 §"ReplacingMergeTree" |
+| Ingestion connectors (Shopify/Meta/Google/Shiprocket/Klaviyo) | **Maya** | canon/BRAIN_TECHNICAL.md (idempotent UPSERT) |
+| MCP write tools | **Vikram** | canon/BRAIN_TECHNICAL.md (Decision Log discipline) |
+| Lifecycle outbound (calls, WhatsApp, SMS, email) | **Maya** | canon/BRAIN_TECHNICAL.md (frequency cap + dedup) |
+| Notifications fan-out | **Vikram** | canon/BRAIN_TECHNICAL.md |
+| ClickHouse insert dedup | **Maya** | canon/BRAIN_TECHNICAL.md (ReplacingMergeTree) |
 
 Related Brain skills: `event-driven-kafka` (Kafka producer dedup keys), `integration-connectors` (per-vendor retry semantics), `security-baseline` (idempotency keys are not auth — never derive them from session tokens).

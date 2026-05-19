@@ -5,9 +5,9 @@ description: Brain's ClickHouse OLAP patterns — MergeTree engine choice, prima
 
 # ClickHouse OLAP — Brain Patterns
 
-Brain's OLAP store. All dashboards read from ClickHouse; raw aggregates never run in API handlers. Owned operationally by Kabir; Aryan reviews schema changes.
+Brain's OLAP store. All dashboards read from ClickHouse; raw aggregates never run in API handlers. Owned operationally by Maya; Aryan reviews schema changes.
 
-**Canonical doc:** `docs/TECH/01_data_architecture.md`. This skill is operational.
+**Canonical doc:** `canon/BRAIN_TECHNICAL.md`. This skill is operational.
 
 ## Invariants (NON-NEGOTIABLE)
 
@@ -91,7 +91,7 @@ SELECT
 FROM orders_queue;
 ```
 
-For rollups (TECH/03):
+For rollups (canon/BRAIN_TECHNICAL.md):
 
 ```sql
 CREATE MATERIALIZED VIEW daily_metrics_from_orders TO daily_metrics_local AS
@@ -139,14 +139,14 @@ All monetary fields are `Int64` in paisa. Never use `Decimal` or `Float`. Displa
 - TTL policy: hot in CH for 24 months; older partitions moved to S3 via `BACKUP` + dropped from CH (Phase 3+)
 - Mutations (UPDATE/DELETE): avoid; if needed, use `ALTER TABLE ... DELETE WHERE` and budget for merge time
 
-## Sharding plan (TECH/01 §scale)
+## Sharding plan (canon/BRAIN_TECHNICAL.md)
 
 - Phase 0–2: 3 shards × 2 replicas
 - Phase 3: scale to 6 shards × 2 replicas at 50K+ workspaces
 - Shard key: `sipHash64(workspace_id)` — single-workspace queries hit one shard
 - Cross-workspace queries (admin-only) explicitly route to all shards
 
-## Late-data handling (TECH/02 §late-data)
+## Late-data handling (canon/BRAIN_TECHNICAL.md)
 
 Refunds and RTO state changes arrive late (sometimes weeks). Pattern:
 
@@ -162,7 +162,7 @@ PARTITION BY toYYYYMM(occurred_at)
 ORDER BY (workspace_id, shipment_id);
 ```
 
-`ingested_at` as version → latest update wins on merge. Reconciliation MV recomputes daily_metrics after late-data window closes (TECH/02 §reconciliation).
+`ingested_at` as version → latest update wins on merge. Reconciliation MV recomputes daily_metrics after late-data window closes (canon/BRAIN_TECHNICAL.md).
 
 ## Performance budgets
 
@@ -181,9 +181,9 @@ ORDER BY (workspace_id, shipment_id);
 
 ## References
 
-- `docs/TECH/01_data_architecture.md` §clickhouse — canonical
-- `docs/TECH/03_metrics_engine.md` — what MVs Brain runs
-- `docs/TECH/04_regional_adapters.md` §india — GST-net-of, RTO-cost columns
+- `canon/BRAIN_TECHNICAL.md` §clickhouse — canonical
+- `canon/BRAIN_TECHNICAL.md` — what MVs Brain runs
+- `canon/BRAIN_TECHNICAL.md` §india — GST-net-of, RTO-cost columns
 - `skills/event-driven-kafka/SKILL.md` — Kafka engine table patterns
 - `skills/python-services/SKILL.md` §clickhouse — `pylibs/brain_clickhouse` usage
 - `skills/database-design/SKILL.md` — Postgres ↔ CH split principles

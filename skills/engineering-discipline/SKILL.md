@@ -39,7 +39,7 @@ State assumptions. Surface tradeoffs. If unclear, name what's confusing — don'
 ✅ "Before writing: scope = current tenant? format = CSV? fields = public only? Defaulting to those — say otherwise."
 
 ### 7. Right-Sized Stack
-**For Brain specifically: the stack is LOCKED.** Fastify + tRPC + gRPC (buf) + Supabase Postgres + ClickHouse Cloud + Amazon MSK + EKS + Karpenter + ArgoCD + AWS CDK + React Native + Expo + Anthropic Claude. See CLAUDE.md §"The Stack (NOT negotiable)" and the stack ADR. Aryan only runs `tech-stack-evaluation` when **adding a new layer** that isn't already chosen (e.g., picking the AI calling vendor — TECH/11 §5). Do NOT re-evaluate the stack per feature; that was the pre-v6 universal-plugin posture.
+**For Brain specifically: the stack is LOCKED.** Fastify + tRPC + gRPC (buf) + Supabase Postgres + ClickHouse Cloud + Amazon MSK + EKS + Karpenter + ArgoCD + AWS CDK + React Native + Expo + Anthropic Claude. See prompts/system-prompt.md ("The Stack — NOT negotiable") and canon/BRAIN_TECHNICAL.md. Aryan only runs `tech-stack-evaluation` when **adding a new layer** that isn't already chosen (e.g., picking the AI calling vendor — see canon/BRAIN_TECHNICAL.md). Do NOT re-evaluate the stack per feature; that was the pre-v6 universal-plugin posture.
 
 ## Vertical Slices (the delivery pattern)
 

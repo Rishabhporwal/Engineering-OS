@@ -97,7 +97,7 @@ The `service_role` key lives in AWS Secrets Manager. Never in env files. Never i
 ## P4 — Schema design (Brain canon)
 
 - **UUIDs** for every primary key (`uuid_generate_v4()` or app-side `ulid()`). Sequential ids leak rate-of-creation info between tenants.
-- **`timestamptz`** for every timestamp. Never `timestamp without tz`. The slice-1 lesson is in `memory/lessons.md` — timezone bugs eat a quarter of debug time.
+- **`timestamptz`** for every timestamp. Never `timestamp without tz`. The slice-1 lesson is in `.engineering-os/lessons-learned.md` — timezone bugs eat a quarter of debug time.
 - **Integer minor units** for money (`spend_minor`, `gross_revenue_minor`) — no `numeric(15,2)` floats; matches the lesson on `spend_minor` from slice-3.
 - **JSONB for flexible payloads** (Decision Log payload, integration config), but **promote frequently-queried JSON fields to columns** with a generated column + index.
 - **`text` not `varchar(N)`** — Postgres treats them identically and `text` avoids accidental truncation bugs.
@@ -115,7 +115,7 @@ CREATE INDEX CONCURRENTLY idx_orders_ws_created
 
 ### Optimistic vs pessimistic
 
-For Brain's high-write paths (ingestion, Decision Log), prefer **optimistic concurrency** with `xmin` or a `version` column. Use `FOR UPDATE NOWAIT` only when serialization is correctness-critical (consent transitions, AI calling scheduling — Neel + Shreya territory).
+For Brain's high-write paths (ingestion, Decision Log), prefer **optimistic concurrency** with `xmin` or a `version` column. Use `FOR UPDATE NOWAIT` only when serialization is correctness-critical (consent transitions, AI calling scheduling — Maya + Shreya territory).
 
 ### Advisory locks (for once-at-a-time jobs)
 
@@ -133,7 +133,7 @@ Used by Brain's scheduled jobs (EventBridge → service → advisory lock → ru
 - **`returning *` discipline** — only when needed; otherwise return nothing
 
 ```sql
--- Bulk upsert for Sahil's ingestion
+-- Bulk upsert for Maya's ingestion
 INSERT INTO orders (workspace_id, order_id, gross_revenue_minor, ...)
 SELECT * FROM UNNEST($1::uuid[], $2::text[], $3::bigint[], ...)
 ON CONFLICT (workspace_id, order_id) DO UPDATE
@@ -172,7 +172,7 @@ Target: > 99%. Below 95% suggests memory pressure — talk to Supabase about ins
 ## P8 — Advanced features Brain uses
 
 - **`pg_cron`** for idempotency-key cleanup, daily rollups, NCPR cache refresh
-- **`pgvector`** for the Memory Layer (Brand Fingerprint, Customer Segment Memory, Seasonal Codebook — TECH/05)
+- **`pgvector`** for the Memory Layer (Brand Fingerprint, Customer Segment Memory, Seasonal Codebook — see canon/BRAIN_TECHNICAL.md)
 - **`pg_trgm`** for fuzzy customer-name search (replaces banned `LIKE '%term%'`)
 - **`citext`** for case-insensitive lookups
 
@@ -188,11 +188,11 @@ Target: > 99%. Below 95% suggests memory pressure — talk to Supabase about ins
 
 | Concern | Owner | Reference |
 |---|---|---|
-| Schema + migrations for core-service | **Vikram** | TECH/01 §"OLTP design" |
-| RLS policy review | **Shreya** + Aryan | TECH/09 §"Multi-tenancy" |
-| Connection pooler config | **Jatin** + Vikram | TECH/01 §"Connection" |
+| Schema + migrations for core-service | **Vikram** | canon/BRAIN_TECHNICAL.md (OLTP design) |
+| RLS policy review | **Shreya** + Aryan | canon/BRAIN_TECHNICAL.md (multi-tenancy) |
+| Connection pooler config | **Jatin** + Vikram | canon/BRAIN_TECHNICAL.md (connection) |
 | Slow query alerting | **Jatin** | `observability` |
-| Memory Layer (pgvector) | **Maya** | TECH/05 |
+| Memory Layer (pgvector) | **Maya** | canon/BRAIN_TECHNICAL.md |
 | pg_cron job inventory | **Jatin** | scheduled tasks doc |
 
 Related Brain skills: `sql-query-optimization` (query-shape rules), `database-design` (schema decisions), `security-baseline` (RLS + secret handling), `idempotency-handling` (key TTL + cleanup), `session-management` (`workspace_id` from JWT into `app.workspace_id` GUC).

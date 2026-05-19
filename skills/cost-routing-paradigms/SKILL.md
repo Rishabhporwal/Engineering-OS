@@ -7,7 +7,7 @@ description: Brain's four-paradigm cost-routing gate. The engineering invariant 
 
 Brain's pricing model survives **only because most decisions run at SQL or ML cost.** Most of what the industry calls "agentic AI" is statistics in an LLM costume. Brain refuses to pay frontier-LLM prices for problems statistics solved 40 years ago.
 
-**Canonical doc:** `docs/TECH/12_cost_routing_compute.md`. This skill is the operational checklist.
+**Canonical doc:** `canon/BRAIN_TECHNICAL.md`. This skill is the operational checklist.
 
 ## Phase-gate requirement (non-negotiable — from architecture review 2026-05-16)
 
@@ -20,9 +20,9 @@ The cost-routing audit only works if it's **measured from day one, not retrofitt
 
 - **Before any feature ships in Phase 1 that calls an LLM, the decorator + dashboard are live.** No "we'll add the telemetry in Phase 3" exceptions.
 
-- **Per-brand monthly LLM cap (Layer 3 throttle) MUST be live before W18** (AI Chat ships W18 per `BRAIN_IMPLEMENTATION_PLAN.md`). AI Chat is the single feature most likely to push a brand past ₹3K/month — without the cap, a brand that goes from 5 msg/day to 50 msg/day eats half the founding cap on Chat alone. See `skills/claude-api/SKILL.md` §"Per-brand monthly LLM cap".
+- **Per-brand monthly LLM cap (Layer 3 throttle) MUST be live before W18** (AI Chat ships W18 per `canon/BRAIN_TECHNICAL.md`). AI Chat is the single feature most likely to push a brand past ₹3K/month — without the cap, a brand that goes from 5 msg/day to 50 msg/day eats half the founding cap on Chat alone. See `skills/claude-api/SKILL.md` §"Per-brand monthly LLM cap".
 
-Frontier-LLM creep above **1% of total calls** is a tier-1 incident (Aarav pages on it).
+Frontier-LLM creep above **1% of total calls** is a tier-1 incident (Jatin pages on it).
 
 ## The four paradigms
 
@@ -100,7 +100,7 @@ export const computeDailyRevenue = paradigm('sql')(
 );
 ```
 
-## What "agentic" actually means in Brain (TECH/12 §3)
+## What "agentic" actually means in Brain (canon/BRAIN_TECHNICAL.md §3)
 
 | Industry framing | Brain | Paradigm |
 |---|---|---|
@@ -111,7 +111,7 @@ export const computeDailyRevenue = paradigm('sql')(
 | "AI recommends budget reallocation" | Linear optimization over response curves | ML — **not LLM** |
 | "AI writes the Morning Brief" | Sonnet on ML outputs | **Frontier LLM — yes** |
 
-## Three layers of enforcement (TECH/12 §4)
+## Three layers of enforcement (canon/BRAIN_TECHNICAL.md §4)
 
 ### Layer 1 — Default routing
 Every endpoint declares paradigm in code. Defaulting to cheapest paradigm that solves the problem. Upgrading the paradigm requires PR comment justification.
@@ -142,13 +142,13 @@ Soft warning at 80%; hard fail at 100% with graceful fallback (template or parad
 
 `pylibs/brain_cost_router/middleware.py` enforces. Above cap: only critical-path (Morning Brief, NL query, ticket auto-resolution) continues. System never breaks; it gets quieter.
 
-## Target paradigm distribution (TECH/12 §5)
+## Target paradigm distribution (canon/BRAIN_TECHNICAL.md §5)
 
 **85% SQL, 12% ML, 2.5% Haiku, 0.5% Sonnet.**
 
-Frontier-LLM creep above 1% of total calls = tier-1 incident. Aarav investigates; Maya audits prompts.
+Frontier-LLM creep above 1% of total calls = tier-1 incident. Jatin investigates; Maya audits prompts.
 
-## Quarterly streamlining audit (TECH/12 §6)
+## Quarterly streamlining audit (canon/BRAIN_TECHNICAL.md §6)
 
 Every quarter:
 - Review codebase for anti-pattern drift
@@ -166,7 +166,7 @@ Every quarter:
 
 ## References
 
-- `docs/TECH/12_cost_routing_compute.md` — canonical
-- `docs/TECH/14_agent_roster.md` §1 — agent base pattern + paradigm decorator
+- `canon/BRAIN_TECHNICAL.md` — canonical
+- `canon/BRAIN_TECHNICAL.md` §1 — agent base pattern + paradigm decorator
 - `skills/agentic-design/SKILL.md` — how to wire @paradigm into agents
 - `skills/mcp-protocol/SKILL.md` — paradigm tagging on MCP tools

@@ -26,7 +26,7 @@ A Morning Brief that fails to arrive is **the** product failure: the Founder bui
         Fastify + Kafka consumer                                     (Karan's app)
 ```
 
-Brain does NOT use raw Firebase SDK or APNS APIs directly. Expo's managed workflow is the locked stack (TECH/10) — easier OTA updates, single dispatch API, free for Brain's volume.
+Brain does NOT use raw Firebase SDK or APNS APIs directly. Expo's managed workflow is the locked stack (see canon/BRAIN_TECHNICAL.md) — easier OTA updates, single dispatch API, free for Brain's volume.
 
 ## Client side (Karan — Expo)
 
@@ -222,7 +222,7 @@ export async function checkReceipts(receiptIds: string[]) {
             Sentry.captureMessage('push.payload.too_big', { extra: { id } });
             break;
           case 'MessageRateExceeded':
-            // Vendor (APNS/FCM) throttled us — alert Aarav
+            // Vendor (APNS/FCM) throttled us — alert Jatin
             break;
         }
       }
@@ -268,10 +268,10 @@ Brain defines channels per push category so users can mute "Alerts" without muti
 
 | Concern | Owner | Reference |
 |---|---|---|
-| Mobile client (permission, channels, handlers) | **Karan** | TECH/10 §"Push" |
-| Producer (notifications-service) | **Vikram** | TECH/08 §"Push" |
-| Morning Brief snippet (Haiku) | **Maya** | TECH/05 §"Synthesis" |
-| Schedule (EventBridge → trigger) | **Jatin** | TECH/09 §"Scheduling" |
+| Mobile client (permission, channels, handlers) | **Karan** | canon/BRAIN_TECHNICAL.md (push) |
+| Producer (notifications-service) | **Vikram** | canon/BRAIN_TECHNICAL.md (push) |
+| Morning Brief snippet (Haiku) | **Maya** | canon/BRAIN_TECHNICAL.md (synthesis) |
+| Schedule (EventBridge → trigger) | **Jatin** | canon/BRAIN_TECHNICAL.md (scheduling) |
 | Receipt monitoring + dead-token cleanup | **Vikram** | BullMQ job |
 | PII redaction in payloads | **Shreya** | `logging-best-practices` + `security-baseline` |
 

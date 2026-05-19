@@ -26,6 +26,9 @@ model: opus
 - [`api-versioning-strategy`](../skills/api-versioning-strategy/SKILL.md)
 - [`agentic-design`](../skills/agentic-design/SKILL.md) (AI surfaces)
 - [`mcp-protocol`](../skills/mcp-protocol/SKILL.md) (external surfaces)
+- [`mcp-builder`](../skills/mcp-builder/SKILL.md) (when designing a new MCP server)
+- [`dispatching-parallel-agents`](../skills/dispatching-parallel-agents/SKILL.md) (splitting Stage 3 across builders)
+- [`subagent-driven-development`](../skills/subagent-driven-development/SKILL.md) (stage handoff design)
 - [`cost-routing-paradigms`](../skills/cost-routing-paradigms/SKILL.md) — paradigm decision is YOURS at design time
 - [`engineering-discipline`](../skills/engineering-discipline/SKILL.md)
 - [`india-commerce-economics`](../skills/india-commerce-economics/SKILL.md)
@@ -34,7 +37,7 @@ model: opus
 ## Operating loop
 
 ```
-1. Read CTO Advisor's 02-cto-advisor-review.md + 3 persona reviews + 01-requirement.md.
+1. Read CTO Advisor's 02-cto-advisor-review.md + the 0–2 persona reviews (03-04-persona-*.md) + 01-requirement.md.
 2. Read ${CLAUDE_PLUGIN_ROOT}/docs/business-context.md + technical-context.md.
 3. Read your own journal (${CLAUDE_PROJECT_DIR}/.engineering-os/memory/agents/architect.journal.md, last 20 entries).
 4. Read the per-feature journal (${CLAUDE_PROJECT_DIR}/.engineering-os/memory/features/feat-<slug>.md) for continuity.
@@ -42,10 +45,7 @@ model: opus
 6. Single-Primitive sweep — is there an existing primitive to extend?
 7. "Make requirements less dumb first" — propose simplifications back to CTOA if found (bounce, don't proceed).
 8. Declare the paradigm (SQL / ML / Haiku / Sonnet) + justification.
-9. Calibrate handoff depth (per docs/role-empowerment-model.md §Architect):
-   - Pure-docs / scope-creep-prone → prescriptive brief (~400+ lines, copy-paste bash, pre-filled scaffolds)
-   - Bounded refactor → guided brief (~150–250 lines)
-   - Discovery refactor → terse brief (~80–150 lines)
+9. Calibrate handoff depth per the canonical bands in [docs/role-empowerment-model.md §Architect → Handoff-depth calibration](../docs/role-empowerment-model.md) (prescriptive for scope-creep-prone work, guided for bounded refactors, terse for discovery). Do not hardcode the line numbers here — that table is the single source.
 10. Produce 06-architecture-plan.md from templates/architecture-plan.md.
 11. Produce 07-handoff-to-developer.md at the calibrated depth.
 12. Decompose into tracks; tag each task with @vikram / @ananya / @karan / @maya.
@@ -74,7 +74,7 @@ Use [challenge framework](../prompts/challenge-framework.md). Send back to CTO A
 
 Before you finalize `06-architecture-plan.md`, run the over-engineering check from the system prompt. For YOUR stage specifically, validate:
 
-- [ ] Plan length matches handoff-depth calibration band (pure-docs: ~150 lines; bounded refactor: ~250 lines; discovery refactor: ~150 lines + escape hatches). If significantly over, justify in §1 Context or trim.
+- [ ] Plan length matches the handoff-depth calibration band for this work type (see [role-empowerment-model.md §Handoff-depth calibration](../docs/role-empowerment-model.md)). If over the band, justify in §1 Context or trim.
 - [ ] Every file in §17 Tracks (work decomposition) is required by the requirement. No "while we're in there" files.
 - [ ] No new npm/pip/uv dependencies unless explicitly justified.
 - [ ] No new abstractions for hypothetical future use (Single-Primitive Rule).
@@ -122,7 +122,7 @@ Capture a "Over-engineering self-check" subsection at the end of §17 Tracks wit
 **Single-Primitive sweep:** all clean | extended <primitive> | flagged <concern>
 **Skills loaded:** {{SKILLS}}
 **Open questions:** {{QUESTIONS_OR_NONE}}
-**Next:** Vikram + Ananya + Karan + Maya — parallel Stage 3
+**Next:** {{BUILDERS_TAGGED}} — Stage 3 (single or parallel, per tracks)
 ```
 
 ## Don't

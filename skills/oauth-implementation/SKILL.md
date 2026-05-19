@@ -5,7 +5,7 @@ description: OAuth 2.0 flows for Brain's vendor connectors — Shopify partner O
 
 # OAuth Implementation
 
-Brain's end-user auth is **Supabase Auth** (see `session-management`). This skill is the other side — Brain acting as the **OAuth Client** to vendor APIs (Shopify, Meta, Google, Shiprocket, Klaviyo). Every Sahil connector starts with OAuth, so getting this right is the foundation of the ingestion pipeline.
+Brain's end-user auth is **Supabase Auth** (see `session-management`). This skill is the other side — Brain acting as the **OAuth Client** to vendor APIs (Shopify, Meta, Google, Shiprocket, Klaviyo). Every Maya-owned connector starts with OAuth, so getting this right is the foundation of the ingestion pipeline.
 
 ## Why this matters for Brain
 
@@ -104,7 +104,7 @@ CREATE POLICY rls_integrations ON integrations
 ```
 
 **Brain rules:**
-- `encrypted_credentials` is **BYTEA**, KMS-envelope-encrypted. Decryption key access is per-task IAM role (Sahil's ingestion role only).
+- `encrypted_credentials` is **BYTEA**, KMS-envelope-encrypted. Decryption key access is per-task IAM role (the ingestion-service role only).
 - **Tokens never appear in logs.** `logging-best-practices` `redact` config covers `*.access_token`, `*.refresh_token`, `*.api_key`.
 - **NEVER expose `client_secret` to the browser or mobile** — all OAuth happens in `ingestion-service`.
 - Connector dispatcher fetches credentials at call time, decrypts in-memory, never stores in-process beyond the request.
@@ -143,7 +143,7 @@ async def refresh_token(source: str, creds: dict) -> dict:
     return {**creds, **new}
 ```
 
-**Refresh failures must page Sahil + alert on the workspace dashboard.** A silently-broken integration means the data simply stops flowing — operators don't notice until they check, by which point CM2 is stale for a week.
+**Refresh failures must page Maya + alert on the workspace dashboard.** A silently-broken integration means the data simply stops flowing — operators don't notice until they check, by which point CM2 is stale for a week.
 
 ## Per-vendor specifics (Brain)
 
@@ -180,10 +180,10 @@ async def refresh_token(source: str, creds: dict) -> dict:
 
 | Concern | Owner | Reference |
 |---|---|---|
-| Connector OAuth flows | **Sahil** | TECH/02 §"OAuth + per-source auth" |
-| Token storage (Postgres + KMS) | **Sahil** + **Vikram** | TECH/02 |
-| Per-task IAM (KMS decrypt) | **Jatin** | TECH/09 §"Secrets" |
-| Token failure alerting | **Sahil** + **Jatin** | `observability` |
+| Connector OAuth flows | **Maya** | canon/BRAIN_TECHNICAL.md (OAuth + per-source auth) |
+| Token storage (Postgres + KMS) | **Maya** + **Vikram** | canon/BRAIN_TECHNICAL.md |
+| Per-task IAM (KMS decrypt) | **Jatin** | canon/BRAIN_TECHNICAL.md (secrets) |
+| Token failure alerting | **Maya** + **Jatin** | `observability` |
 | End-user auth (NOT this skill) | **Vikram** + **Shreya** | `session-management` |
 
 Related Brain skills: `session-management` (Supabase end-user auth — distinct), `integration-connectors` (per-vendor specifics), `security-baseline` (broader posture), `defense-in-depth-validation` (HMAC + state verification), `logging-best-practices` (redaction).

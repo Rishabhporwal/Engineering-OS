@@ -12,9 +12,9 @@ Model Context Protocol (MCP) is Brain's contract for:
 3. **Agents reaching external systems** (Shopify, Meta, Razorpay, calling vendors) via MCP adapters
 4. **External clients** (Anthropic Claude native MCP, OpenAI Assistants, partner integrations, Enterprise tier) calling Brain agents
 
-**Canonical doc:** `docs/TECH/13_mcp_protocol.md`. This skill is the operational reference.
+**Canonical doc:** `canon/BRAIN_TECHNICAL.md`. This skill is the operational reference.
 
-## Architecture (TECH/13 §2)
+## Architecture (canon/BRAIN_TECHNICAL.md §2)
 
 ```
 External MCP clients (Claude, partners, Enterprise)        Brain agents (intelligence-service) as MCP clients
@@ -33,7 +33,7 @@ External MCP clients (Claude, partners, Enterprise)        Brain agents (intelli
               (routes via gRPC to analytics-service / core-service / lifecycle-service / intelligence-service)
 ```
 
-## Tool naming convention (TECH/13 §3)
+## Tool naming convention (canon/BRAIN_TECHNICAL.md §3)
 
 ```
 <domain>.<resource>.<action>
@@ -85,7 +85,7 @@ export const buildAudience = mcpTool({
 });
 ```
 
-## Auth (TECH/13 §5) — four layers, all mandatory
+## Auth (canon/BRAIN_TECHNICAL.md §5) — four layers, all mandatory
 
 1. **Auth** — JWT or brain_mcp_key valid?
 2. **Scope** — does the caller's scope include this tool's required scope?
@@ -109,7 +109,7 @@ brain:admin                  — superuser; rare; audited
 
 Default new key: `brain:analytics:read + brain:memory:read`. Higher scopes need Owner approval (audit-logged).
 
-## Streaming (TECH/13 §6)
+## Streaming (canon/BRAIN_TECHNICAL.md §6)
 
 For long-running operations (agent reasoning, Morning Brief generation, AI Chat):
 
@@ -127,7 +127,7 @@ event: agent_recommendation data: { "action": "reduce_meta_budget", "amount_mino
 event: done               data: { "decision_log_id": "..." }
 ```
 
-## Inter-agent invocation (TECH/13 §7)
+## Inter-agent invocation (canon/BRAIN_TECHNICAL.md §7)
 
 ```json
 {
@@ -145,7 +145,7 @@ Why MCP (not direct gRPC) for inter-agent? Inter-agent calls happen inside LLM r
 
 For non-LLM agent code paths, direct gRPC is acceptable.
 
-## Decision Log integration (TECH/13 §8) — MANDATORY
+## Decision Log integration (canon/BRAIN_TECHNICAL.md §8) — MANDATORY
 
 **Every MCP write tool call writes a Decision Log entry via middleware.** Never bypass.
 
@@ -160,13 +160,13 @@ Decision Log entry includes:
 - Caller (user_id OR agent_id OR external_api_key_id)
 - Tool name + arguments (PII-redacted)
 - Outcome (success / error / partial)
-- 7d + 30d outcome attribution (backfilled by Kabir's nightly job)
+- 7d + 30d outcome attribution (backfilled by Maya's nightly job)
 
 This is what makes the Decision Log Brain's single source of truth for "what did Brain do?"
 
-## Human-in-the-loop mode (TECH/13 §9)
+## Human-in-the-loop mode (canon/BRAIN_TECHNICAL.md §9)
 
-For un-graduated agents (TECH/14 §6 graduation criteria not yet met):
+For un-graduated agents (canon/BRAIN_TECHNICAL.md §6 graduation criteria not yet met):
 - Agent generates **recommendation** (Decision Log entry in `pending` state)
 - Owner sees it on Morning Brief or web app
 - Owner approves → MCP write tool fires with `decision_log_id` reference
@@ -174,7 +174,7 @@ For un-graduated agents (TECH/14 §6 graduation criteria not yet met):
 
 For graduated agents: write fires automatically; entry marked `auto_approved`.
 
-## Observability (TECH/13 §10)
+## Observability (canon/BRAIN_TECHNICAL.md §10)
 
 Every MCP call emits:
 - `Brain/MCP/tool_calls_total{tool, status, paradigm}` (CloudWatch)
@@ -183,7 +183,7 @@ Every MCP call emits:
 - OpenSearch log entry with correlation IDs
 - X-Ray span via `traceparent` header
 
-## Versioning (TECH/13 §11)
+## Versioning (canon/BRAIN_TECHNICAL.md §11)
 
 - Tool versions in URL: `memory.brand_fingerprint.query/v2` for breaking changes
 - Old versions supported ≥ 6 months after new version ships
@@ -199,9 +199,9 @@ Every MCP call emits:
 
 ## References
 
-- `docs/TECH/13_mcp_protocol.md` — canonical
-- `docs/TECH/06_api_contracts.md` — gRPC + tRPC + MCP intersection
-- `docs/TECH/14_agent_roster.md` — agents that produce MCP tool catalogues
+- `canon/BRAIN_TECHNICAL.md` — canonical
+- `canon/BRAIN_TECHNICAL.md` — gRPC + tRPC + MCP intersection
+- `canon/BRAIN_TECHNICAL.md` — agents that produce MCP tool catalogues
 - `skills/agentic-design/SKILL.md` — `@mcp_tool` decorator wiring on agent methods
 - `skills/grpc-buf/SKILL.md` — proto codegen workflow
 - `skills/security-baseline/SKILL.md` §mcp-auth — scope check + tenant check + tool-specific gate

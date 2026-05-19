@@ -11,14 +11,14 @@ Brain's async backbone is **Amazon MSK** (managed Kafka) + **AWS Glue Schema Reg
 
 Brain uses Kafka for:
 
-- **Source data ingestion** — Sahil publishes canonical events (`integrations.orders.v1`, etc.)
+- **Source data ingestion** — Maya publishes canonical events (`integrations.orders.v1`, etc.)
 - **Cross-service state propagation** — `operations.workspace.changed.v1`, `analytics.metrics.daily_materialized.v1`
 - **Trigger fan-out** — `intelligence.anomaly.detected.v1` → notifications-service + alerts
 - **Replay** — late-data backfills, reconciliation jobs replay from infinite retention
 - **CDC** — Debezium streams Postgres WAL → Kafka so analytics-service can mirror recent OLTP state
 
 Brain does NOT use Kafka for:
-- Synchronous service-to-service calls (gRPC instead — TECH/06)
+- Synchronous service-to-service calls (gRPC instead — see canon/BRAIN_TECHNICAL.md)
 - Simple cron-triggered jobs (EventBridge Scheduler)
 - In-process job queues (we don't have BullMQ; if you need queues, push the event to Kafka)
 
@@ -226,7 +226,7 @@ Postgres WAL  →  Debezium connector (MSK Connect)  →  Kafka topic: cdc.publi
 
 Used for `audience`, `outreach`, `rfm_score`, `ai.decision_log` — analytics needs recent state without querying core-service's Postgres directly.
 
-## Monitoring (TECH/09 §observability)
+## Monitoring (canon/BRAIN_TECHNICAL.md)
 
 CloudWatch metrics emitted:
 - `MSK/KafkaConsumerLag` per consumer group per topic — alarm when > threshold
@@ -256,10 +256,10 @@ OpenSearch monitor:
 
 ## References
 
-- `docs/TECH/02_integrations.md` — canonical Kafka topology + per-source flows
-- `docs/TECH/01_data_architecture.md` §kafka + §debezium
+- `canon/BRAIN_TECHNICAL.md` — canonical Kafka topology + per-source flows
+- `canon/BRAIN_TECHNICAL.md` §kafka + §debezium
 - `skills/backend-fastify-trpc-grpc/SKILL.md` — TS KafkaJS patterns (Brain's Node services consume + produce here)
 - `skills/python-services/SKILL.md` §kafka — aiokafka patterns
-- `skills/integration-connectors/SKILL.md` — producer side (Sahil's domain)
+- `skills/integration-connectors/SKILL.md` — producer side (Maya's domain)
 - `skills/clickhouse-olap/SKILL.md` §kafka-engine-tables — CH consumer engine pattern
 - `skills/devops-aws/SKILL.md` §msk — MSK CDK config

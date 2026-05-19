@@ -7,7 +7,7 @@ description: Brain's React Native + Expo stack — Expo Router + Tamagui + tRPC 
 
 The mobile stack for Brain's **primary product surface**. The Morning Brief is THE product workflow — three signals at 06:55–09:00 IST, approve / reject / edit, three-minute commitment, thumb-first.
 
-## Stack invariants (LOCKED — TECH/10 §1)
+## Stack invariants (LOCKED — canon/BRAIN_TECHNICAL.md §1)
 
 | Layer | Choice | Reason |
 |---|---|---|
@@ -36,7 +36,7 @@ The mobile stack for Brain's **primary product surface**. The Morning Brief is T
 
 ## Morning Brief — the three-signal rule
 
-The Morning Brief is the highest-quality UI in all of Brain (TECH/10 mandate). Get it right:
+The Morning Brief is the highest-quality UI in all of Brain (canon/BRAIN_TECHNICAL.md mandate). Get it right:
 
 - **Three signals max** — not five, not seven. The Synthesizer (Maya) picks top three by priority score.
 - **One-thumb operation** — swipe between cards; tap approve/reject; long-press to edit.
@@ -70,7 +70,7 @@ export function SignalCard({ signal }: { signal: Recommendation }) {
 }
 ```
 
-## Auth flow (TECH/10 §4)
+## Auth flow (canon/BRAIN_TECHNICAL.md §4)
 
 ```typescript
 // apps/mobile/lib/auth/storage.ts
@@ -88,7 +88,7 @@ export async function storeRefreshToken(token: string) {
 - Refresh on app foreground + 5-min idle
 - Biometric re-prompt before sensitive views (Phase 2)
 
-## Push notifications (TECH/10 §7)
+## Push notifications (canon/BRAIN_TECHNICAL.md §7)
 
 ```typescript
 // apps/mobile/lib/push/register.ts
@@ -107,7 +107,7 @@ export async function registerForPush() {
 
 Android channels: `alerts.critical` (high), `alerts.warning` (default), `digests` (low), `insights` (default).
 
-## OTA vs native bump policy (TECH/10 §9)
+## OTA vs native bump policy (canon/BRAIN_TECHNICAL.md §9)
 
 | Change | Path |
 |---|---|
@@ -119,7 +119,7 @@ Android channels: `alerts.critical` (high), `alerts.warning` (default), `digests
 
 **Anti-pattern:** pushing OTA when a native module was added → silently breaks for users. Discipline: any `package.json` change to a native-touching dep → native bump.
 
-## Cert pinning rotation (CRITICAL — TECH/10 §11)
+## Cert pinning rotation (CRITICAL — canon/BRAIN_TECHNICAL.md §11)
 
 Pin BOTH current + rotation cert. Rotation sequence:
 
@@ -149,9 +149,9 @@ const PINS = [
 />
 ```
 
-List in TECH/10 §3.
+List in canon/BRAIN_TECHNICAL.md §3.
 
-## Versioning (TECH/10 §14)
+## Versioning (canon/BRAIN_TECHNICAL.md §14)
 
 ```json
 {
@@ -186,6 +186,45 @@ packages/ui-mobile/<Component>.tsx
 packages/state/slices/<slice>.ts
 ```
 
+## Local dev loop — simulator + Expo (the inner loop)
+
+Before EAS cloud builds and Detox, this is the fast iteration loop Karan lives in. EAS Build is for releases; the simulator is for development. Don't wait on a 15-min cloud build to test a layout change.
+
+```bash
+# Start Metro + dev server (from apps/mobile)
+pnpm --filter mobile start            # or: npx expo start
+#   press i → open iOS Simulator   |  press a → open Android emulator
+#   press r → reload               |  press m → toggle dev menu
+#   press shift+i → pick a specific iOS simulator device
+
+# Custom dev client (needed once you add any native module — Expo Go won't load it)
+npx expo run:ios                      # builds + installs the dev client on the sim
+npx expo run:android
+```
+
+**Expo Go vs dev client:** Expo Go runs JS-only against the Expo SDK. The moment you add a native module (cert pinning, a custom native dep), Expo Go can't load it — you must use a **dev client** (`expo run:ios`/`run:android`). Symptom of getting this wrong: "module not found" / native crash only in Expo Go.
+
+### Driving the simulator directly (`simctl`)
+
+```bash
+xcrun simctl list devices                              # find booted/available sims
+xcrun simctl boot "iPhone 15 Pro"                      # boot a specific device
+xcrun simctl openurl booted "brain://morning-brief"    # test a deep link without a push
+xcrun simctl push booted <bundle-id> payload.apns.json # test a push notification locally
+xcrun simctl io booted screenshot brief.png            # capture a screenshot for the PR
+```
+
+Deep-link + push testing on the simulator is the fast way to verify the Morning Brief entry points (`brain://morning-brief`, `brain://auth/callback`) before wiring real APNS/FCM.
+
+### When the simulator misbehaves
+
+- **Stale JS / weird state** → press `r` to reload, or shake (dev menu) → Reload. If still wrong, `npx expo start -c` (clears Metro cache).
+- **Native change not reflected** → Expo Go can't show it; rebuild the dev client (`expo run:ios`).
+- **Sim won't boot / black screen** → `xcrun simctl erase all` (wipes all sims — resets to clean state).
+- **Push not arriving** → simulators need `simctl push` (real APNS doesn't reach the sim); test the real path on a device.
+
+The simulator is the inner loop; a real device + EAS build is still required before a PASS (per `verification-before-completion` — sim behavior ≠ device behavior for push, biometrics, and performance).
+
 ## Detox flow (mandatory for Morning Brief PR)
 
 ```javascript
@@ -209,8 +248,8 @@ describe('Morning Brief approve flow', () => {
 
 ## References
 
-- `docs/TECH/10_mobile_architecture.md` — the entire mobile spec
-- `docs/TECH/08_alerts_reporting.md` §push — notifications-service path
+- `canon/BRAIN_TECHNICAL.md` — the entire mobile spec
+- `canon/BRAIN_TECHNICAL.md` §push — notifications-service path
 - `skills/morning-brief-mobile/SKILL.md` — the Morning Brief UX rules in depth
 - `skills/security-baseline/SKILL.md` §MASVS
 - `skills/india-commerce-economics/SKILL.md` §currency-format

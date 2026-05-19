@@ -7,7 +7,7 @@ description: Run verification commands and confirm output before claiming succes
 
 > Claiming work is complete without verification is dishonesty, not efficiency.
 
-This skill is the **operational depth behind Iron Law #5 — Goal-Driven Execution** in CLAUDE.md. It's also what `memory/lessons.md` already references as "don't fake green-tests claims" (slice-3). Both apply: every builder agent, on every handoff signal, every PR description, every status update.
+This skill is the **operational depth behind Iron Law #5 — Goal-Driven Execution** in prompts/system-prompt.md. It's also what `.engineering-os/lessons-learned.md` already references as "don't fake green-tests claims" (slice-3). Both apply: every builder agent, on every handoff signal, every PR description, every status update.
 
 **Core principle:** Evidence before claims, always.
 **Violating the letter of this rule is violating the spirit.**
@@ -72,7 +72,7 @@ pnpm --filter mobile detox test
 curl -s -o /dev/null -w "%{http_code}\n" https://staging.brain.pipadacapital.com/api/health/ready
 ```
 
-For the **inverted-handoff fallback** (subagent Bash denied per CLAUDE.md §"Inverted-handoff fallback"): the agent enumerates the exact commands above; the orchestrator runs them; the agent verifies the orchestrator's reported output (do NOT trust on faith, ask for the failing test names and counts).
+For the **inverted-handoff fallback** (subagent Bash denied per prompts/system-prompt.md, "Inverted-handoff fallback"): the agent enumerates the exact commands above; the orchestrator runs them; the agent verifies the orchestrator's reported output (do NOT trust on faith, ask for the failing test names and counts).
 
 ## Common claims and what they actually require
 
@@ -166,9 +166,9 @@ Brain ships financial-adjacent metrics (CM2, MER, recovered-revenue) and a regul
 
 | Concern | Owner | Reference |
 |---|---|---|
-| Every builder's verification floor | Vikram, Sahil, Kabir, Maya, Neel, Ananya, Karan | their agent MDs + Iron Law #5 in CLAUDE.md |
-| QA PASS/FAIL discipline | **Tanvi** | TECH/09 §"SLO + test gates" |
-| Inverted-handoff verification (Bash-denied subagents) | orchestrator | CLAUDE.md §"Inverted-handoff fallback" |
+| Every builder's verification floor | Vikram, Maya, Ananya, Karan | their agent MDs + Iron Law #5 in prompts/system-prompt.md |
+| QA PASS/FAIL discipline | **Tanvi** | canon/BRAIN_TECHNICAL.md (SLO + test gates) |
+| Inverted-handoff verification (Bash-denied subagents) | orchestrator | prompts/system-prompt.md (Inverted-handoff fallback) |
 | Audit trail of verification claims | `memory/qa/<slug>.md` + Decision Log | |
 
 Related Brain skills: `testing-tdd` (the tests themselves), `systematic-debugging` (when a verification fails, don't guess), `operational-readiness` (real-network smoke patterns).

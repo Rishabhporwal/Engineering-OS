@@ -7,7 +7,7 @@ description: Brain's Next.js 14 web stack — App Router + tRPC client + Redux T
 
 The web stack for Brain's **workbench surface** — Ananya's domain. Web is the desktop surface operators use for Monday review + on-demand depth. Mobile is the daily heartbeat (Karan owns it).
 
-## Stack invariants (LOCKED — TECH/07)
+## Stack invariants (LOCKED — canon/BRAIN_TECHNICAL.md)
 
 | Layer | Choice | Reason |
 |---|---|---|
@@ -85,7 +85,7 @@ Every interactive element gets `data-testid` for Cypress.
 
 ## RAG (Red/Amber/Green) on every metric card
 
-Per `docs/TECH/03_metrics_engine.md` §goals:
+Per `canon/BRAIN_TECHNICAL.md` (goals):
 
 ```tsx
 <RagCell
@@ -97,7 +97,7 @@ Per `docs/TECH/03_metrics_engine.md` §goals:
 />
 ```
 
-Calendar Report (TECH/03) renders every cell with RAG. CSV exports preserve raw values + RAG metadata.
+Calendar Report (canon/BRAIN_TECHNICAL.md) renders every cell with RAG. CSV exports preserve raw values + RAG metadata.
 
 ## CM Waterfall — Visx
 
@@ -105,7 +105,7 @@ Calendar Report (TECH/03) renders every cell with RAG. CSV exports preserve raw 
 // components/charts/Waterfall.tsx
 import { BarStack } from '@visx/shape';
 import { Group } from '@visx/group';
-// ... layered horizontal step-down per the spec in BRAIN_REQUIREMENTS.md §P2.5
+// ... layered horizontal step-down per the spec in canon/BRAIN_BUSINESS.md
 ```
 
 Filter: `[All | New Customers | Returning Customers]`. The "wow" demo moment is showing the loss-making-new vs profitable-returning pattern.
@@ -139,7 +139,7 @@ These views don't translate to mobile:
 />
 ```
 
-## Performance targets (TECH/07)
+## Performance targets (canon/BRAIN_TECHNICAL.md)
 
 - Lighthouse > 80 on every dashboard route
 - p95 < 500ms server-rendered initial paint
@@ -168,8 +168,7 @@ apps/frontend/
 
 ## References
 
-- `docs/TECH/07_frontend_architecture.md` — design system + BFF + multi-currency
-- `docs/TECH/03_metrics_engine.md` — KPI definitions + RAG + Calendar Report
-- `docs/BRAIN_REQUIREMENTS.md` §P2 — every wedge feature's UI spec
+- `canon/BRAIN_TECHNICAL.md` — design system + BFF + multi-currency, KPI definitions + RAG + Calendar Report
+- `canon/BRAIN_BUSINESS.md` — every wedge feature's UI spec
 - `skills/india-commerce-economics/SKILL.md` §currency-format — numbering + GST display
 - `skills/testing-tdd/SKILL.md` — Vitest + RTL + Cypress patterns

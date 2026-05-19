@@ -12,8 +12,8 @@ Protect Brain's api-gateway and downstream services from abuse, throttle per-bra
 | Surface | Concern |
 |---|---|
 | `api-gateway` external tRPC + MCP (Vikram) | Per-brand quotas align with GMV % tiers; an abusive workspace can't degrade other tenants. |
-| `ingestion-service` outbound (Sahil) | Meta Marketing API: ~200 calls/hr/app-user; Shopify: 2 req/s per shop. Brain MUST stay under or we get banned. |
-| `lifecycle-service` AI calling vendor (Neel) | Vapi/Bolna concurrency caps; per-brand call queue depth. |
+| `ingestion-service` outbound (Maya) | Meta Marketing API: ~200 calls/hr/app-user; Shopify: 2 req/s per shop. Brain MUST stay under or we get banned. |
+| `lifecycle-service` AI calling vendor (Maya) | Vapi/Bolna concurrency caps; per-brand call queue depth. |
 | `intelligence-service` Claude API (Maya) | Anthropic rate limits + the per-brand monthly LLM cap (₹3K founding / ₹5K standard / ₹15K growth / ₹50K+ enterprise — see `memory/business-context.md`). |
 
 ## Algorithm choice
@@ -106,7 +106,7 @@ export const rateLimitPlugin: FastifyPluginAsync = async (app) => {
 
 ## Per-vendor (outbound) limiting
 
-Sahil's ingestion-service must throttle **outbound** calls to Shopify, Meta, Google. Use ElastiCache as the global semaphore — multiple replicas pulling from the same vendor account share the budget.
+Maya's ingestion-service must throttle **outbound** calls to Shopify, Meta, Google. Use ElastiCache as the global semaphore — multiple replicas pulling from the same vendor account share the budget.
 
 ```python
 # Python ingestion: per-Shopify-shop budget
@@ -154,9 +154,9 @@ These are tRPC headers AND MCP transport headers — the MCP client surface shou
 
 | Concern | Owner | Reference |
 |---|---|---|
-| Inbound api-gateway per-brand quotas | **Vikram** | TECH/06 §"Rate limit" |
-| Outbound connector throttling | **Sahil** | TECH/02 §"Vendor quotas" |
-| AI calling vendor concurrency | **Neel** | TECH/11 §5 |
-| Claude API budget enforcement | **Maya** | TECH/12 + `cost-routing-paradigms` |
+| Inbound api-gateway per-brand quotas | **Vikram** | canon/BRAIN_TECHNICAL.md (rate limit) |
+| Outbound connector throttling | **Maya** | canon/BRAIN_TECHNICAL.md (vendor quotas) |
+| AI calling vendor concurrency | **Maya** | canon/BRAIN_TECHNICAL.md |
+| Claude API budget enforcement | **Maya** | canon/BRAIN_TECHNICAL.md + `cost-routing-paradigms` |
 
 Related Brain skills: `cost-routing-paradigms` (budget-aware throttling), `observability` (`429` rate as an SLO), `integration-connectors` (per-vendor specific limits).

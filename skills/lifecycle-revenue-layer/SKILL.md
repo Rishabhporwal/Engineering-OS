@@ -7,9 +7,9 @@ description: Brain's revenue engine — RFM scoring (SQL paradigm 1), 11 canonic
 
 Brain's revenue centre. Pricing model (GMV %) survives because Lifecycle layer recovered-revenue ratio > 3x by month 3, > 5x by month 6. Below 3x = cost centre = failure.
 
-**Canonical doc:** `docs/TECH/11_lifecycle_revenue_layer.md`. This skill is operational.
+**Canonical doc:** `canon/BRAIN_TECHNICAL.md`. This skill is operational.
 
-## The Single-Primitive Rule (THE foundation — TECH/11 §1)
+## The Single-Primitive Rule (THE foundation — canon/BRAIN_TECHNICAL.md §1)
 
 > Every cross-cutting concern is built **once** and consumed by every channel, every agent, every workflow.
 
@@ -28,7 +28,7 @@ Single primitives:
 - **Attribution** (owned: analytics-service)
 - **Identity resolution** (owned: core-service)
 
-## RFM scoring — SQL paradigm 1 (TECH/11 §4.5)
+## RFM scoring — SQL paradigm 1 (canon/BRAIN_TECHNICAL.md §4.5)
 
 ```sql
 -- Daily RFM job at 06:30 IST in lifecycle-service Python side
@@ -52,9 +52,9 @@ ON CONFLICT (workspace_id, customer_id, date) DO UPDATE SET
   r_score = EXCLUDED.r_score, /* ... */;
 ```
 
-Per-brand bucketing (NTILE 1–5) — never industry benchmarks. **Monetary = CM2 contribution, not Gross Sales** (TECH/11 §4.1).
+Per-brand bucketing (NTILE 1–5) — never industry benchmarks. **Monetary = CM2 contribution, not Gross Sales** (canon/BRAIN_TECHNICAL.md §4.1).
 
-## 11 canonical segments (TECH/11 §4.2)
+## 11 canonical segments (canon/BRAIN_TECHNICAL.md §4.2)
 
 | Segment | RFM | Default routing |
 |---|---|---|
@@ -70,7 +70,7 @@ Per-brand bucketing (NTILE 1–5) — never industry benchmarks. **Monetary = CM
 | Hibernating | 1-2-X, 2-1-X | Email winback |
 | Lost | 1-1-X | Email final-touch; do-not-call |
 
-## Audience builder — the one-click flow (TECH/11 §4.3)
+## Audience builder — the one-click flow (canon/BRAIN_TECHNICAL.md §4.3)
 
 ```
 Brand operator (web):
@@ -87,7 +87,7 @@ Brand operator (web):
 
 Audience is **frozen at trigger time** — `audience_member.rfm_score_snapshot` captures the score at that moment.
 
-## Compliance engine (TECH/11 §6 — NON-NEGOTIABLE)
+## Compliance engine (canon/BRAIN_TECHNICAL.md §6 — NON-NEGOTIABLE)
 
 ```python
 class CallComplianceEngine:
@@ -124,7 +124,7 @@ Mirror `can_message(...)` for WhatsApp / SMS — DLT + opt-out + frequency apply
 
 **Out-of-window dial attempts = tier-1 incident. Hard zero target.**
 
-## Vendor abstraction (TECH/11 §5)
+## Vendor abstraction (canon/BRAIN_TECHNICAL.md §5)
 
 ```python
 class CallProvider(ABC):
@@ -142,7 +142,7 @@ Swapping = config, not rewrite. Production can run multiple concurrently (Bolna 
 
 **Migration heuristic:** Months 1–6 partner (A or B); months 6–12 parallel-build C if volume crosses ~5K calls/day; months 12+ migrate primary to C, keep partner as overflow + regional-language hedge.
 
-## Data model (TECH/11 §7)
+## Data model (canon/BRAIN_TECHNICAL.md §7)
 
 ```
 audience            -- the primitive (filter_definition JSONB)
@@ -159,7 +159,7 @@ mobile_push_tokens  -- shared with notifications-service
 Plus columns on `customer`: `last_rfm_score`, `last_segment`, `last_outreach_at`, `do_not_call`, `do_not_email`, `do_not_whatsapp`.
 Plus columns on `decision_log`: `channel`, `recovered_revenue_7d_minor`, `recovered_revenue_30d_minor`.
 
-## Cost discipline (TECH/11 §8)
+## Cost discipline (canon/BRAIN_TECHNICAL.md §8)
 
 - **Bundled in GMV %** — no per-call or per-resolution fee
 - **Per-brand monthly call cap** (set at onboarding by tier)
@@ -169,7 +169,7 @@ Plus columns on `decision_log`: `channel`, `recovered_revenue_7d_minor`, `recove
 
 System never breaks; it gets quieter.
 
-## Success metrics (TECH/11 §9 — North Stars)
+## Success metrics (canon/BRAIN_TECHNICAL.md §9 — North Stars)
 
 | Metric | Target |
 |---|---|
@@ -182,7 +182,7 @@ System never breaks; it gets quieter.
 | DND-blocked dials | **0** — rule violation if non-zero |
 | Out-of-window dials | **0** — rule violation if non-zero |
 
-## Phase mapping (TECH/11 §10)
+## Phase mapping (canon/BRAIN_TECHNICAL.md §10)
 
 | Phase | Weeks | Capability |
 |---|---|---|
@@ -208,10 +208,10 @@ System never breaks; it gets quieter.
 
 ## References
 
-- `docs/TECH/11_lifecycle_revenue_layer.md` — canonical
-- `docs/TECH/12_cost_routing_compute.md` — RFM is SQL; response model is ML; personalisation is Haiku
-- `docs/TECH/13_mcp_protocol.md` §lifecycle-tools — `lifecycle.audience.build` + `lifecycle.outreach.trigger` + `lifecycle.call.place` + `lifecycle.ticket.resolve`
-- `docs/TECH/05_intelligence_layer.md` §Customer-Segment-Memory — Memory Layer feeding RFM
+- `canon/BRAIN_TECHNICAL.md` — canonical
+- `canon/BRAIN_TECHNICAL.md` — RFM is SQL; response model is ML; personalisation is Haiku
+- `canon/BRAIN_TECHNICAL.md` §lifecycle-tools — `lifecycle.audience.build` + `lifecycle.outreach.trigger` + `lifecycle.call.place` + `lifecycle.ticket.resolve`
+- `canon/BRAIN_TECHNICAL.md` §Customer-Segment-Memory — Memory Layer feeding RFM
 - `skills/india-commerce-economics/SKILL.md` — DLT + NCPR + DND + calling hours
 - `skills/agentic-design/SKILL.md` §inter-agent — AICMO ↔ Lifecycle interaction
 - `skills/mcp-protocol/SKILL.md` — lifecycle.* MCP tool definitions

@@ -43,7 +43,7 @@ You MUST complete each phase before proceeding to the next.
 
 **BEFORE attempting ANY fix:**
 
-1. **Read errors carefully** — Brain logs land in OpenSearch (Fluent Bit → OpenSearch per TECH/09). The exact error message + stack trace + `request_id` + `workspace_id` is almost always already there. Don't paraphrase. Don't skim. Read every line.
+1. **Read errors carefully** — Brain logs land in OpenSearch (Fluent Bit → OpenSearch per canon/BRAIN_TECHNICAL.md). The exact error message + stack trace + `request_id` + `workspace_id` is almost always already there. Don't paraphrase. Don't skim. Read every line.
 
 2. **Reproduce consistently**
    - Can you trigger it reliably? In staging? In a specific tenant?
@@ -66,7 +66,7 @@ You MUST complete each phase before proceeding to the next.
    - ingestion-service → vendor: log endpoint, status, retry count
    ```
 
-   Brain's single correlation ID (TECH/09) runs across all surfaces — use it. Search OpenSearch for `request_id:abc123` and you see every hop.
+   Brain's single correlation ID (see canon/BRAIN_TECHNICAL.md) runs across all surfaces — use it. Search OpenSearch for `request_id:abc123` and you see every hop.
 
 5. **Trace data flow backwards** — see `root-cause-tracing` skill. When the error is deep in the call stack, the fix usually isn't there. Trace up until you find the original trigger.
 
@@ -120,12 +120,12 @@ Fix the root cause, not the symptom.
 | Symptom | Where to look first | Owning agent |
 |---|---|---|
 | "Tests pass locally, fail in CI" | tsconfig drift; missing build output; ESM/CJS mismatch — see `operational-readiness` slice-1 lessons | Vikram |
-| "ClickHouse query suddenly slow" | EXPLAIN PIPELINE; partition pruning; MV merge lag; `system.parts` row count | Kabir |
-| "Webhook from Shopify fires twice" | idempotency key cardinality; Shopify retry semantics; ingestion-service consumer offset | Sahil |
+| "ClickHouse query suddenly slow" | EXPLAIN PIPELINE; partition pruning; MV merge lag; `system.parts` row count | Maya |
+| "Webhook from Shopify fires twice" | idempotency key cardinality; Shopify retry semantics; ingestion-service consumer offset | Maya |
 | "Decision Log row missing" | look at api-gateway logs for the request_id; check tx rollback; check MCP write scope | Vikram + Maya |
 | "Push notification didn't arrive at 07:05 IST" | EAS push receipt status; APNS/FCM error code; user opt-out state; Morning Brief synthesis log | Karan + Maya |
-| "AI call placed at 22:00 IST" | compliance engine config; calling hours guard; NCPR cache freshness; was queue level blocked correctly | Neel + Shreya |
-| "MER value differs between dashboard and DB" | metric-registry parity (TS lib-metrics vs Python brain_metrics); v1↔v2 reconciliation | Kabir + Tanvi |
+| "AI call placed at 22:00 IST" | compliance engine config; calling hours guard; NCPR cache freshness; was queue level blocked correctly | Maya + Shreya |
+| "MER value differs between dashboard and DB" | metric-registry parity (TS lib-metrics vs Python brain_metrics); v1↔v2 reconciliation | Maya + Tanvi |
 | "EKS pod restart loop" | liveness probe failure mode (don't depend on external deps); cold cache; OOMKilled | Jatin + Vikram |
 | "Sub-agent reported success but code is broken" | check the diff (`git diff`); re-run the verification commands; trust nothing | orchestrator |
 
@@ -149,7 +149,7 @@ If you catch yourself thinking:
 | Excuse | Reality |
 |---|---|
 | "Issue is simple, don't need process" | Simple issues have root causes too. Process is fast for simple bugs. |
-| "Emergency, no time for process" | Systematic IS faster than guess-and-check thrashing. Aarav's incident playbook is literally this skill. |
+| "Emergency, no time for process" | Systematic IS faster than guess-and-check thrashing. Jatin's incident playbook is literally this skill. |
 | "Just try this first, then investigate" | First fix sets the pattern. Do it right from the start. |
 | "I'll write the test after confirming the fix" | Untested fixes don't stick. Test first proves it. |
 | "Multiple fixes at once saves time" | Can't isolate what worked. Causes new bugs. |
@@ -179,10 +179,10 @@ But: 95% of "no root cause" cases are incomplete investigation.
 
 | Concern | Owner | Reference |
 |---|---|---|
-| Incident debugging | **Aarav** | TECH/09 §"Incident playbook" |
+| Incident debugging | **Jatin** | canon/BRAIN_TECHNICAL.md (incident playbook) |
 | Service-level debugging | each builder for their service | service-specific skill |
-| Cross-service correlation | request_id + workspace_id everywhere | TECH/09 §"Correlation" |
-| Postmortems with root cause | **Aarav** + the builder | `blueprints/postmortem.md` |
+| Cross-service correlation | request_id + workspace_id everywhere | canon/BRAIN_TECHNICAL.md (correlation) |
+| Postmortems with root cause | **Jatin** + the builder | `blueprints/postmortem.md` |
 
 Related Brain skills: `root-cause-tracing` (back-tracing through call stacks), `defense-in-depth-validation` (post-RC, add structural prevention), `verification-before-completion` (verify the fix is real), `observability` (where the logs/traces live).
 
@@ -193,4 +193,4 @@ Related Brain skills: `root-cause-tracing` (back-tracing through call stacks), `
 - First-time fix rate: 95% vs 40%
 - New bugs introduced: near zero vs common
 
-Slice-3 captured the team-wide version of this lesson in `memory/lessons.md`: *"Don't fake green-tests claims."* This skill is the upstream discipline that makes that lesson hold.
+Slice-3 captured the team-wide version of this lesson in `.engineering-os/lessons-learned.md`: *"Don't fake green-tests claims."* This skill is the upstream discipline that makes that lesson hold.

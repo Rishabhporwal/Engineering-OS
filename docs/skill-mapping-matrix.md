@@ -1,6 +1,6 @@
 # Section 2.1 — Skill Mapping Matrix
 
-This document is the **authoritative skill-to-role binding** for the Brain Engineering OS. Every one of the 54 curated skills in [`skills/`](../skills/) is mapped to:
+This document is the **authoritative skill-to-role binding** for the Brain Engineering OS. It maps every one of the **58 domain skills** in [`skills/`](../skills/). (The **14 command-skills** — slash commands carrying `disable-model-invocation: true`: requirement, status, recall, handoff, approve, reject, deploy, rollback, persona, invoke-skill, eos-init, propose-rule, adopt-rule, reject-rule — are human-triggered and not mapped here. 58 + 14 = 72 skill folders.) Each domain skill is mapped to:
 
 - A **domain category** (one of 14).
 - One or more **primary role owners** (which agent must auto-load it).
@@ -34,7 +34,7 @@ This document is the **authoritative skill-to-role binding** for the Brain Engin
 
 | Code | Persona | Title |
 |------|---------|-------|
-| **CTOA** | (Shadow — Rishabh's) | CTO Advisor |
+| **CTOA** | Rohan | CTO Advisor |
 | **ARC** | Aryan | Architect |
 | **BE** | Vikram | Backend Developer |
 | **FEW** | Ananya | Frontend Web Developer |
@@ -48,9 +48,9 @@ This document is the **authoritative skill-to-role binding** for the Brain Engin
 
 ---
 
-## The matrix (all 54 skills)
+## The matrix (58 domain skills)
 
-| # | Skill | Domain | Primary | Shared with | Exposed as `/skill` |
+| # | Skill | Domain | Primary | Shared with | Exposed as command |
 |---|-------|--------|---------|-------------|---------------------|
 | 1 | [`access-control-rbac`](../skills/access-control-rbac/SKILL.md) | SEC | SEC | ARC, BE, AIE | yes |
 | 2 | [`agentic-design`](../skills/agentic-design/SKILL.md) | AI | AIE | ARC, CTOA | yes |
@@ -102,10 +102,16 @@ This document is the **authoritative skill-to-role binding** for the Brain Engin
 | 48 | [`turborepo`](../skills/turborepo/SKILL.md) | OPS | OPS | BE, FEW, FEM | yes |
 | 49 | [`verification-before-completion`](../skills/verification-before-completion/SKILL.md) | DISC | **ALL** roles | — | yes |
 | 50 | [`vulnerability-scanning`](../skills/vulnerability-scanning/SKILL.md) | SEC | SEC | OPS | yes |
-| 51 | [`web-performance-audit`](../skills/web-performance-audit/SKILL.md) | PERF | FEW | QA, OPS | yes |
-| 52 | [`web-performance-optimization`](../skills/web-performance-optimization/SKILL.md) | PERF + FE-W | FEW | ARC | yes |
+| 51 | [`web-performance`](../skills/web-performance/SKILL.md) (merged audit + optimization) | PERF + FE-W | FEW | QA, OPS, ARC | yes |
 | 53 | [`writing-plans`](../skills/writing-plans/SKILL.md) | DISC | PM, ARC | **ALL** roles (every plan-emitting agent) | yes |
 | 54 | [`xss-prevention`](../skills/xss-prevention/SKILL.md) | SEC + FE-W | SEC | FEW, FEM | yes |
+| 55 | [`agentic-actions-auditor`](../skills/agentic-actions-auditor/SKILL.md) | SEC + AI | SEC | AIE, ARC | yes |
+| 56 | [`mcp-builder`](../skills/mcp-builder/SKILL.md) | AI + ARCH | AIE | ARC, BE | yes |
+| 57 | [`dispatching-parallel-agents`](../skills/dispatching-parallel-agents/SKILL.md) | DISC | CTOA | ARC, **ALL** dispatchers | yes |
+| 58 | [`subagent-driven-development`](../skills/subagent-driven-development/SKILL.md) | DISC | CTOA | ARC | yes |
+| 59 | [`finishing-a-development-branch`](../skills/finishing-a-development-branch/SKILL.md) | OPS + DISC | OPS | **ALL** (commit discipline) | yes |
+
+> Numbering note: rows 55–59 were appended in v0.5.0 (awesome-claude-skills integration); v0.6.0 merged web-performance-audit + web-performance-optimization into a single `web-performance` (row 51), so #52 is intentionally vacant rather than renumber the whole table. Domain-skill total = 58.
 
 ---
 
@@ -122,10 +128,12 @@ This document is the **authoritative skill-to-role binding** for the Brain Engin
 - `tech-stack-evaluation` (rare; only when a new layer is proposed)
 - `task-tracker-integration` (cross-team coordination)
 - `agentic-design` (when reviewing AI surfaces)
+- `dispatching-parallel-agents` (persona-count + fan-out discipline)
+- `subagent-driven-development` (drives the stage pipeline)
 - `verification-before-completion` (always)
 
 ### Dynamic Persona Generator (`dynamic-persona-generator`)
-*No fixed skills — selects 3 personas at runtime based on the requirement. May invoke any of the 54 skills indirectly via the spawned persona.*
+*No fixed skills — selects 0–2 personas at runtime based on the requirement's complexity. May invoke any of the domain skills indirectly via the spawned persona.*
 
 ### Architect — Aryan (`architect`)
 - `architecture-patterns` (primary)
@@ -135,6 +143,9 @@ This document is the **authoritative skill-to-role binding** for the Brain Engin
 - `engineering-discipline`
 - `agentic-design` (when designing AI surfaces)
 - `mcp-protocol` (when external surfaces are touched)
+- `mcp-builder` (when designing a new MCP server)
+- `dispatching-parallel-agents` (splitting Stage 3 across builders)
+- `subagent-driven-development` (stage handoff design)
 - `cost-routing-paradigms` (paradigm decision at design time)
 - `india-commerce-economics`
 - `writing-plans`
@@ -163,8 +174,7 @@ This document is the **authoritative skill-to-role binding** for the Brain Engin
 ### Frontend Web Developer — Ananya (`frontend-web-developer`)
 - `frontend-web` (primary)
 - `kpi-dashboard-design`
-- `web-performance-optimization`
-- `web-performance-audit`
+- `web-performance` (audit + optimization)
 - `xss-prevention` (shared with SEC)
 - `session-management` (shared with SEC)
 - `api-pagination` (consumer side)
@@ -194,6 +204,7 @@ This document is the **authoritative skill-to-role binding** for the Brain Engin
 - `claude-api` (primary)
 - `python-services` (primary — intelligence-service is Python)
 - `mcp-protocol`
+- `mcp-builder` (when building a new MCP server / tool surface)
 - `clickhouse-olap`
 - `forecasting-prophet`
 - `lifecycle-revenue-layer` (when the agent affects revenue)
@@ -211,6 +222,7 @@ This document is the **authoritative skill-to-role binding** for the Brain Engin
 - `access-control-rbac`
 - `defense-in-depth-validation`
 - `vulnerability-scanning`
+- `agentic-actions-auditor` (audit agent-emitted actions before ship)
 - `xss-prevention`
 - `session-management`
 - `oauth-implementation` (security review side)
@@ -241,6 +253,7 @@ This document is the **authoritative skill-to-role binding** for the Brain Engin
 - `app-store-deployment` (shared with FEM)
 - `vulnerability-scanning` (CI gates)
 - `operational-readiness`
+- `finishing-a-development-branch` (Stage 8 commit/push discipline)
 - `engineering-discipline`
 - `verification-before-completion`
 
@@ -269,14 +282,14 @@ Some skills are so foundational that **every role auto-loads them**. These are l
 
 ---
 
-## Recommended additional skills (NOT sourced from `skills/` — see [folder-context-summary.md](folder-context-summary.md))
+## Recommended additional skills (not yet implemented)
 
 Four candidate skills are flagged but not implemented in this build:
 
 | Suggested skill | Primary | Why |
 |-----------------|---------|-----|
 | `requirement-intake` | CTOA, PM | Standard for converting a Founder ask into a structured requirement. |
-| `dynamic-persona-spawning` | DYN | Discipline for choosing which 3 personas to spawn and how to weight inputs. |
+| `dynamic-persona-spawning` | DYN | Discipline for choosing the 0–2 personas to spawn and how to weight inputs. |
 | `production-readiness-checklist` | CTOA, OPS | Composed Stage 6 gate aggregating `operational-readiness` + `health-check-endpoints` + `observability` + `vulnerability-scanning`. |
 | `release-notes-and-changelog` | OPS, PM | Human-readable release notes derived from per-run journals at Stage 8. |
 
@@ -304,7 +317,7 @@ A few mappings deserve explicit explanation:
    - When a developer agent picks up a task, it auto-loads its owned skills + any skills whose **description** matches keywords in the requirement.
    - The **Shared with** column tells an agent when to request peer review even if no failing gate triggers.
 
-The matrix is rebuilt whenever a new skill is added to `skills/`. A CI check ([`hooks/`](../hooks/)) detects new skill folders and fails CI until this matrix is updated.
+Update this matrix whenever a domain skill is added to or removed from `skills/`. (A CI check that fails when a skill folder isn't mapped here is planned for V2 — see ROADMAP.)
 
 ---
 

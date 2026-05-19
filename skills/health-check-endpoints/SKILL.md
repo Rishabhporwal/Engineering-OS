@@ -81,7 +81,7 @@ export const healthPlugin: FastifyPluginAsync = async (app) => {
 };
 ```
 
-## Implementation (FastAPI, Python services — Sahil / Kabir / Maya)
+## Implementation (FastAPI, Python services — Maya)
 
 ```python
 from fastapi import FastAPI, Response
@@ -146,7 +146,7 @@ startupProbe:
 - **Health endpoints are exempt from rate limiting and auth.** Configure the rate-limit plugin and Supabase Auth middleware to bypass `/health/*`.
 - **Log readiness transitions** — every flap from healthy → unhealthy → healthy is a signal something is wrong with a dep.
 
-## Composite alarm + auto-rollback (Aarav / Jatin)
+## Composite alarm + auto-rollback (Jatin)
 
 ArgoCD watches a CloudWatch composite alarm: readiness failure rate > 10% over 2 minutes triggers automatic rollback to the previous deployment. This is the safety net that lets the team ship multiple times per day without paging the Founder.
 
@@ -172,8 +172,8 @@ const compositeAlarm = new cloudwatch.CompositeAlarm(this, 'pod-readiness-compos
 | Concern | Owner | Reference |
 |---|---|---|
 | Fastify probes (api-gateway, core, notifications, lifecycle Node side) | **Vikram** | |
-| FastAPI probes (ingestion, analytics, intelligence) | **Sahil / Kabir / Maya** | |
-| EKS probe config + composite alarm | **Jatin** | TECH/09 §"SLOs + auto-rollback" |
-| Probe failure → page-or-rollback decision tree | **Aarav** | TECH/09 §"Incident playbook" |
+| FastAPI probes (ingestion, analytics, intelligence) | **Maya** | |
+| EKS probe config + composite alarm | **Jatin** | canon/BRAIN_TECHNICAL.md (SLOs + auto-rollback) |
+| Probe failure → page-or-rollback decision tree | **Jatin** | canon/BRAIN_TECHNICAL.md (incident playbook) |
 
 Related Brain skills: `observability` (probe metrics), `devops-aws` (EKS + ArgoCD config), `operational-readiness` (pre-deploy smoke).

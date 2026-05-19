@@ -2,7 +2,7 @@
 
 An **AI engineering team** delivered as a Claude Code plugin. Orchestrates a 10-role agent pipeline that takes a requirement from intake to production for **[Brain](https://brain.pipadacapital.com)** — Pipada Capital's AI-native commerce operating system for D2C brands.
 
-Every agent is grounded in the Brain canon — 54 curated skills + a business primer + a technical primer (all shipped inside the plugin). When you install the plugin in your Brain product repo, the agents come with you.
+Every agent is grounded in the Brain canon — 58 domain skills + 14 command-skills + a business primer + a technical primer (all shipped inside the plugin). When you install the plugin in your Brain product repo, the agents come with you.
 
 ---
 
@@ -72,7 +72,7 @@ All plugin-provided commands are invokable via Claude Code's plugin namespace:
 
 > **Tip:** type `/` in Claude Code and start typing `brain` — autocomplete will surface every available command. You don't have to remember the exact names.
 
-You never see the agent prompts, the 54 Brain canon skills' internals, the workflow YAMLs, or the hook scripts. You see invokable skills, status, and rendered artifacts.
+You never see the agent prompts, the Brain canon skills' internals, the workflow YAMLs, or the hook scripts. You see invokable skills, status, and rendered artifacts.
 
 ---
 
@@ -80,8 +80,8 @@ You never see the agent prompts, the 54 Brain canon skills' internals, the workf
 
 | Role | Persona | Pipeline stage(s) |
 |------|---------|-------------------|
-| CTO Advisor (shadow CTO) | *Rishabh's shadow* | 1, 6 |
-| Dynamic Persona Generator | *Runtime-spawned ×3 in Stage 1* | 1 |
+| CTO Advisor (shadow CTO) | **Rohan** | 1, 6 |
+| Dynamic Persona Generator | *Runtime-spawned 0–2 in Stage 1* | 1 |
 | Architect | **Aryan** | 2 |
 | Backend Developer | **Vikram** | 3 |
 | Frontend (Web) Developer | **Ananya** | 3 |
@@ -100,7 +100,7 @@ Names are continuous across runs and across teammates. Vikram is always Vikram, 
 ## The 8-stage pipeline
 
 ```
-1. CTO Advisor (intake) + 3 dynamic personas
+1. Rohan (CTO Advisor, intake) + 0–2 dynamic personas (by complexity)
 2. Architect (Aryan)
 3. Parallel Development — Vikram (BE) ∥ Ananya (FE) ∥ Karan (Mobile) ∥ Maya (AI)
 4. Security (Shreya) — VETO on CRITICAL/HIGH + India compliance

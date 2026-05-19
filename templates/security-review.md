@@ -20,6 +20,7 @@
 | No HIGH findings | {{NO_HIGH}} | |
 | No India compliance violation | {{NO_INDIA_VIOLATION}} | DLT / NCPR / DND / calling hours / recording consent |
 | Every mutation endpoint guarded (`requireRole` + `requireWorkspaceMember` + Zod + `workspace_id` assertion) | {{MUTATION_GUARDED}} | |
+| Every new MCP tool / agent-emitted action audited (blast radius classified, human gate on irreversible/financial, idempotency, arg validation) | {{ACTIONS_AUDITED}} | per [`agentic-actions-auditor`](../skills/agentic-actions-auditor/SKILL.md) |
 | Every new MCP tool tenant-checked + Decision Log middleware + auth scope | {{MCP_TENANT_CHECKED}} | |
 | Every new connector: OAuth AES-256-GCM + webhook signature + per-brand KMS key | {{CONNECTORS_TOKEN_ENCRYPTED}} | |
 | PII not in logs (sampled log lines reviewed) | {{PII_NOT_IN_LOGS}} | |
@@ -92,6 +93,18 @@
 | **Original bounce ts** | {{ORIG_BOUNCE_TS}} |
 | **Re-review ts** | {{REREVIEW_TS}} |
 | **Original findings re-checked** | {{REREVIEW_NOTES}} |
+
+---
+
+## Self-review (before handoff)
+
+> Walk this before invoking Stage 5. Per [system-prompt §Plan-first + Self-review](../prompts/system-prompt.md).
+
+- [ ] Every finding has a file path + line and a verification snippet (not "looks unsafe")
+- [ ] Secrets grep run on the staged diff; result captured
+- [ ] Every CRITICAL/HIGH has an explicit bounce target (no silent pass)
+- [ ] Scan output captured for each tool above (not assumed clean)
+- [ ] If any agent-emitted action was added, the agentic-actions-auditor classification is recorded
 
 ---
 

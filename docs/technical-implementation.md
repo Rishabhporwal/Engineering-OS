@@ -62,13 +62,13 @@ Append-only canonical list of every `req_id` ever seen.
 ### Example: stage advancement
 
 ```json
-{"ts":"2026-05-15T09:31:00Z","actor":"cto-advisor","type":"stage-advance","req_id":"feat-abandoned-cart-recovery-gcc","from_stage":1,"to_stage":2,"to_owner":"architect","rationale":"Requirement is clear; 3 personas concurred; paradigm should be SQL (RFM lookup + rule-based)."}
+{"ts":"2026-05-15T09:31:00Z","actor":"cto-advisor","type":"stage-advance","req_id":"feat-abandoned-cart-recovery-gcc","from_stage":1,"to_stage":2,"to_owner":"architect","rationale":"Requirement is clear; 2 personas concurred; paradigm should be SQL (RFM lookup + rule-based)."}
 ```
 
 ### Example: persona spawn
 
 ```json
-{"ts":"2026-05-15T09:18:00Z","actor":"cto-advisor","type":"persona-spawn","req_id":"feat-abandoned-cart-recovery-gcc","personas":["compliance-officer","regional-expansion-officer","data-quality-skeptic"]}
+{"ts":"2026-05-15T09:18:00Z","actor":"cto-advisor","type":"persona-spawn","req_id":"feat-abandoned-cart-recovery-gcc","persona_count":2,"personas":["compliance-officer","regional-expansion-officer"]}
 ```
 
 ### Example: bounce
@@ -116,17 +116,18 @@ V2 adds a `/digest` slash command that wraps these queries into one weekly repor
 .engineering-os/runs/2026-05-15T09-15-22Z__feat-abandoned-cart-recovery-gcc__rishabh/
 ├── 01-requirement.md                  # raw Founder text (from /requirement)
 ├── 02-cto-advisor-review.md           # Stage 1 output
-├── 03-persona-compliance-officer.md
-├── 04-persona-regional-expansion-officer.md
-├── 05-persona-data-quality-skeptic.md
+├── 03-persona-compliance-officer.md          # Stage 1 — persona 1 of 2 (0–2 by complexity)
+├── 04-persona-regional-expansion-officer.md  # Stage 1 — persona 2 of 2
 ├── 06-architecture-plan.md            # Stage 2 output
-├── 07-dev-report-vikram.md            # Stage 3 — BE track
-├── 08-dev-report-maya.md              # Stage 3 — AI track
-├── 09-security-review.md              # Stage 4 output (PASS or FAIL)
+├── 07-handoff-to-developer.md         # Stage 2 — calibrated dev brief
+├── 08-developer-report-vikram.md      # Stage 3 — BE track (08 + persona suffix)
+├── 08-developer-report-maya.md        # Stage 3 — AI track (parallel; suffix avoids collision)
+├── 09-security-review.md              # Stage 4 output (PASS or BOUNCE)
 ├── 10-qa-review.md                    # Stage 5 output
 ├── 11-final-review.md                 # Stage 6 output
 ├── 12-founder-decision.json           # Stage 7
-└── 13-deployment-report.md            # Stage 8
+├── 13-deployment-report.md            # Stage 8
+└── 14-retro.md                        # Stage 6 retro → lessons-learned registry
 ```
 
 Numeric prefix preserves chronological ordering even when filenames don't sort alphabetically by stage.
@@ -175,8 +176,8 @@ Same entry shape as the per-agent journal, but **every agent** that touches the 
 ## 2026-05-15T09:14:00Z — Rishabh (founder) — submission
 > Add abandoned cart recovery for COD orders in the GCC region. Use the existing RFM segment. Don't break the India path.
 
-## 2026-05-15T09:31:00Z — CTO Advisor — Stage 1 complete (ADVANCE)
-3 personas spawned: compliance-officer, regional-expansion-officer, data-quality-skeptic.
+## 2026-05-15T09:31:00Z — Rohan (cto-advisor) — Stage 1 complete (ADVANCE)
+Persona count = 2 spawned: compliance-officer, regional-expansion-officer.
 All concurred. One concern from compliance-officer: GCC has no equivalent of DLT/NCPR, but UAE does have time-window constraints for outbound calls (use UAE-specific window 09:00–22:00 GST). Paradigm recommended: SQL. Handed to Aryan.
 
 ## 2026-05-15T11:02:00Z — Aryan (architect) — Stage 2 complete
@@ -201,16 +202,14 @@ When `/recall feat-abandoned-cart-recovery-gcc` is invoked, the agent prints thi
 
 ## Slash command body example
 
-`commands/requirement.md`:
+`skills/requirement/SKILL.md` (a command-skill — invoked by a human typing `/brain-engineering-os:requirement <text>`):
 
 ```markdown
 ---
 name: requirement
 description: Submit a new requirement to the Engineering OS pipeline (Stage 1)
-arguments:
-  - name: text
-    description: The requirement text in natural language
-    required: true
+disable-model-invocation: true
+argument-hint: <requirement text in natural language>
 ---
 
 You are processing a new requirement submission from the Founder.
@@ -256,13 +255,13 @@ A complete trace from Founder submission to production deploy, showing what file
 | Time | Action | Files written |
 |------|--------|---------------|
 | Day 1 09:14 | Founder runs `/requirement "Abandoned cart recovery for COD orders in GCC"` | `01-requirement.md`, `state/active.json` updated |
-| Day 1 09:18 | CTO Advisor reads canon + spawns 3 personas (parallel) | (in-memory) |
-| Day 1 09:24 | 3 persona reviews returned | `03-persona-*.md` (×3) |
+| Day 1 09:18 | Rohan (CTO Advisor) reads canon + spawns 2 personas (parallel) | (in-memory) |
+| Day 1 09:24 | 2 persona reviews returned | `03-04-persona-*.md` (×2) |
 | Day 1 09:31 | CTO Advisor synthesis + ADVANCE | `02-cto-advisor-review.md`, journal entry, decision-log entry, state status → `architect` |
 | Day 1 09:32 | Aryan picks up Stage 2 | (in-memory) |
 | Day 1 11:02 | Aryan plan complete | `06-architecture-plan.md`, journal, state → `dev-parallel`, tracks tagged `@vikram` + `@maya` |
 | Day 1–2 | Vikram + Maya implement in parallel | code, tests, migrations + journal entries per task |
-| Day 2 17:30 | Both post READY-FOR-SECURITY | `07-dev-report-vikram.md`, `08-dev-report-maya.md`, state → `security-review` |
+| Day 2 17:30 | Both post READY-FOR-SECURITY | `08-developer-report-vikram.md`, `08-developer-report-maya.md`, state → `security-review` |
 | Day 2 17:35 | Shreya reads + scans | (in-memory; vuln scan output captured to artifacts/) |
 | Day 2 18:01 | Shreya finds HIGH: missing UAE window assertion → BOUNCE | `09-security-review.md` (FAIL), journal, decision-log, state → `dev-parallel` (security-bounced) |
 | Day 3 09:40 | Vikram fixes + re-handoff | journal entry, state → `security-review` again |
@@ -318,7 +317,7 @@ In practice: agents check `state/active.json` immediately after pulling, and the
 ## Performance + scaling
 
 - **Repo size:** Journals + decision log accrete forever. At 50 features/month, expect ~5 MB/year of markdown + JSONL. Comfortably git-friendly indefinitely.
-- **Large artifacts:** Code diffs, screenshots, perf reports — write to `artifacts/<req-id>/`. If >1 MB, [git LFS](https://git-lfs.com) is recommended (assumption A4 in [folder-context-summary.md](folder-context-summary.md)).
+- **Large artifacts:** Code diffs, screenshots, perf reports — write to `artifacts/<req-id>/`. If >1 MB, [git LFS](https://git-lfs.com) is recommended.
 - **Search:** `grep` over the decision log is fast at <100 MB. V2 adds an indexed query (`/digest`, `/recall <topic>`).
 
 ---
@@ -328,11 +327,11 @@ In practice: agents check `state/active.json` immediately after pulling, and the
 | Need | How |
 |------|-----|
 | Add an 11th agent | Create `agents/<role>.md`; add to skill matrix; update RACI; create `.engineering-os/memory/agents/<role>.journal.md` starter |
-| Add a 54th skill | Drop `skills/<name>/SKILL.md`; rerun `hooks/on-session-start.sh` to sync mirror; add to `skill-mapping-matrix.md` |
-| Add an 11th command | Create `commands/<cmd>.md` |
+| Add a domain skill | Drop `skills/<name>/SKILL.md` (auto-discovered, no sync step); add it to `skill-mapping-matrix.md` + the owning agent's owned-skill list. See `docs/skill-authoring-guide.md`. |
+| Add a new command | Create `skills/<cmd>/SKILL.md` with `disable-model-invocation: true` |
 | Add a hook | Append to `hooks/hooks.json`; create the script; make executable |
-| Change a quality gate | Edit `docs/quality-gates.md`; update gate-check logic in `hooks/on-pre-handoff.sh`; update agent prompts that cite the gate |
-| Add a Founder-approval channel (Slack) | Set `SLACK_WEBHOOK_URL`; extend `commands/approve.md` to post; no plugin internals change |
+| Change a quality gate | Edit `docs/quality-gates.md`; update the agent prompts that enforce the gate (enforcement is in the agents, not the hooks) |
+| Add a Founder-approval channel (Slack) | Set `SLACK_WEBHOOK_URL`; extend `skills/approve/SKILL.md` to post; no plugin internals change |
 | Add a region (GCC, US, EU) | Drop a new RegionAdapter section in `docs/business-context.md` and `docs/technical-context.md`; no plugin internals change |
 
 ---

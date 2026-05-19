@@ -11,14 +11,14 @@ Brain uses **Supabase Auth** (JWT + refresh token) as the identity primitive. Th
 
 | Surface | Requirement |
 |---|---|
-| Web (Next.js BFF, Ananya, TECH/07) | Browser JS NEVER sees the access token. Server components read it from an httpOnly cookie and add it as `Authorization: Bearer` for the BFF → api-gateway hop. |
-| Mobile (RN + Expo, Karan, TECH/10) | Tokens live in **expo-secure-store** (Keychain on iOS, Keystore on Android). NEVER AsyncStorage. |
-| api-gateway (Vikram, TECH/06) | Validates JWT on every request, including MCP. Refresh is a dedicated endpoint with strict rate limit. |
+| Web (Next.js BFF, Ananya) | Browser JS NEVER sees the access token. Server components read it from an httpOnly cookie and add it as `Authorization: Bearer` for the BFF → api-gateway hop. |
+| Mobile (RN + Expo, Karan) | Tokens live in **expo-secure-store** (Keychain on iOS, Keystore on Android). NEVER AsyncStorage. |
+| api-gateway (Vikram) | Validates JWT on every request, including MCP. Refresh is a dedicated endpoint with strict rate limit. |
 | Decision Log / Audit (Shreya) | Session events (issued, refreshed, revoked, invalidated-all) are audit-logged. |
 
 ## Don't reinvent — use Supabase Auth as the primitive
 
-Supabase ships HS256 JWT + a refresh-token table backed by Postgres. Brain wires around it; we don't roll our own JWT library (see `memory/lessons.md` — slice-3 anti-pattern: don't install `jsonwebtoken`).
+Supabase ships HS256 JWT + a refresh-token table backed by Postgres. Brain wires around it; we don't roll our own JWT library (see `.engineering-os/lessons-learned.md` — slice-3 anti-pattern: don't install `jsonwebtoken`).
 
 ```typescript
 // JWT verification (api-gateway preHandler hook)
@@ -143,10 +143,10 @@ After global signout, mobile clients receive 401 on next protected call, clear s
 
 | Concern | Owner | Reference |
 |---|---|---|
-| api-gateway JWT verification + refresh endpoint | **Vikram** | TECH/06 §"Auth" |
-| Next.js BFF cookie flow | **Ananya** | TECH/07 §"BFF + auth" |
-| Mobile secure-store + refresh | **Karan** | TECH/10 §"Token storage" |
-| Revocation, audit, compliance | **Shreya** | TECH/09 §"Audit" |
-| Composite session events feed | **Aarav** (incident response) | TECH/09 |
+| api-gateway JWT verification + refresh endpoint | **Vikram** | canon/BRAIN_TECHNICAL.md (auth) |
+| Next.js BFF cookie flow | **Ananya** | canon/BRAIN_TECHNICAL.md (BFF + auth) |
+| Mobile secure-store + refresh | **Karan** | canon/BRAIN_TECHNICAL.md (token storage) |
+| Revocation, audit, compliance | **Shreya** | canon/BRAIN_TECHNICAL.md (audit) |
+| Composite session events feed | **Jatin** (incident response) | canon/BRAIN_TECHNICAL.md |
 
 Related Brain skills: `security-baseline` (broader auth posture), `api-rate-limiting` (refresh-storm protection), `defense-in-depth-validation` (never trust client-supplied `workspace_id`).

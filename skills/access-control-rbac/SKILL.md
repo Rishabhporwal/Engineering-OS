@@ -12,8 +12,8 @@ Brain has multiple authorization surfaces (Owner approves consent transitions; A
 | Surface | Authorization concern |
 |---|---|
 | Web dashboard (tRPC) | Analyst sees revenue but can't change campaign budget; Admin can; Owner can approve agency invitations |
-| MCP write tools (TECH/13) | Each tool declares required scope; external partner keys are scoped (read-only by default) |
-| Outbound writebacks (Sahil → vendor) | Some brands disable writebacks entirely; per-brand toggle |
+| MCP write tools (see canon/BRAIN_TECHNICAL.md) | Each tool declares required scope; external partner keys are scoped (read-only by default) |
+| Outbound writebacks (Maya → vendor) | Some brands disable writebacks entirely; per-brand toggle |
 | Decision Log "approver" field | Owner-only actions audit-logged with actor |
 | Agency multi-workspace | One user → N workspaces with different roles in each |
 
@@ -95,7 +95,7 @@ export const adsRouter = router({
 
 If a future bug skips the middleware, RLS + the Decision Log audit still catch it (`defense-in-depth-validation`).
 
-## MCP tool scopes (TECH/13)
+## MCP tool scopes (see canon/BRAIN_TECHNICAL.md)
 
 Each MCP write tool declares the role it requires; external partner API keys carry scopes (read-only by default; write scopes require Owner approval).
 
@@ -175,10 +175,10 @@ The audit is also what makes the system reviewable for SOC 2 T1 (Phase 4).
 
 | Concern | Owner | Reference |
 |---|---|---|
-| Role taxonomy + middleware | **Vikram** + **Shreya** | TECH/06 §"Auth" + this skill |
-| Postgres RLS policy review | **Shreya** + Aryan | TECH/09 §"Multi-tenancy" |
-| MCP tool scope catalogue | **Vikram** + **Maya** | TECH/13 §"Scopes" |
-| Agency multi-workspace flow | **Vikram** + **Ananya** | TECH/06 + TECH/07 |
-| Audit + SOC 2 prep (Phase 4) | **Shreya** + Jatin | TECH/09 §"Audit" |
+| Role taxonomy + middleware | **Vikram** + **Shreya** | canon/BRAIN_TECHNICAL.md (auth) + this skill |
+| Postgres RLS policy review | **Shreya** + Aryan | canon/BRAIN_TECHNICAL.md (multi-tenancy) |
+| MCP tool scope catalogue | **Vikram** + **Maya** | canon/BRAIN_TECHNICAL.md (scopes) |
+| Agency multi-workspace flow | **Vikram** + **Ananya** | canon/BRAIN_TECHNICAL.md |
+| Audit + SOC 2 prep (Phase 4) | **Shreya** + Jatin | canon/BRAIN_TECHNICAL.md (audit) |
 
-Related Brain skills: `session-management` (JWT + cookies), `defense-in-depth-validation` (layer 2 + 3), `security-baseline` (broader posture), `mcp-protocol` (tool scopes).
+Related Brain skills (security trio): `security-baseline` (the index + Shreya's gate; this skill is its OWASP A01 deep dive), `defense-in-depth-validation` (the multi-tenant `workspace_id` four-layer pattern that backstops every RBAC check). Also: `session-management` (JWT + cookies), `mcp-protocol` (tool scopes).

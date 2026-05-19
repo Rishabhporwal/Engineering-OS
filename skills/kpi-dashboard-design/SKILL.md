@@ -9,7 +9,7 @@ Brain **is** a dashboard. The discipline of which KPI to show, where it lives in
 
 ## Why this matters for Brain
 
-Brain's surface split (TECH/07 + TECH/10):
+Brain's surface split (see canon/BRAIN_TECHNICAL.md):
 
 | Surface | Time on task | Density | Owner |
 |---|---|---|---|
@@ -21,7 +21,7 @@ Same KPIs, different rendering. The web's CM Waterfall is a 12-cell drill-down v
 
 ## Brain's KPI registry is canonical — NEVER reinvent
 
-Every metric Brain shows lives in `packages/lib-metrics` (TS) + `pylibs/brain_metrics` (Python). The formulas are versioned, parity-tested (`mutation-testing` 90%+), and documented in TECH/03. **You do not invent a new metric in a dashboard.** If a real new KPI is needed, propose it to Kabir → Aryan → enter the registry → THEN render it.
+Every metric Brain shows lives in `packages/lib-metrics` (TS) + `pylibs/brain_metrics` (Python). The formulas are versioned, parity-tested (`mutation-testing` 90%+), and documented in canon/BRAIN_TECHNICAL.md. **You do not invent a new metric in a dashboard.** If a real new KPI is needed, propose it to Maya → Aryan → enter the registry → THEN render it.
 
 ### The Brain canon (from `memory/business-context.md`)
 
@@ -103,7 +103,7 @@ const badColor  = 'text-rose-600 dark:text-rose-400';         // problem
 | Data shape | Chart | Library |
 |---|---|---|
 | Trend over time | Line (sparkline for cards; full Visx for drill-down) | Visx |
-| Composition (CM1 → CM2 → CM3) | **Waterfall** (the Brain hero chart) | Visx (custom build, TECH/07 §"Waterfall") |
+| Composition (CM1 → CM2 → CM3) | **Waterfall** (the Brain hero chart) | Visx (custom build, canon/BRAIN_TECHNICAL.md) |
 | Cohort retention | **Heatmap** 24×36 grid | Visx |
 | Mix-by-segment | Stacked bar | Visx |
 | Distribution (AOV, pincode reliability) | Histogram | Visx |
@@ -121,7 +121,7 @@ const badColor  = 'text-rose-600 dark:text-rose-400';         // problem
 | Dates | `DD MMM` (e.g., "13 May") — never `MM/DD/YYYY` |
 | Time | 24-hour for system events, 12-hour `am/pm` for user-facing (Morning Brief at "7:00 am IST") |
 | GST | Every revenue/margin display is GST-net. If the brand wants gross, expose a toggle — default is net |
-| Festivals | Festival overlay band on every time-series (TECH/04 §festival); Diwali, Holi, Eid, Rakhi, Christmas |
+| Festivals | Festival overlay band on every time-series (canon/BRAIN_TECHNICAL.md); Diwali, Holi, Eid, Rakhi, Christmas |
 | Pincode | Render with state + tier (e.g., "411014 · Pune · Tier-2"); reliability score color-coded |
 | Phone numbers | Mask middle digits if Phase 3 inbox shows customer phone (PII discipline) |
 
@@ -170,11 +170,11 @@ Mobile cells don't drill. They show "View on desktop →" if the user taps. Kara
 
 | Concern | Owner | Reference |
 |---|---|---|
-| Web dashboard layout + drill-down | **Ananya** | TECH/07 §"Frontend" |
-| Mobile Morning Brief + dashboard | **Karan** | TECH/10, `morning-brief-mobile` |
-| Canonical metric registry | **Kabir** | TECH/03, `lib-metrics` + `brain_metrics` |
-| India-specific rendering | **Ananya** + **Kabir** | TECH/04 §"UI" |
-| Empty/loading states | **Ananya** + **Karan** | TECH/07 §"States" |
-| Performance budget (LCP/INP) | **Ananya** | `web-performance-optimization` |
+| Web dashboard layout + drill-down | **Ananya** | canon/BRAIN_TECHNICAL.md (frontend) |
+| Mobile Morning Brief + dashboard | **Karan** | canon/BRAIN_TECHNICAL.md, `morning-brief-mobile` |
+| Canonical metric registry | **Maya** | canon/BRAIN_TECHNICAL.md, `lib-metrics` + `brain_metrics` |
+| India-specific rendering | **Ananya** + **Maya** | canon/BRAIN_TECHNICAL.md (UI) |
+| Empty/loading states | **Ananya** + **Karan** | canon/BRAIN_TECHNICAL.md (states) |
+| Performance budget (LCP/INP) | **Ananya** | `web-performance` |
 
-Related Brain skills: `frontend-web`, `frontend-mobile`, `morning-brief-mobile`, `web-performance-optimization`, `india-commerce-economics` (the rules behind India-native rendering), `engineering-discipline` (Simplicity First applies to dashboard design too).
+Related Brain skills: `frontend-web`, `frontend-mobile`, `morning-brief-mobile`, `web-performance`, `india-commerce-economics` (the rules behind India-native rendering), `engineering-discipline` (Simplicity First applies to dashboard design too).

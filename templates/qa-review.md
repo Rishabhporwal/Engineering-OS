@@ -108,6 +108,28 @@
 
 ---
 
+## Skipped-gates re-verified
+
+> If any upstream gate was SKIPPED (e.g. a Stage 4 security fast-pass), re-run a minimal version of it here. Leave empty ONLY if nothing upstream was skipped. (Per quality-gates W13 — QA re-runs skipped gates.)
+
+| Skipped gate | Re-run command | Output snippet | Verdict |
+|---|---|---|---|
+| {{SKIPPED_GATE_OR_NONE}} | `{{RERUN_CMD}}` | {{RERUN_OUTPUT}} | {{RERUN_VERDICT}} |
+
+---
+
+## Self-review (before handoff)
+
+> Walk this before invoking Stage 6. Per [system-prompt §Plan-first + Self-review](../prompts/system-prompt.md).
+
+- [ ] Every gate verdict + finding above is backed by captured command output (no "looks fine")
+- [ ] Real-network smoke actually ran on a real port (not in-process inject)
+- [ ] Metric registry parity check run (if any metric touched)
+- [ ] Any upstream SKIPPED gate re-verified in the section above
+- [ ] In-lane DoD walked line-by-line; each PASS/FAIL has evidence
+
+---
+
 ## Handoff
 
 - **If PASS:** CTO Advisor (Stage 6).

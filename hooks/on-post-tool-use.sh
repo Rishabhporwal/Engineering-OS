@@ -24,7 +24,21 @@ TOOL=$(echo "$PAYLOAD" | jq -r '.tool_name // .toolName // empty' 2>/dev/null ||
 
 # Only care about side-effect tools
 case "$TOOL" in
-  Edit|Write|Bash) ;;
+  Edit|Write) ;;
+  Bash)
+    # Skip read-only Bash — journaling `ls`/`grep`/`date`/`git status` is pure noise
+    # (the "80+ junk entries" problem). Only journal Bash that can mutate state.
+    CMD=$(echo "$PAYLOAD" | jq -r '.tool_input.command // empty' 2>/dev/null | head -c 300)
+    FIRST=$(printf '%s' "$CMD" | sed -E 's/^[[:space:]]*//' | awk '{print $1}')
+    case "$FIRST" in
+      ls|cat|grep|rg|find|head|tail|echo|pwd|which|date|wc|stat|tree|env|printenv|less|more|jq|sort|uniq|cut|diff|cd|export|true)
+        exit 0 ;;
+    esac
+    # git read-only subcommands produce no state change worth journaling
+    if printf '%s' "$CMD" | grep -qE '^[[:space:]]*git[[:space:]]+(status|diff|log|show|branch|remote|rev-parse|ls-files|ls-remote|config[[:space:]]+--get)'; then
+      exit 0
+    fi
+    ;;
   *) exit 0 ;;
 esac
 

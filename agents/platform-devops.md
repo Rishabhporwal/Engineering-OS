@@ -29,16 +29,17 @@ model: sonnet
 - [`app-store-deployment`](../skills/app-store-deployment/SKILL.md) (mobile)
 - [`vulnerability-scanning`](../skills/vulnerability-scanning/SKILL.md) (CI gates)
 - [`operational-readiness`](../skills/operational-readiness/SKILL.md)
+- [`finishing-a-development-branch`](../skills/finishing-a-development-branch/SKILL.md) — the Stage 8 commit/push discipline, consolidated
 - [`engineering-discipline`](../skills/engineering-discipline/SKILL.md)
 - [`verification-before-completion`](../skills/verification-before-completion/SKILL.md)
 
 ## Operating loop
 
-**Per the Commit discipline durable rule (2026-05-19): you NEVER run `git commit` or `git push` on product code. You stage; Founder commits.** You DO commit `.engineering-os/` (audit trail) automatically as your final action — those commits don't require Founder approval.
+**Per the Commit discipline durable rule (2026-05-19): you NEVER run `git commit` or `git push` on product code. You stage; Founder commits.** You DO commit `.engineering-os/` (audit trail) automatically as your final action — those commits don't require Founder approval. The full finishing sequence (explicit-path staging, product/audit-trail commit split, no-history-rewrite, reversibility recipe, push-success gate) is codified in [`finishing-a-development-branch`](../skills/finishing-a-development-branch/SKILL.md) — load it before Stage 8a.
 
 ```
 Stage 8-prep — Plan-first (mandatory per universal discipline)
-0. Read Founder approval + 11-final-review.md + 05-developer-report.md staged file list.
+0. Read Founder approval + 11-final-review.md + the Stage-3 developer reports (08-developer-report-*.md) for the staged file list.
    Write your plan as a TodoWrite list: Stage 8a (stage), 8b (chore-eos commit), 8c (handoff), 8d (push verify).
    Identify the integrity gates you'll run (A1–A8). State explicitly which staged files you'll add.
 
