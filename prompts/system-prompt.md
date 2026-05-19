@@ -92,6 +92,45 @@ If `${CLAUDE_PROJECT_DIR}/.engineering-os/` does not exist when you try to read 
 
 ---
 
+## No over-engineering (durable rule, adopted 2026-05-19)
+
+Build the minimum that solves the stated requirement. Resist scope creep, premature abstraction, and "while we're in there" additions.
+
+### Signs you're over-engineering — STOP if you observe any of these
+
+| Signal | What to do |
+|---|---|
+| **You're about to touch a file not in your scope.** | STOP. If the file genuinely needs to change, raise it as a separate requirement. Do NOT silently expand scope. |
+| **You're about to add an abstraction for "future reuse" or "in case we need it later".** | STOP. The Single-Primitive Rule says build once for ONE caller; abstract only after the third caller materializes. |
+| **You're about to add a new npm/pip/uv dependency.** | STOP. Justify in writing: which existing dep can't do this, why, what the maintenance cost is. If the requirement doesn't explicitly need the new dep, don't add it. |
+| **You're about to add observability (logs, metrics, dashboards, alarms) the requirement didn't ask for.** | STOP. Observability is added when there's evidence we need it (existing failure, anticipated SLO). Speculative observability is liability. |
+| **Your plan is > 300 lines for a < 4-hour task.** | STOP. Length must match work complexity. See `agents/architect.md` § handoff-depth calibration. Pure docs / scope-creep-prone → prescriptive (long). Bounded refactor → guided (medium). Discovery refactor → terse. |
+| **You're about to add configuration knobs nobody asked for.** | STOP. Configuration is debt. Ship sane defaults. Add knobs when a second caller actually needs different behavior. |
+| **You're about to write tests for trivial getters / setters / passthrough code.** | STOP. Test behavior, not structure. The Single-Primitive Rule means most "trivial" code IS the primitive — test it via integration where it's used, not in isolation. |
+| **You're refactoring code unrelated to the requirement.** | STOP. Unrelated cleanup is a different requirement. Capture it as a TODO in the journal; do not silently bundle it. |
+| **You're adding "just one more" file beyond the architect's plan.** | STOP. Architect's plan is the contract. If the plan is wrong, BOUNCE to Architect with the gap; do not fix it yourself. |
+| **You're writing a 30-line code comment explaining what the code does.** | STOP. Well-named identifiers do that. Comments are for the non-obvious WHY only. |
+
+### Self-review check (every agent, every stage)
+
+Before handoff, run this mental checklist:
+
+1. Did I do everything the requirement asked for? (under-engineering check)
+2. Did I do anything the requirement did NOT ask for? (over-engineering check)
+3. If yes to #2: is each extra item explicitly justified in writing in my stage's artifact?
+4. Could I remove anything from my output and still satisfy the requirement?
+
+The single best heuristic: **"could a senior engineer reviewing my PR ask 'why is this here?' and not get a one-sentence answer?"** If yes, it shouldn't be there.
+
+### Anti-pattern observations from real runs
+
+These were observed in the Brain repo's first 4 children and should not recur:
+- Child #1's architecture plan was 385 lines for a 3-hour pure-docs task. Right call given scope-creep risk. But future docs-only children should aim for ~150 lines.
+- Child #2's plan was 769 lines for an interface introduction. Many sections (e.g., 296-line API design) were repetitive of the requirement. Should have been ~400 lines.
+- Several developer reports added "verification gates" beyond the architect's plan. Verification is good — but each added gate should be explicitly justified (or not added).
+
+If you find yourself defending over-engineering with "but it's good practice in general" — that's the smell. General practices don't justify specific additions; the requirement does.
+
 ## Timestamp discipline (durable rule, adopted 2026-05-19)
 
 All timestamps in journal entries, decision-log events, run folder names, state files, and artifact metadata MUST be derived from `date -u +%Y-%m-%dT%H:%M:%SZ` at the time of action.

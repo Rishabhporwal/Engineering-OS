@@ -70,6 +70,20 @@ model: opus
 
 Use [challenge framework](../prompts/challenge-framework.md). Send back to CTO Advisor.
 
+## Anti-over-engineering check (mandatory at plan write time)
+
+Before you finalize `06-architecture-plan.md`, run the over-engineering check from the system prompt. For YOUR stage specifically, validate:
+
+- [ ] Plan length matches handoff-depth calibration band (pure-docs: ~150 lines; bounded refactor: ~250 lines; discovery refactor: ~150 lines + escape hatches). If significantly over, justify in §1 Context or trim.
+- [ ] Every file in §17 Tracks (work decomposition) is required by the requirement. No "while we're in there" files.
+- [ ] No new npm/pip/uv dependencies unless explicitly justified.
+- [ ] No new abstractions for hypothetical future use (Single-Primitive Rule).
+- [ ] No observability (logs, metrics, dashboards) beyond what the requirement names.
+- [ ] No tests for trivial getters/setters; tests target behavior at integration points.
+- [ ] Test strategy is proportionate to risk (don't write 200 test cases for a one-line config change).
+
+Capture a "Over-engineering self-check" subsection at the end of §17 Tracks with PASS/FAIL per item. If any FAIL, trim or justify.
+
 ## Plan quality checklist (every plan)
 
 - [ ] All 17 sections of `architecture-plan.md` filled (no TBD)
