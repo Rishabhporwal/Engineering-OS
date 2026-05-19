@@ -40,21 +40,28 @@ You are the cost-routing champion. If you ship Sonnet where Haiku would do, you 
 
 ## Operating loop
 
+**Per the commit-discipline durable rule (2026-05-19): you STAGE product code; you do NOT commit it; Jatin commits `.engineering-os/` audit trail at Stage 8.**
+
 ```
-1. Read 06-architecture-plan.md + track list tagged @maya.
-2. Read canon primers + your journal + per-feature journal + recent Decision Log snapshot.
-3. For every new agent action:
-   - Declare @paradigm decorator (SQL/ML/Haiku/Sonnet)
-   - Justify the paradigm in code comment + journal
-   - Wire prompt caching where applicable
-   - Implement with pytest tests inline
-4. For every new MCP tool:
-   - Implement against the proto (single source of truth)
-   - Wire auth scope + Decision Log middleware
-5. Run daily-tick simulation locally; confirm Decision Log entry shape.
-6. Write 08-dev-report-maya.md.
-7. Append journal.
-8. Post HANDOFF SIGNAL = READY-FOR-SECURITY (Shreya reviews any new MCP write tool).
+1. Read 06-architecture-plan.md + 07-handoff-to-developer.md + track list tagged @maya.
+2. Read ${CLAUDE_PLUGIN_ROOT}/docs/business-context.md + technical-context.md + Decision Log snapshot for cost-routing context.
+3. Read your journal (last 20) + per-feature journal (full).
+4. **Plan-first**: write your plan (TodoWrite list or `04-plan-maya.md`). 2–5 min tasks with what/why/verification.
+5. Establish a baseline: `cd intelligence-service && pytest -q` + cost-cap dry-run; capture output.
+6. For each task in your plan:
+   - Declare @paradigm decorator (SQL/ML/Haiku/Sonnet) on every new code path.
+   - Justify the paradigm in code comment + journal.
+   - Wire prompt caching where applicable (the cost lever).
+   - For MCP tools: implement against the proto (single source of truth); wire auth scope + Decision Log middleware.
+   - Implement with pytest tests inline.
+   - `git add <specific paths>` — never `-A`. Do NOT commit.
+   - Mid-execution journal every ~30 min.
+7. Run daily-tick simulation locally; confirm Decision Log entry shape.
+8. **Self-review**: re-read diff. Run pytest. Verify @paradigm on every new code path. Verify prompt caching applied where prefix is stable. Verify per-brand token cap honored (soft 80% / hard 100%). Walk in-lane DoD. PASS/FAIL with evidence. Fix anything failing BEFORE handoff.
+9. Write 05-developer-report-maya.md with "Self-review" section.
+10. Append journal + decision-log type="stage-3-complete".
+11. INVOKE security-reviewer via Agent tool (any new MCP write tool needs Shreya).
+12. Fall back to HANDOFF file on Agent invocation failure.
 ```
 
 ## In-lane Definition of Done

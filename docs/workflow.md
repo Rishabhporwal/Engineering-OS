@@ -4,6 +4,40 @@ Each stage below specifies: **owner**, **inputs**, **what happens**, **outputs**
 
 ---
 
+## Universal protocol (every stage, every agent)
+
+Per the `Plan-first + Self-review discipline` durable rule (2026-05-19), every stage's owner observes the same three responsibilities:
+
+### 1. Plan-first (at start of every stage)
+
+The owning agent writes its plan-of-work within the first 2–5 minutes of invocation:
+- TodoWrite list (preferred for in-flight tracking), or
+- `<stage-N>-plan.md` file in the run folder (preferred when plan exceeds 10 tasks)
+
+Each plan task has: **what** (1-line action) + **why** (which DoD item it satisfies) + **verification** (how the agent knows it's done).
+
+### 2. Self-review (before handoff)
+
+The owning agent re-reads its own output and walks the in-lane Definition of Done line-by-line before handing off. Captured under a "Self-review" section in the stage's primary artifact. Anything failing must be FIXED before handoff, not deferred to the next agent.
+
+### 3. Explicit handoff via Agent tool
+
+When the stage is genuinely complete and self-reviewed, the agent invokes the next agent via the `Agent` tool — that call IS the handoff:
+
+```
+Agent(
+  description="Stage N+1 <stage-name> for <req_id>",
+  subagent_type="<next-agent-id>",
+  prompt="<context: what the prior stage did, what artifacts exist, what next agent should do>"
+)
+```
+
+Only if the `Agent` invocation fails: fall back to writing a `HANDOFF-TO-<NEXT>.md` file in the run folder + emit `type: handoff-file-fallback` decision-log event. The pipeline becomes "manual-routed" at that point — Founder must invoke the next agent — but state never silently stalls.
+
+These three responsibilities together = **smooth autonomous flow**. The pipeline moves agent-to-agent without Founder prompting between stages. Founder gates remain only at Stage 0 (the original requirement) and Stage 7 (approval, unless delegated).
+
+---
+
 ## Stage 1 — CTO Advisor (intake & brainstorm)
 
 **Owner:** CTO Advisor (shadow agent).

@@ -92,6 +92,55 @@ If `${CLAUDE_PROJECT_DIR}/.engineering-os/` does not exist when you try to read 
 
 ---
 
+## Plan-first + Self-review discipline (durable rule, adopted 2026-05-19)
+
+Every agent owns three responsibilities for every invocation:
+
+### 1. Plan your work BEFORE executing it (mandatory)
+
+Within the first 2–5 minutes of any invocation, you MUST:
+
+- Read your assigned work (requirement, plan, handoff brief — whatever your stage starts from).
+- Write your plan of work as either:
+  - A `TodoWrite` list with 2–5 minute tasks (preferred for in-flight tracking), OR
+  - A `<stage-N>-plan.md` file in the run folder (preferred for plans >10 tasks or that someone else will read).
+- Each task in the plan must have: what (1-line action), why (which DoD item it satisfies), verification (how you'll know it's done).
+
+You may execute the plan; you may NOT skip writing it. "Just doing the work" without planning is forbidden — it's how scope-creep, missed constraints, and unjournalled silence happen.
+
+### 2. Self-review your work BEFORE handing off (mandatory)
+
+Before you invoke the next agent via Agent tool (or write any handoff file), you MUST:
+
+- Re-read your own output as if you were a senior engineer reviewing a stranger's PR.
+- Walk your in-lane Definition of Done line-by-line. Each item: PASS or FAIL with one-line evidence.
+- Run any static check appropriate to your stage:
+  - **Architect**: re-read plan vs requirement; confirm constraints honored; confirm tracks actionable.
+  - **Developer (Vikram/Ananya/Karan/Maya)**: lint + typecheck + tests + real-network smoke. Capture command output.
+  - **Security (Shreya)**: every finding has file path + line; secrets-grep on the staged diff.
+  - **QA (Tanvi)**: every claim has captured command output; skipped-upstream gates re-run.
+  - **CTO Advisor**: paradigm audit + spot-re-run 3 of Tanvi's gates + Single-Primitive sweep + India moat preserved.
+  - **DevOps (Jatin)**: staged set explicit (no `git add -A`); integrity gates all green; deployment report has reversibility recipe.
+- Capture the self-review output in your stage's primary artifact under a "Self-review" section (or equivalent).
+- If your self-review finds anything failing, FIX IT before handing off. Do not pass broken work down the line and expect the next stage to catch it.
+
+### 3. Hand off explicitly via Agent tool (mandatory)
+
+When your stage is genuinely complete and self-reviewed:
+
+- Invoke the next agent via the `Agent` tool. The Agent call IS the handoff:
+  ```
+  Agent(
+    description="<one-line: next stage + req_id>",
+    subagent_type="<next-agent-id>",
+    prompt="<context: what you did, what's in the run folder, what the next agent should do, any caveats they need to know>"
+  )
+  ```
+- Only if the Agent invocation fails or is unavailable: fall back to writing a `HANDOFF-TO-<NEXT>.md` file + emit `type: handoff-file-fallback` decision-log event.
+- Do NOT silently disappear. Do NOT leave state at your stage with no next-step signal. Either the next agent is running, or a HANDOFF file with explicit next-action is on disk, or Founder is paged via `pending-founder-attention.md`.
+
+These three together = "smooth autonomous flow." The pipeline moves agent-to-agent without Founder prompting between stages. Founder gates remain at Stage 7 (approval) and Stage 0 (the original requirement).
+
 ## Commit discipline (durable rule, adopted 2026-05-19)
 
 You may write, edit, and stage product code. **You may NOT run `git commit` on product code.** Definition of "product code" = anything outside `${CLAUDE_PROJECT_DIR}/.engineering-os/`.

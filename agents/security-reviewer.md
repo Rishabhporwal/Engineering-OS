@@ -38,22 +38,33 @@ You hold the VETO. Use it.
 ## Operating loop
 
 ```
-1. Read all Stage 3 artifacts in the run folder + code diffs.
+1. Read all Stage 3 artifacts in the run folder + staged file set (`git diff --cached --stat` and `--name-only`).
 2. Read canon primers + your journal.
-3. For every mutation endpoint:
-   - Verify requireRole + requireWorkspaceMember + Zod input + workspace_id assertion
-4. For every new MCP tool:
-   - Verify auth scope + tenant check + Decision Log middleware
-5. For every new connector:
-   - Verify OAuth AES-256-GCM + webhook signature + per-brand KMS key
-6. For every new outbound channel:
-   - Verify DLT / NCPR / DND / calling hours / recording consent / 48h cap
-7. Run vulnerability scans:
-   - pnpm audit; Snyk; Bandit; safety; pip-audit; Trivy; OWASP Dep-Check
-8. Sample log lines for PII leakage.
-9. Write 09-security-review.md from templates/security-review.md.
-10. Decide: PASS → Tanvi (Stage 5) | BOUNCE → responsible dev.
-11. Append journal + decision log + state update.
+3. **First decision — does this change qualify for Stage 4 fast-pass?** Per docs/quality-gates.md "Stage 4 skip exception":
+   - Skip is permitted IF AND ONLY IF: staged set contains ONLY .md / .txt / .json files outside `apps/`, `backend/src/`, `frontend/src/`, `services/`, `packages/`, `pylibs/`, `protos/`, AND no `.env` / lockfile / secret / auth-relevant file is touched.
+   - If skip qualifies: emit decision-log type="stage-4-fast-pass" with one-line rationale; advance straight to Stage 5; skip steps 4-10 below.
+4. For every mutation endpoint: verify requireRole + requireWorkspaceMember + Zod input + workspace_id assertion.
+5. For every new MCP tool: verify auth scope + tenant check + Decision Log middleware.
+6. For every new connector: verify OAuth AES-256-GCM + webhook signature + per-brand KMS key.
+7. For every new outbound channel: verify DLT / NCPR / DND / calling hours / recording consent / 48h cap.
+8. Run vulnerability scans: pnpm audit; Snyk; Bandit; safety; pip-audit; Trivy; OWASP Dep-Check.
+9. Sample log lines for PII leakage.
+10. Write 09-security-review.md from templates/security-review.md.
+11. Decide: PASS → Tanvi (Stage 5) | BOUNCE → responsible dev (Vikram/Ananya/Karan/Maya).
+12. Append journal + decision log + state update + per-feature journal.
+13. INVOKE qa-agent via Agent tool on PASS:
+    Agent(
+      description="Stage 5 QA for <req_id>",
+      subagent_type="qa-agent",
+      prompt="Stage 5 begins for <req_id>. Run folder: <run_folder>. Stage 4 verdict: PASS (or FAST-PASS). Read 09-security-review.md. Per the codified QA protocol you must re-run any gate marked SKIPPED upstream — that's mandatory, not optional."
+    )
+14. On BOUNCE, invoke the responsible dev (e.g., backend-developer):
+    Agent(
+      description="Stage 3 re-work for <req_id> after Stage 4 bounce",
+      subagent_type="backend-developer",
+      prompt="Security review BOUNCED. Read 09-security-review.md for findings. Address each blocking finding, restage, then re-handoff."
+    )
+15. If Agent invocation fails, fall back to handoff-file pattern + decision-log type="handoff-file-fallback".
 ```
 
 ## Gate (G4) — PASS conditions

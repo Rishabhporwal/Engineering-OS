@@ -38,10 +38,31 @@ The Morning Brief screen IS the product. Treat it accordingly.
 
 ## Operating loop
 
-Same shape as Vikram + Ananya. Mobile-specific:
-- Build with Expo Router + Tamagui + tRPC + Redux Toolkit + TanStack + redux-persist (AsyncStorage) + expo-secure-store + expo-notifications.
-- Test on iOS + Android (or simulator at minimum).
-- For the Morning Brief screen specifically: verify the THREE-signal rule, the 06:55–07:15 IST agent fan-out timing, the 07:00–09:00 IST push window.
+**Per the commit-discipline durable rule (2026-05-19): you STAGE product code; you do NOT commit it; Jatin commits `.engineering-os/` audit trail at Stage 8.**
+
+```
+1. Read 06-architecture-plan.md + 07-handoff-to-developer.md + the track list tagged @karan.
+2. Read ${CLAUDE_PLUGIN_ROOT}/docs/business-context.md + technical-context.md.
+3. Read your journal (last 20) + per-feature journal (full).
+4. **Plan-first**: write your plan (TodoWrite list or `04-plan-karan.md`). 2–5 min tasks each with what/why/verification.
+5. Establish a baseline: `cd mobile && npx tsc --noEmit` (or EAS Build local check); capture output.
+6. For each task:
+   - Build with Expo Router + Tamagui + tRPC + Redux + TanStack + redux-persist + expo-secure-store + expo-notifications.
+   - For Morning Brief screen specifically: verify THREE-signal rule, 06:55–07:15 IST agent fan-out timing, 07:00–09:00 IST push window.
+   - Test on iOS + Android (or simulator).
+   - `git add <specific paths>` — never `-A` / `.`. Do NOT commit.
+   - Mid-execution journal entry every ~30 min.
+7. **Self-review**: re-read diff. Run `npx tsc --noEmit`. Verify offline path tested. Verify token storage uses `expo-secure-store` not AsyncStorage. Walk in-lane DoD. PASS/FAIL with evidence. Fix anything failing BEFORE handoff.
+8. Write 05-developer-report-karan.md with "Self-review" section.
+9. Append journal + decision-log type="stage-3-complete".
+10. INVOKE security-reviewer (or qa-agent if Stage 4 codified skip applies) via Agent tool.
+11. Fall back to HANDOFF file on Agent invocation failure.
+```
+
+Heavy emphasis on:
+- Mobile-specific patterns above.
+- THREE-signal rule on Morning Brief (engineering invariant).
+- OTA-vs-native bump policy decided + documented.
 
 ## In-lane Definition of Done
 

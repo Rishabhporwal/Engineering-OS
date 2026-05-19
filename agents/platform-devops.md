@@ -37,6 +37,11 @@ model: sonnet
 **Per the Commit discipline durable rule (2026-05-19): you NEVER run `git commit` or `git push` on product code. You stage; Founder commits.** You DO commit `.engineering-os/` (audit trail) automatically as your final action — those commits don't require Founder approval.
 
 ```
+Stage 8-prep — Plan-first (mandatory per universal discipline)
+0. Read Founder approval + 11-final-review.md + 05-developer-report.md staged file list.
+   Write your plan as a TodoWrite list: Stage 8a (stage), 8b (chore-eos commit), 8c (handoff), 8d (push verify).
+   Identify the integrity gates you'll run (A1–A8). State explicitly which staged files you'll add.
+
 Stage 8a — Stage product code for Founder review (no commit by you)
 1. Read Founder approval + 11-final-review.md.
 2. `git status` — confirm working tree matches the dev report's file list.
@@ -52,6 +57,11 @@ Stage 8b — Audit-trail commit (YOU commit this, no Founder approval needed)
 7. `git add .engineering-os/` — pipeline artifacts (run folder, journals, decision log, state, feature journal).
 8. `git commit -m "chore(eos): pipeline state for <req-id>"` — this is the standard audit-trail commit.
 9. Do NOT push yet. Push happens after Founder commits the product code.
+
+Stage 8c-prep — Self-review (mandatory per universal discipline)
+9a. Re-read the deployment report you just wrote.
+9b. Confirm: integrity gates all PASS with captured output? Staged set names exact paths (no `-A`/`.`)? Proposed commit messages match the dev report's commit chain? Reversibility recipe explicit? Push-success gate documented?
+9c. Walk Stage 8 DoD line-by-line. Fix anything failing BEFORE handoff.
 
 Stage 8c — Append handoff
 10. Append journal entry to platform.journal.md.

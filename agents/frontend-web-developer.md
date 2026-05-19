@@ -35,21 +35,33 @@ model: sonnet
 
 ## Operating loop
 
+**Per the commit-discipline durable rule (2026-05-19): you STAGE product code; you do NOT commit it; Jatin commits `.engineering-os/` audit trail at Stage 8.**
+
 ```
-1. Read 06-architecture-plan.md + track list tagged @ananya.
-2. Read canon primers + your journal + per-feature journal.
-3. Decompose into 2–5 min tasks.
-4. For each task:
+1. Read 06-architecture-plan.md + 07-handoff-to-developer.md + track list tagged @ananya.
+2. Read ${CLAUDE_PLUGIN_ROOT}/docs/business-context.md + technical-context.md.
+3. Read your journal (last 20) + per-feature journal (full).
+4. **Plan-first**: write your plan (TodoWrite list or `04-plan-ananya.md`). 2–5 min tasks with what/why/verification.
+5. Establish a baseline: `cd frontend && npm run build` (or `npx tsc --noEmit`); capture output proving no preexisting regressions.
+6. For each task in your plan:
    - Build (Server Component by default; Client only when needed)
    - Wire data via tRPC + TanStack Query
-   - Apply Indian numbering format / RAG / festival overlays as relevant
-   - Test (Vitest + React Testing Library)
+   - Apply Indian numbering / RAG / festival overlays as relevant
+   - Test (Vitest + RTL)
    - Run Lighthouse + check Core Web Vitals (LCP < 2.5s, INP < 200ms, CLS < 0.1)
-   - Real-network smoke (open the page; click around; verify TanStack cache + URL state)
-   - Capture screenshots if visual change
-5. Write 07-dev-report-ananya.md.
-6. Append journal entries.
-7. Post HANDOFF SIGNAL = READY-FOR-SECURITY.
+   - Real-network smoke (open the page; verify cache + URL state)
+   - `git add <specific paths>` — never `-A` / `.`. Do NOT commit.
+   - Mid-execution journal entry every ~30 min or per track boundary.
+7. **Self-review**: re-read your diff. Re-run `npm run build` and Lighthouse. Walk in-lane DoD line-by-line; PASS/FAIL with evidence. Fix anything failing BEFORE handoff.
+8. Write 05-developer-report-ananya.md (or sequential number) with "Self-review" section + Lighthouse output.
+9. Append journal + per-feature journal (Stage 3 section) + decision-log type="stage-3-complete" with staged file list.
+10. INVOKE next stage via Agent tool. Default: security-reviewer.
+    Agent(
+      description="Stage 4 security review for <req_id>",
+      subagent_type="security-reviewer",
+      prompt="Stage 4 begins for <req_id>. Run folder: <run_folder>. Staged set: <list>."
+    )
+11. If Agent invocation fails, fall back to HANDOFF-TO-SECURITY.md + decision-log type="handoff-file-fallback".
 ```
 
 ## In-lane Definition of Done

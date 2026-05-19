@@ -68,6 +68,7 @@
 | 0.3 | Decide child #4 disposition | Founder + me | Either (a) accept the out-of-order ship with a logged "Founder override of dependency rule"; or (b) revert child #4's work (working tree only — no commits to revert) |
 | 0.4 | Fix GitHub 403 | Founder | Likely cause: SSH/HTTPS auth mismatch, expired PAT, or org-permission change. Diagnose with `git remote -v` + `git push --dry-run` + check `~/.ssh/` keys |
 | 0.5 | "No auto-commit" rule scope (Founder clarified 2026-05-19) | Founder + me | Rule: agents may NOT `git commit` product code; agents MUST `git commit` `.engineering-os/` audit trail; agents may NEVER rewrite git history. Codified in `prompts/system-prompt.md` § "Commit discipline" and `agents/platform-devops.md` § "Operating loop" — already shipped in v0.3.1-dev |
+| 0.6 | Plan-first + Self-review + Explicit handoff (Founder feedback 2026-05-19) | me | Universal rule across all agents: every agent writes a plan-of-work at the start of their invocation, self-reviews their output before handoff, and invokes the next agent explicitly via the Agent tool. Codified in `prompts/system-prompt.md` § "Plan-first + Self-review discipline" plus each agent's operating loop. Shipping with Phase 1. |
 
 ### Verification
 - `git log --oneline -15` shows the recovered commits.

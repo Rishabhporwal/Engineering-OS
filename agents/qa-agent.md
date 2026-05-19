@@ -37,26 +37,37 @@ model: sonnet
 ## Operating loop
 
 ```
-1. Read all artifacts (Stage 3 + Stage 4) + code diffs.
+1. Read all artifacts (Stage 3 + Stage 4) + staged file set (`git diff --cached --stat`).
 2. Read canon primers + your journal.
-3. Run every test category:
+3. **MANDATORY — re-run skipped gates.** If Stage 4 was marked SKIPPED or FAST-PASS, you MUST re-run a minimal version of the Stage 4 verification yourself. At minimum: `git diff --cached | grep -iE 'password|secret|api[_-]?key|bearer|aws_|sk-[a-zA-Z0-9]+|ghp_'` on the staged diff. Capture output. Record in QA review under a new "Stage 4 skip acknowledgment" section.
+4. Run every test category:
    - Unit (pnpm vitest run; pytest)
    - Integration (services + connectors with synthetic + live credentials)
    - Contract (buf breaking; Pact; tRPC schema diff; MCP schema diff)
    - E2E (Cypress web; Detox mobile)
    - Load (k6 — Phase 3+)
    - **Real-network smoke (mandatory for PASS)**
-4. Verify metric registry parity (TS ↔ Python — every metric definition).
-5. Run operational-readiness checklist (root handler, health, port, env vars, native deps).
-6. Run mutation tests on high-stakes paths:
-   - Metric registry
-   - India compliance engine
-   - Decision Log
-7. Re-run any flaky tests 3× to confirm.
-8. Capture ACTUAL command output for every claim — no paraphrasing.
-9. Write 10-qa-review.md from templates/qa-review.md.
-10. Decide: PASS → CTO Advisor (Stage 6) | FAIL → responsible dev.
-11. Append journal + decision log + state update.
+5. Verify metric registry parity (TS ↔ Python — every metric definition).
+6. Run operational-readiness checklist (root handler, health, port, env vars, native deps).
+7. Run mutation tests on high-stakes paths: metric registry, India compliance engine, Decision Log.
+8. Re-run any flaky tests 3× to confirm.
+9. Capture ACTUAL command output for every claim — no paraphrasing.
+10. Write 10-qa-review.md from templates/qa-review.md.
+11. Decide: PASS → CTO Advisor (Stage 6) | FAIL → responsible dev.
+12. Append journal + decision log + state update + per-feature journal.
+13. INVOKE cto-advisor via Agent tool on PASS:
+    Agent(
+      description="Stage 6 final review for <req_id>",
+      subagent_type="cto-advisor",
+      prompt="Stage 6 begins for <req_id>. Run folder: <run_folder>. Read all prior artifacts. Per the codified Stage 6 protocol you MUST spot-re-run at least 3 of Tanvi's gates yourself with captured output (G1 app-code-diff sentinel, G3 provenance/discipline gate, G4 parity round-trip are common picks). Also write 14-retro.md per templates/retro.md."
+    )
+14. On FAIL, invoke responsible dev:
+    Agent(
+      description="Stage 3 re-work for <req_id> after Stage 5 bounce",
+      subagent_type="<dev-persona>",
+      prompt="QA bounced. Read 10-qa-review.md for findings. Address each blocking finding, restage, then re-handoff."
+    )
+15. If Agent invocation fails, fall back to handoff-file pattern + decision-log type="handoff-file-fallback".
 ```
 
 ## Gate (G5) — PASS conditions
