@@ -23,7 +23,30 @@ This command writes `.engineering-os/` + `.gitattributes` into `${CLAUDE_PROJECT
    - `${CLAUDE_PROJECT_DIR}/.engineering-os/runs/.gitkeep`
    - `${CLAUDE_PROJECT_DIR}/.engineering-os/artifacts/.gitkeep`
    - `${CLAUDE_PROJECT_DIR}/.gitattributes` (or append if exists) with the `merge=union` rules for append-only files.
-5. **Write each file** using the canonical templates below. Use the Write tool one file at a time.
+5. **Also create v0.4.0+ directories + files** for the self-improvement substrate:
+   - `${CLAUDE_PROJECT_DIR}/.engineering-os/rule-proposals/.gitkeep` (rule proposals land here)
+   - `${CLAUDE_PROJECT_DIR}/.engineering-os/durable-rules/.gitkeep` (adopted rules land here)
+   - `${CLAUDE_PROJECT_DIR}/.engineering-os/lessons-learned.md` with header:
+     ```
+     # Brain Engineering OS — Lessons Learned
+
+     > Append-only registry. Each entry sourced from a per-child retro (`14-retro.md`).
+     > CTOA reads relevant entries at every Stage 1 intake.
+     > Mutation rule: append only.
+
+     No lessons filed yet. First entry will come from the first child's retro.
+     ```
+   - `${CLAUDE_PROJECT_DIR}/.engineering-os/pending-founder-attention.md` with header:
+     ```
+     # Pending Founder Attention
+
+     > Items here require Founder review. Agents add lines; Founder acts and strikes them through.
+     > Each line names the issue, the artifact path, and the slash command to act.
+
+     (no items)
+     ```
+
+6. **Write each scaffolded file** using the canonical templates below. Use the Write tool one file at a time.
 6. **Stage and commit** (with operator confirmation) — `git add .engineering-os/ .gitattributes && git commit -m "Wire up Engineering OS shared memory"`. Do NOT push — that's the operator's decision.
 7. **Print a summary** of what was created and the suggested next steps:
    - "Push when ready: `git push`"

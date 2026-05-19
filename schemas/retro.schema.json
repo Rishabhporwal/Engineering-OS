@@ -1,0 +1,67 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://brain.pipadacapital.com/engineering-os/schemas/retro.schema.json",
+  "title": "Retro (Stage 6 close)",
+  "description": "Per-child retrospective written by CTO Advisor at the close of Stage 6. Feeds the lessons-learned registry. Append-only.",
+  "type": "object",
+  "required": ["schema_version", "req_id", "shipped_at", "author", "what_worked", "what_didnt_work", "what_surprised", "lessons_to_file"],
+  "properties": {
+    "schema_version": { "type": "integer", "const": 1 },
+    "req_id": { "type": "string" },
+    "parent_req_id": { "type": ["string", "null"] },
+    "shipped_at": { "type": "string", "format": "date-time" },
+    "author": { "type": "string", "const": "cto-advisor" },
+    "what_worked": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" },
+      "description": "Concrete patterns to replicate. Each item should cite an artifact or be specific enough to be actionable."
+    },
+    "what_didnt_work": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" },
+      "description": "Concrete patterns to avoid. Even on successful children, name what nearly broke or wasted time."
+    },
+    "what_surprised": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Emergent learnings the planning didn't anticipate."
+    },
+    "lessons_to_file": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["lesson", "applies_to", "evidence"],
+        "properties": {
+          "lesson": { "type": "string" },
+          "applies_to": {
+            "type": "array",
+            "items": {
+              "enum": ["process", "code", "security", "india-compliance", "numeric-parity", "cost-routing", "single-primitive", "migration", "agent-discipline", "pipeline-mechanics", "infra"]
+            }
+          },
+          "evidence": { "type": "string" }
+        }
+      }
+    },
+    "action_items_next_child": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "calibration": {
+      "type": "object",
+      "properties": {
+        "monthly_cost_usd": { "type": "object", "properties": { "planned": { "type": "number" }, "actual": { "type": "number" } } },
+        "llm_tokens_per_day": { "type": "object", "properties": { "planned": { "type": "integer" }, "actual": { "type": "integer" } } },
+        "wall_clock_hours": { "type": "object", "properties": { "planned": { "type": "number" }, "actual": { "type": "number" } } },
+        "paradigm_declared_planned": { "enum": ["sql", "ml", "haiku", "sonnet"] },
+        "paradigm_declared_actual": { "enum": ["sql", "ml", "haiku", "sonnet"] },
+        "persona_count_planned": { "type": "integer", "minimum": 0, "maximum": 2 },
+        "persona_count_actual": { "type": "integer", "minimum": 0, "maximum": 2 },
+        "note": { "type": "string" }
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,6 +1,6 @@
 {
   "name": "brain-engineering-os",
-  "version": "0.3.3",
+  "version": "0.4.0",
   "description": "An AI engineering team delivered as a Claude Code plugin. Orchestrates CTO Advisor, Architect, Backend/Frontend/Mobile devs, Security, QA, and DevOps agents through an 8-stage requirement-to-release pipeline grounded in the Brain canon (54 curated skills + business + technical primer). Install once, use in any Brain product repo. Shared memory lives in the consuming project's `.engineering-os/` (committed to git).",
   "author": {
     "name": "Brain (Pipada Capital)",
