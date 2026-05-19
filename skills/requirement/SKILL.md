@@ -16,9 +16,18 @@ Steps:
 
 2. **Generate a `req_id`.** Pattern: `<kind>-<kebab-slug>` where kind ∈ `{feat, fix, chore, spike, exp}`. Slug is the kebab-cased core of the requirement (max ~6 words).
 
-3. **Create the run folder:**
-   `.engineering-os/runs/<ISO-8601-UTC-no-colons>__<req-id>__<operator>/`
-   (e.g., `.engineering-os/runs/2026-05-17T14-22-31Z__feat-abandoned-cart-recovery-gcc__rishabh/`)
+3. **Create the run folder.** Format (v0.3.1+):
+   `.engineering-os/runs/<ISO-8601-UTC-no-colons>__<hex6>__<req-id>__<operator>/`
+   
+   Where:
+   - `<ISO-8601-UTC-no-colons>` — fresh from `date -u +%Y-%m-%dT%H-%M-%SZ` (colons replaced with hyphens for filesystem-safety). Per the UTC timestamp discipline durable rule, derive at action time; do NOT infer from prior artifacts.
+   - `<hex6>` — 6 random hex chars from `openssl rand -hex 3` (prevents same-second collisions when multiple intakes overlap).
+   - `<req-id>` — the kebab-cased requirement ID.
+   - `<operator>` — current OS user (or `<actor>-via-cto-advisor` when CTOA intakes a child on Founder's behalf under delegation).
+   
+   Example: `.engineering-os/runs/2026-05-17T14-22-31Z__a3f201__feat-abandoned-cart-recovery-gcc__rishabh/`
+   
+   The `<hex6>` suffix was added in v0.3.1 after the monitor caught children #3 and #4 in the Brain repo colliding on the same `2026-05-19T14-30-00Z` prefix. Collisions are now mechanically prevented.
 
 4. **Write `01-requirement.md`** using [templates/requirement-template.md](../templates/requirement-template.md). Fill in `raw_text`, `submitted_by` (current operator), `submitted_at` (now). Other fields can be filled by CTO Advisor in Stage 1.
 
