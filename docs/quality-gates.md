@@ -90,7 +90,8 @@ This document defines each gate's:
 - [ ] Requirement has a clear **target user** (persona + tier).
 - [ ] Requirement has a **success metric** (how do we know it worked).
 - [ ] Requirement has at least one stated **constraint** (cost, time, regulatory, technical).
-- [ ] 3 dynamic personas have weighed in; each surfaced at least one concern.
+- [ ] G0 (pre-flight dependency check) PASSED — if this is a child req, all declared blockers are `shipped` or `founder-override-of-dependency-rule`.
+- [ ] Persona count (0, 1, or 2) recorded with rationale per the complexity classifier in `agents/cto-advisor.md`. If 1 or 2 personas spawned, each surfaced at least one concern. If 0 personas, CTOA's own analysis stands as the synthesis.
 - [ ] CTO Advisor decision is one of: ADVANCE, CHALLENGE-BACK, KILL.
 
 **Evidence:**

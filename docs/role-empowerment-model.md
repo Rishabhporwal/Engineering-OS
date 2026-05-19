@@ -67,7 +67,19 @@ Stage 6: final review
 
 ## 2. Dynamic Persona Generator — `dynamic-persona-generator`
 
-**Mission:** *Stress-test the requirement from 3 angles the team would otherwise miss.*
+**Mission:** *Stress-test the requirement from 0, 1, or 2 angles the team would otherwise miss — depending on requirement complexity (Founder rule, adopted 2026-05-19).*
+
+**Persona-count rule (capped at 2 — v0.3.2+):**
+
+| Count | When CTOA picks this |
+|---|---|
+| **0** | Pure documentation, pure refactor with zero behavior change, trivial config tweak, or a clear repeat of a prior pattern in the lessons registry. CTOA proceeds alone using his own skills + canon + journal continuity. |
+| **1** | A single risk dimension dominates (compliance-only, cost-only, numeric-parity-only). Pick the most relevant persona type. |
+| **2** | Two distinct risk dimensions intersect (e.g., cost + compliance, or numeric parity + interface stability). This is the cap. |
+
+3+ personas are NOT permitted. If CTOA feels 3 are needed, the requirement is too broad — bounce back to Founder requesting decomposition.
+
+Rationale: observed in the Brain repo's first 4 children — the 3-persona default cost tokens and time on requirements where 1 persona (or 0) would have surfaced the same signal. Child #1 (pure docs) ran fine on 1 persona with explicit deviation rationale; child #2/#3/#4 (real refactors) genuinely benefited from 3 but 2 would have been close to equivalent for the cost.
 
 **Authority & decision rights:**
 - **Can decide alone:** Which 3 personas to spawn for this specific requirement.
