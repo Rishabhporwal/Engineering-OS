@@ -49,6 +49,12 @@ Steps:
    - after it returns: `✓ <persona>: <2–3 line summary of what it decided/did> → handing to <next>` (or `✗ <persona>: BOUNCE — <reason> → re-spawning <target>`).
    This main-terminal narration + the agents' `live.log` lines together give full real-time visibility into what every agent is thinking, planning, and implementing.
 
+   **LOG TOKEN USAGE after each spawn (powers the dashboard's cost view).** Each Agent result reports the subagent's token usage. Immediately after a spawn returns, append one line to `${CLAUDE_PROJECT_DIR}/.engineering-os/usage.jsonl`:
+   ```sh
+   echo '{"ts":"<UTC ISO>","req_id":"<req>","agent":"<agent-id>","stage":<N>,"total_tokens":<from the Agent result usage>,"model":"<opus|sonnet|haiku>"}' >> ${CLAUDE_PROJECT_DIR}/.engineering-os/usage.jsonl
+   ```
+   Use the agent's configured model (Opus: cto-advisor/architect/security-reviewer; Sonnet: builders/qa/devops/pm; Haiku: workers). This append-only stream is what `/dashboard` aggregates into per-agent / per-feature token + cost totals.
+
    **Loop:**
 
    a. **Stage 1 — spawn `cto-advisor`.** Read its HANDOFF + state:
