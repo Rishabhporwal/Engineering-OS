@@ -38,6 +38,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 
@@ -59,26 +60,42 @@ def ensure_chromium() -> None:
 
 
 class Capture:
-    """Collects console errors/warnings, page errors, failed + 4xx/5xx requests."""
+    """Collects console errors/warnings, page errors, failed + 4xx/5xx requests.
+    With live=True, also streams each event to stderr the moment it fires (for
+    monitoring mode — the operator watches issues appear in real time)."""
 
-    def __init__(self):
+    def __init__(self, live: bool = False):
         self.console_errors: list[dict] = []
         self.page_errors: list[str] = []
         self.failed_requests: list[dict] = []
         self.bad_responses: list[dict] = []
+        self.live = live
+
+    def _emit(self, kind: str, detail: str) -> None:
+        if self.live:
+            print(f"[monitor] {kind}: {detail[:200]}", file=sys.stderr, flush=True)
 
     def wire(self, page) -> None:
         def on_console(m):
             if m.type in ("error", "warning"):
                 self.console_errors.append({"type": m.type, "text": m.text[:500]})
+                self._emit(f"console.{m.type}", m.text)
         page.on("console", on_console)
-        page.on("pageerror", lambda e: self.page_errors.append(str(e)[:500]))
-        page.on("requestfailed", lambda r: self.failed_requests.append(
-            {"url": r.url[:300], "failure": (r.failure or "")[:200]}))
+
+        def on_pageerror(e):
+            self.page_errors.append(str(e)[:500])
+            self._emit("page-error", str(e))
+        page.on("pageerror", on_pageerror)
+
+        def on_reqfail(r):
+            self.failed_requests.append({"url": r.url[:300], "failure": (r.failure or "")[:200]})
+            self._emit("request-failed", f"{r.url} ({r.failure or ''})")
+        page.on("requestfailed", on_reqfail)
 
         def on_response(resp):
             if resp.status >= 400:
                 self.bad_responses.append({"url": resp.url[:300], "status": resp.status})
+                self._emit("http-error", f"{resp.status} {resp.url}")
         page.on("response", on_response)
 
     def summary(self) -> dict:
@@ -220,6 +237,54 @@ def cmd_run(args) -> dict:
             "steps": results, **s}
 
 
+def cmd_monitor(args) -> dict:
+    """LIVE MONITORING MODE — keep a real browser open on the running app and
+    capture console/page/network errors AS THEY HAPPEN for --duration seconds,
+    optionally re-sweeping each URL every --interval seconds. Streams each issue
+    to stderr live; returns a JSON summary (exit 2 if any issue seen)."""
+    from playwright.sync_api import sync_playwright
+
+    urls = args.url
+    print(f"[monitor] watching {len(urls)} url(s) for {args.duration}s "
+          f"(interval={args.interval}s)…", file=sys.stderr, flush=True)
+    cap = Capture(live=True)
+    deadline = time.time() + args.duration
+    sweeps = 0
+    with sync_playwright() as p:
+        browser = _launch(p, args.headed)
+        page = browser.new_page()
+        cap.wire(page)
+        # initial load of each url
+        for u in urls:
+            try:
+                page.goto(u, wait_until="networkidle", timeout=30000)
+            except Exception as e:
+                cap.page_errors.append(f"navigation {u}: {e}")
+                cap._emit("nav-error", f"{u}: {e}")
+        sweeps += 1
+        # watch window: idle-wait, or periodic re-sweep if interval>0
+        while time.time() < deadline:
+            if args.interval and args.interval > 0:
+                page.wait_for_timeout(min(args.interval, max(0, deadline - time.time())) * 1000)
+                for u in urls:
+                    if time.time() >= deadline:
+                        break
+                    try:
+                        page.goto(u, wait_until="networkidle", timeout=30000)
+                    except Exception as e:
+                        cap._emit("nav-error", f"{u}: {e}")
+                sweeps += 1
+            else:
+                page.wait_for_timeout(min(2, max(0, deadline - time.time())) * 1000)
+        browser.close()
+    s = cap.summary()
+    total = (len(s["console_errors"]) + len(s["page_errors"])
+             + len(s["failed_requests"]) + len(s["bad_responses"]))
+    print(f"[monitor] done — {sweeps} sweep(s), {total} issue(s) captured.", file=sys.stderr, flush=True)
+    return {"command": "monitor", "urls": urls, "duration_s": args.duration,
+            "sweeps": sweeps, "issue_count": total, "ok": total == 0, **s}
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Engineering OS browser + visual QA engine")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -238,10 +303,15 @@ def main() -> int:
     r = sub.add_parser("run"); r.add_argument("scenario"); r.add_argument("--headed", action="store_true")
     r.add_argument("--artifacts")
 
+    m = sub.add_parser("monitor"); m.add_argument("url", nargs="+", help="one or more app URLs to watch")
+    m.add_argument("--duration", type=int, default=60, help="seconds to watch (default 60)")
+    m.add_argument("--interval", type=int, default=0, help="re-sweep each URL every N seconds (0 = watch idle)")
+    m.add_argument("--headed", action="store_true")
+
     args = ap.parse_args()
     ensure_chromium()
     fn = {"check": cmd_check, "screenshot": cmd_screenshot,
-          "extract": cmd_extract, "run": cmd_run}[args.cmd]
+          "extract": cmd_extract, "run": cmd_run, "monitor": cmd_monitor}[args.cmd]
     try:
         out = fn(args)
     except Exception as ex:
