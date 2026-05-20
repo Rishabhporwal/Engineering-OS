@@ -47,18 +47,21 @@ model: sonnet
    - **Real-network smoke (mandatory for PASS)**
 5. Verify metric registry parity (TS ↔ Python — every metric definition).
 6. Run operational-readiness checklist (root handler, health, port, env vars, native deps).
-7. Run mutation tests on high-stakes paths: metric registry, India compliance engine, Decision Log.
+7. Run mutation tests on high-stakes paths: metric registry, India compliance engine, Decision Log. (SKIP for `feature_class=express` — express is trigger-surface-free by definition, so there are no high-stakes paths to mutate; run smoke + lint only.)
 8. Re-run any flaky tests 3× to confirm.
 9. Capture ACTUAL command output for every claim — no paraphrasing.
 10. Write 10-qa-review.md from templates/qa-review.md.
-11. Decide: PASS → CTO Advisor (Stage 6) | FAIL → responsible dev.
+11. Decide PASS/FAIL. On PASS, route BY LANE: `express` → Founder gate (Stage 7, skipping Final-review); `standard`/`high-stakes` → CTO Advisor (Stage 6). On FAIL → responsible dev.
 12. Append journal + decision log + state update + per-feature journal.
-13. INVOKE cto-advisor via Agent tool on PASS:
-    Agent(
-      description="Stage 6 final review for <req_id>",
-      subagent_type="cto-advisor",
-      prompt="Stage 6 begins for <req_id>. Run folder: <run_folder>. Read all prior artifacts. Per the codified Stage 6 protocol you MUST spot-re-run at least 3 of Tanvi's gates yourself with captured output (G1 app-code-diff sentinel, G3 provenance/discipline gate, G4 parity round-trip are common picks). Also write 14-retro.md per templates/retro.md."
-    )
+13. On PASS, route by review mode + lane:
+    - **PARALLEL REVIEW MODE** (your invocation prompt says so — builder ran you ∥ Shreya): do NOT invoke any next stage and do NOT expect `09-security-review.md` to exist yet (you reviewed independently). Return your verdict to the caller (the builder) as `QA: PASS` (or `QA: FAIL` + findings) and STOP. The builder reconciles you with Shreya and invokes Stage 6.
+    - **SEQUENTIAL — STANDARD / HIGH-STAKES → invoke cto-advisor (Stage 6):**
+      Agent(
+        description="Stage 6 final review for <req_id>",
+        subagent_type="cto-advisor",
+        prompt="Stage 6 begins for <req_id>. Run folder: <run_folder>. Read all prior artifacts. Per the codified Stage 6 protocol you MUST spot-re-run at least 3 of Tanvi's gates yourself with captured output (G1 app-code-diff sentinel, G3 provenance/discipline gate, G4 parity round-trip are common picks). Also write 14-retro.md per templates/retro.md."
+      )
+    - **EXPRESS → SKIP Stage 6** (express is always sequential — no Security stage to parallel with). Update state: status → `awaiting-founder`, stage → 7, owner → `founder` (write `.bak.<ts>` first). Surface to Founder: "Express PASS for <req_id>. Run `/approve <req-id>` to ship, or `/reject <req-id> <reason>`." Do NOT invoke cto-advisor — express has no Final-review by design. (You already re-ran the minimal Stage 4 secrets grep as part of the skipped-Security protocol; note that output in 10-qa-review.md.)
 14. On FAIL, invoke responsible dev:
     Agent(
       description="Stage 3 re-work for <req_id> after Stage 5 bounce",

@@ -24,6 +24,21 @@
       "type": "array",
       "items": { "enum": ["in", "ae", "sa", "us", "eu", "lat", "sea", "afr"] }
     },
+    "feature_class": {
+      "enum": ["express", "standard", "high-stakes"],
+      "description": "Pipeline lane, assigned by Rohan at Stage 1. express = trivial change with zero trigger-surface touch (skips Architect, Security, Final-review); standard = normal feature, no trigger surface; high-stakes = touches a trigger surface (full pipeline + mutation tests + 2 personas + mandatory Shreya VETO). See docs/feature-tiering.md."
+    },
+    "feature_class_rationale": {
+      "type": "string",
+      "description": "One-line justification for the assigned feature_class, naming the classifier rule applied and any trigger surfaces touched."
+    },
+    "trigger_surfaces_touched": {
+      "type": "array",
+      "items": {
+        "enum": ["auth", "multi-tenancy", "mcp-tools", "connectors", "outbound-channels", "pii", "schema-proto", "money", "india-compliance"]
+      },
+      "description": "High-stakes surfaces this requirement touches. MUST be empty for feature_class=express; any entry forces high-stakes. Mirrors Shreya's review triggers."
+    },
     "problem_statement": { "type": "string" },
     "target_user": {
       "type": "string",

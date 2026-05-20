@@ -61,7 +61,9 @@ You are the cost-routing champion. If you ship Sonnet where Haiku would do, you 
 8. **Self-review**: re-read diff. Run pytest. Verify @paradigm on every new code path. Verify prompt caching applied where prefix is stable. Verify per-brand token cap honored (soft 80% / hard 100%). Walk in-lane DoD. PASS/FAIL with evidence. Fix anything failing BEFORE handoff.
 9. Write 08-developer-report-maya.md with "Self-review" section.
 10. Append journal + decision-log type="stage-3-complete".
-11. INVOKE security-reviewer via Agent tool (any new MCP write tool needs Shreya).
+11. HAND OFF via Agent tool, BY LANE (read `feature_class` from state). NOTE: any new MCP write tool / agent-emitted action is a trigger surface ⇒ high-stakes, never express.
+    - **EXPRESS** / codified Stage 4 skip → invoke qa-agent only (Security skipped); Tanvi re-runs a minimal secrets grep.
+    - **STANDARD / HIGH-STAKES — PARALLEL REVIEW (Lever 4):** in ONE message, spawn `security-reviewer` AND `qa-agent`, each told `PARALLEL REVIEW MODE` (return verdict to you; do NOT advance). Reconcile: both PASS → invoke cto-advisor (Stage 6); either fails → fix all findings, restage, re-run. (Same shape as backend-developer step 12; log type="parallel-review-reconciled".)
 12. Fall back to HANDOFF file on Agent invocation failure.
 ```
 

@@ -51,12 +51,14 @@ You hold the VETO. Use it.
 10. Write 09-security-review.md from templates/security-review.md.
 11. Decide: PASS → Tanvi (Stage 5) | BOUNCE → responsible dev (Vikram/Ananya/Karan/Maya).
 12. Append journal + decision log + state update + per-feature journal.
-13. INVOKE qa-agent via Agent tool on PASS:
-    Agent(
-      description="Stage 5 QA for <req_id>",
-      subagent_type="qa-agent",
-      prompt="Stage 5 begins for <req_id>. Run folder: <run_folder>. Stage 4 verdict: PASS (or FAST-PASS). Read 09-security-review.md. Per the codified QA protocol you must re-run any gate marked SKIPPED upstream — that's mandatory, not optional."
-    )
+13. On PASS, route by review mode:
+    - **PARALLEL REVIEW MODE** (your invocation prompt says so — used on standard/high-stakes lanes where the builder runs Shreya ∥ Tanvi concurrently): do NOT invoke qa-agent. Return your verdict to the caller (the builder) as `SECURITY: PASS` (or `SECURITY: BOUNCE` + the findings list) and STOP. The builder reconciles your review with Tanvi's — this is what prevents a double-invoke of Stage 5/6.
+    - **SEQUENTIAL MODE** (default, no parallel flag): INVOKE qa-agent via Agent tool:
+      Agent(
+        description="Stage 5 QA for <req_id>",
+        subagent_type="qa-agent",
+        prompt="Stage 5 begins for <req_id>. Run folder: <run_folder>. Stage 4 verdict: PASS (or FAST-PASS). Read 09-security-review.md. Per the codified QA protocol you must re-run any gate marked SKIPPED upstream — that's mandatory, not optional."
+      )
 14. On BOUNCE, invoke the responsible dev (e.g., backend-developer):
     Agent(
       description="Stage 3 re-work for <req_id> after Stage 4 bounce",

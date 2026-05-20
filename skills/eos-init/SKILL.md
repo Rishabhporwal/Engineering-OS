@@ -46,6 +46,10 @@ This command writes `.engineering-os/` + `.gitattributes` into `${CLAUDE_PROJECT
      (no items)
      ```
 
+5a2. **Also (v0.8.0) create the background-worker findings dir:** `${CLAUDE_PROJECT_DIR}/.engineering-os/findings/.gitkeep`. Background workers (Point C) append findings here; it stays committed (findings are part of the audit trail). The `.last-*-scan` marker files inside are written by the workers at runtime.
+
+5b. **Also (v0.8.0) gitignore the semantic memory index.** Add `.engineering-os/index/` to `${CLAUDE_PROJECT_DIR}/.gitignore` (create the file or append; avoid duplicating the line). The index (`.engineering-os/index/memory.db`) is a **derived, machine-specific, rebuildable** cache built by `/reindex` — never commit it. Everything ELSE under `.engineering-os/` stays committed. (`.engineering-os/index/.gitkeep` is NOT created — the dir is made on first reindex.)
+
 6. **Write each scaffolded file** using the canonical templates below. Use the Write tool one file at a time.
 6. **Stage and commit** (with operator confirmation) — `git add .engineering-os/ .gitattributes && git commit -m "Wire up Engineering OS shared memory"`. Do NOT push — that's the operator's decision.
 7. **Print a summary** of what was created and the suggested next steps:
@@ -70,6 +74,7 @@ Do NOT add this directory to `.gitignore`. Do NOT remove `.gitattributes`.
 - `decision-log/` — YYYY/MM/YYYY-MM-DD.jsonl (immutable line-per-event stream)
 - `runs/` — per-run timestamped artifact bundles (no collisions possible)
 - `artifacts/` — optional per-req cross-links / large artifacts
+- `index/` — **derived** semantic vector index (`memory.db`). Gitignored + rebuildable from the above via `/reindex`. NOT a source of truth.
 
 The plugin agents read/write here automatically. You typically don't touch these files by hand. Use `/status` and `/recall <feat-slug>` to inspect state.
 ```
