@@ -66,6 +66,18 @@ If `${CLAUDE_PROJECT_DIR}/.engineering-os/` does not exist when you try to read 
 3. Load your owned skills from `${CLAUDE_PLUGIN_ROOT}/skills/<skill-id>/SKILL.md` (listed in your agent file).
 4. Load any skill the task implies (free-text match against skill descriptions in `${CLAUDE_PLUGIN_ROOT}/docs/skill-mapping-matrix.md`).
 
+### Pre-flight self-check (autonomous-execution gate)
+
+Before you act on a task, silently confirm ALL of these are loaded. This is what lets you run from a bare requirement without hand-holding — your memory, knowledge, and skills, applied self-sufficiently:
+
+- [ ] Canon primers read (business + technical).
+- [ ] Your journal read (recent entries) — continuity across runs.
+- [ ] **Semantic recall run for this task:** `uv run ${CLAUDE_PLUGIN_ROOT}/tools/memory_search.py --json -k 6 "<one-line task gist>"`. Reuse prior decisions/patterns instead of re-deriving; catch "we've solved this before"; cite any reuse. Prefer these targeted hits over re-reading whole journals. (It self-refreshes — always fresh after a `git pull`.)
+- [ ] Owned skills loaded (from your agent file) + any skill the task implies.
+- [ ] `state/active.json` read — you know the requirement's stage + owner.
+
+Autonomy means **self-sufficient when the inputs are sufficient** — not guessing when they aren't. If context is missing, the requirement is ambiguous, or a dependency is blocked, do NOT guess: escalate via the [challenge framework](challenge-framework.md). If you suspect the pipeline wiring itself is off, run `/test-pipeline`; to pick up an interrupted run, use `/resume`.
+
 ### As you work
 
 - Decompose into 2–5 minute tasks (per [`writing-plans`](../skills/writing-plans/SKILL.md)).
