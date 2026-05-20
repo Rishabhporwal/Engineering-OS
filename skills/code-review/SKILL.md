@@ -36,7 +36,7 @@ Trigger when:
 - Completing a builder task before emitting the handoff signal to Tanvi
 - Before merging to main
 - Stuck and need a fresh perspective
-- After fixing a complex bug — verify the fix is at root cause (`root-cause-tracing`), not symptom
+- After fixing a complex bug — verify the fix is at root cause (`systematic-debugging`), not symptom
 - For any change touching: auth, PII, payments, India compliance, MCP scopes, mobile cert pinning → **must** route through Shreya (VETO)
 
 ### Verification gates
@@ -162,7 +162,7 @@ See `verification-before-completion` for the full red-flag inventory.
 - **Builder flow:** builder completes → run verification → /review → emit handoff to Tanvi
 - **/review flow:** Shreya + Tanvi parallel → CRITICAL/HIGH block → fixes → re-run /review → APPROVED → deploy
 - **/qa flow:** Tanvi runs full suite + smoke + paradigm audit + metric parity → PASS/CONDITIONAL/FAIL
-- **/deploy flow:** Jatin runs CI/CD; auto-rollback on composite alarm (see `health-check-endpoints`)
+- **/deploy flow:** Jatin runs CI/CD; auto-rollback on composite alarm (see `operational-readiness`)
 - **Incident:** Jatin can recall a PR's review trail in postmortem — verifications are part of the record
 
 ## Bottom line

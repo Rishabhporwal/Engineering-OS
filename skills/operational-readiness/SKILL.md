@@ -1,6 +1,6 @@
 ---
 name: operational-readiness
-description: Production-readiness checklist for every shippable service — root handler, health check, port selection, real-network smoke test, env var validation, native-dep gotchas. Used by Vikram before declaring a service "done" and by Tanvi before issuing a PASS verdict. Encoded from real failures the team hit (pnpm 11 native-build gate, port 3000 collisions, in-memory tests masking real-network bugs, API-only services that look broken in browsers).
+description: Production-readiness checklist for every shippable service — root handler, K8s health checks (liveness/readiness/startup/deep probes for EKS), port selection, real-network smoke test, env var validation, native-dep gotchas. Used by Vikram before declaring a service "done" and by Tanvi before issuing a PASS verdict. Encoded from real failures the team hit (pnpm 11 native-build gate, port 3000 collisions, in-memory tests masking real-network bugs, API-only services that look broken in browsers, liveness probes that depend on Postgres and restart-loop the whole fleet).
 ---
 
 # Operational Readiness — the "won't look broken in production" checklist
@@ -11,22 +11,98 @@ Every shippable service must clear this checklist before Vikram hands off and be
 
 A service that 404s on `GET /` looks "broken" to a human hitting the URL. `GET /` must return either a minimal description page, a JSON `{"service", "version", "endpoints"}`, or a redirect to `/health`. Five lines of code that save 30 minutes of "is the server down?".
 
-## 2. `/health` endpoint is non-negotiable
+## 2. Health checks are non-negotiable — four probe types
 
-Returns `{"status": "ok"}` minimum; better includes `version` (git SHA) and `deps` reachability:
+EKS / ALB / CloudFront all need health endpoints (Brain's locked stack — canon/BRAIN_TECHNICAL.md). Without working liveness + readiness probes the service can't deploy. Implement K8s-style checks so broken pods restart, not-ready pods leave the LB, and ArgoCD auto-rolls-back when the composite alarm fires.
+
+| Probe | Question | EKS action on failure | What to check in Brain |
+|---|---|---|---|
+| **Liveness** (`/health/live`) | Is the process responsive? | Restart pod | Process up, event loop unblocked, responds in <100ms — **no external deps** |
+| **Readiness** (`/health/ready`) | Can the pod serve traffic? | Remove from Service endpoints | Postgres pool warm, ClickHouse reachable, ElastiCache connected, Kafka producer connected |
+| **Startup** (`/health/live`) | Has the app finished booting? | Delay liveness/readiness | First Prisma migration applied; proto codegen loaded; first ClickHouse query succeeds |
+| **Deep** (`/health/deep`) | Are upstream deps healthy? | Page on-call (alerting only) | Vendor APIs (Shopify, Meta, Google) reachable; Anthropic reachable. Never gates traffic. |
+
+### Fastify (Node — Vikram)
 
 ```typescript
-app.get('/health', async (c) => {
-  const [db, redis] = await Promise.allSettled([pingDb(), pingRedis()]);
-  return c.json({
-    status: [db, redis].every(r => r.status === 'fulfilled') ? 'ok' : 'degraded',
-    version: process.env.GIT_SHA ?? 'dev',
-    deps: { db: db.status, redis: redis.status },
+class HealthChecker {
+  constructor(private pg: Pool, private redis: Redis.Cluster, private kafka: Kafka) {}
+  private async time<T>(fn: () => Promise<T>) {
+    const t0 = Date.now();
+    try { await fn(); return { status: 'healthy', latencyMs: Date.now() - t0 }; }
+    catch (e) { return { status: 'unhealthy', error: (e as Error).message }; }
+  }
+  async readiness() {
+    const [pg, rd, ch, kf] = await Promise.all([
+      this.time(() => this.pg.query('SELECT 1')),
+      this.time(() => this.redis.ping()),
+      this.time(() => clickhouse.query({ query: 'SELECT 1', format: 'JSON' })),
+      this.time(async () => { const a = this.kafka.admin(); await a.connect(); await a.disconnect(); }),
+    ]);
+    const checks = { postgres: pg, redis: rd, clickhouse: ch, kafka: kf };
+    return { healthy: Object.values(checks).every(c => c.status === 'healthy'), checks };
+  }
+}
+
+export const healthPlugin: FastifyPluginAsync = async (app) => {
+  const hc = new HealthChecker(app.pg, app.redis, app.kafka);
+  app.get('/health/live', async () => ({ status: 'ok', ts: new Date().toISOString() })); // no deps
+  app.get('/health/ready', async (_, reply) => {
+    const r = await hc.readiness();
+    reply.code(r.healthy ? 200 : 503).send(r);   // 503 removes pod from LB
   });
-});
+  app.get('/health/deep', async () => hc.readiness()); // + vendor reachability; humans only
+};
 ```
 
-EKS / ALB / CloudFront all need this (Brain's locked stack — canon/BRAIN_TECHNICAL.md). Without working liveness + readiness probes the service can't deploy. Full Fastify + FastAPI probe pattern: [health-check-endpoints](../health-check-endpoints/SKILL.md).
+### FastAPI (Python — Maya)
+
+```python
+async def check(coro):
+    t0 = time.time()
+    try: await coro; return {"status": "healthy", "latency_ms": int((time.time()-t0)*1000)}
+    except Exception as e: return {"status": "unhealthy", "error": str(e)}
+
+@app.get("/health/live")
+async def live(): return {"status": "ok", "ts": time.time()}  # no deps
+
+@app.get("/health/ready")
+async def ready(response: Response):
+    pg, ch, kafka = await asyncio.gather(
+        check(db.execute(text("SELECT 1"))), check(clickhouse.query("SELECT 1")), check(kafka_admin_ping()))
+    checks = {"postgres": pg, "clickhouse": ch, "kafka": kafka}
+    healthy = all(c["status"] == "healthy" for c in checks.values())
+    response.status_code = 200 if healthy else 503
+    return {"healthy": healthy, "checks": checks}
+```
+
+### EKS probe config (Jatin's CDK)
+
+```yaml
+livenessProbe:  { httpGet: { path: /health/live,  port: 3000 }, initialDelaySeconds: 15, periodSeconds: 10, failureThreshold: 3 }   # 30s → restart
+readinessProbe: { httpGet: { path: /health/ready, port: 3000 }, initialDelaySeconds: 5,  periodSeconds: 10, failureThreshold: 2, timeoutSeconds: 3 }  # 20s → off LB
+startupProbe:   { httpGet: { path: /health/live,  port: 3000 }, failureThreshold: 30, periodSeconds: 10 }  # 5 min for cold migrations + cache warm
+```
+
+### Probe rules (lived failures)
+
+- **Liveness MUST NOT depend on external services.** Postgres down ≠ container broken. Liveness failing on Postgres down restart-loops every container and makes the outage worse.
+- **Readiness MUST check what the pod needs to serve** (Postgres; ClickHouse for analytics-service; Redis for api-gateway sessions + rate limit; Kafka for ingestion producers).
+- **Return 200 healthy / 503 unhealthy** — anything else (500, timeout) confuses K8s and the ALB.
+- **Timeouts < probe period** — a 10s probe with a 30s timeout holds the pod in undefined state.
+- **`/health/*` is exempt from rate limiting and auth** — configure both middlewares to bypass it.
+- **Log readiness transitions** — every healthy→unhealthy→healthy flap is a signal.
+- **`/health/deep` is for humans, never the LB or autoscaler.**
+
+### Composite alarm + auto-rollback (Jatin)
+
+ArgoCD watches a CloudWatch composite alarm: readiness failure rate > 10% over 2 minutes triggers automatic rollback to the previous deployment — the safety net that lets the team ship multiple times per day.
+
+```typescript
+const compositeAlarm = new cloudwatch.CompositeAlarm(this, 'pod-readiness-composite', {
+  alarmRule: cloudwatch.AlarmRule.allOf(apiGatewayReadinessAlarm, overallErrorRateAlarm),
+});
+```
 
 ## 3. Port selection — never hardcode, never assume :3000 is free
 
@@ -115,3 +191,19 @@ If any is unchecked, the verdict is FAIL with the specific gap named.
 - ❌ Shipping a service whose `GET /` returns 404 with no body
 - ❌ `pnpm install` succeeding but native binaries unbuilt (treat the "ignored build scripts" warning as a real error)
 - ❌ "We'll add the smoke test later" — later is never
+- ❌ Liveness depending on Postgres / Redis / Kafka — cascading restart loops turn outages into 4-hour pages
+- ❌ Returning 200 while a critical dependency is unreachable — the LB sends real user traffic into the failure
+- ❌ Skipping readiness "because the service is simple" — every Brain service has at least one dep
+- ❌ Making `/health/deep` part of the LB or autoscaler decision
+
+## Brain wiring
+
+| Concern | Owner | Reference |
+|---|---|---|
+| Fastify probes (api-gateway, core, notifications, lifecycle Node) | **Vikram** | |
+| FastAPI probes (ingestion, analytics, intelligence) | **Maya** | |
+| EKS probe config + composite alarm | **Jatin** | canon/BRAIN_TECHNICAL.md (SLOs + auto-rollback) |
+| Probe failure → page-or-rollback decision tree | **Jatin** | canon/BRAIN_TECHNICAL.md (incident playbook) |
+| Pre-ship readiness checklist sign-off | **Vikram** → **Tanvi** | this skill |
+
+Related Brain skills: `observability` (probe metrics + the spine), `devops-aws` (EKS + ArgoCD config), `testing-tdd` (the smoke-test templates), `verification-before-completion` (the real-network smoke floor).

@@ -23,21 +23,18 @@ model: sonnet
 - [`backend-fastify-trpc-grpc`](../skills/backend-fastify-trpc-grpc/SKILL.md) — primary
 - [`domain-driven-design`](../skills/domain-driven-design/SKILL.md) — every service he builds is bounded-context structured
 - [`grpc-buf`](../skills/grpc-buf/SKILL.md)
-- [`supabase-postgres-best-practices`](../skills/supabase-postgres-best-practices/SKILL.md)
-- [`database-design`](../skills/database-design/SKILL.md) (shared with Aryan)
+- [`database-design`](../skills/database-design/SKILL.md) (shared with Aryan; incl. Supabase/Postgres patterns)
 - [`event-driven-kafka`](../skills/event-driven-kafka/SKILL.md)
-- [`api-pagination`](../skills/api-pagination/SKILL.md)
-- [`api-rate-limiting`](../skills/api-rate-limiting/SKILL.md)
+- [`api-traffic-patterns`](../skills/api-traffic-patterns/SKILL.md) (cursor pagination + rate limiting)
 - [`idempotency-handling`](../skills/idempotency-handling/SKILL.md)
 - [`oauth-implementation`](../skills/oauth-implementation/SKILL.md) (Node-side flows)
 - [`sql-query-optimization`](../skills/sql-query-optimization/SKILL.md)
-- [`health-check-endpoints`](../skills/health-check-endpoints/SKILL.md)
+- [`operational-readiness`](../skills/operational-readiness/SKILL.md) (incl. health-check endpoints)
 - [`defense-in-depth-validation`](../skills/defense-in-depth-validation/SKILL.md)
 - [`engineering-discipline`](../skills/engineering-discipline/SKILL.md)
 - [`india-commerce-economics`](../skills/india-commerce-economics/SKILL.md)
 - [`cost-routing-paradigms`](../skills/cost-routing-paradigms/SKILL.md)
-- [`systematic-debugging`](../skills/systematic-debugging/SKILL.md)
-- [`root-cause-tracing`](../skills/root-cause-tracing/SKILL.md)
+- [`systematic-debugging`](../skills/systematic-debugging/SKILL.md) (incl. root-cause tracing)
 - [`verification-before-completion`](../skills/verification-before-completion/SKILL.md)
 
 ## Operating loop

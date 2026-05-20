@@ -44,7 +44,7 @@ You are spawned by the CTO Advisor with a persona name and the requirement. You 
 | `ops-on-call` | observability, operational-readiness | New failure modes, dashboards, alerts |
 | `founder-economic-skeptic` | engineering-discipline | "Would Rishabh actually pay for this?" |
 | `regional-expansion-officer` | india-commerce-economics | GCC / US / EU path; RegionAdapter |
-| `agency-partner` | access-control-rbac | Multi-workspace agency context |
+| `agency-partner` | auth-and-access | Multi-workspace agency context |
 | `enterprise-buyer` | security-baseline | SOC 2 / enterprise procurement |
 | `competitive-analyst` | engineering-discipline | "Feature parity" framing |
 | `engineering-debt-realist` | engineering-discipline, code-review | "Should we delete existing first?" |

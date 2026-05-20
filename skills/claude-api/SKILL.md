@@ -80,7 +80,7 @@ print(msg.content[0].text)
 6. **Assume single content block** — `content` is an array
 7. **Skip error handling**
 8. **Mix message roles incorrectly** — alternate user/assistant
-9. **Store API key in logs / DB / cache** (PII redaction in `logging-best-practices` covers this)
+9. **Store API key in logs / DB / cache** (PII redaction in `observability` covers this)
 10. **Default to Sonnet** — start at Haiku; escalate only when bounded NL fails
 
 ## Prompt caching (the single biggest cost lever)
@@ -280,7 +280,7 @@ Catch in the paradigm audit at PR time. Aryan blocks the PR.
 - **Cache the system prompt + tool catalogue + Brand Fingerprint** — they're huge and stable.
 - **Pin model versions.** Never `*-latest`.
 - **Wrap every call** with the cost-cap + budget guard.
-- **Log token usage** at INFO level per call (`logging-best-practices` covers PII).
+- **Log token usage** at INFO level per call (`observability` covers PII).
 - **Stream user-facing responses** (AI Chat).
 - **Tool use through MCP**, not directly — preserves the Decision Log contract.
 
@@ -294,4 +294,4 @@ Catch in the paradigm audit at PR time. Aryan blocks the PR.
 | Prompt caching hit-rate dashboards | **Maya** + **Jatin** | `observability` |
 | Per-brand budget enforcement | **Maya** | canon/BRAIN_TECHNICAL.md (budget) |
 
-Related Brain skills: `cost-routing-paradigms` (the @paradigm decorator), `mcp-protocol` (tool catalogue), `grpc-buf` (proto-driven schemas), `defense-in-depth-validation` (prompt injection guards), `logging-best-practices` (token usage logging).
+Related Brain skills: `cost-routing-paradigms` (the @paradigm decorator), `mcp-protocol` (tool catalogue), `grpc-buf` (proto-driven schemas), `defense-in-depth-validation` (prompt injection guards), `observability` (token usage logging).

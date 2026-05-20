@@ -1,6 +1,6 @@
 ---
 name: observability
-description: Brain's centralized observability spine — Fluent Bit → OpenSearch (logs) + CloudWatch Metrics + AWS X-Ray (traces) + Sentry (errors) + PostHog (product). Single correlation ID (request_id + trace_id + workspace_id + user_id) propagates end-to-end through HTTP headers, gRPC metadata, Kafka envelope. PII redaction at logger + Fluent Bit Lua script. Auto-load whenever wiring instrumentation, debugging cross-service flows, building Kibana dashboards, or investigating an incident.
+description: Brain's centralized observability spine — Fluent Bit → OpenSearch (logs) + CloudWatch Metrics + AWS X-Ray (traces) + Sentry (errors) + PostHog (product). Structured JSON logging (pino/structlog) with level discipline, retention, and the what-to-log catalog; single correlation ID (request_id + trace_id + workspace_id + user_id) propagates end-to-end through HTTP headers, gRPC metadata, Kafka envelope; OTel instrumentation; circuit breakers. PII redaction at logger + Fluent Bit Lua script. Auto-load whenever wiring instrumentation or a new service's logging, debugging cross-service flows, building Kibana dashboards, investigating an incident, or when log volume blows the OpenSearch budget.
 ---
 
 # Observability — Brain's Spine
@@ -31,18 +31,63 @@ CloudFront (X-Request-Id; generate X-Trace-Id if absent)
 
 ## Logging (pino / structlog)
 
-Both loggers attach the four correlation fields + `service` + `version` to every line and **redact PII at the field level** (`email`, `phone`, `access_token`, `refresh_token`, `authorization`, `pan_card`, `aadhaar`, `*.token`). Representative Node config:
+Logs are the most expensive observability surface — log too much or the wrong things and you simultaneously blow the budget and hide the signal. Structured JSON is the **only** format Brain ships: pino for Node (matches Fastify), structlog for Python. Both attach the four correlation fields + `service` + `version` (git sha) to every line and **redact PII at the field level**. Representative Node config:
 
 ```typescript
 export const logger = pino({
   level: process.env.LOG_LEVEL || 'info',
-  formatters: { log: (obj) => ({ ...obj, ...als.getStore(), service: SERVICE_NAME, version: VERSION }) },
-  redact: ['email', 'phone', 'access_token', 'refresh_token', 'authorization', '*.token'],
+  base: { service: SERVICE_NAME, env: process.env.NODE_ENV, version: VERSION },
+  formatters: { level: (l) => ({ level: l }), log: (obj) => ({ ...obj, ...als.getStore() }) },
+  redact: { paths: ['req.headers.authorization', 'req.headers.cookie', '*.token', '*.refresh_token',
+    '*.access_token', '*.api_key', '*.brand_token', '*.phone', '*.email'], censor: '[REDACTED]' },
   timestamp: pino.stdTimeFunctions.isoTime,
 });
 ```
 
-Python structlog mirrors this with an `add_correlation` processor (reads contextvars) + a `redact_pii` processor before `JSONRenderer`. Full pino/structlog/Fastify-hook scaffolds are in canon/BRAIN_TECHNICAL.md.
+Python structlog mirrors this with `merge_contextvars` + `add_log_level` + `dict_tracebacks` + a `redact_pii` processor before `JSONRenderer`, bound with `service`/`env`/`version`. Full scaffolds in canon/BRAIN_TECHNICAL.md.
+
+### Log levels + retention (Brain canon)
+
+| Level | Use for | Prod | OpenSearch retention |
+|---|---|---|---|
+| DEBUG | Step-by-step tracing | **OFF** | dev only |
+| INFO | Significant business events (order ingested, brief synthesized, call placed) | ON | 30 days |
+| WARN | Recoverable issues (vendor rate-limit, retry exhausted, cache-miss spike) | ON | 90 days |
+| ERROR | Errors handled (caught + degraded) | ON | 90 days |
+| FATAL | Critical failures (DB unreachable, OOM, init failed) | ON | 365 days |
+
+**Never DEBUG in production** — local dev only.
+
+### Correlation wiring at the call site
+
+Carry `request_id` + `workspace_id` on every line via **AsyncLocalStorage** (Node) / **contextvars** (Python) so anything in request scope logs them without threading args:
+
+```typescript
+const ctx = new AsyncLocalStorage<{ requestId: string; workspaceId?: string }>();
+app.addHook('onRequest', (req, _, done) =>
+  ctx.run({ requestId: (req.headers['x-request-id'] as string) ?? randomUUID() }, done));
+app.addHook('preHandler', (req, _, done) => { ctx.getStore()!.workspaceId = req.workspaceId; done(); }); // from JWT, see auth-and-access
+export const log = () => logger.child({ request_id: ctx.getStore()?.requestId, workspace_id: ctx.getStore()?.workspaceId });
+// log().info({ orders_count: 42 }, 'orders.ingested');
+```
+
+Searching OpenSearch for `request_id:abc123` then shows the **complete call chain** across all 7 services — the difference between a 5-minute debug session and a 4-hour one.
+
+### What to log — and what not to
+
+**DO:** business events (`orders.ingested`, `brief.synthesized`, `call.placed`, `decision_log.recorded`); state transitions (`consent.granted/revoked`, `session.refreshed`); external-call **summaries** (vendor, account, latency, count); errors with full context (request_id, workspace_id, actor, stack, triggering inputs); perf-budget crossings (aggregated, once/min).
+
+**DON'T:** DEBUG in prod; request/response bodies wholesale (sample at 1% if you must); inside tight loops; stack traces for client 4xx (their bug, not ours — only 5xx); PII (always mask); tokens/secrets/brand keys (always redact); `console.log`/`print` (skips redaction); spreading >1 logging library per service.
+
+### Cost discipline — log batches, not items
+
+OpenSearch storage cost is real. For high-volume topics (Maya's ingestion), Kafka itself is the log of record — log only the **batch summary**, never per-item:
+
+```typescript
+// BAD — 5,000 log lines per poll:  for (const e of events) log().info({ id: e.id }, 'event.processed');
+// GOOD — one line per batch:
+log().info({ count: events.length, source: 'shopify', latency_ms: t1 - t0, error_count: failed.length }, 'ingestion.batch.completed');
+```
 
 ### Standard log schema
 
@@ -119,7 +164,7 @@ Non-negotiable per service — verified before a service is "done" (`operational
 - **Tracing** (X-Ray, correlation IDs propagated)
 - **Structured logging** (pino/structlog, four correlation fields, PII-redacted)
 - **Retries** (bounded, backoff+jitter on transient failures)
-- **Health checks** (liveness + readiness + dependency probes — `health-check-endpoints`)
+- **Health checks** (liveness + readiness + dependency probes — `operational-readiness`)
 - **Circuit breakers** (on every cross-service / external call)
 
 ## PII redaction rules
@@ -149,9 +194,19 @@ NEVER log: `access_token`/`refresh_token`/JWTs/API keys; `email` (SHA-256 hash i
 - **No circuit breaker on a cross-service call** — a slow downstream cascades into the caller's latency budget. Wrap every gRPC/vendor/DB call with a breaker + timeout.
 - **Proposing Prometheus/Grafana** — OTel is the instrumentation API; the backends (X-Ray/CloudWatch/OpenSearch) are locked. Don't swap the backend stack.
 
+## Brain wiring
+
+| Concern | Owner | Reference |
+|---|---|---|
+| Node services log standard (pino) | **Vikram** | canon/BRAIN_TECHNICAL.md (logs) |
+| Python services log standard (structlog) | **Maya** | canon/BRAIN_TECHNICAL.md |
+| Fluent Bit → OpenSearch shipping + retention/cost | **Jatin** | canon/BRAIN_TECHNICAL.md (log shipping) |
+| PII redaction policy | **Shreya** | canon/BRAIN_TECHNICAL.md (privacy) |
+
 ## References
 
 - `canon/BRAIN_TECHNICAL.md` — canonical log spine + logger scaffolds + Kibana dashboards + monitors + cost-discipline dashboard
 - `skills/devops-aws/SKILL.md` — OpenSearch + Fluent Bit deployment; AWS FIS chaos (breaker behavior under failure)
 - `skills/security-baseline/SKILL.md` — PII redaction posture
-- `skills/health-check-endpoints/SKILL.md` — liveness/readiness/dependency probes
+- `skills/operational-readiness/SKILL.md` — liveness/readiness/dependency probes
+- `skills/systematic-debugging/SKILL.md` — logs are the trail (backward root-cause tracing)

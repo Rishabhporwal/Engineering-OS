@@ -75,7 +75,7 @@ If you wrote a task and you can't immediately answer these in one sentence each,
 ### Platform (Jatin in infra/)
 - ❌ "Scale analytics-service"
 - ✅ "[JATIN][infra] Add `analytics-service` HPA to infra/cdk/lib/eks/analytics-service.ts (target 70% CPU, min 3 max 20) — verify: `pnpm --filter infra synth && cdk diff`"
-- ✅ "[JATIN][infra] Add ClickHouse readiness check to `/health/ready` per health-check-endpoints — verify: `curl -s -o /dev/null -w '%{http_code}' https://staging.api.brain.pipadacapital.com/health/ready` returns 200"
+- ✅ "[JATIN][infra] Add ClickHouse readiness check to `/health/ready` per operational-readiness — verify: `curl -s -o /dev/null -w '%{http_code}' https://staging.api.brain.pipadacapital.com/health/ready` returns 200"
 
 ## Plan Output Format (Priya's spec includes this)
 

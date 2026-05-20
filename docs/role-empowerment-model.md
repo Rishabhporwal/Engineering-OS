@@ -197,7 +197,7 @@ This table is the single source of truth for plan-length bands. Do not restate t
 **Operating loop:**
 ```
 Read architecture-plan.md + relevant prior journal entries for this feature
-Load backend-fastify-trpc-grpc + grpc-buf + supabase-postgres-best-practices + others
+Load backend-fastify-trpc-grpc + grpc-buf + database-design + others
 Decompose into 2–5 minute tasks (writing-plans discipline — borrowed)
 For each task:
    Implement
@@ -210,7 +210,7 @@ Append journal: .engineering-os/memory/agents/backend.journal.md
 Emit handoff signal to QA (Tanvi) once Definition of Done items in his lane are green
 ```
 
-**Skill-driven behavior:** See [skill-mapping-matrix.md §Backend Developer](skill-mapping-matrix.md). At minimum every PR triggers `idempotency-handling`, `api-pagination`, `defense-in-depth-validation`, `engineering-discipline`, and `verification-before-completion`.
+**Skill-driven behavior:** See [skill-mapping-matrix.md §Backend Developer](skill-mapping-matrix.md). At minimum every PR triggers `idempotency-handling`, `api-traffic-patterns`, `defense-in-depth-validation`, `engineering-discipline`, and `verification-before-completion`.
 
 **Anti-blind-agreement triggers:**
 - Architect's plan implies offset pagination, plaintext tokens, missing `requireRole`, sequential DB queries in a layout, or hard-coded India economics — push back to Aryan with [`backend-fastify-trpc-grpc`](../skills/backend-fastify-trpc-grpc/SKILL.md) citation.
@@ -293,7 +293,7 @@ Hand to Tanvi for QA + Shreya for review of any new MCP write tool
 **Anti-blind-agreement triggers:**
 - Plan asks for Sonnet where ML or Haiku would solve.
 - Plan adds an LLM call without prompt caching opportunity assessment.
-- Plan adds an MCP tool without auth scope (`access-control-rbac`) or without Decision Log middleware.
+- Plan adds an MCP tool without auth scope (`auth-and-access`) or without Decision Log middleware.
 - Plan ignores the per-brand monthly cap — costs would blow through soft/hard throttle.
 - Plan creates a new memory store — push back; use existing `memory.*` schemas.
 
@@ -311,7 +311,7 @@ Hand to Tanvi for QA + Shreya for review of any new MCP write tool
 **Operating loop:**
 ```
 Read all artifacts from this run
-Load security-baseline + access-control-rbac + defense-in-depth-validation + vulnerability-scanning
+Load security-baseline + auth-and-access + defense-in-depth-validation + vulnerability-scanning
 For every mutation endpoint:
    Verify requireRole + requireWorkspaceMember + Zod input + workspace_id assertion
 For every new MCP tool:
@@ -345,7 +345,7 @@ Append journal: .engineering-os/memory/agents/security.journal.md
 **Operating loop:**
 ```
 Read every artifact + security review
-Load testing-tdd + api-contract-testing + mutation-testing + operational-readiness + verification-before-completion
+Load testing-tdd (incl. mutation testing) + api-contract-testing + operational-readiness + verification-before-completion
 For each delivery:
    Run unit + integration + contract + E2E + load (if Phase 3+) + real-network smoke
    Verify metric registry parity (TS↔Python)
@@ -434,7 +434,7 @@ Both files are committed to git. When a teammate runs `git pull`, they see the f
 ## 2026-05-17T14:32:00Z — Vikram (backend-developer) — feat-abandoned-cart-recovery-gcc
 **Stage:** 3 (parallel dev)
 **Action:** Implemented Fastify route POST /v1/lifecycle/recover (api-gateway).
-**Skills loaded:** backend-fastify-trpc-grpc, idempotency-handling, api-rate-limiting, defense-in-depth-validation, india-commerce-economics, cost-routing-paradigms, verification-before-completion.
+**Skills loaded:** backend-fastify-trpc-grpc, idempotency-handling, api-traffic-patterns, defense-in-depth-validation, india-commerce-economics, cost-routing-paradigms, verification-before-completion.
 **Paradigm:** SQL (no LLM, no ML — rule-based recovery with RFM segment lookup).
 **Decisions:**
 - Reused single Audience Builder (no new primitive — Single-Primitive Rule).

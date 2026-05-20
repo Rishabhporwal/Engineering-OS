@@ -1,6 +1,6 @@
 ---
 name: systematic-debugging
-description: Four-phase debugging — Root Cause → Pattern Analysis → Hypothesis → Implementation. Never jump to fixes. Use for any test failure, production incident, unexpected behaviour, performance regression, or build failure on the Brain stack (Fastify, FastAPI, ClickHouse, Kafka, Expo, gRPC).
+description: Four-phase debugging (Root Cause → Pattern Analysis → Hypothesis → Implementation) plus backward root-cause tracing through the call stack. Never jump to fixes. Use for any test failure, production incident, unexpected behaviour, performance regression, build failure, or when an error manifests deep in execution far from its trigger on the Brain stack (Fastify, FastAPI, ClickHouse, Kafka, Expo, gRPC).
 ---
 
 # Systematic Debugging
@@ -68,7 +68,7 @@ You MUST complete each phase before proceeding to the next.
 
    Brain's single correlation ID (see canon/BRAIN_TECHNICAL.md) runs across all surfaces — use it. Search OpenSearch for `request_id:abc123` and you see every hop.
 
-5. **Trace data flow backwards** — see `root-cause-tracing` skill. When the error is deep in the call stack, the fix usually isn't there. Trace up until you find the original trigger.
+5. **Trace data flow backwards** — see "Backward root-cause tracing" below. When the error is deep in the call stack, the fix usually isn't there. Trace up until you find the original trigger.
 
 ### Phase 2 — Pattern Analysis
 
@@ -112,6 +112,74 @@ Fix the root cause, not the symptom.
    STOP and ask: is this pattern fundamentally sound? Are we "sticking with it through inertia"? Should we refactor (likely escalate to Aryan + Rohan for the architecture call)?
 
    This is NOT a failed hypothesis — it's a wrong architecture. Discuss before attempting Fix #4.
+
+---
+
+## Backward root-cause tracing
+
+Phase 1's hardest step. Bugs manifest deep in the call stack — a Kafka offset-commit failure traced to a tRPC handler that didn't `await`; a ClickHouse insert failure traced to a Pydantic model with a stray `None`; an AI call placed outside calling hours traced to a Decision Log replay that bypassed the compliance engine. Your instinct is to fix where the error appears. That's symptom-treatment.
+
+**Core principle:** Trace backward through the call chain until you find the original trigger. Then fix at the source.
+
+### The tracing process
+
+1. **Observe the symptom** — read the exact error, don't paraphrase (`Code: 50. DB::Exception: Mandatory column 'workspace_id' has no value`).
+2. **Find the immediate cause** — what code directly throws? `await ch.insert("events_raw", rows)`.
+3. **Ask what called this, and with what value?** — `rows = [e.dict() for e in batch.events]`; `batch` comes from `ShopifyConnector.poll()`.
+4. **Keep tracing upward**, recording the value at each hop:
+   ```
+   ShopifyConnector.poll() → maps ShopifyOrderEvent → Kafka shopify.orders.v1
+     → ingestion consumer batches → BatchProcessor.process() → ch.insert(...)
+   #  ShopifyOrderEvent.workspace_id == None for one row
+   ```
+5. **Find the original trigger.** Here: an old migration left some `integrations` rows with `workspace_id=NULL`; every poll for those connectors emits broken events.
+
+**Fix at source, not symptom:** wrong — filter out the bad rows in the insert. Right — (1) backfill the missing `workspace_id` in `integrations`; (2) add a NOT NULL constraint; (3) add defense-in-depth — `ShopifyConnector` raises on missing `workspace_id`, never produces the event (see `defense-in-depth-validation`).
+
+### When async boundaries lose the stack
+
+Across Kafka, gRPC, BullMQ jobs the call stack is gone. Add explicit instrumentation **before** the dangerous call (after-fail loses the inputs):
+
+```python
+async def insert_events(rows):
+    if any(r.workspace_id is None for r in rows):
+        import traceback
+        logger.error("DEBUG events with null workspace_id", extra={
+            "null_count": sum(1 for r in rows if r.workspace_id is None),
+            "stack": traceback.format_stack(),
+            "request_id": correlation_id.get(),
+        })
+    await ch.insert("events_raw", rows)
+```
+
+Use `logger.error()` not `print()` so it lands in OpenSearch with the `request_id`, searchable later.
+
+### Cross-service tracing in Brain
+
+Brain runs **a single correlation ID** across web BFF → api-gateway → gRPC → service → Kafka → consumer (canon/BRAIN_TECHNICAL.md). Search OpenSearch for one `request_id` and you get the complete chain across all 7 services — a failure in `analytics-service` at hop 5 ties back to the originating tRPC call at hop 1 and the dashboard click at hop 0. For span timing use AWS X-Ray:
+```bash
+aws xray get-trace-summaries --start-time $(date -u -d '-1 hour' +%s) --end-time $(date +%s)
+```
+
+### Finding which test polluted shared state
+
+```bash
+pnpm test --bail              # stop at first failure
+pnpm test --shard 1/4         # narrow by shard
+for f in $(find . -name '*.test.ts' | sort); do
+  echo "=== $f ===" && pnpm vitest run "$f" || break   # find the polluter
+done
+# Cypress/Detox flake hunt — run the suspect in isolation 20×
+for i in {1..20}; do pnpm test:e2e --spec cypress/e2e/morning-brief.cy.ts || echo "Failed at run $i"; done
+```
+
+### Real Brain example — the JWT entropy bug (slice-3)
+
+**Symptom:** integration tests intermittently failed JWT verification with "bad signature". **Trace chain:** test signs JWT with local secret → api-gateway verify hook reads `JWT_SECRET` (12 chars) → `jose` HMAC-SHA256 tolerates short secrets → but parallel tests mutated `JWT_SECRET` mid-flight after another cached the wrong value. **Root cause:** `JWT_SECRET` was both `< 32` bytes (Shreya HIGH finding) AND mutated in a setup that broke parallel test isolation. **Fix at source (layered):** (1) fail-fast on missing `JWT_SECRET`; (2) **fail-fast on `< 32` bytes** — entropy floor; (3) fresh per-test secret + hermetic verifier; (4) Decision Log row on `session.invalidate_all` so cross-test pollution surfaces. Stop at "I'll bump the secret length" and the parallel-test pollution bug survives.
+
+**Stack-trace tips:** in tests use `logger.error()` not `print()` (runner swallows it); log **before** the dangerous call; include `correlation_id` + `workspace_id` + key inputs; capture `new Error().stack` (Node) / `traceback.format_stack()` (Python); across services rely on the correlation ID, X-Ray, OpenSearch — not local stacks.
+
+**NEVER fix just where the error appears.** Trace to the original trigger, then `defense-in-depth-validation` ensures the class of bug can't recur.
 
 ---
 
@@ -184,7 +252,7 @@ But: 95% of "no root cause" cases are incomplete investigation.
 | Cross-service correlation | request_id + workspace_id everywhere | canon/BRAIN_TECHNICAL.md (correlation) |
 | Postmortems with root cause | **Jatin** + the builder | `blueprints/postmortem.md` |
 
-Related Brain skills: `root-cause-tracing` (back-tracing through call stacks), `defense-in-depth-validation` (post-RC, add structural prevention), `verification-before-completion` (verify the fix is real), `observability` (where the logs/traces live).
+Related Brain skills: `defense-in-depth-validation` (post-RC, add structural prevention), `verification-before-completion` (verify the fix is real), `observability` (where the logs/traces live).
 
 ## Real-world impact (from the slice-3 retro)
 

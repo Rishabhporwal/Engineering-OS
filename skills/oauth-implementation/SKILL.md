@@ -5,7 +5,7 @@ description: OAuth 2.0 flows for Brain's vendor connectors — Shopify partner O
 
 # OAuth Implementation
 
-Brain's end-user auth is **Supabase Auth** (see `session-management`). This skill is the other side — Brain acting as the **OAuth Client** to vendor APIs (Shopify, Meta, Google, Shiprocket, Klaviyo). Every Maya-owned connector starts with OAuth, so getting this right is the foundation of the ingestion pipeline.
+Brain's end-user auth is **Supabase Auth** (see `auth-and-access`). This skill is the other side — Brain acting as the **OAuth Client** to vendor APIs (Shopify, Meta, Google, Shiprocket, Klaviyo). Every Maya-owned connector starts with OAuth, so getting this right is the foundation of the ingestion pipeline.
 
 ## Why this matters for Brain
 
@@ -105,7 +105,7 @@ CREATE POLICY rls_integrations ON integrations
 
 **Brain rules:**
 - `encrypted_credentials` is **BYTEA**, KMS-envelope-encrypted. Decryption key access is per-task IAM role (the ingestion-service role only).
-- **Tokens never appear in logs.** `logging-best-practices` `redact` config covers `*.access_token`, `*.refresh_token`, `*.api_key`.
+- **Tokens never appear in logs.** `observability` `redact` config covers `*.access_token`, `*.refresh_token`, `*.api_key`.
 - **NEVER expose `client_secret` to the browser or mobile** — all OAuth happens in `ingestion-service`.
 - Connector dispatcher fetches credentials at call time, decrypts in-memory, never stores in-process beyond the request.
 
@@ -184,6 +184,6 @@ async def refresh_token(source: str, creds: dict) -> dict:
 | Token storage (Postgres + KMS) | **Maya** + **Vikram** | canon/BRAIN_TECHNICAL.md |
 | Per-task IAM (KMS decrypt) | **Jatin** | canon/BRAIN_TECHNICAL.md (secrets) |
 | Token failure alerting | **Maya** + **Jatin** | `observability` |
-| End-user auth (NOT this skill) | **Vikram** + **Shreya** | `session-management` |
+| End-user auth (NOT this skill) | **Vikram** + **Shreya** | `auth-and-access` |
 
-Related Brain skills: `session-management` (Supabase end-user auth — distinct), `integration-connectors` (per-vendor specifics), `security-baseline` (broader posture), `defense-in-depth-validation` (HMAC + state verification), `logging-best-practices` (redaction).
+Related Brain skills: `auth-and-access` (Supabase end-user auth + RBAC — distinct), `integration-connectors` (per-vendor specifics), `security-baseline` (broader posture), `defense-in-depth-validation` (HMAC + state verification), `observability` (redaction).

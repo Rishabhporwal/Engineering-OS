@@ -190,7 +190,7 @@ These three responsibilities together = **smooth autonomous flow**. The pipeline
 - All Stage 3 artifacts + code diffs + proto changes + schema changes + new MCP tools (if any) + new outbound channels (if any).
 
 ### What happens
-1. Load `security-baseline`, `access-control-rbac`, `defense-in-depth-validation`, `vulnerability-scanning`, `xss-prevention`, `session-management`, `oauth-implementation`, `india-commerce-economics` (compliance side).
+1. Load `security-baseline`, `auth-and-access`, `defense-in-depth-validation` (incl. XSS), `vulnerability-scanning`, `oauth-implementation`, `india-commerce-economics` (compliance side).
 2. For every mutation endpoint: verify `requireRole` + `requireWorkspaceMember` + Zod input + `workspace_id` assertion.
 3. For every new MCP tool: verify auth scope + tenant check + Decision Log middleware.
 4. For every new connector: verify OAuth AES-256-GCM + webhook signature + per-brand KMS key.
@@ -233,7 +233,7 @@ These three responsibilities together = **smooth autonomous flow**. The pipeline
 - Stage 3 + Stage 4 artifacts + all code diffs.
 
 ### What happens
-1. Load `testing-tdd`, `api-contract-testing`, `mutation-testing`, `operational-readiness`, `verification-before-completion`.
+1. Load `testing-tdd` (incl. mutation testing), `api-contract-testing`, `operational-readiness`, `verification-before-completion`.
 2. Run:
    - Unit tests (`pnpm vitest`, `pytest`).
    - Integration tests (services + connectors with synthetic + live credentials).

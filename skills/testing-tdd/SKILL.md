@@ -1,6 +1,6 @@
 ---
 name: testing-tdd
-description: Brain's testing discipline — Vitest (Node + Web + RNTL), pytest (Python), Cypress (web E2E), Detox (mobile E2E), k6 (load — Phase 3+ 5K RPS target), real-network smoke tests (mandatory for PASS), metric registry parity (TS↔Python), cost-routing paradigm audit verification, India compliance test matrix. Auto-load whenever Tanvi or any builder is writing tests.
+description: Brain's testing discipline — Vitest (Node + Web + RNTL), pytest (Python), Cypress (web E2E), Detox (mobile E2E), k6 (load — Phase 3+ 5K RPS target), real-network smoke tests (mandatory for PASS), the testing anti-patterns catalog, mutation testing for test effectiveness (Stryker for TS, mutmut for Python), metric registry parity (TS↔Python), cost-routing paradigm audit verification, India compliance test matrix. Auto-load whenever Tanvi or any builder is writing tests.
 ---
 
 # Testing — Brain's TDD Discipline
@@ -121,6 +121,95 @@ A green test suite is only worth something if the tests would actually fail when
 
 **Brain-specific must-cover edges** (not optional): cross-workspace 403 (multi-tenant isolation), metric registry parity (TS↔Python), paise/BigInt rounding, division-by-zero metrics → `None`, and the full India compliance matrix on any lifecycle touch.
 
+## Test effectiveness — mutation testing
+
+Coverage tells you "this line was executed." Mutation testing tells you "this line was *meaningfully* asserted" — the gap between a test that runs your code and one that catches a bug. **Mutants** are tiny automatic edits (`a + b` → `a - b`, `>` → `>=`, `true` → `false`). A mutant is **killed** when a test fails (good) and **survives** when all tests still pass (your test was weak). Score = % killed. Aim **80%+** on critical paths.
+
+For Brain the priority paths are where wrong-but-tested code is most expensive: the metric engine, the India compliance engine, the Decision Log writer, cost-routing paradigm enforcement, and the JWT/RLS auth layer.
+
+| Module | Score target | Owner |
+|---|---|---|
+| `packages/lib-metrics` (TS) + `pylibs/brain_metrics` (Python, parity-critical) | **90%+** | Maya + Tanvi |
+| `lifecycle-service` compliance engine (calling hours, NCPR, 48h cap) | **95%+** | Maya + Shreya |
+| `core-service` Decision Log writer | **90%+** | Vikram |
+| `api-gateway` JWT + RLS-context middleware | **90%+** | Vikram + Shreya |
+| Service-internal business logic | **80%+** | each builder |
+| Glue / DI / boilerplate | n/a — not worth mutating | |
+
+### TS/Vitest — Stryker
+
+```bash
+pnpm add -D @stryker-mutator/core @stryker-mutator/vitest-runner
+```
+```javascript
+// stryker.config.mjs
+export default {
+  packageManager: 'pnpm', testRunner: 'vitest', coverageAnalysis: 'perTest',
+  mutate: ['src/**/*.ts', '!src/**/*.test.ts', '!src/**/index.ts'],   // skip barrels
+  thresholds: { high: 90, low: 75, break: 75 },   // CI fails below 75
+  incremental: true,
+};
+```
+```bash
+pnpm dlx stryker run                          # full (nightly CI)
+pnpm dlx stryker run --incremental            # changed files — dev loop
+pnpm dlx stryker run --mutate "src/metrics/**/*.ts"   # investigate one module
+```
+
+### Python/pytest — mutmut
+
+```bash
+uv add --dev mutmut
+```
+```toml
+# pyproject.toml
+[tool.mutmut]
+paths_to_mutate = ["src/brain_metrics", "src/compliance", "src/decision_log"]
+tests_dir = "tests"
+runner = "uv run pytest -x --tb=no -q"
+```
+```bash
+uv run mutmut run && uv run mutmut results
+uv run mutmut show 42        # inspect a surviving mutant
+```
+
+### Weak vs strong (kill the mutants)
+
+```typescript
+// ❌ WEAK — survives mutation; passes even when calculateCM2 returns 0
+test('computes CM2', () => { expect(calculateCM2(100, 30, 10)).toBeDefined(); });
+
+// ✅ STRONG — kills arithmetic, sign, and boundary mutants
+test('computes CM2', () => {
+  expect(calculateCM2(100, 30, 10)).toBe(60);
+  expect(calculateCM2(0, 0, 0)).toBe(0);
+  expect(calculateCM2(50, 80, 10)).toBe(-40);   // negative CM2 must be representable
+});
+```
+
+Boundary mutants are non-negotiable on the India compliance bounds — the mutant that flips `<` to `<=` at the 09:00/21:00 IST calling-hours edge MUST be killed:
+```typescript
+expect(isCallable(new Date('2026-05-13T08:59:59+05:30'))).toBe(false);
+expect(isCallable(new Date('2026-05-13T09:00:00+05:30'))).toBe(true);
+expect(isCallable(new Date('2026-05-13T21:00:01+05:30'))).toBe(false);
+```
+
+### Mutation types Brain cares about
+
+| Mutation | Concern |
+|---|---|
+| Arithmetic (`+`→`-`) | Metric formulas (CM1/2/3, MER/aMER), GST extraction |
+| Relational (`>`→`>=`) | Calling-hours bounds, 48h frequency cap edge |
+| Logical (`&&`→`\|\|`) | India compliance OR-chain (NCPR OR opt-out OR pending consent) |
+| Boolean (`true`→`false`) | Paradigm-audit gate, RLS context flag |
+| Return-value (early `null`) | Auth middleware bypass tests |
+| String (UUID swap) | Workspace-scoping — do tests notice the scope changed? |
+
+### Score + practice
+- **90%+** maintain · **80–89%** chip away · **70–79%** OK for non-critical only · **<60%** weak, backlog before more features.
+- Start with critical paths (mutating glue wastes CPU); ensure 80%+ line coverage first; run incrementally locally, full nightly in CI (`cron: '0 19 * * *'` = 00:30 IST quiet period, upload the HTML report as an artifact); PR-time runs `--incremental` and fails if a critical module's score drops.
+- Investigate every survivor on a critical path — kill it or document why it's an *equivalent mutant*. Don't chase 100% (equivalent mutants and unreachable branches are real; diminishing returns past 90%).
+
 ## References
 
 - `canon/BRAIN_TECHNICAL.md` — Definition of Done per layer + full test scaffolds
@@ -128,3 +217,6 @@ A green test suite is only worth something if the tests would actually fail when
 - `skills/cost-routing-paradigms/SKILL.md` — paradigm audit verification
 - `skills/india-commerce-economics/SKILL.md` — compliance test matrix
 - `skills/clickhouse-olap/SKILL.md` — query gateway test patterns
+- `skills/auth-and-access/SKILL.md` — JWT + RLS middleware (a 90%+ mutation target)
+- `skills/verification-before-completion/SKILL.md` — PASS discipline (mutation score is verified, not trusted)
+- `skills/code-review/SKILL.md` — mutation score is a `/review` discussion input

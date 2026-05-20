@@ -21,7 +21,7 @@ Same KPIs, different rendering. The web's CM Waterfall is a 12-cell drill-down v
 
 ## Brain's KPI registry is canonical — NEVER reinvent
 
-Every metric Brain shows lives in `packages/lib-metrics` (TS) + `pylibs/brain_metrics` (Python). The formulas are versioned, parity-tested (`mutation-testing` 90%+), and documented in canon/BRAIN_TECHNICAL.md. **You do not invent a new metric in a dashboard.** If a real new KPI is needed, propose it to Maya → Aryan → enter the registry → THEN render it.
+Every metric Brain shows lives in `packages/lib-metrics` (TS) + `pylibs/brain_metrics` (Python). The formulas are versioned, parity-tested (`testing-tdd` mutation testing 90%+), and documented in canon/BRAIN_TECHNICAL.md. **You do not invent a new metric in a dashboard.** If a real new KPI is needed, propose it to Maya → Aryan → enter the registry → THEN render it.
 
 ### The Brain canon (from `memory/business-context.md`)
 

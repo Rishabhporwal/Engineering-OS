@@ -273,6 +273,6 @@ Brain defines channels per push category so users can mute "Alerts" without muti
 | Morning Brief snippet (Haiku) | **Maya** | canon/BRAIN_TECHNICAL.md (synthesis) |
 | Schedule (EventBridge → trigger) | **Jatin** | canon/BRAIN_TECHNICAL.md (scheduling) |
 | Receipt monitoring + dead-token cleanup | **Vikram** | BullMQ job |
-| PII redaction in payloads | **Shreya** | `logging-best-practices` + `security-baseline` |
+| PII redaction in payloads | **Shreya** | `observability` + `security-baseline` |
 
 Related Brain skills: `morning-brief-mobile` (the surface deep design), `frontend-mobile`, `defense-in-depth-validation` (push payload validation), `idempotency-handling` (dispatch dedup), `mobile-offline-support` (handle push received while offline).

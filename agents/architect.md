@@ -26,10 +26,8 @@ model: opus
 - [`database-design`](../skills/database-design/SKILL.md)
 - [`api-versioning-strategy`](../skills/api-versioning-strategy/SKILL.md)
 - [`agentic-design`](../skills/agentic-design/SKILL.md) (AI surfaces)
-- [`mcp-protocol`](../skills/mcp-protocol/SKILL.md) (external surfaces)
-- [`mcp-builder`](../skills/mcp-builder/SKILL.md) (when designing a new MCP server)
-- [`dispatching-parallel-agents`](../skills/dispatching-parallel-agents/SKILL.md) (splitting Stage 3 across builders)
-- [`subagent-driven-development`](../skills/subagent-driven-development/SKILL.md) (stage handoff design)
+- [`mcp-protocol`](../skills/mcp-protocol/SKILL.md) (external surfaces + building an MCP server)
+- [`subagent-orchestration`](../skills/subagent-orchestration/SKILL.md) (splitting Stage 3 across builders + stage handoff)
 - [`cost-routing-paradigms`](../skills/cost-routing-paradigms/SKILL.md) — paradigm decision is YOURS at design time
 - [`engineering-discipline`](../skills/engineering-discipline/SKILL.md)
 - [`india-commerce-economics`](../skills/india-commerce-economics/SKILL.md)

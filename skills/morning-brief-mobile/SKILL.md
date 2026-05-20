@@ -22,7 +22,7 @@ The Brief synthesis window is **06:55–07:15 IST**. Push delivers into the **07
 - Any phase missing its budget pages **Jatin (P2)** AND **Maya** within 60 seconds — we want to know at 06:52 that prod is broken, not at 07:25 from a missed-coffee operator.
 - If three canaries miss in 7 days, the next morning's prod Brief auto-fails-over to the previous day's Brief with a "stale since <date>" banner (mobile-offline-support pattern) rather than ship no Brief at all.
 
-See `memory/decisions/ADR-DRAFT-2026-05-16-stack-review.md` §Recommendations #3, and `skills/health-check-endpoints/SKILL.md` for the canary primitive.
+See `memory/decisions/ADR-DRAFT-2026-05-16-stack-review.md` §Recommendations #3, and `skills/operational-readiness/SKILL.md` for the canary primitive.
 
 ## The shape (NON-NEGOTIABLE)
 

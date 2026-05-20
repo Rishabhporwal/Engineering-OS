@@ -26,8 +26,7 @@ You are the cost-routing champion. If you ship Sonnet where Haiku would do, you 
 - [`domain-driven-design`](../skills/domain-driven-design/SKILL.md) — her Python services are DDD-structured too
 - [`claude-api`](../skills/claude-api/SKILL.md) — primary
 - [`python-services`](../skills/python-services/SKILL.md) — primary
-- [`mcp-protocol`](../skills/mcp-protocol/SKILL.md)
-- [`mcp-builder`](../skills/mcp-builder/SKILL.md) — building a new MCP server / tool surface
+- [`mcp-protocol`](../skills/mcp-protocol/SKILL.md) — incl. building a new MCP server / tool surface
 - [`clickhouse-olap`](../skills/clickhouse-olap/SKILL.md)
 - [`forecasting-prophet`](../skills/forecasting-prophet/SKILL.md)
 - [`lifecycle-revenue-layer`](../skills/lifecycle-revenue-layer/SKILL.md)

@@ -1,6 +1,6 @@
 ---
 name: database-design
-description: Brain's data layer — Supabase Postgres (OLTP) + ClickHouse Cloud (OLAP) split. Schema conventions, RLS policies, multi-tenant `workspace_id` discipline, indexes, partitioning, materialized views, Debezium CDC. Auto-load whenever designing a new table, adding an index, or hitting a query performance issue. See clickhouse-olap for deep CH patterns and security-baseline for RLS detail.
+description: Brain's data layer — Supabase Postgres (OLTP) + ClickHouse Cloud (OLAP) split. Schema conventions, RLS policies (workspace_id-leading), multi-tenant discipline, indexes/partial indexes, partitioning, materialized views, Debezium CDC, transaction-vs-session pooling, idempotency-key TTL, pg_cron/pgvector. Auto-load whenever designing a new core-service table, adding an index, configuring connection pooling, reviewing a Supabase migration, or hitting a query performance issue. See clickhouse-olap for deep CH patterns and security-baseline for RLS detail.
 ---
 
 # Database Design — Brain's OLTP + OLAP Split
@@ -55,8 +55,84 @@ Set `app.<tenant_id>` via Prisma middleware on every connection.
 
 ### Migration Discipline (Prisma)
 - Never `ALTER TABLE` directly. Always migrations.
-- Backwards-compatible by default: add column nullable → backfill → make NOT NULL in a later migration
-- For huge tables: use `pg_repack` or batched UPDATE, not a single locking ALTER
+- **One migration per PR** — never bundle schema changes.
+- **Idempotent**: `IF NOT EXISTS`, `IF EXISTS`, `OR REPLACE`.
+- Backwards-compatible by default: add column nullable → backfill → make NOT NULL in a later migration (two-phase pattern; never a single `ADD COLUMN NOT NULL` lock).
+- **No locking DDL during business hours** — schedule for the maintenance window.
+- **Always `CREATE INDEX CONCURRENTLY`** in prod (cannot run inside a transaction).
+- For huge tables: use `pg_repack` or batched UPDATE, not a single locking ALTER.
+- **Roll-back script** for every migration (Prisma generates the down migration — check it).
+
+## Supabase + Brain specifics (workspace_id as the tenant column)
+
+Brain's OLTP system of record is **Supabase Postgres** (workspaces, members, integrations config, goals, marketing actions, consent model, Decision Log, idempotency keys, audit). For Brain, the `<tenant_id>` column above is concretely **`workspace_id`**. Companion skills: `sql-query-optimization` (query-shape), `security-baseline` (RLS + secret handling), `idempotency-handling` (key TTL + cleanup).
+
+### Connection management — transaction vs session pooler (CRITICAL)
+
+Supabase exposes two pooler endpoints:
+
+| Pooler | Port | When |
+|---|---|---|
+| **Transaction** | 6543 | Default for API request paths (short, stateless). **Cannot use prepared statements**, `LISTEN/NOTIFY`, or session state. |
+| **Session** | 5432 | Long-running connections needing session state — migrations, Prisma `$transaction([...])`, `LISTEN/NOTIFY`. |
+
+Brain services use the **transaction pooler** for tRPC + gRPC request paths (Prisma in `pgbouncer` mode); migrations run via the session pooler.
+
+```env
+DATABASE_URL="postgres://...@aws-0-ap-south-1.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=20"
+DIRECT_URL="postgres://...@aws-0-ap-south-1.pooler.supabase.com:5432/postgres"
+```
+
+**`connection_limit` per pod = 20** (Brain default). 10 replicas → 200 connections, within Supabase's budget. Each EKS pod owns its own; don't share across processes.
+
+### RLS — workspace_id-leading (Shreya VETO territory)
+
+RLS is mandatory on every workspace-scoped table — but it is a **safety net, not the primary boundary**. `workspace_id` is set per-request from the verified JWT:
+
+```sql
+ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
+CREATE POLICY rls_orders ON orders
+  USING (workspace_id = current_setting('app.workspace_id')::uuid);
+```
+```typescript
+// preHandler hook on every request — transaction-local, cleared at tx end
+await db.query("SELECT set_config('app.workspace_id', $1, true)", [req.workspaceId]);
+```
+
+Brain rule: **`workspace_id` MUST come from `app_metadata.workspace_id` in the verified JWT** (see `auth-and-access`, `defense-in-depth-validation`). Never from the request body — slice-3 caught a CVE-class cross-tenant write from that exact anti-pattern.
+
+**RLS performance:** for the policy predicate to be index-usable, the index leading column must be `workspace_id`. EXPLAIN the policy-augmented query to confirm `Index Scan`, not `Seq Scan + Filter`:
+```sql
+EXPLAIN (ANALYZE, BUFFERS) SELECT * FROM orders WHERE id = 'some-uuid';
+```
+
+**Bypass RLS only via `service_role`** (admin paths: cross-workspace backfill, the metric engine). NEVER unset RLS. The `service_role` key lives in AWS Secrets Manager — never in env files, never in client code.
+
+### Concurrency
+
+```sql
+CREATE INDEX CONCURRENTLY idx_orders_ws_created ON orders (workspace_id, created_at DESC);
+SELECT pg_try_advisory_lock(hashtext('daily_rollup_2026_05_13'));  -- one-at-a-time jobs
+```
+For high-write paths (ingestion, Decision Log) prefer **optimistic concurrency** (`xmin` / `version` column). Use `FOR UPDATE NOWAIT` only when serialization is correctness-critical (consent transitions, AI calling scheduling).
+
+### Data access + schema reminders
+- **No `SELECT *` in API code** — project columns; the heap fetch happens without a covering index.
+- **Cursor pagination, never OFFSET** (banned in prod paths — see `api-traffic-patterns`).
+- **Batched DML** — multi-row `INSERT ... ON CONFLICT ... DO UPDATE` via `UNNEST(...)`, or `COPY` for bulk loads.
+- **Integer minor units** for money (`spend_minor`, `gross_revenue_minor`) — never `numeric(15,2)` floats (slice-3 lesson).
+- **`text` not `varchar(N)`** (identical in PG, avoids truncation bugs); **`citext`** for case-insensitive (email).
+- **JSONB for flexible payloads** (Decision Log, integration config), but promote frequently-queried fields to a generated column + index.
+
+### Advanced features Brain uses
+- **`pg_cron`** — idempotency-key cleanup (TTL), daily rollups, NCPR cache refresh.
+- **`pgvector`** — the Memory Layer (Brand Fingerprint, Customer Segment Memory, Seasonal Codebook).
+- **`pg_trgm`** — fuzzy customer-name search (replaces banned `LIKE '%term%'`).
+
+### Monitoring (Jatin + Vikram)
+- **`pg_stat_statements`** (default in Supabase): any query with `mean_exec_time > 500ms` and `calls > 100` over 1h → page Vikram (blowing the BFF latency budget).
+- **Pool saturation** — CloudWatch PgBouncer active connections; alert at 80% capacity.
+- **Cache hit ratio** — `sum(blks_hit)/sum(blks_hit+blks_read)` target > 99%; below 95% suggests memory pressure (talk to Supabase about instance size).
 
 ## Time + Timezones (multi-tenant gotcha)
 
@@ -176,3 +252,16 @@ GROUP BY <tenant_id>, date;
 2. Check `pg_stat_user_indexes` for unused indexes (cost) and missing ones (your slow query is full-scanning)
 3. For ClickHouse: `system.query_log` shows what's slow
 4. For Redis: `--latency` flag, check key cardinality
+
+## Brain wiring
+
+| Concern | Owner | Reference |
+|---|---|---|
+| Schema + migrations for core-service | **Vikram** | canon/BRAIN_TECHNICAL.md (OLTP design) |
+| RLS policy review | **Shreya** + Aryan | canon/BRAIN_TECHNICAL.md (multi-tenancy) |
+| Connection pooler config | **Jatin** + Vikram | canon/BRAIN_TECHNICAL.md (connection) |
+| Slow query alerting | **Jatin** | `observability` |
+| Memory Layer (pgvector) | **Maya** | canon/BRAIN_TECHNICAL.md |
+| pg_cron job inventory | **Jatin** | scheduled tasks doc |
+
+Related Brain skills: `sql-query-optimization` (query-shape rules), `clickhouse-olap` (deep CH patterns), `security-baseline` (RLS + secret handling), `idempotency-handling` (key TTL + cleanup), `auth-and-access` (`workspace_id` from JWT into the `app.workspace_id` GUC), `api-traffic-patterns` (cursor pagination).

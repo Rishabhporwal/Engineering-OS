@@ -109,4 +109,4 @@ If you can't write the undo step, you don't understand the change well enough to
 
 Stage explicit product paths for the Founder; commit only the `.engineering-os/` audit trail yourself; never rewrite history; and don't say `shipped` until the push succeeds. The last mile is where discipline matters most.
 
-Related: `verification-before-completion` (the green-claim gate), `subagent-driven-development` (this is the final stage), `operational-readiness` (pre-ship checklist), `devops-aws` (deploy + rollback).
+Related: `verification-before-completion` (the green-claim gate), `subagent-orchestration` (this is the final stage), `operational-readiness` (pre-ship checklist), `devops-aws` (deploy + rollback).

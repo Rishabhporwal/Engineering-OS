@@ -36,7 +36,7 @@ description: Brain's architecture patterns — Microservices + Monorepo + Event-
 10. Be contract-first — `proto/` is the source of truth; `buf breaking` gates changes
 11. Be event-driven — state changes flow via Kafka; sync via gRPC
 12. Separate infrastructure from domain — domain code imports no framework (`domain-driven-design`)
-13. Be K8s-ready — health/liveness/readiness probes, graceful drain, PDB (`health-check-endpoints`)
+13. Be K8s-ready — health/liveness/readiness probes, graceful drain, PDB (`operational-readiness`)
 14. Enforce multi-tenancy — `workspace_id` at 4 layers (Postgres RLS, CH query gateway, Kafka envelope, MCP tenant check)
 15. Pass the cost-routing paradigm gate on every new path (`cost-routing-paradigms`)
 

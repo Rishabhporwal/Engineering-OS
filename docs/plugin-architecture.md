@@ -26,7 +26,7 @@ A future companion (Slack notifier, GitHub Action) can be added later — the pl
 | Plugin primitive | Brain use | Lives in |
 |------------------|-----------|----------|
 | **Subagents** | The 10 named agents (Rohan, Aryan, Vikram, Ananya, Karan, Maya, Shreya, Tanvi, Jatin, Priya) + the runtime dynamic-persona-generator | [`agents/`](../agents/) |
-| **Skills** | The Brain skill library (58 domain skills + 14 command-skills) | [`skills/`](../skills/) |
+| **Skills** | The Brain skill library (49 domain skills + 14 command-skills) | [`skills/`](../skills/) |
 | **Slash commands** | `/requirement`, `/status`, `/recall`, `/handoff`, `/approve`, `/reject`, `/deploy`, `/rollback`, `/persona`, `/invoke-skill`, `/eos-init`, `/propose-rule`, `/adopt-rule`, `/reject-rule` | command-skills in [`skills/`](../skills/) (`disable-model-invocation: true`) |
 | **Hooks** | Session-start memory rehydration; post-tool-use journal append; pre-handoff handoff-event logging | [`hooks/`](../hooks/) |
 | **Plugin manifest** | Declares everything above | [`.claude-plugin/plugin.json`](../.claude-plugin/plugin.json) |
@@ -60,8 +60,8 @@ brain-engineering-os/                        # THE PLUGIN
 │   └── product-manager.md                   (Priya)
 │
 ├── skills/                                  # all skills: domain skills + command-skills
-│   ├── access-control-rbac/                 # domain skill (model-auto-loaded)
-│   ├── agentic-design/
+│   ├── agentic-design/                      # domain skill (model-auto-loaded)
+│   ├── domain-driven-design/
 │   ├── requirement/                         # command-skill (disable-model-invocation: true)
 │   ├── approve/                             # command-skill
 │   └── ...

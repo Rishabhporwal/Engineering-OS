@@ -50,7 +50,7 @@ Every challenge — issued to a Founder, a peer agent, or back through the pipel
 
 ```markdown
 > **What I understood:** New endpoint `GET /v1/orders` paginated for the dashboard.
-> **What I'm concerned about:** Offset pagination is banned in prod paths (skill: api-pagination). Cursor is mandatory.
+> **What I'm concerned about:** Offset pagination is banned in prod paths (skill: api-traffic-patterns). Cursor is mandatory.
 > **Risk:** Offset performance degrades as `OFFSET` grows; we'd hit our p95 budget by month 3 at brand-level scale. Two prior incidents in Looqus on this exact pattern.
 > **Recommendation:** Cursor over (workspace_id, created_at, id). Same engineering effort. Future-proof.
 > **Decision needed:** Confirm cursor; if you disagree, surface the reason — but cursor is the discipline.

@@ -144,7 +144,7 @@ Append-only. Each entry is a markdown section.
 ## 2026-05-17T14:32:00Z — Vikram (backend-developer) — feat-abandoned-cart-recovery-gcc
 **Stage:** 3 (parallel dev)
 **Action:** Implemented Fastify route POST /v1/lifecycle/recover-cod-uae in api-gateway.
-**Skills loaded:** backend-fastify-trpc-grpc, idempotency-handling, api-rate-limiting, defense-in-depth-validation, india-commerce-economics (UAE specifics), cost-routing-paradigms, verification-before-completion.
+**Skills loaded:** backend-fastify-trpc-grpc, idempotency-handling, api-traffic-patterns, defense-in-depth-validation, india-commerce-economics (UAE specifics), cost-routing-paradigms, verification-before-completion.
 **Paradigm:** SQL (no LLM, no ML — rule-based with RFM segment lookup).
 **Decisions:**
 - Reused single Audience Builder (no new primitive — Single-Primitive Rule).

@@ -21,14 +21,12 @@ model: sonnet
 ## Owned skills
 
 - [`devops-aws`](../skills/devops-aws/SKILL.md) — primary
-- [`observability`](../skills/observability/SKILL.md) — primary
-- [`logging-best-practices`](../skills/logging-best-practices/SKILL.md)
-- [`health-check-endpoints`](../skills/health-check-endpoints/SKILL.md)
+- [`observability`](../skills/observability/SKILL.md) — primary (incl. structured logging)
 - [`turborepo`](../skills/turborepo/SKILL.md)
-- [`api-rate-limiting`](../skills/api-rate-limiting/SKILL.md) (gateway level)
+- [`api-traffic-patterns`](../skills/api-traffic-patterns/SKILL.md) (gateway-level rate-limiting)
 - [`app-store-deployment`](../skills/app-store-deployment/SKILL.md) (mobile)
 - [`vulnerability-scanning`](../skills/vulnerability-scanning/SKILL.md) (CI gates)
-- [`operational-readiness`](../skills/operational-readiness/SKILL.md)
+- [`operational-readiness`](../skills/operational-readiness/SKILL.md) — incl. health-check endpoints
 - [`finishing-a-development-branch`](../skills/finishing-a-development-branch/SKILL.md) — the Stage 8 commit/push discipline, consolidated
 - [`engineering-discipline`](../skills/engineering-discipline/SKILL.md)
 - [`verification-before-completion`](../skills/verification-before-completion/SKILL.md)

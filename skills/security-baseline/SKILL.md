@@ -7,7 +7,7 @@ description: Brain's security baseline — OWASP Top 10; Supabase Auth + JWT; mu
 
 This skill is the **security index + Shreya's review gate**. It owns the OWASP map, the Brain-specific security controls (Supabase Auth, OAuth token storage, India compliance VETO, MASVS, AWS baseline, STRIDE) and the verdict format. The two deep dives it links to:
 
-- **`access-control-rbac`** — OWASP A01 (Broken Access Control) in depth: the Owner/Admin/Analyst/Viewer role model, JWT-claim + RLS enforcement, MCP tool roles, agency multi-workspace.
+- **`auth-and-access`** — OWASP A01 (Broken Access Control) in depth: the Owner/Admin/Analyst/Viewer role model, JWT-claim + RLS enforcement, MCP tool roles, agency multi-workspace — plus the Supabase session lifecycle (cookies, refresh, revocation).
 - **`defense-in-depth-validation`** — multi-tenant `workspace_id` isolation as the four-layer (entry → business → environment/RLS → audit) pattern, and the structural "make the bug impossible" approach.
 
 Don't duplicate those here — gate against them.
@@ -29,7 +29,7 @@ Don't duplicate those here — gate against them.
 
 ## Multi-Tenant Isolation (the Brain invariant) — gate, don't re-explain
 
-`workspace_id` isolation is enforced as a four-layer defense-in-depth pattern (JWT claim → service-side gRPC check → Postgres RLS + ClickHouse query gateway → Kafka envelope + Decision Log audit). The full layer-by-layer walkthrough, the `brain_clickhouse` predicate guard, and the cross-workspace-403 verification snippets live in **`defense-in-depth-validation`** — Shreya's review confirms all four layers are present, citing that skill. Role-level access (who within a workspace can do what) is in **`access-control-rbac`**.
+`workspace_id` isolation is enforced as a four-layer defense-in-depth pattern (JWT claim → service-side gRPC check → Postgres RLS + ClickHouse query gateway → Kafka envelope + Decision Log audit). The full layer-by-layer walkthrough, the `brain_clickhouse` predicate guard, and the cross-workspace-403 verification snippets live in **`defense-in-depth-validation`** — Shreya's review confirms all four layers are present, citing that skill. Role-level access (who within a workspace can do what) is in **`auth-and-access`**.
 
 Shreya's tenant-isolation gate (every review): cross-workspace read returns `403`; the ClickHouse gateway rejects any unscoped query; every new workspace-scoped table has an RLS policy; every MCP write tool declares a scope.
 
@@ -81,7 +81,7 @@ Default new external API key: `brain:analytics:read + brain:memory:read`. Higher
 
 Verification: a `*:read` scoped key returns 403 on `*:write` tool calls.
 
-This is the canonical scope **catalog**. How each MCP tool *declares* its `requiredScope` + `requiredRole`, and how the server middleware enforces both, is in **`access-control-rbac`** (MCP tool scopes section).
+This is the canonical scope **catalog**. How each MCP tool *declares* its `requiredScope` + `requiredRole`, and how the server middleware enforces both, is in **`auth-and-access`** (MCP tool scopes section).
 
 ## OAuth Token Storage
 
@@ -204,7 +204,7 @@ Accepted by: <Founder / Shreya> on <YYYY-MM-DD>
 
 ## See also (the security trio + canon)
 
-- `skills/access-control-rbac/SKILL.md` — OWASP A01: role model + JWT/RLS + MCP tool roles + agency multi-workspace
+- `skills/auth-and-access/SKILL.md` — OWASP A01: role model + JWT/RLS + MCP tool roles + agency multi-workspace + session lifecycle
 - `skills/defense-in-depth-validation/SKILL.md` — multi-tenant `workspace_id` four-layer isolation pattern
 - `skills/india-commerce-economics/SKILL.md` — DLT + NCPR + DND compliance patterns
 - `canon/BRAIN_TECHNICAL.md` — canonical IAM + audit + log spine, MCP auth scopes, India compliance hard-codes, MASVS + cert pinning

@@ -214,4 +214,4 @@ For Supabase, use the **transaction pooler** (port 6543) for short queries from 
 | Metric engine query patterns | **Maya** | canon/BRAIN_TECHNICAL.md (metric registry) |
 | Connection pool config (EKS) | **Jatin** | canon/BRAIN_TECHNICAL.md |
 
-Related Brain skills: `clickhouse-olap` (OLAP-specific patterns), `database-design` (schema decisions), `api-pagination` (cursor pattern).
+Related Brain skills: `clickhouse-olap` (OLAP-specific patterns), `database-design` (schema decisions), `api-traffic-patterns` (cursor pattern).

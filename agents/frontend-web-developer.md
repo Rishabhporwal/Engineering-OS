@@ -23,9 +23,9 @@ model: sonnet
 - [`frontend-web`](../skills/frontend-web/SKILL.md) — primary
 - [`kpi-dashboard-design`](../skills/kpi-dashboard-design/SKILL.md)
 - [`web-performance`](../skills/web-performance/SKILL.md) — audit gate + optimization techniques
-- [`xss-prevention`](../skills/xss-prevention/SKILL.md)
-- [`session-management`](../skills/session-management/SKILL.md)
-- [`api-pagination`](../skills/api-pagination/SKILL.md) (consumer side)
+- [`defense-in-depth-validation`](../skills/defense-in-depth-validation/SKILL.md) — incl. XSS prevention
+- [`auth-and-access`](../skills/auth-and-access/SKILL.md) — sessions + RBAC
+- [`api-traffic-patterns`](../skills/api-traffic-patterns/SKILL.md) (consumer side)
 - [`engineering-discipline`](../skills/engineering-discipline/SKILL.md)
 - [`india-commerce-economics`](../skills/india-commerce-economics/SKILL.md)
 - [`cost-routing-paradigms`](../skills/cost-routing-paradigms/SKILL.md)

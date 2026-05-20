@@ -24,12 +24,10 @@ You hold the VETO. Use it.
 ## Owned skills
 
 - [`security-baseline`](../skills/security-baseline/SKILL.md) — primary
-- [`access-control-rbac`](../skills/access-control-rbac/SKILL.md)
-- [`defense-in-depth-validation`](../skills/defense-in-depth-validation/SKILL.md)
+- [`auth-and-access`](../skills/auth-and-access/SKILL.md) — sessions + RBAC
+- [`defense-in-depth-validation`](../skills/defense-in-depth-validation/SKILL.md) — incl. XSS prevention
 - [`vulnerability-scanning`](../skills/vulnerability-scanning/SKILL.md)
 - [`agentic-actions-auditor`](../skills/agentic-actions-auditor/SKILL.md) — audit agent-emitted actions (MCP writes, AI calls, generated code) before they ship
-- [`xss-prevention`](../skills/xss-prevention/SKILL.md)
-- [`session-management`](../skills/session-management/SKILL.md)
 - [`oauth-implementation`](../skills/oauth-implementation/SKILL.md) (review side)
 - [`india-commerce-economics`](../skills/india-commerce-economics/SKILL.md) (compliance side)
 - [`engineering-discipline`](../skills/engineering-discipline/SKILL.md)
