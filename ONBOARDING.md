@@ -1,6 +1,6 @@
 # Brain Engineering OS — Onboarding
 
-> The complete picture of the AI engineering team. If you're new, read this top to bottom once. Current version: **v0.9.1**. (New since 0.7.1: risk-based lanes, semantic memory, parallel review, background workers, paradigm gate, browser/visual QA, the `/careful` guard, the pipeline doctor, 6 new domain skills, and cross-engineer `/team-digest`. **Product engineers: jump to §12 — "Get the most from the team."**)
+> The complete picture of the AI engineering team. If you're new, read this top to bottom once. Current version: **v0.10.0**. (New since 0.7.1: risk-based lanes, semantic memory, parallel review, background workers, paradigm gate, browser/visual QA, the `/careful` guard, the pipeline doctor, 6 new domain skills, and cross-engineer `/team-digest`. **Product engineers: jump to §12 — "Get the most from the team."**)
 
 ---
 
@@ -41,7 +41,7 @@ Founder /requirement
   → Stage 7  Rishabh: /approve or /reject  ← the human gate
   → Stage 8  Jatin: stage product code, commit .engineering-os, CI → ArgoCD → 48h monitor
 ```
-Each stage **plans → executes → self-reviews → verifies → invokes the next stage via the `Agent` tool** (handoff files are a logged fallback only). The Founder intervenes only at Stage 7 and at the final push.
+Each stage **plans → executes → self-reviews → verifies → returns a `HANDOFF` block**; the **top-level `/requirement` orchestrator** reads it + `state/active.json` and spawns the next stage (subagents can't spawn subagents on this platform — orchestration lives at the top level; see [docs/orchestration.md](docs/orchestration.md)). The Founder intervenes only at Stage 7 and at the final push.
 
 ## 5. The skill library — 80 folders (55 domain + 25 command)
 **Domain skills** are model-auto-loaded per each agent's owned-skill list (see [docs/skill-mapping-matrix.md](docs/skill-mapping-matrix.md)). **Command-skills** carry `disable-model-invocation: true` and run only when a human types `/brain-engineering-os:<name>`.

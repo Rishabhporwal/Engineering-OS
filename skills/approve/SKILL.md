@@ -23,7 +23,9 @@ Steps:
 5. Update `state/active.json`: status → `approved`, stage → 8, owner → `platform-devops`.
 6. Append a decision-log entry of type `decision` with `actor: rishabh, decision: approved`.
 7. Append journal under `platform.journal.md` ("Founder approval received").
-8. **Invoke the `platform-devops` subagent** to run Stage 8.
-9. Print: "Approved. Jatin is starting Stage 8."
+8. **Drive Stage 8 (you are top-level — you have the Agent tool).** Spawn the `platform-devops` subagent for Stage 8, passing the absolute `${CLAUDE_PLUGIN_ROOT}` + `${CLAUDE_PROJECT_DIR}` and the note "you have no Agent tool — do Stage 8, persist artifacts/state/journals, return a HANDOFF block." Read its returned HANDOFF + state:
+   - `shipped` / `monitoring` → done; print the deployment summary.
+   - `rolled-back` (BOUNCE) → the rollback re-enters Stage 4: spawn `security-reviewer` (then continue the orchestration loop from there, as in `/requirement`).
+9. Print: "Approved. Jatin ran Stage 8 → <final status>."
 
 If `$ARGUMENTS` was empty or req_id not found, print available `awaiting-founder` requirements.

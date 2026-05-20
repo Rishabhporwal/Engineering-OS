@@ -195,22 +195,26 @@ Before you invoke the next agent via Agent tool (or write any handoff file), you
 - Capture the self-review output in your stage's primary artifact under a "Self-review" section (or equivalent).
 - If your self-review finds anything failing, FIX IT before handing off. Do not pass broken work down the line and expect the next stage to catch it.
 
-### 3. Hand off explicitly via Agent tool (mandatory)
+### 3. Hand off by RETURNING a structured signal — NOT by spawning
 
-When your stage is genuinely complete and self-reviewed:
+**Platform reality (read this carefully):** you run as a spawned subagent and you do **NOT** have the `Agent` tool — on this platform a subagent cannot spawn another subagent. So you **cannot** invoke the next stage yourself. The pipeline is driven by a **top-level orchestrator** (the `/requirement` flow, which does have the `Agent` tool). **This section SUPERSEDES any "invoke the next subagent via the Agent tool" instruction anywhere in your role file** — wherever your role file says to spawn the next agent, instead do the following.
 
-- Invoke the next agent via the `Agent` tool. The Agent call IS the handoff:
+When your stage is complete and self-reviewed:
+
+- **Persist everything before you return:** write your stage artifact(s) to the run folder; append your per-agent journal + the per-feature journal; append a decision-log line; and **update `state/active.json`** — set `status` / `stage` / `current_owner` to the NEXT stage per the workflow + lane (use the EXACT status values from `workflows/state-machine.yaml`) so the orchestrator can route deterministically.
+- **End your response with a machine-readable HANDOFF block:**
   ```
-  Agent(
-    description="<one-line: next stage + req_id>",
-    subagent_type="<next-agent-id>",
-    prompt="<context: what you did, what's in the run folder, what the next agent should do, any caveats they need to know>"
-  )
+  HANDOFF:
+    decision: ADVANCE | BOUNCE | CHALLENGE-BACK | KILL | PASS | FAIL
+    next_stage: <stage number/name, or "founder">
+    next_agent: <agent-id | founder | none>
+    bounce_target: <agent-id | none>      # only when decision is BOUNCE/FAIL
+    needs_personas: [<persona-type>, ...]  # Stage 1 only; else []
+    reason: <one line>
   ```
-- Only if the Agent invocation fails or is unavailable: fall back to writing a `HANDOFF-TO-<NEXT>.md` file + emit `type: handoff-file-fallback` decision-log event.
-- Do NOT silently disappear. Do NOT leave state at your stage with no next-step signal. Either the next agent is running, or a HANDOFF file with explicit next-action is on disk, or Founder is paged via `pending-founder-attention.md`.
+- Do **NOT** call the Agent tool (you don't have it). Do **NOT** write `HANDOFF-TO-*.md` files — that legacy fallback is replaced by the HANDOFF block + the `state/active.json` update. Do **NOT** end without a HANDOFF block.
 
-These three together = "smooth autonomous flow." The pipeline moves agent-to-agent without Founder prompting between stages. Founder gates remain at the initial requirement submission and at Stage 7 (approval).
+The top-level orchestrator reads your `state/active.json` update + your HANDOFF block and spawns the next stage (it has the Agent tool; you don't). That is how "submit one `/requirement` and the team runs end-to-end" works on this platform. Founder gates remain at requirement submission and Stage 7.
 
 ## Commit discipline (durable rule, adopted 2026-05-19)
 
