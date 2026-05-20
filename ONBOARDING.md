@@ -1,6 +1,6 @@
 # Brain Engineering OS — Onboarding
 
-> The complete picture of the AI engineering team. If you're new, read this top to bottom once. Current version: **v0.12.0**. (New since 0.7.1: risk-based lanes, semantic memory, parallel review, background workers, paradigm gate, browser/visual QA, the `/careful` guard, the pipeline doctor, 6 new domain skills, cross-engineer `/team-digest`, the **top-level orchestrator** (one `/requirement` runs the team end-to-end), **live activity logs** (`/watch`), and **live monitoring mode** (`/monitor` — watch the running app, auto-open fixes for browser errors). **Product engineers: jump to §12 — "Get the most from the team."**)
+> The complete picture of the AI engineering team. If you're new, read this top to bottom once. Current version: **v0.13.0**. (New since 0.7.1: risk-based lanes, semantic memory, parallel review, background workers, paradigm gate, browser/visual QA, the `/careful` guard, the pipeline doctor, 6 new domain skills, cross-engineer `/team-digest`, the **top-level orchestrator** (one `/requirement` runs the team end-to-end), **live activity logs** (`/watch`), **live monitoring mode** (`/monitor`), and a **visual progress dashboard** (`/dashboard`). **Product engineers: jump to §12 — "Get the most from the team."**)
 
 ---
 
@@ -43,7 +43,7 @@ Founder /requirement
 ```
 Each stage **plans → executes → self-reviews → verifies → returns a `HANDOFF` block**; the **top-level `/requirement` orchestrator** reads it + `state/active.json` and spawns the next stage (subagents can't spawn subagents on this platform — orchestration lives at the top level; see [docs/orchestration.md](docs/orchestration.md)). The Founder intervenes only at Stage 7 and at the final push.
 
-## 5. The skill library — 82 folders (55 domain + 27 command)
+## 5. The skill library — 83 folders (55 domain + 28 command)
 **Domain skills** are model-auto-loaded per each agent's owned-skill list (see [docs/skill-mapping-matrix.md](docs/skill-mapping-matrix.md)). **Command-skills** carry `disable-model-invocation: true` and run only when a human types `/brain-engineering-os:<name>`.
 
 - **Architecture/discipline:** architecture-patterns, domain-driven-design, region-adapter, api-versioning-strategy, tech-stack-evaluation, engineering-discipline, code-review, writing-plans, verification-before-completion, systematic-debugging, subagent-orchestration, finishing-a-development-branch, cost-routing-paradigms
@@ -52,7 +52,7 @@ Each stage **plans → executes → self-reviews → verifies → returns a `HAN
 - **AI:** agentic-design, claude-api, forecasting-prophet, agentic-actions-auditor, memory-layer-pgvector
 - **Security:** security-baseline, auth-and-access, defense-in-depth-validation, vulnerability-scanning, oauth-implementation, data-privacy-dpdp
 - **Ops/testing/product:** devops-aws, observability, operational-readiness, testing-tdd, api-contract-testing, task-tracker-integration, lifecycle-revenue-layer, india-commerce-economics
-- **Command-skills (27):** requirement, status, recall, handoff, approve, reject, deploy, rollback, persona, invoke-skill, eos-init, propose-rule, adopt-rule, reject-rule, recall-similar, reindex, qa-browser, design-review, worker-test-gap, worker-canon-drift, worker-compliance-drift, test-pipeline, resume, new-skill, team-digest, watch, monitor
+- **Command-skills (28):** requirement, status, recall, handoff, approve, reject, deploy, rollback, persona, invoke-skill, eos-init, propose-rule, adopt-rule, reject-rule, recall-similar, reindex, qa-browser, design-review, worker-test-gap, worker-canon-drift, worker-compliance-drift, test-pipeline, resume, new-skill, team-digest, watch, monitor, dashboard
 
 ## 6. Durable rules (the non-negotiables, in every agent's system prompt)
 1. **Commit discipline** — agents stage product code (`git add`, explicit paths, never `-A`); the **Founder** commits product code; agents commit only the `.engineering-os/` audit trail as `chore(eos):`; **never** rewrite git history.
@@ -100,7 +100,7 @@ A **7-service, DDD, event-driven** D2C commerce OS:
 ## 11. Repo layout (the plugin)
 ```
 agents/      11 subagent definitions
-skills/      82 skill folders (55 domain + 27 command)  +  tools/  (uv scripts: memory, browse, pipeline_doctor, team_digest, paradigm_check)
+skills/      83 skill folders (55 domain + 28 command)  +  tools/  (uv scripts: memory, browse, pipeline_doctor, team_digest, paradigm_check, dashboard)
 prompts/     system-prompt, anti-blind-agreement, challenge-framework
 canon/       BRAIN_BUSINESS.md, BRAIN_TECHNICAL.md (source of truth)
 docs/        operating manual, primers, matrix, quality-gates, role-empowerment, …

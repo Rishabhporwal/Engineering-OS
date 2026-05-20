@@ -38,9 +38,12 @@ if printf '%s' "$CMD" | grep -qiE '\brm\b[^|;&]*-[a-z]*r' \
   fi
 fi
 
-# 2) git force-push (force-with-lease is allowed)
+# 2) git force-push (force-with-lease is allowed).
+# Force-flag match is CASE-SENSITIVE: git push uses lowercase --force / -f. This
+# avoids a false positive on `git commit -F <file>` (uppercase -F, a different
+# flag) appearing in the same compound command as a normal `git push`.
 if [ -z "$block" ] && printf '%s' "$CMD" | grep -qiE 'git[[:space:]]+push'; then
-  if printf '%s' "$CMD" | grep -qiE '(--force([^-]|$)|[[:space:]]-f([[:space:]]|$))' \
+  if printf '%s' "$CMD" | grep -qE '(--force([^-]|$)|[[:space:]]-f([[:space:]]|$))' \
      && ! printf '%s' "$CMD" | grep -qi 'force-with-lease'; then
     block="git force-push (forbidden to shared branches; use --force-with-lease on a feature branch if you must)"
   fi

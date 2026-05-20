@@ -48,9 +48,10 @@ This command writes `.engineering-os/` + `.gitattributes` into `${CLAUDE_PROJECT
 
 5a2. **Also (v0.8.0) create the background-worker findings dir:** `${CLAUDE_PROJECT_DIR}/.engineering-os/findings/.gitkeep`. Background workers (Point C) append findings here; it stays committed (findings are part of the audit trail). The `.last-*-scan` marker files inside are written by the workers at runtime.
 
-5b. **Also (v0.8.0+) gitignore the derived/runtime files.** Add these two lines to `${CLAUDE_PROJECT_DIR}/.gitignore` (create or append; avoid duplicates):
+5b. **Also (v0.8.0+) gitignore the derived/runtime files.** Add these lines to `${CLAUDE_PROJECT_DIR}/.gitignore` (create or append; avoid duplicates):
    - `.engineering-os/index/` — the **derived** semantic vector index (`memory.db`), rebuilt by `/reindex`. Never commit it.
    - `.engineering-os/live.log` — the **live pipeline activity stream** agents append to while working (watch it with `/watch` / `tail -f`). Ephemeral runtime narration; the durable record is the journals + decision-log.
+   - `.engineering-os/dashboard.html` — the **generated** progress dashboard (rebuilt by `/dashboard`). Derived/rebuildable; never commit it.
    Everything ELSE under `.engineering-os/` stays committed.
 
 6. **Write each scaffolded file** using the canonical templates below. Use the Write tool one file at a time.

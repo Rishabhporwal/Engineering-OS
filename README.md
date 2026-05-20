@@ -2,7 +2,7 @@
 
 An **AI engineering team** delivered as a Claude Code plugin. Orchestrates a 10-role agent pipeline that takes a requirement from intake to production for **[Brain](https://brain.pipadacapital.com)** — Pipada Capital's AI-native commerce operating system for D2C brands.
 
-Every agent is grounded in the Brain canon — 55 domain skills + 27 command-skills + a business primer + a technical primer (all shipped inside the plugin). When you install the plugin in your Brain product repo, the agents come with you.
+Every agent is grounded in the Brain canon — 55 domain skills + 28 command-skills + a business primer + a technical primer (all shipped inside the plugin). When you install the plugin in your Brain product repo, the agents come with you.
 
 ---
 
@@ -64,6 +64,7 @@ All plugin-provided commands are invokable via Claude Code's plugin namespace:
 /brain-engineering-os:reindex                             # refresh the semantic memory index
 /brain-engineering-os:watch                               # live stream: what every agent is thinking/doing right now
 /brain-engineering-os:monitor http://localhost:3000       # live-watch the running app; auto-open fixes for browser errors
+/brain-engineering-os:dashboard                           # visual HTML board of all work by stage (progress tracking)
 /brain-engineering-os:qa-browser                          # real-Chromium QA: walk flows, capture errors, gen regression test
 /brain-engineering-os:design-review http://localhost:3000/dashboard   # screenshot + 0–10 scored visual audit
 /brain-engineering-os:approve feat-abandoned-cart-recovery-gcc  # Founder gate (Stage 7)
