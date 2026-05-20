@@ -224,92 +224,130 @@ def open_db(eos: Path):
     return db, sqlite_vec
 
 
+SOURCE_GLOBS = (("decision-log", "**/*.jsonl"), ("memory/agents", "*.md"), ("memory/features", "*.md"))
+
+
+def _source_files(eos: Path):
+    files = []
+    for sub, _g in SOURCE_GLOBS:
+        d = eos / sub
+        if d.is_dir():
+            files += list(d.rglob("*.jsonl") if sub == "decision-log" else d.glob("*.md"))
+    return files
+
+
+def index_is_stale(eos: Path) -> bool:
+    """True if the index is missing or any source file is newer than it.
+    Used by memory_search to self-refresh lazily before a query."""
+    db_path = eos / "index" / "memory.db"
+    if not db_path.exists():
+        return True
+    db_m = db_path.stat().st_mtime
+    return any(f.stat().st_mtime > db_m for f in _source_files(eos) if f.exists())
+
+
+def build_index(rebuild: bool = False) -> dict:
+    """(Re)build the index incrementally. Returns a summary dict. Does NOT print
+    (so callers — incl. memory_search in --json mode — control output)."""
+    eos = eos_root()
+    if not eos.is_dir():
+        return {"ok": False, "reason": "no-eos", "eos": str(eos)}
+
+    backend = os.environ.get("EOS_EMBED_BACKEND", "fastembed")
+    db, sqlite_vec = open_db(eos)
+    try:
+        if rebuild:
+            db.execute("DELETE FROM chunks")
+            db.execute("DELETE FROM vec_chunks")
+
+        # backend consistency: a different backend means incomparable vectors -> rebuild
+        prev = db.execute("SELECT v FROM meta WHERE k='backend'").fetchone()
+        rebuilt_for_backend = bool(prev and prev[0] != backend)
+        if rebuilt_for_backend:
+            db.execute("DELETE FROM chunks")
+            db.execute("DELETE FROM vec_chunks")
+        db.execute(
+            "INSERT INTO meta(k,v) VALUES('backend',?) "
+            "ON CONFLICT(k) DO UPDATE SET v=excluded.v",
+            (backend,),
+        )
+
+        existing = {
+            row[0]: (row[1], row[2])  # id -> (rowid, hash)
+            for row in db.execute("SELECT id, rowid, hash FROM chunks")
+        }
+        seen: set[str] = set()
+        to_embed: list[tuple[int, str]] = []  # (rowid, text)
+        added = updated = unchanged = 0
+
+        for c in iter_chunks(eos):
+            cid = c["id"]
+            seen.add(cid)
+            h = chunk_hash(c)
+            if cid not in existing:
+                cur = db.execute(
+                    "INSERT INTO chunks(id,source,req_id,ts,heading,hash,text) "
+                    "VALUES(?,?,?,?,?,?,?)",
+                    (cid, c["source"], c["req_id"], c["ts"], c["heading"], h, c["text"]),
+                )
+                to_embed.append((cur.lastrowid, c["text"]))
+                added += 1
+            elif existing[cid][1] != h:
+                rowid = existing[cid][0]
+                db.execute(
+                    "UPDATE chunks SET source=?,req_id=?,ts=?,heading=?,hash=?,text=? WHERE id=?",
+                    (c["source"], c["req_id"], c["ts"], c["heading"], h, c["text"], cid),
+                )
+                db.execute("DELETE FROM vec_chunks WHERE rowid=?", (rowid,))
+                to_embed.append((rowid, c["text"]))
+                updated += 1
+            else:
+                unchanged += 1
+
+        removed = 0
+        for cid, (rowid, _h) in existing.items():
+            if cid not in seen:
+                db.execute("DELETE FROM chunks WHERE id=?", (cid,))
+                db.execute("DELETE FROM vec_chunks WHERE rowid=?", (rowid,))
+                removed += 1
+
+        if to_embed:
+            embed = get_embedder(backend)
+            vectors = embed([t for _r, t in to_embed])
+            for (rowid, _t), vec in zip(to_embed, vectors):
+                db.execute(
+                    "INSERT INTO vec_chunks(rowid, embedding) VALUES(?, ?)",
+                    (rowid, sqlite_vec.serialize_float32(vec)),
+                )
+
+        db.commit()
+        total = db.execute("SELECT COUNT(*) FROM chunks").fetchone()[0]
+        return {
+            "ok": True, "backend": backend, "total": total, "added": added,
+            "updated": updated, "unchanged": unchanged, "removed": removed,
+            "rebuilt_for_backend": rebuilt_for_backend,
+            "index_path": str(eos / "index" / "memory.db"),
+        }
+    finally:
+        db.close()
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Engineering OS semantic memory indexer")
     ap.add_argument("--rebuild", action="store_true", help="drop and fully rebuild")
     args = ap.parse_args()
 
-    eos = eos_root()
-    if not eos.is_dir():
-        print(f"[reindex] No .engineering-os/ found near {eos.parent}. Nothing to index.")
+    s = build_index(rebuild=args.rebuild)
+    if not s.get("ok"):
+        print(f"[reindex] No .engineering-os/ found near {Path(s.get('eos', '.')).parent}. Nothing to index.")
         return 0
-
-    backend = os.environ.get("EOS_EMBED_BACKEND", "fastembed")
-    db, sqlite_vec = open_db(eos)
-
-    if args.rebuild:
-        db.execute("DELETE FROM chunks")
-        db.execute("DELETE FROM vec_chunks")
-
-    # backend consistency: if the index was built with a different backend, force rebuild
-    prev = db.execute("SELECT v FROM meta WHERE k='backend'").fetchone()
-    if prev and prev[0] != backend:
-        print(f"[reindex] backend changed ({prev[0]} -> {backend}); rebuilding.")
-        db.execute("DELETE FROM chunks")
-        db.execute("DELETE FROM vec_chunks")
-    db.execute(
-        "INSERT INTO meta(k,v) VALUES('backend',?) "
-        "ON CONFLICT(k) DO UPDATE SET v=excluded.v",
-        (backend,),
-    )
-
-    existing = {
-        row[0]: (row[1], row[2])  # id -> (rowid, hash)
-        for row in db.execute("SELECT id, rowid, hash FROM chunks")
-    }
-    seen: set[str] = set()
-    to_embed: list[tuple[int, str]] = []  # (rowid, text)
-    added = updated = unchanged = 0
-
-    for c in iter_chunks(eos):
-        cid = c["id"]
-        seen.add(cid)
-        h = chunk_hash(c)
-        if cid not in existing:
-            cur = db.execute(
-                "INSERT INTO chunks(id,source,req_id,ts,heading,hash,text) "
-                "VALUES(?,?,?,?,?,?,?)",
-                (cid, c["source"], c["req_id"], c["ts"], c["heading"], h, c["text"]),
-            )
-            to_embed.append((cur.lastrowid, c["text"]))
-            added += 1
-        elif existing[cid][1] != h:
-            rowid = existing[cid][0]
-            db.execute(
-                "UPDATE chunks SET source=?,req_id=?,ts=?,heading=?,hash=?,text=? WHERE id=?",
-                (c["source"], c["req_id"], c["ts"], c["heading"], h, c["text"], cid),
-            )
-            db.execute("DELETE FROM vec_chunks WHERE rowid=?", (rowid,))
-            to_embed.append((rowid, c["text"]))
-            updated += 1
-        else:
-            unchanged += 1
-
-    # prune deleted
-    removed = 0
-    for cid, (rowid, _h) in existing.items():
-        if cid not in seen:
-            db.execute("DELETE FROM chunks WHERE id=?", (cid,))
-            db.execute("DELETE FROM vec_chunks WHERE rowid=?", (rowid,))
-            removed += 1
-
-    # embed in one batch, insert vec rows
-    if to_embed:
-        embed = get_embedder(backend)
-        vectors = embed([t for _r, t in to_embed])
-        for (rowid, _t), vec in zip(to_embed, vectors):
-            db.execute(
-                "INSERT INTO vec_chunks(rowid, embedding) VALUES(?, ?)",
-                (rowid, sqlite_vec.serialize_float32(vec)),
-            )
-
-    db.commit()
-    total = db.execute("SELECT COUNT(*) FROM chunks").fetchone()[0]
+    if s.get("rebuilt_for_backend"):
+        print("[reindex] embedding backend changed — rebuilt from scratch.")
     print(
-        f"[reindex] backend={backend} total={total} "
-        f"added={added} updated={updated} unchanged={unchanged} removed={removed}"
+        f"[reindex] backend={s['backend']} total={s['total']} "
+        f"added={s['added']} updated={s['updated']} unchanged={s['unchanged']} removed={s['removed']}"
     )
-    print(f"[reindex] index at {eos / 'index' / 'memory.db'} (gitignored, rebuildable)")
+    print(f"[reindex] index at {s['index_path']} (gitignored, rebuildable)")
     return 0
 
 

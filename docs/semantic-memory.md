@@ -48,6 +48,18 @@ The index adds **zero** new source of truth. Delete `memory.db` and `/reindex` r
 
 ---
 
+## Automatic freshness (no manual reindex)
+
+`/recall-similar` (and every agent search) **self-refreshes inline**: before searching, it checks whether any source file is newer than the index and, if so, runs an incremental re-index *as part of the search command* — which always completes (no fragile background job to get killed).
+
+Consequence for teams: after a teammate ships a feature and you `git pull`, your very next `/recall-similar` automatically sees their new decisions. You do **not** run `/reindex`. The cost is near-zero when nothing changed (the embedding model only loads when there are genuinely new entries to embed).
+
+`/reindex` remains for two cases only: a forced full rebuild (`--rebuild`), or pre-warming the index so the first search after a big pull has no latency (optional; e.g. via a scheduled `/schedule` job).
+
+> We deliberately do **not** reindex from the session-start hook: a background job spawned by a hook isn't guaranteed to survive after the hook returns (verified — it gets killed mid-build). Inline self-refresh is the robust mechanism.
+
+---
+
 ## How agents use it (the token win)
 
 Rohan (Stage 1) and Aryan (Stage 2) run `memory_search.py --json` early in their loop:
@@ -79,7 +91,7 @@ This forces uv to use its own managed CPython (python-build-standalone), which *
 - **What's indexed:** decision log (one event per line) + agent/feature journals (split on `## ` sections). `runs/` artifacts are excluded to keep the index lean.
 - **Incremental:** chunks are content-hashed; unchanged chunks are skipped, changed ones re-embedded, deleted ones pruned. Re-running is cheap.
 - **Backend safety:** the index records its embedding backend; querying with a mismatched backend triggers an automatic rebuild (a `hash` index and a `fastembed` index are not comparable).
-- **Staleness:** the index reflects the last `/reindex`. For always-fresh recall, run `/reindex` after each shipped feature (a good candidate for a future post-feature hook).
+- **Staleness:** handled automatically — see "Automatic freshness" below. You almost never run `/reindex` by hand.
 
 ---
 

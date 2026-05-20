@@ -6,73 +6,34 @@
 """
 Engineering OS — semantic memory SEARCH (Point A / Lever 3).
 
-Embeds a query and returns the top-k most semantically similar entries from the
-index built by memory_index.py. Used by:
+Embeds a query and returns the top-k most semantically similar entries.
+
+SELF-REFRESHING: before searching, it incrementally re-indexes if any source
+file is newer than the index (or the index is missing). This is what makes
+recall feel "always fresh" with zero manual /reindex — the refresh runs inline,
+as part of the command you invoked, so it always completes (no fragile
+background job). Cost is near-zero when nothing changed; the embedding model is
+only loaded when there are genuinely new entries. Use --no-refresh to skip.
+
+Used by:
   - the /recall-similar command-skill (human, markdown output)
-  - agents during their loop (--json), e.g. Rohan at Stage 1 / Aryan at Stage 2,
-    so they retrieve the relevant slices instead of re-reading whole journals.
+  - agents during their loop (--json), e.g. Rohan at Stage 1 / Aryan at Stage 2.
 
 Usage:
   uv run tools/memory_search.py "abandoned cart recovery for COD"
   uv run tools/memory_search.py -k 5 --json "RFM segment reuse"
+  uv run tools/memory_search.py --no-refresh "fast read, skip the freshness check"
 """
 from __future__ import annotations
 
 import argparse
 import json
-import os
 import sys
 from pathlib import Path
 
-DIM = 384
-
-
-def eos_root() -> Path:
-    base = os.environ.get("CLAUDE_PROJECT_DIR")
-    cands = []
-    if base:
-        cands.append(Path(base))
-    try:
-        import subprocess
-
-        top = subprocess.run(
-            ["git", "rev-parse", "--show-toplevel"],
-            capture_output=True, text=True, check=False,
-        ).stdout.strip()
-        if top:
-            cands.append(Path(top))
-    except Exception:
-        pass
-    cands.append(Path.cwd())
-    for c in cands:
-        if (c / ".engineering-os").is_dir():
-            return c / ".engineering-os"
-    return Path.cwd() / ".engineering-os"
-
-
-def hash_embed(texts):
-    import hashlib
-
-    import numpy as np
-
-    out = []
-    for t in texts:
-        v = np.zeros(DIM, dtype="float32")
-        for tok in t.lower().split():
-            h = int(hashlib.md5(tok.encode()).hexdigest(), 16)
-            v[h % DIM] += 1.0
-        n = float(np.linalg.norm(v))
-        out.append((v / n if n else v).tolist())
-    return out
-
-
-def embed_query(text: str, backend: str):
-    if backend == "hash":
-        return hash_embed([text])[0]
-    from fastembed import TextEmbedding
-
-    model = TextEmbedding(model_name="BAAI/bge-small-en-v1.5")
-    return list(map(float, next(iter(model.embed([text])))))
+# Reuse the indexer's helpers (eos_root, get_embedder, build_index, staleness).
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import memory_index  # noqa: E402
 
 
 def main() -> int:
@@ -80,13 +41,30 @@ def main() -> int:
     ap.add_argument("query", nargs="+", help="natural-language query")
     ap.add_argument("-k", "--limit", type=int, default=8, help="results to return")
     ap.add_argument("--json", action="store_true", help="machine-readable output")
+    ap.add_argument("--no-refresh", action="store_true", help="skip the inline freshness check")
     args = ap.parse_args()
     query = " ".join(args.query)
 
-    eos = eos_root()
+    eos = memory_index.eos_root()
+
+    # --- Self-refresh (lazy, inline, always completes) ---
+    if not args.no_refresh:
+        try:
+            if memory_index.index_is_stale(eos):
+                s = memory_index.build_index()
+                if s.get("ok") and (s["added"] or s["updated"] or s["removed"] or s.get("rebuilt_for_backend")):
+                    # note to STDERR so --json stdout stays clean
+                    print(
+                        f"[recall] auto-refreshed index "
+                        f"(added={s['added']} updated={s['updated']} removed={s['removed']})",
+                        file=sys.stderr,
+                    )
+        except Exception as e:  # never let a refresh failure block a search
+            print(f"[recall] auto-refresh skipped ({e})", file=sys.stderr)
+
     db_path = eos / "index" / "memory.db"
     if not db_path.exists():
-        msg = "index not found — run /reindex (or: uv run tools/memory_index.py) first."
+        msg = "index not found and could not be built — run /reindex (or check uv/.engineering-os)."
         print(json.dumps({"error": msg}) if args.json else f"[recall] {msg}")
         return 1
 
@@ -102,7 +80,7 @@ def main() -> int:
     row = db.execute("SELECT v FROM meta WHERE k='backend'").fetchone()
     backend = row[0] if row else "fastembed"
 
-    qvec = embed_query(query, backend)
+    qvec = memory_index.get_embedder(backend)([query])[0]
     rows = db.execute(
         "SELECT c.id, c.source, c.req_id, c.ts, c.heading, c.text, m.distance "
         "FROM (SELECT rowid, distance FROM vec_chunks "

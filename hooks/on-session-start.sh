@@ -19,6 +19,22 @@ fi
 
 echo "[engineering-os] === Session start ==="
 
+# 0) Semantic memory status (v0.8.0) --------------------------------------
+# /recall-similar self-refreshes on use (it incrementally re-indexes inline if
+# any source file changed), so there is NOTHING to run here and nothing to wait
+# for — recall is always fresh after a git pull, automatically, with no manual
+# /reindex. We only surface a one-line status (and a hint if uv is missing).
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
+TOOLS_DIR="${CLAUDE_PLUGIN_ROOT:-$SCRIPT_DIR/..}/tools"
+if [ -f "$TOOLS_DIR/memory_index.py" ]; then
+  if command -v uv >/dev/null 2>&1; then
+    echo "[engineering-os] Semantic recall ready — /recall-similar auto-refreshes from git memory on use."
+  else
+    echo "[engineering-os] (uv not found — /recall-similar paused until uv is installed; core git memory unaffected.)"
+  fi
+fi
+# -------------------------------------------------------------------------
+
 # 1) In-flight requirements
 if [ -f "$STATE" ] && command -v jq >/dev/null 2>&1; then
   COUNT=$(jq '.active_requirements | length' "$STATE" 2>/dev/null || echo "0")

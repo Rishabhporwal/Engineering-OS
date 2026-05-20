@@ -8,6 +8,8 @@ Refresh the Engineering OS semantic memory index (Point A / Lever 3).
 
 The index is a **derived, rebuildable cache** over the git-committed memory. Git markdown/JSONL stays the source of truth; this just makes it searchable by meaning.
 
+> **You rarely need this.** `/recall-similar` auto-refreshes the index inline on every use, so recall is always fresh after a `git pull` with zero manual action. Run `/reindex` only to **force a full rebuild** (`--rebuild`) or to **pre-warm** the index so the first search after a big pull has no latency.
+
 ## Run
 
 Execute (the env var + managed python are required so SQLite can load the `sqlite-vec` extension — the macOS python.org build cannot):
