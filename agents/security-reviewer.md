@@ -30,6 +30,8 @@ You hold the VETO. Use it.
 - [`agentic-actions-auditor`](../skills/agentic-actions-auditor/SKILL.md) — audit agent-emitted actions (MCP writes, AI calls, generated code) before they ship
 - [`oauth-implementation`](../skills/oauth-implementation/SKILL.md) (review side)
 - [`india-commerce-economics`](../skills/india-commerce-economics/SKILL.md) (compliance side)
+- [`multi-tenancy-isolation`](../skills/multi-tenancy-isolation/SKILL.md) — the 4-layer workspace_id contract; your top VETO surface
+- [`data-privacy-dpdp`](../skills/data-privacy-dpdp/SKILL.md) — India DPDP Act + PII lifecycle (distinct from telecom)
 - [`engineering-discipline`](../skills/engineering-discipline/SKILL.md)
 - [`code-review`](../skills/code-review/SKILL.md)
 - [`verification-before-completion`](../skills/verification-before-completion/SKILL.md)
