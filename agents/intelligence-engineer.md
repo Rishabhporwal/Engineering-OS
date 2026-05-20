@@ -28,6 +28,8 @@ You are the cost-routing champion. If you ship Sonnet where Haiku would do, you 
 - [`python-services`](../skills/python-services/SKILL.md) — primary
 - [`mcp-protocol`](../skills/mcp-protocol/SKILL.md) — incl. building a new MCP server / tool surface
 - [`clickhouse-olap`](../skills/clickhouse-olap/SKILL.md)
+- [`metric-engine`](../skills/metric-engine/SKILL.md) — the Formula Book + TS↔Python parity (your definitions feed the daily tick)
+- [`memory-layer-pgvector`](../skills/memory-layer-pgvector/SKILL.md) — Brand Fingerprint; the product's memory layer
 - [`forecasting-prophet`](../skills/forecasting-prophet/SKILL.md)
 - [`lifecycle-revenue-layer`](../skills/lifecycle-revenue-layer/SKILL.md)
 - [`integration-connectors`](../skills/integration-connectors/SKILL.md) (ingestion-service is Python — yours)

@@ -1,6 +1,6 @@
 # Section 2.1 — Skill Mapping Matrix
 
-This document is the **authoritative skill-to-role binding** for the Brain Engineering OS. It maps every one of the **49 domain skills** in [`skills/`](../skills/). (The **14 command-skills** — slash commands carrying `disable-model-invocation: true`: requirement, status, recall, handoff, approve, reject, deploy, rollback, persona, invoke-skill, eos-init, propose-rule, adopt-rule, reject-rule — are human-triggered and not mapped here. 49 + 14 = 63 skill folders.) Each domain skill is mapped to:
+This document is the **authoritative skill-to-role binding** for the Brain Engineering OS. It maps every one of the **55 domain skills** in [`skills/`](../skills/). (The **24 command-skills** carrying `disable-model-invocation: true` — requirement, status, recall, handoff, approve, reject, deploy, rollback, persona, invoke-skill, eos-init, propose-rule, adopt-rule, reject-rule, plus recall-similar, reindex, qa-browser, design-review, worker-test-gap, worker-canon-drift, worker-compliance-drift, test-pipeline, resume, new-skill — are human/schedule-triggered and not mapped here. 55 + 24 = 79 skill folders.) Each domain skill is mapped to:
 
 - A **domain category** (one of 14).
 - One or more **primary role owners** (which agent must auto-load it).
@@ -48,7 +48,7 @@ This document is the **authoritative skill-to-role binding** for the Brain Engin
 
 ---
 
-## The matrix (49 domain skills)
+## The matrix (55 domain skills)
 
 | # | Skill | Domain | Primary | Shared with | Exposed as command |
 |---|-------|--------|---------|-------------|---------------------|
@@ -101,6 +101,12 @@ This document is the **authoritative skill-to-role binding** for the Brain Engin
 | 47 | [`vulnerability-scanning`](../skills/vulnerability-scanning/SKILL.md) | SEC | SEC | OPS | yes |
 | 48 | [`web-performance`](../skills/web-performance/SKILL.md) (audit + optimization) | PERF + FE-W | FEW | QA, OPS, ARC | yes |
 | 49 | [`writing-plans`](../skills/writing-plans/SKILL.md) | DISC | PM, ARC | **ALL** plan-emitting agents | yes |
+| 50 | [`caching-strategy`](../skills/caching-strategy/SKILL.md) | DATA + PERF | BE | AIE, OPS, SEC | yes |
+| 51 | [`metric-engine`](../skills/metric-engine/SKILL.md) | DATA + AI + PROD | AIE | BE, QA, FEW | yes |
+| 52 | [`region-adapter`](../skills/region-adapter/SKILL.md) | ARCH | ARC | CTOA, **ALL** builders | yes |
+| 53 | [`multi-tenancy-isolation`](../skills/multi-tenancy-isolation/SKILL.md) | SEC + DATA | SEC | ARC, BE, AIE, **ALL** | yes |
+| 54 | [`memory-layer-pgvector`](../skills/memory-layer-pgvector/SKILL.md) | AI + DATA | AIE | ARC | yes |
+| 55 | [`data-privacy-dpdp`](../skills/data-privacy-dpdp/SKILL.md) | SEC + PROD | SEC | AIE, **ALL** | yes |
 
 > v0.7.1 consolidation: 10 merge groups folded 59 domain skills → 49 (clean 1–49 numbering). Absorbed: root-cause-tracing→systematic-debugging, supabase-postgres-best-practices→database-design, health-check-endpoints→operational-readiness, mutation-testing→testing-tdd, logging-best-practices→observability, mcp-builder→mcp-protocol, xss-prevention→defense-in-depth-validation. New merged folders: api-traffic-patterns (pagination+rate-limiting), auth-and-access (sessions+RBAC), subagent-orchestration (dispatching+subagent-driven-development).
 
@@ -127,6 +133,7 @@ This document is the **authoritative skill-to-role binding** for the Brain Engin
 
 ### Architect — Aryan (`architect`)
 - `architecture-patterns` (primary)
+- `region-adapter` (multi-region from day one)
 - `domain-driven-design` (mandatory — every backend service is bounded-context structured)
 - `tech-stack-evaluation` (rare)
 - `database-design`
@@ -148,6 +155,7 @@ This document is the **authoritative skill-to-role binding** for the Brain Engin
 - `event-driven-kafka`
 - `api-traffic-patterns` (pagination + rate-limiting)
 - `idempotency-handling`
+- `caching-strategy` (ElastiCache/Redis)
 - `oauth-implementation` (shared with AIE)
 - `sql-query-optimization` (shared with AIE)
 - `operational-readiness` (incl. health-check endpoints; shared with OPS)
@@ -193,6 +201,8 @@ This document is the **authoritative skill-to-role binding** for the Brain Engin
 - `domain-driven-design` (her Python services are DDD-structured too)
 - `mcp-protocol` (incl. building a new MCP server / tool surface)
 - `clickhouse-olap`
+- `metric-engine` (Formula Book + TS↔Python parity)
+- `memory-layer-pgvector` (Brand Fingerprint)
 - `forecasting-prophet`
 - `lifecycle-revenue-layer` (when the agent affects revenue)
 - `integration-connectors` (ingestion-service is Python; Maya owns Python connectors)
@@ -212,6 +222,8 @@ This document is the **authoritative skill-to-role binding** for the Brain Engin
 - `agentic-actions-auditor` (audit agent-emitted actions before ship)
 - `oauth-implementation` (security review side)
 - `india-commerce-economics` (DLT/NCPR/DND compliance is hers)
+- `multi-tenancy-isolation` (the 4-layer workspace_id contract — top VETO surface)
+- `data-privacy-dpdp` (India DPDP Act + PII lifecycle)
 - `engineering-discipline`
 - `code-review` (security pass)
 - `verification-before-completion`
