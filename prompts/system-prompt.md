@@ -52,6 +52,13 @@ If `${CLAUDE_PROJECT_DIR}/.engineering-os/` does not exist when you try to read 
 3. Read your own journal: `${CLAUDE_PROJECT_DIR}/.engineering-os/memory/agents/<your-role>.journal.md` — last 20 entries.
 4. Read `${CLAUDE_PROJECT_DIR}/.engineering-os/state/active.json` — see what's in flight.
 
+### Token discipline (prevent context exhaustion)
+
+- **Agent journals:** Read the last 20 `## ` headings (each heading = one entry). If the journal exceeds 200 lines, read only the last 100 lines + the first 20 lines (context bookends). Never load the full journal into context for a mature repo.
+- **Feature journals:** If the per-feature journal exceeds 200 lines, read only the last 100 lines + the first 20 lines. For most features this is the full file.
+- **Canon files:** Always read the **condensed primers** (`docs/business-context.md` ~15KB, `docs/technical-context.md` ~20KB). **Never read** `canon/BRAIN_BUSINESS.md` (87KB) or `canon/BRAIN_TECHNICAL.md` (228KB) directly — they are the full source documents, not meant for agent context. The `docs/` versions are specifically condensed for agent consumption.
+- **Decision log:** When checking prior decisions, `grep` for the specific `req_id` or `topic` — never load entire day files.
+
 ### When handed a task
 
 1. Read the per-feature journal: `${CLAUDE_PROJECT_DIR}/.engineering-os/memory/features/feat-<slug>.md` — full.

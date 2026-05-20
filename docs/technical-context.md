@@ -33,19 +33,37 @@
 
 ## The 7 microservices
 
-| # | Service | Lang | Owns |
-|---|---------|------|------|
-| 1 | `api-gateway` | TS | BFF: tRPC (web/mobile) + MCP server. Auth + multi-tenancy + rate limit live here. Fan-out via gRPC to internal services. |
-| 2 | `core-service` | TS | Workspaces, users, integrations, settings, goals, costs, campaigns, festivals. OLTP write path. |
-| 3 | `ingestion-service` | Python | Connectors (Shopify, Meta, Google, Shiprocket, Klaviyo, Razorpay, WooCommerce, …). OAuth, sync, canonicalize, produce to Kafka. |
-| 4 | `analytics-service` | Python | ClickHouse query gateway. Materialized views. KPI computation. |
-| 5 | `intelligence-service` | Python | The 15 AICMO/AICOO/AICFO agents. Daily tick 06:55–07:15 IST. Claude API calls. Memory Layer (pgvector). |
-| 6 | `notifications-service` | TS | Email, SMS, push, in-app. WhatsApp via partner BSP. Templates + delivery + receipts. |
-| 7 | `lifecycle-service` | Python | RFM scoring, audience builder, channel routers, AI calling, compliance engine, multi-channel inbox (Phase 3). |
+Each is independently deployable, horizontally scalable, owns its own database (no service touches another's), and is **DDD-structured by bounded context** (see [`domain-driven-design`](../skills/domain-driven-design/SKILL.md) — never controllers/services/models). The topology is fixed at these 7 services (background jobs, cron, realtime, and long-running workflows are handled *inside* these services — Kafka consumers, the daily tick, EventBridge Scheduler — not as separate services).
 
-**Communication model:** gRPC for synchronous request/reply. Kafka for asynchronous state changes. Services **never** call each other via REST.
+| # | Service | Lang | Owner | Owns | DB |
+|---|---------|------|-------|------|----|
+| 1 | `api-gateway` | TS/Fastify | Vikram | BFF: tRPC (web/mobile) + MCP server. Auth + multi-tenancy + rate limit. gRPC fan-out. **No business logic, no AI orchestration here.** | — |
+| 2 | `core-service` | TS/Fastify | Vikram | Workspaces, users, integrations, settings, goals, costs, campaigns, festivals, permissions. OLTP. | PostgreSQL |
+| 3 | `ingestion-service` | Python | Maya | Connectors (Shopify/Meta/Google/Shiprocket/Klaviyo/…). OAuth, sync, canonicalize, produce to Kafka. | PostgreSQL + S3 |
+| 4 | `analytics-service` | Python | Maya | ClickHouse query gateway. Materialized views. KPI/forecasting/attribution/anomaly. **Isolated from OLTP.** | ClickHouse |
+| 5 | `intelligence-service` | Python | Maya | The 15 AICMO/AICOO/AICFO agents. Daily tick. Claude calls. RAG + Memory Layer. | PostgreSQL + pgvector |
+| 6 | `notifications-service` | TS/Fastify | Vikram | Email, SMS, push, in-app, WhatsApp (BSP). Templates + delivery + receipts. | PostgreSQL |
+| 7 | `lifecycle-service` | Python | Maya | **[MOAT]** RFM scoring, audience builder, channel routers, AI calling, compliance engine, inbox. | PostgreSQL |
 
-**Language split discipline:** TypeScript for I/O-heavy (gateway, core, notifications, web). Python for analytics/ML/agents (ingestion, analytics, intelligence, lifecycle).
+*(Plus `frontend-web` (Next.js, Ananya) and `mobile` (RN+Expo, Karan) — presentation only.)*
+
+**Communication rules (contract-first):** frontend → **api-gateway** only · api-gateway → services via **gRPC** · services → services via **Kafka events** (versioned, e.g. `campaigns.created.v1`, + DLQ + retries). Services **never** call each other via REST and **never** share a database.
+
+**Language split discipline:** TypeScript/Fastify for I/O-heavy (gateway, core, notifications, web). Python/FastAPI for analytics/ML/agents (ingestion, analytics, intelligence, lifecycle).
+
+---
+
+## Enterprise architecture invariants (v0.7.0)
+
+The full doctrine is in [`architecture-patterns`](../skills/architecture-patterns/SKILL.md) + [`domain-driven-design`](../skills/domain-driven-design/SKILL.md). The non-negotiables:
+
+1. **DDD by bounded context.** Every backend service: `bootstrap / domain/<context>/{entities,services,repositories,value-objects,dto,validators,mappers,events,policies,exceptions,factories,aggregates} / application/{commands,queries,workflows,orchestrators,handlers,use-cases} / infrastructure / interfaces/{rest,grpc,consumers,producers,websocket,jobs} / observability / security / testing`. **Never** controllers/services/models technical layers.
+2. **One service = one domain = one database.** No service reads another service's DB. Cross-service data via gRPC (sync) or Kafka (async) only.
+3. **Contract-first.** `proto/` (buf) is the single source of truth; never duplicate contracts. Kafka topics versioned + DLQ + retries.
+4. **Independent deployability + horizontal scale.** Every service: OTel instrumentation, metrics, tracing, structured logging, retries, circuit breakers, health checks. K8s-ready (EKS + ArgoCD).
+5. **Separation of concerns (hard rules):** no business logic in frontend; no AI orchestration in api-gateway; no analytics logic in frontend-facing services; infra (CDK) separate from domain logic.
+6. **Topology is the locked 7 services.** Realtime (WS/SSE), background jobs, cron, and long-running workflows live *inside* those services (Kafka consumers, the daily tick, EventBridge Scheduler) — NOT as separate realtime/worker/scheduler/workflow-orchestrator services.
+7. **Stack stays locked** (the moat + the Founder's decisions): AWS CDK + ArgoCD (not Terraform/Helm); CloudWatch/OpenSearch/X-Ray/Sentry/PostHog with OTel as the instrumentation API (not Prometheus/Grafana/Loki/Tempo); Fastify with DDD on top (not NestJS); Redux Toolkit (not Zustand); pgvector (not a separate vector DB); Turborepo only (not Nx). Single-Primitive Rule + cost-routing + India compliance all still apply.
 
 ---
 

@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://brain.pipadacapital.com/engineering-os/schemas/dynamic-persona.schema.json",
   "title": "Dynamic Persona Review (Stage 1)",
-  "description": "Output from one of the 3 personas spawned in Stage 1.",
+  "description": "Output from one of the 0-2 personas spawned in Stage 1 (count by complexity).",
   "type": "object",
   "required": ["schema_version", "req_id", "persona", "ts", "what_this_lens_sees", "concerns", "recommendations"],
   "properties": {

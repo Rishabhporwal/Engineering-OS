@@ -32,3 +32,6 @@ venv/
 
 # State file backups (kept locally only — short-lived recovery)
 .engineering-os/state/*.bak.*
+
+# Claude Code local settings (operator-specific absolute paths)
+.claude/settings.local.json

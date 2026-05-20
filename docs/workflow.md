@@ -64,7 +64,7 @@ These three responsibilities together = **smooth autonomous flow**. The pipeline
 
 ### Outputs
 - `cto-advisor-review.md` artifact in the run folder.
-- 3 `dynamic-persona-review.md` artifacts.
+- 0-2 `dynamic-persona-review.md` artifacts.
 - Status: `cto-review` → `architect` (ADVANCE) | `challenged-back` (CHALLENGE) | terminal `killed`.
 
 ### Expected duration
@@ -88,7 +88,7 @@ These three responsibilities together = **smooth autonomous flow**. The pipeline
 **Owner:** Aryan.
 
 ### Inputs
-- `cto-advisor-review.md` + 3 `dynamic-persona-review.md`.
+- `cto-advisor-review.md` + 0-2 `dynamic-persona-review.md` (one per spawned persona).
 - The raw requirement (for original-context reference).
 - Relevant skill files (auto-loaded from his owned-skill list).
 - Prior architecture decisions in `.engineering-os/memory/agents/architect.journal.md` (Aryan reads his own prior journal for continuity).

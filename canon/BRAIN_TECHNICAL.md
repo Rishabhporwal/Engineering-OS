@@ -540,82 +540,76 @@ Six backend services + frontend. Each service has:
 ## 7. Monorepo Structure
 
 ```
-brain/
-├── apps/                          # Deployable applications
-│   ├── frontend/                  # Next.js app
-│   ├── api-gateway/               # Node BFF
-│   ├── core-service/              # Node OLTP service
-│   ├── ingestion-service/         # Python ETL
-│   ├── analytics-service/         # Python metrics engine
-│   ├── intelligence-service/      # Python AI/ML
-│   └── notifications-service/     # Node alerts/digests/lifecycle
+brain/                              # Turborepo + pnpm workspaces (TS) · uv workspace (Python). NO Nx.
 │
-├── packages/                      # Shared TypeScript libraries
-│   ├── ui/                        # Shared UI components (shadcn-derived)
-│   ├── lib-metrics/               # Type-safe metric registry
-│   ├── lib-regional/              # Region adapter interface + currency utils
-│   ├── lib-grpc-clients/          # Generated gRPC clients (TS)
-│   ├── lib-kafka/                 # Kafka producer/consumer wrappers
-│   ├── lib-auth/                  # JWT, session utils, requireRole guards
-│   ├── lib-mcp/                   # MCP server framework (TS)
-│   ├── eslint-config/
-│   └── tsconfig/
+├── apps/                           # 7 backend services + 2 presentation apps (the locked topology)
+│   ├── frontend-web/               # Next.js 14 web (Ananya) — presentation only; talks to api-gateway only
+│   ├── mobile/                     # React Native + Expo (Karan) — the Morning Brief surface
+│   ├── api-gateway/                # Node/Fastify BFF + MCP server (Vikram) — auth, authz, aggregation, WS/SSE edge
+│   ├── core-service/               # Node/Fastify OLTP (Vikram) — users, workspaces, campaigns, permissions, settings, tenancy
+│   ├── ingestion-service/          # Python/FastAPI ETL (Maya) — Shopify/Meta/Google/Shiprocket/Klaviyo, webhooks, normalize
+│   ├── analytics-service/          # Python/FastAPI metrics (Maya) — KPI/forecasting/attribution/anomaly on ClickHouse
+│   ├── intelligence-service/       # Python/FastAPI AI (Maya) — 15 AICMO/COO/CFO agents, daily tick, RAG, Memory Layer
+│   ├── notifications-service/      # Node/Fastify (Vikram) — email/WhatsApp/SMS/alerts/digests/exports
+│   └── lifecycle-service/          # Python/FastAPI (Maya) — [MOAT] RFM, audience builder, AI calling, compliance engine, inbox
 │
-├── pylibs/                        # Shared Python libraries
-│   ├── brain_metrics/             # Metric registry mirror
-│   ├── brain_regional/            # Region adapter mirror
-│   ├── brain_kafka/               # Kafka wrapper
-│   ├── brain_clickhouse/          # ClickHouse client + workspace_id query helper
-│   ├── brain_db/                  # Postgres connection, multi-tenant helpers
-│   ├── brain_grpc/                # Generated gRPC clients (Python)
-│   ├── brain_mcp/                 # MCP server framework (Python)
-│   ├── brain_ml/                  # Shared ML models (BG/NBD, Prophet wrappers)
-│   └── brain_llm/                 # Claude client wrapper with cost-routed paradigm
+│   # Realtime (WS/SSE), background jobs, cron, and long-running workflows are handled INSIDE these 7 services —
+│   # Kafka consumers, the intelligence-service daily tick, EventBridge Scheduler, in-service application/use-cases —
+│   # NOT as separate realtime/worker/scheduler/workflow-orchestrator services.
 │
-├── protos/                        # Protocol Buffer definitions (single source of truth)
-│   ├── core/                      # core-service contracts
-│   ├── analytics/                 # analytics-service contracts
-│   ├── intelligence/              # intelligence-service contracts
-│   ├── notifications/             # notifications-service contracts
-│   └── events/                    # Kafka event schemas (Avro/JSON)
+│   # Every backend service is DDD-structured (skills/domain-driven-design):
+│   #   src/{bootstrap, domain/<bounded-context>/{entities,services,repositories,value-objects,dto,validators,
+│   #   mappers,events,policies,exceptions,factories,aggregates}, application/{commands,queries,workflows,
+│   #   orchestrators,handlers,use-cases}, infrastructure, interfaces/{rest,grpc,consumers,producers,websocket,jobs},
+│   #   observability, security, testing}.  NEVER controllers/services/models technical layers.
 │
-├── infra/                         # AWS CDK
-│   ├── stacks/
-│   │   ├── network.ts             # VPC, subnets, security groups
-│   │   ├── compute.ts             # EKS cluster, node groups, Karpenter
-│   │   ├── data.ts                # RDS/Supabase peering, ClickHouse, ElastiCache, pgvector
-│   │   ├── kafka.ts               # MSK cluster, topics, IAM, Glue Schema Registry
-│   │   ├── storage.ts             # S3 buckets, CloudFront, signed URL config
-│   │   ├── observability.ts       # CloudWatch dashboards, alarms, X-Ray
-│   │   └── security.ts            # IAM roles, Secrets Manager, WAF, Shield
-│   ├── k8s/                       # ArgoCD app manifests per service
-│   └── bin/
+├── packages/                       # Shared TS libraries (Single-Primitive Rule)
+│   ├── shared-types/ shared-auth/ shared-events/ shared-kafka/ shared-clients/ shared-config/ shared-errors/
+│   ├── shared-observability/ shared-security/ shared-cache/ shared-storage/ shared-feature-flags/ shared-testing/ shared-utils/
+│   ├── shared-ai/                  # cost-routed @paradigm Claude client wrappers
+│   ├── lib-metrics/                # type-safe metric registry (TS↔Python parity)   [MOAT]
+│   ├── lib-regional/               # RegionAdapter + INR/GST/currency utils          [MOAT]
+│   ├── protobuf-generated/         # buf-generated gRPC clients (TS)
+│   └── ui-system/                  # shadcn-derived component library
 │
-├── docs/                          # This documentation
-│   ├── BRAIN_BUSINESS.md
-│   ├── BRAIN_TECHNICAL.md
-│   └── TECH/
-│       ├── 01_data_architecture.md
-│       ├── 02_integrations.md
-│       ├── 03_metrics_engine.md
-│       ├── 04_regional_adapters.md
-│       ├── 05_intelligence_layer.md
-│       ├── 06_api_contracts.md
-│       ├── 07_frontend_architecture.md
-│       ├── 08_alerts_reporting.md
-│       └── 09_security_observability.md
+├── pylibs/                         # Shared Python libs (mirror shared-* + moat): brain_metrics, brain_regional,
+│   │                               #   brain_kafka, brain_clickhouse, brain_db, brain_grpc, brain_mcp, brain_ml, brain_llm
 │
-├── tools/                         # Dev scripts, codegen
-│   ├── codegen-proto.sh
-│   ├── seed-demo.py
-│   └── migration-from-looqus/     # Phase 0 scripts to port existing data
+├── proto/                          # CONTRACT-FIRST source of truth (buf) — versioned, no duplicate contracts
+│   ├── common/ core/ ingestion/ analytics/ intelligence/ notifications/ lifecycle/
+│   └── buf.yaml                    # → packages/protobuf-generated (TS) + pylibs/brain_grpc (Py)
 │
-├── .github/workflows/             # CI: lint → typecheck → test → build → push → ArgoCD
-├── turbo.json                     # Turborepo orchestration for TS workspaces
-├── pnpm-workspace.yaml
-├── pyproject.toml                 # uv/poetry workspace for Python apps
-├── docker-compose.yml             # Local dev (Postgres, ClickHouse, Kafka, Redis, MinIO)
-└── README.md
+├── kafka/                          # Event backbone (MSK + Glue Schema Registry + Avro)
+│   └── topics/ schemas/ producers/ consumers/ retry-policies/ dead-letter/ stream-processors/ connectors/
+│       # versioned topics (campaigns.created.v1) · workspace_id = partition key · schema-validation + retries + DLQ
+│
+├── schemas/                        # Data + API contracts: api/ events/ analytics/ ai/ validation/ exports/ database/ data-contracts/
+│
+├── ai/                             # AI infra (skills/agentic-design) — custom agents + pgvector
+│   └── prompts(versioned)/ agents/ workflows/ orchestration/ memory/ embeddings/ vector-search/
+│       evaluations/ benchmark/ guardrails/ policies/ datasets/ fine-tuning/
+│
+├── data-platform/                  # Analytics — ISOLATED from transactional (skills/clickhouse-olap)
+│   └── clickhouse/ warehouse/ transformations/ aggregations/ pipelines/ forecasting/ benchmarks/ dbt/ airflow/ spark/
+│       # dbt/airflow/spark = analytics DAGs ONLY here; keep analytics pipelines isolated from the OLTP services
+│
+├── infra/                          # AWS CDK (TypeScript) — NOT Terraform, NOT Helm
+│   └── stacks/ (network·compute[EKS+Karpenter]·data·kafka·storage·observability·security)  k8s/ (ArgoCD manifests)  bin/
+│
+├── monitoring/                     # Observability config — AWS-native (skills/observability)
+│   └── dashboards/ alerts/ slo/ tracing/ incident-response/
+│       # CloudWatch · OpenSearch · X-Ray · Sentry · PostHog. OTel = in-code instrumentation exporting to these.
+│       # NOT Prometheus/Grafana/Loki/Tempo.
+│
+├── security/                       # policies/ audits/ compliance/ pii/ pentest/ governance/ risk-assessments/ threat-models/
+│                                   #   India gates (DLT/NCPR/DND/calling-hours/consent/GST) live here + lifecycle-service
+├── deployments/                    # local/ staging/ production/ canary/ blue-green/ rollback/  (ArgoCD-driven)
+├── tests/                          # integration/ e2e/ contracts/ load/ performance/ chaos/ security/ mocks/ fixtures/
+│
+├── tools/  docs/  scripts/  .github/workflows/
+├── turbo.json  pnpm-workspace.yaml  pyproject.toml  docker-compose.yml  Makefile  .env.example  package.json  README.md
+└── .engineering-os/                # plugin-delivered shared memory (journals/decision-log/state/runs).
+                                    #   The team is INSTALLED, not vendored — there is NO engineering-os/ SOURCE tree in Brain.
 ```
 
 ### 7.1 Build & Deploy Tooling

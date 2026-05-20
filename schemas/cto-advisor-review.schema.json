@@ -20,10 +20,10 @@
     },
     "personas_spawned": {
       "type": "array",
-      "minItems": 3,
-      "maxItems": 3,
+      "minItems": 0,
+      "maxItems": 2,
       "items": { "type": "string" },
-      "description": "Stage 1 only. Names of the 3 personas spawned."
+      "description": "Stage 1 only. Names of the 0-2 personas spawned (by complexity)."
     },
     "persona_synthesis": {
       "type": "string",

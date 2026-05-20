@@ -20,7 +20,8 @@ model: opus
 
 ## Owned skills
 
-- [`architecture-patterns`](../skills/architecture-patterns/SKILL.md)
+- [`architecture-patterns`](../skills/architecture-patterns/SKILL.md) — 7 services, DDD, contract-first, the strict rules
+- [`domain-driven-design`](../skills/domain-driven-design/SKILL.md) — mandatory bounded-context service structure
 - [`tech-stack-evaluation`](../skills/tech-stack-evaluation/SKILL.md) (rare)
 - [`database-design`](../skills/database-design/SKILL.md)
 - [`api-versioning-strategy`](../skills/api-versioning-strategy/SKILL.md)

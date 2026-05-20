@@ -1,6 +1,6 @@
 # Section 2.1 — Skill Mapping Matrix
 
-This document is the **authoritative skill-to-role binding** for the Brain Engineering OS. It maps every one of the **58 domain skills** in [`skills/`](../skills/). (The **14 command-skills** — slash commands carrying `disable-model-invocation: true`: requirement, status, recall, handoff, approve, reject, deploy, rollback, persona, invoke-skill, eos-init, propose-rule, adopt-rule, reject-rule — are human-triggered and not mapped here. 58 + 14 = 72 skill folders.) Each domain skill is mapped to:
+This document is the **authoritative skill-to-role binding** for the Brain Engineering OS. It maps every one of the **59 domain skills** in [`skills/`](../skills/). (The **14 command-skills** — slash commands carrying `disable-model-invocation: true`: requirement, status, recall, handoff, approve, reject, deploy, rollback, persona, invoke-skill, eos-init, propose-rule, adopt-rule, reject-rule — are human-triggered and not mapped here. 59 + 14 = 73 skill folders.) Each domain skill is mapped to:
 
 - A **domain category** (one of 14).
 - One or more **primary role owners** (which agent must auto-load it).
@@ -48,7 +48,7 @@ This document is the **authoritative skill-to-role binding** for the Brain Engin
 
 ---
 
-## The matrix (58 domain skills)
+## The matrix (59 domain skills)
 
 | # | Skill | Domain | Primary | Shared with | Exposed as command |
 |---|-------|--------|---------|-------------|---------------------|
@@ -110,8 +110,9 @@ This document is the **authoritative skill-to-role binding** for the Brain Engin
 | 57 | [`dispatching-parallel-agents`](../skills/dispatching-parallel-agents/SKILL.md) | DISC | CTOA | ARC, **ALL** dispatchers | yes |
 | 58 | [`subagent-driven-development`](../skills/subagent-driven-development/SKILL.md) | DISC | CTOA | ARC | yes |
 | 59 | [`finishing-a-development-branch`](../skills/finishing-a-development-branch/SKILL.md) | OPS + DISC | OPS | **ALL** (commit discipline) | yes |
+| 60 | [`domain-driven-design`](../skills/domain-driven-design/SKILL.md) | ARCH | ARC | **ALL** builders | yes |
 
-> Numbering note: rows 55–59 were appended in v0.5.0 (awesome-claude-skills integration); v0.6.0 merged web-performance-audit + web-performance-optimization into a single `web-performance` (row 51), so #52 is intentionally vacant rather than renumber the whole table. Domain-skill total = 58.
+> Numbering note: rows 55–59 appended in v0.5.0; v0.6.0 merged web-performance-audit + -optimization into `web-performance` (row 51), so #52 is intentionally vacant; row 60 added in v0.7.0 (DDD + enterprise architecture rigor on the locked 7-service topology). Domain-skill total = 59.
 
 ---
 
@@ -137,6 +138,7 @@ This document is the **authoritative skill-to-role binding** for the Brain Engin
 
 ### Architect — Aryan (`architect`)
 - `architecture-patterns` (primary)
+- `domain-driven-design` (mandatory — every backend service is bounded-context structured)
 - `tech-stack-evaluation` (rare)
 - `database-design`
 - `api-versioning-strategy`
@@ -153,6 +155,7 @@ This document is the **authoritative skill-to-role binding** for the Brain Engin
 
 ### Backend Developer — Vikram (`backend-developer`)
 - `backend-fastify-trpc-grpc` (primary)
+- `domain-driven-design` (every service he builds is DDD-structured)
 - `grpc-buf`
 - `supabase-postgres-best-practices`
 - `database-design` (shared with ARC)
@@ -203,6 +206,7 @@ This document is the **authoritative skill-to-role binding** for the Brain Engin
 - `agentic-design` (primary)
 - `claude-api` (primary)
 - `python-services` (primary — intelligence-service is Python)
+- `domain-driven-design` (her Python services are DDD-structured too)
 - `mcp-protocol`
 - `mcp-builder` (when building a new MCP server / tool surface)
 - `clickhouse-olap`

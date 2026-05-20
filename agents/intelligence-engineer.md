@@ -22,7 +22,8 @@ You are the cost-routing champion. If you ship Sonnet where Haiku would do, you 
 
 ## Owned skills
 
-- [`agentic-design`](../skills/agentic-design/SKILL.md) — primary
+- [`agentic-design`](../skills/agentic-design/SKILL.md) — primary (now incl. AI infra layers: RAG, evals, guardrails, vector-search on pgvector)
+- [`domain-driven-design`](../skills/domain-driven-design/SKILL.md) — her Python services are DDD-structured too
 - [`claude-api`](../skills/claude-api/SKILL.md) — primary
 - [`python-services`](../skills/python-services/SKILL.md) — primary
 - [`mcp-protocol`](../skills/mcp-protocol/SKILL.md)

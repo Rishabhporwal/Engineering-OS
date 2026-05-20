@@ -84,6 +84,44 @@ clickhouse-stale       — max(date) on daily_metrics < now() - 30 min
 - **X-Ray:** auto-instrument Fastify/gRPC/Kafka via the matching `@opentelemetry/instrumentation-*` packages + OTLP exporter; wrap business logic in manual spans (`tracer.start_as_current_span("amer_computation")`). Sampling: **5% prod, 100% staging** — never 100% prod ($$$).
 - **Sentry:** `Sentry.init({ dsn, release: '<service>@<version>', tracesSampleRate: 0.05, beforeSend })`; `beforeSend` tags the event with `request_id`/`trace_id`/`workspace_id` from ALS so errors stitch to logs.
 
+## OpenTelemetry as the instrumentation API (NOT a backend swap)
+
+OpenTelemetry is allowed **only as the vendor-neutral instrumentation API in code** — the OTel SDK + auto-instrumentation packages produce spans/metrics/logs, and the **OTLP exporter ships them to Brain's EXISTING AWS backends**: traces → **AWS X-Ray**, metrics → **CloudWatch**, logs → **OpenSearch** (via Fluent Bit). The instrumentation API is portable; the backends are locked.
+
+```
+code (OTel SDK: @opentelemetry/* / opentelemetry-python)
+  → OTLP exporter / ADOT Collector
+     → X-Ray (traces) + CloudWatch (metrics) + OpenSearch (logs)
+```
+
+**Do NOT introduce Prometheus, Grafana, Loki, or Tempo.** OTel ≠ a new backend stack — it's the instrumentation layer in front of the backends Brain already runs. Anyone proposing a Prometheus/Grafana migration is changing a locked decision and needs an explicit ADR (and the answer is no).
+
+## Circuit breakers (every cross-service call)
+
+Every cross-service call (gRPC to a downstream, an external vendor API, a DB/cache dependency) is wrapped in a **circuit breaker** so a slow/failing dependency degrades gracefully instead of cascading.
+
+| State | Behavior |
+|---|---|
+| **Closed** | Calls pass through; failures counted |
+| **Open** | Failure threshold crossed → fail fast (return fallback / cached / degraded) without calling the dependency |
+| **Half-open** | After a cooldown, allow a probe call; success → close, failure → re-open |
+
+- Pair with **timeouts** (no call without a deadline — gRPC deadline, vendor httpx timeout) + **bounded retries** (exponential backoff + jitter).
+- Graceful degradation examples: api-gateway breaker on analytics-service opens → serve last Redis-cached KPIs; intelligence breaker on Anthropic opens → AI Chat returns template responses (mirrors the AWS FIS chaos drill in `devops-aws`).
+- Emit breaker state as a CloudWatch metric (`CircuitBreakerState` by downstream) + alarm on sustained Open.
+
+## Every service has (the observability floor)
+
+Non-negotiable per service — verified before a service is "done" (`operational-readiness`):
+
+- **OTel instrumentation** (auto + manual spans) exporting to X-Ray/CloudWatch/OpenSearch
+- **Metrics** (CloudWatch standard set below)
+- **Tracing** (X-Ray, correlation IDs propagated)
+- **Structured logging** (pino/structlog, four correlation fields, PII-redacted)
+- **Retries** (bounded, backoff+jitter on transient failures)
+- **Health checks** (liveness + readiness + dependency probes — `health-check-endpoints`)
+- **Circuit breakers** (on every cross-service / external call)
+
 ## PII redaction rules
 
 NEVER log: `access_token`/`refresh_token`/JWTs/API keys; `email` (SHA-256 hash if you need identity comparison); `phone` (India customer PII); `pan_card`/`aadhaar`; full card or order-total+name combos; addresses; WhatsApp message content (unless explicit per-call opt-in). Three layers: logger field filter → Fluent Bit Lua → OpenSearch field mapping at display.
@@ -108,9 +146,12 @@ NEVER log: `access_token`/`refresh_token`/JWTs/API keys; `email` (SHA-256 hash i
 - **OpenSearch hot-tier disk full** — Fluent Bit drops logs silently. Monitor cluster disk weekly.
 - **CloudWatch over-billed** — too many custom metrics × dimensions.
 - **No X-Ray sampling rule** — 100% prod = $$$. Default 5% prod, 100% staging.
+- **No circuit breaker on a cross-service call** — a slow downstream cascades into the caller's latency budget. Wrap every gRPC/vendor/DB call with a breaker + timeout.
+- **Proposing Prometheus/Grafana** — OTel is the instrumentation API; the backends (X-Ray/CloudWatch/OpenSearch) are locked. Don't swap the backend stack.
 
 ## References
 
 - `canon/BRAIN_TECHNICAL.md` — canonical log spine + logger scaffolds + Kibana dashboards + monitors + cost-discipline dashboard
-- `skills/devops-aws/SKILL.md` — OpenSearch + Fluent Bit deployment
+- `skills/devops-aws/SKILL.md` — OpenSearch + Fluent Bit deployment; AWS FIS chaos (breaker behavior under failure)
 - `skills/security-baseline/SKILL.md` — PII redaction posture
+- `skills/health-check-endpoints/SKILL.md` — liveness/readiness/dependency probes

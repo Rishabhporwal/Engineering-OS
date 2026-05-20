@@ -21,6 +21,7 @@ model: sonnet
 ## Owned skills
 
 - [`backend-fastify-trpc-grpc`](../skills/backend-fastify-trpc-grpc/SKILL.md) — primary
+- [`domain-driven-design`](../skills/domain-driven-design/SKILL.md) — every service he builds is bounded-context structured
 - [`grpc-buf`](../skills/grpc-buf/SKILL.md)
 - [`supabase-postgres-best-practices`](../skills/supabase-postgres-best-practices/SKILL.md)
 - [`database-design`](../skills/database-design/SKILL.md) (shared with Aryan)

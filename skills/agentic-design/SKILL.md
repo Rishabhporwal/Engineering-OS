@@ -139,6 +139,37 @@ async def query_brand_fingerprint(workspace_id, as_of, k=5, cross_brand=False):
     """, workspace_id, as_of, k)
 ```
 
+## AI infrastructure layers (the `ai/` dir)
+
+The monorepo's top-level `ai/` dir holds the cross-cutting AI infrastructure that every agent + AI workflow consumes (Single-Primitive Rule applied to AI). KEEP the custom agent base class + `@paradigm` cost-routing + Memory Layer — these layers sit *on top*, not instead.
+
+| Layer | What it is | Brain rule |
+|---|---|---|
+| **Prompts** | Versioned, testable, evaluated prompt templates | Every prompt is a versioned artifact (`ai/prompts/<name>.vN`); no inline string prompts in agent code; changes go through eval before ship |
+| **Guardrails** | Input/output validation, PII redaction, jailbreak + injection checks, schema enforcement on LLM output | Every Frontier-LLM call passes guardrails in + out; bad output → fallback, never raw-through to the user |
+| **Evaluations / benchmarks** | Golden-set + regression evals per prompt/agent (accuracy, faithfulness, cost, latency) | A prompt change ships only if its eval ≥ baseline; CI gate (see `testing-tdd`) |
+| **RAG** | Retrieval over Brand Fingerprint + decision history + brand notes | Retrieve-then-synthesize; cite supporting_data; retrieval is paradigm 1/2 (SQL/ML), synthesis is the only Frontier step |
+| **Embeddings + vector-search** | Embedding generation + cosine k-NN on **pgvector** (NOT a dedicated vector DB) | Vectors live in `memory.brand_fingerprint` (pgvector); ivfflat index; query via the Memory Layer helper |
+| **Orchestration** | The agent base class + daily-tick + cross-agent choreography | Custom base class (NOT LangGraph); `@paradigm` + `@mcp_tool` on every action |
+
+**Every AI workflow supports: tracing + retries + fallback + guardrails + observability.**
+
+```
+input → guardrails(in) → RAG retrieve (pgvector k-NN, paradigm 1/2)
+      → paradigm-routed model (SQL>ML>Haiku>>Sonnet — cost-routing gate)
+      → guardrails(out) → schema-validated result
+   with: X-Ray span per step · retry+backoff on transient LLM errors
+        · fallback (template / lower-tier model) on budget breach or guardrail fail
+        · structured log + cost metric per call (request_id/trace_id/workspace_id)
+```
+
+- **Tracing:** wrap each step in an X-Ray span (`observability`); the whole chain stitches under one `trace_id`.
+- **Retries:** transient Anthropic errors → exponential backoff (see `claude-api`); deterministic failures → fallback, not retry.
+- **Fallback:** budget breach or guardrail rejection → drop to a lower paradigm (Haiku, then template) rather than failing the Morning Brief.
+- **Guardrails + observability:** mandatory on every call; the cost-routing audit (Frontier-LLM rate > 1%) is a tier-1 trigger (`cost-routing-paradigms`, `observability`).
+
+Vectors stay on **pgvector** in `intelligence-service`'s Postgres (per-service DB ownership — `architecture-patterns`). Do NOT add a dedicated vector DB; do NOT replace the base class with LangGraph.
+
 ## Graduation framework (canon/BRAIN_TECHNICAL.md §6)
 
 Per-agent, per-tool, per-brand. 90-day rolling window.
@@ -224,3 +255,6 @@ Includes:
 - `skills/cost-routing-paradigms/SKILL.md` — the four-paradigm gate
 - `skills/forecasting-prophet/SKILL.md` — Prophet for AICMO-Festival, AICOO-Inventory, AICFO-Cashflow
 - `skills/mcp-protocol/SKILL.md` — agent.invoke + tool schemas
+- `skills/claude-api/SKILL.md` — Anthropic Messages API, prompt caching, retries (the Frontier-LLM step)
+- `skills/observability/SKILL.md` — tracing + cost metrics + guardrail/fallback observability
+- `skills/architecture-patterns/SKILL.md` — the `ai/` dir + pgvector per-service DB ownership

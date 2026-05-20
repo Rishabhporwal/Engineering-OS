@@ -38,12 +38,14 @@ A future companion (Slack notifier, GitHub Action) can be added later — the pl
 
 ---
 
-## File layout (full)
+## File layout
+
+### Plugin files (shipped in `~/.claude/plugins/brain-engineering-os/`)
 
 ```
-Engineering OS/
+brain-engineering-os/                        # THE PLUGIN
 ├── .claude-plugin/
-│   └── plugin.json                          # plugin manifest
+│   └── plugin.json                          # plugin manifest (with components block)
 ├── agents/                                  # 10 subagent files (md + frontmatter)
 │   ├── cto-advisor.md
 │   ├── dynamic-persona-generator.md
@@ -67,10 +69,10 @@ Engineering OS/
 ├── hooks/
 │   ├── hooks.json                           # hook registry
 │   ├── on-session-start.sh                  # rehydrate state on session start
-│   ├── on-pre-handoff.sh                    # gate check before handoff
+│   ├── on-pre-handoff.sh                    # handoff event logger (observability only)
 │   └── on-post-tool-use.sh                  # auto-append to journal
 │
-├── docs/                                    # this directory — operating manual
+├── docs/                                    # operating manual
 │   ├── operating-system.md
 │   ├── business-context.md
 │   ├── technical-context.md
@@ -121,7 +123,15 @@ Engineering OS/
 │   ├── BRAIN_BUSINESS.md
 │   └── BRAIN_TECHNICAL.md
 │
-├── .engineering-os/                         # SHARED STATE — git-committed
+├── ROADMAP.md
+└── README.md
+```
+
+### Consumer repo files (scaffolded by `/eos-init` in the Brain product repo)
+
+```
+<brain-product-repo>/
+├── .engineering-os/                         # SHARED STATE — git-committed in the PRODUCT repo
 │   ├── memory/
 │   │   ├── agents/                          # per-agent journals (append-only)
 │   │   │   ├── cto-advisor.journal.md
@@ -143,11 +153,14 @@ Engineering OS/
 │   │   └── 2026/05/2026-05-17.jsonl
 │   ├── artifacts/                           # per-req artifact bundles (optional cross-link)
 │   │   └── <req-id>/
-│   └── runs/                                # full per-run logs (timestamped, collision-free)
-│       └── 2026-05-17T14-22-31Z__feat-<slug>__<operator>/
+│   ├── runs/                                # full per-run logs (timestamped, collision-free)
+│   │   └── 2026-05-17T14-22-31Z__a3f201__feat-<slug>__<operator>/
+│   ├── rule-proposals/                      # self-improvement substrate (v0.4.0+)
+│   ├── durable-rules/
+│   ├── lessons-learned.md
+│   └── pending-founder-attention.md
 │
-├── ROADMAP.md                               # MVP / V2 / V3 + end-to-end walkthrough
-└── README.md                                # user-facing landing
+└── .gitattributes                           # merge=union rules for append-only files
 ```
 
 ---
@@ -159,11 +172,10 @@ Already created. Key fields:
 ```json
 {
   "name": "brain-engineering-os",
-  "version": "0.1.0",
+  "version": "0.6.0",
   "components": {
     "agents": "./agents",
-    "skills": "./plugin-skills",
-    "commands": "./commands",
+    "skills": "./skills",
     "hooks": "./hooks/hooks.json"
   },
   "engineering-os": {
@@ -179,7 +191,7 @@ Already created. Key fields:
 }
 ```
 
-The `engineering-os` block is a Brain-specific extension (Claude Code ignores fields it doesn't know). Future hooks read it to find the shared state dir, the canon roots, and the team naming.
+The `components` block tells Claude Code where to find the agents, skills (including command-skills / slash commands), and hooks. The `engineering-os` block is a Brain-specific extension (Claude Code ignores fields it doesn't know). Future hooks read it to find the shared state dir, the canon roots, and the team naming.
 
 ---
 
@@ -257,13 +269,14 @@ Runs once when Claude Code opens. Steps:
 
 This is **what makes the "agents never forget" guarantee real**.
 
-### 2. `on-pre-handoff.sh` (event: `PreToolUse` matching a handoff signal)
+### 2. `on-pre-handoff.sh` (event: `PreToolUse` matching `Write`)
 
-Runs before a handoff is committed. Steps:
-1. Parse the handoff signal (which gate is the handoff crossing).
-2. Read the corresponding gate definition from [docs/quality-gates.md](quality-gates.md).
-3. Verify the gate conditions are met (by checking journals / artifacts).
-4. If any condition fails, **block the handoff** with a clear error pointing to the missing evidence.
+Runs before a Write tool use is committed. **Observability only — does NOT block.** Steps:
+1. Detect writes to `runs/` folders (handoff artifacts live there).
+2. Check content for handoff-signal keywords (`READY-FOR-SECURITY`, `READY-FOR-QA`, `verdict: PASS`).
+3. If detected, append a timestamped event to `.engineering-os/memory/handoff-attempts.log` for audit trail.
+
+> **Why this hook doesn't enforce gates:** Gate enforcement is intentionally the agents' job — each stage owner self-reviews against [quality-gates.md](quality-gates.md), QA (Tanvi) re-runs skipped gates (W13), and CTOA (Rohan) spot-re-runs QA's gates at Stage 6 (W14). A stdin heuristic doesn't have the context to judge whether a gate is truly met; the agents do. Keep enforcement in agents; keep this hook for the audit trail.
 
 ### 3. `on-post-tool-use.sh` (event: `PostToolUse`)
 

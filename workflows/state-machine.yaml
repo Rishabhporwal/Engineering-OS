@@ -11,7 +11,7 @@ states:
     transitions_to: [cto-review, killed]
 
   cto-review:
-    description: CTOA + 3 personas active.
+    description: CTOA + 0-2 personas active (by complexity).
     transitions_to: [architect, challenged-back, killed]
 
   challenged-back:
@@ -93,6 +93,10 @@ states:
   shipped:
     description: 48h post-deploy with no incidents. (Terminal happy path.)
     transitions_to: []
+
+  paused:
+    description: Manually paused by operator. Tracked in /status but no agent acts.
+    transitions_to: [intake, cto-review, architect, dev-parallel, security-review, qa-review, final-review]
 
   killed:
     description: Archived before any work. (Terminal.)

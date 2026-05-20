@@ -51,12 +51,29 @@ fi
 
 echo
 
-# 3) Reminders
+# 3) Pre-flight Agent tool check
+# The pipeline relies on the Agent tool for autonomous stage-to-stage handoffs.
+# If it's unavailable (older Claude Code versions or certain plans), warn the operator.
+if [ -n "${CLAUDE_SUPPORTS_SUBAGENTS:-}" ] && [ "$CLAUDE_SUPPORTS_SUBAGENTS" = "false" ]; then
+  cat <<EOF
+[engineering-os] ⚠️  WARNING: Subagent support not detected.
+  The pipeline will require manual /handoff between stages.
+  Agents cannot invoke each other automatically.
+  To proceed: after each stage completes, run the next agent manually.
+  Consider upgrading your Claude Code version for autonomous flow.
+EOF
+fi
+
+echo
+
+# 4) Reminders
 cat <<EOF
 [engineering-os] Reminders:
   • Read docs/business-context.md + docs/technical-context.md before non-trivial work.
   • Memory is git-committed — your decisions persist for teammates.
   • Use /status for the full pipeline view, /recall <feat-slug> for one feature.
+  • Use /resume <req-id> to recover an interrupted pipeline.
+  • Use /test-pipeline --dry-run to validate plugin health.
   • Anti-blind-agreement: challenge weak requirements (see prompts/challenge-framework.md).
 [engineering-os] === Ready ===
 EOF

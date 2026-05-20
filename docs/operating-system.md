@@ -333,6 +333,7 @@ A requirement moves through these statuses. (See [workflows/state-machine.yaml](
 | `monitoring` | 8d (48h) | Production live; under watch. |
 | `rolled-back` | 8d → back to 4 | Auto-rollback fired. |
 | `shipped` | 9 (terminal happy path) | 48h post-deploy with no incidents. |
+| `paused` | any → paused | Manually paused by operator. Tracked in `/status` but no agent acts. |
 
 ---
 

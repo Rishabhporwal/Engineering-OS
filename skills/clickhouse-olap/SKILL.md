@@ -170,9 +170,26 @@ ORDER BY (workspace_id, shipment_id);
 - Cross-workspace admin query: best-effort
 - Materialized view freshness: < 30 seconds for daily_metrics from `integrations.orders.v1`
 
+## Data platform (isolated from transactional)
+
+Heavy batch + ELT + transformation + forecasting work lives in the top-level **`data-platform/`** dir — NOT inside any frontend-facing or OLTP service. Analytics workloads MUST stay isolated from the transactional path so a long batch job can never contend with a Founder-facing dashboard read or a core-service mutation.
+
+| Tool | Role |
+|---|---|
+| **dbt** | SQL transformations + tested models over ClickHouse (staging → marts); the canonical ELT layer |
+| **Airflow / Dagster** | Orchestrate analytics DAGs (scheduled batch transforms, aggregations, forecasting refreshes) |
+| **Spark** | Large batch/ELT where dbt-in-CH isn't enough (heavy cross-source joins, big backfills) |
+
+Rules:
+- **Isolation is the invariant:** data-platform jobs read raw/replica data and write back aggregates/marts — they never run in api-gateway, core-service, or any user-latency-critical path.
+- **Airflow/Dagster live ONLY here** (analytics DAGs); analytics pipelines stay isolated from the transactional services. Do not put business sagas in Dagster.
+- dbt models still respect `workspace_id`-first ordering + the multi-tenant invariants above.
+- Forecasting (Prophet/sklearn/statsmodels) batch refreshes are scheduled here; the per-request serving stays in intelligence-service (see `forecasting-prophet`).
+
 ## Common failure modes
 
 - **`workspace_id` not first in `ORDER BY`** — defeats sharding + scoping. Detection: DDL review.
+- **Analytics batch job in a transactional service** — a long DAG/transform running inside core/api-gateway contends with user latency. Detection: heavy aggregation in a frontend-facing service. Move it to `data-platform/`.
 - **API handler does `SELECT ... GROUP BY` on raw tables** — should be MV. Detection: code review on grpc handler.
 - **Forgetting `ON CLUSTER` clauses** — table only exists on one node. Detection: subsequent inserts from MV fail.
 - **MV reads from `Distributed` table** — double-aggregates. MVs always read from `_local`.
@@ -187,3 +204,4 @@ ORDER BY (workspace_id, shipment_id);
 - `skills/event-driven-kafka/SKILL.md` — Kafka engine table patterns
 - `skills/python-services/SKILL.md` §clickhouse — `pylibs/brain_clickhouse` usage
 - `skills/database-design/SKILL.md` — Postgres ↔ CH split principles
+- `skills/forecasting-prophet/SKILL.md` — forecasting batch refreshes scheduled in data-platform/

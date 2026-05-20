@@ -9,7 +9,10 @@ schema_version: 1
 
 # Personas — must match agents/ filenames and .engineering-os/memory/agents/ paths.
 personas:
-  cto_advisor: { agent: cto-advisor, journal: cto-advisor.journal.md }
+  cto_advisor:
+    persona_name: Rohan
+    agent: cto-advisor
+    journal: cto-advisor.journal.md
   dynamic_persona: { agent: dynamic-persona-generator, journal: null }
   architect:
     persona_name: Aryan
@@ -57,7 +60,7 @@ stages:
     owner: cto_advisor
     inputs: [requirement_template]
     outputs: [cto_advisor_review, dynamic_persona_reviews]
-    spawns_subagents: [dynamic_persona_generator x 3]
+    spawns_subagents: [dynamic_persona_generator, count: "0-2 by complexity"]
     gate: G1
     next_on_advance: 2
     on_challenge_back: founder

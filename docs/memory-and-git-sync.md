@@ -84,6 +84,8 @@ Whoever pushes second gets a tiny conflict on `state/active.json`. Git's built-i
 
 **Defensive layer:** Before any agent writes a final artifact (e.g., `qa-review.md`), it pulls again and checks `state/active.json`. If the status moved on, it bails with a clear message.
 
+> **V2 improvement — optimistic concurrency:** To make the defensive layer mechanical rather than convention-based, V2 will add a `version` (or `last_modified_sha`) field to `active.json`. Agents compare the version before writing; if it changed since their last read, the write is rejected with a clear message. This prevents silent overwrites without requiring locking.
+
 ### Scenario 3 — Two operators append to the same journal at the same place
 
 **Setup:** Both pull. Both make Vikram append an entry to `memory/agents/backend.journal.md` at the same time.
@@ -186,6 +188,8 @@ The `hooks/on-post-tool-use.sh` hook (Claude Code post-tool-use event) auto-appe
 - Decisions made.
 - Verification commands + output.
 - Handoff signal (if applicable).
+
+> **Known limitation — auto-journal agent routing:** The `on-post-tool-use.sh` hook tries several env vars (`CLAUDE_AGENT_NAME`, `CLAUDE_SUBAGENT_TYPE`, `CLAUDE_CONTEXT_AGENT`) to determine which agent is running. If none are set (which is common in current Claude Code versions), entries are filed under `auto.journal.md`. This is a known safety-net limitation — **agents must still write their own structured journal entries** in their named file (e.g., `architect.journal.md`). Auto-journal entries are supplementary, not authoritative.
 
 ---
 

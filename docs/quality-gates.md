@@ -96,7 +96,7 @@ This document defines each gate's:
 
 **Evidence:**
 - `cto-advisor-review.md` artifact in the run folder.
-- 3 `dynamic-persona-review.md` artifacts.
+- 0-2 `dynamic-persona-review.md` artifacts (one per spawned persona).
 - Decision log entry.
 
 **Bounce target on fail:** Back to Founder (`challenged-back` status) with structured challenge.
