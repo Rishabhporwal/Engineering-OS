@@ -1,6 +1,6 @@
 # Brain Engineering OS — Onboarding
 
-> The complete picture of the AI engineering team. If you're new, read this top to bottom once. Current version: **v0.10.0**. (New since 0.7.1: risk-based lanes, semantic memory, parallel review, background workers, paradigm gate, browser/visual QA, the `/careful` guard, the pipeline doctor, 6 new domain skills, and cross-engineer `/team-digest`. **Product engineers: jump to §12 — "Get the most from the team."**)
+> The complete picture of the AI engineering team. If you're new, read this top to bottom once. Current version: **v0.10.1**. (New since 0.7.1: risk-based lanes, semantic memory, parallel review, background workers, paradigm gate, browser/visual QA, the `/careful` guard, the pipeline doctor, 6 new domain skills, and cross-engineer `/team-digest`. **Product engineers: jump to §12 — "Get the most from the team."**)
 
 ---
 
