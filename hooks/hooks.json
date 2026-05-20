@@ -31,6 +31,15 @@
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/on-pre-handoff.sh"
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/on-careful.sh"
+          }
+        ]
       }
     ]
   }
