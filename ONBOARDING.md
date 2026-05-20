@@ -1,6 +1,6 @@
 # Brain Engineering OS — Onboarding
 
-> The complete picture of the AI engineering team. If you're new, read this top to bottom once. Current version: **v0.7.1**.
+> The complete picture of the AI engineering team. If you're new, read this top to bottom once. Current version: **v0.9.0**. (New since 0.7.1: risk-based lanes, semantic memory, parallel review, background workers, paradigm gate, browser/visual QA, the `/careful` guard, the pipeline doctor, 6 new domain skills, and cross-engineer `/team-digest`. **Product engineers: jump to §12 — "Get the most from the team."**)
 
 ---
 
@@ -43,16 +43,16 @@ Founder /requirement
 ```
 Each stage **plans → executes → self-reviews → verifies → invokes the next stage via the `Agent` tool** (handoff files are a logged fallback only). The Founder intervenes only at Stage 7 and at the final push.
 
-## 5. The skill library — 63 folders (49 domain + 14 command)
+## 5. The skill library — 80 folders (55 domain + 25 command)
 **Domain skills** are model-auto-loaded per each agent's owned-skill list (see [docs/skill-mapping-matrix.md](docs/skill-mapping-matrix.md)). **Command-skills** carry `disable-model-invocation: true` and run only when a human types `/brain-engineering-os:<name>`.
 
-- **Architecture/discipline:** architecture-patterns, domain-driven-design, api-versioning-strategy, tech-stack-evaluation, engineering-discipline, code-review, writing-plans, verification-before-completion, systematic-debugging, subagent-orchestration, finishing-a-development-branch, cost-routing-paradigms
-- **Backend/data:** backend-fastify-trpc-grpc, grpc-buf, python-services, database-design, clickhouse-olap, sql-query-optimization, event-driven-kafka, api-traffic-patterns, idempotency-handling, integration-connectors, mcp-protocol, turborepo
+- **Architecture/discipline:** architecture-patterns, domain-driven-design, region-adapter, api-versioning-strategy, tech-stack-evaluation, engineering-discipline, code-review, writing-plans, verification-before-completion, systematic-debugging, subagent-orchestration, finishing-a-development-branch, cost-routing-paradigms
+- **Backend/data:** backend-fastify-trpc-grpc, grpc-buf, python-services, database-design, clickhouse-olap, sql-query-optimization, event-driven-kafka, api-traffic-patterns, idempotency-handling, caching-strategy, integration-connectors, mcp-protocol, turborepo, multi-tenancy-isolation, metric-engine
 - **Frontend/mobile:** frontend-web, frontend-mobile, web-performance, kpi-dashboard-design, morning-brief-mobile, mobile-offline-support, push-notification-setup
-- **AI:** agentic-design, claude-api, forecasting-prophet, agentic-actions-auditor
-- **Security:** security-baseline, auth-and-access, defense-in-depth-validation, vulnerability-scanning, oauth-implementation
+- **AI:** agentic-design, claude-api, forecasting-prophet, agentic-actions-auditor, memory-layer-pgvector
+- **Security:** security-baseline, auth-and-access, defense-in-depth-validation, vulnerability-scanning, oauth-implementation, data-privacy-dpdp
 - **Ops/testing/product:** devops-aws, observability, operational-readiness, testing-tdd, api-contract-testing, task-tracker-integration, lifecycle-revenue-layer, india-commerce-economics
-- **Command-skills (14):** requirement, status, recall, handoff, approve, reject, deploy, rollback, persona, invoke-skill, eos-init, propose-rule, adopt-rule, reject-rule
+- **Command-skills (25):** requirement, status, recall, handoff, approve, reject, deploy, rollback, persona, invoke-skill, eos-init, propose-rule, adopt-rule, reject-rule, recall-similar, reindex, qa-browser, design-review, worker-test-gap, worker-canon-drift, worker-compliance-drift, test-pipeline, resume, new-skill, team-digest
 
 ## 6. Durable rules (the non-negotiables, in every agent's system prompt)
 1. **Commit discipline** — agents stage product code (`git add`, explicit paths, never `-A`); the **Founder** commits product code; agents commit only the `.engineering-os/` audit trail as `chore(eos):`; **never** rewrite git history.
@@ -90,14 +90,17 @@ A **7-service, DDD, event-driven** D2C commerce OS:
 /brain-engineering-os:eos-init                       # one-time scaffold of .engineering-os/
 /brain-engineering-os:requirement <what to build>    # start the pipeline
 /brain-engineering-os:status                          # what's in flight
-/brain-engineering-os:recall <feat-slug>              # full per-feature history
+/brain-engineering-os:recall <feat-slug>              # full per-feature history (exact)
+/brain-engineering-os:recall-similar <description>    # semantic search across ALL memory
+/brain-engineering-os:team-digest                     # what the whole team built + challenges
 /brain-engineering-os:approve <req-id>                # the Founder gate (Stage 7)
+/brain-engineering-os:test-pipeline                   # validate plugin health (pipeline doctor)
 ```
 
 ## 11. Repo layout (the plugin)
 ```
 agents/      11 subagent definitions
-skills/      63 skill folders (49 domain + 14 command)
+skills/      80 skill folders (55 domain + 25 command)  +  tools/  (uv scripts: memory, browse, pipeline_doctor, team_digest, paradigm_check)
 prompts/     system-prompt, anti-blind-agreement, challenge-framework
 canon/       BRAIN_BUSINESS.md, BRAIN_TECHNICAL.md (source of truth)
 docs/        operating manual, primers, matrix, quality-gates, role-empowerment, …
@@ -107,5 +110,31 @@ hooks/       session-start, post-tool-use, pre-handoff
 .claude-plugin/  plugin.json, marketplace.json
 ```
 
+## 12. Get the most from the team (product engineers)
+
+You don't write the features — you direct the team and let it run. Here's how to extract maximum value, especially with several engineers on one Brain repo.
+
+### Your daily loop
+1. **Start with awareness.** `git pull`, then `/team-digest` — see what every engineer has built, what's in flight, and the challenges they hit. Before starting anything, `/recall-similar "<your idea>"` — the team may have already solved it (reuse the decision; don't re-derive).
+2. **Submit a requirement, not a spec.** `/requirement <plain-English ask>`. The team handles intake → architecture → build → security → QA → review autonomously. You're the Founder gate at Stage 7 only.
+3. **Let the lane do the work.** Rohan auto-classifies risk:
+   - **Express** (copy/config/docs/trivial) — skips Architect/Security/Final-review; ~5 agent touches.
+   - **Standard** — full pipeline, lean, Security ∥ QA in parallel.
+   - **High-stakes** (auth/money/multi-tenancy/PII/connectors/schema/India-compliance) — full rigor, 2 personas, mandatory Shreya VETO, mutation tests.
+   You don't pick the lane; you can trust the conservative tie-break (ambiguity routes *up*).
+4. **Approve or reject.** Read the Stage-6 review, then `/approve <req-id>` or `/reject <req-id> <reason>`.
+
+### Powers worth knowing
+- **Memory is shared and semantic.** Every decision/journal/challenge from every engineer is git-synced and searchable by *meaning* via `/recall-similar` (it self-refreshes — always current after a pull). Agents use it automatically in their pre-flight, so they reuse the team's prior work without you asking.
+- **Real-browser + visual QA.** Web changes get `/qa-browser` (walks real flows, catches console/network errors, generates a Cypress regression test) and `/design-review` (0–10 scored visual audit) — the Morning Brief + KPI surfaces have the highest bar.
+- **Proactive workers.** Schedule `/worker-test-gap`, `/worker-canon-drift`, `/worker-compliance-drift` to scan the repo between requirements and file findings.
+- **Safety rails.** The `/careful` guard blocks catastrophic commands (rm -rf ~, force-push, DROP/TRUNCATE) with an easy override; the paradigm gate keeps cost discipline; `workspace_id` + India compliance are enforced at every layer.
+- **Recover & validate.** `/resume <req-id>` picks up an interrupted pipeline with no lost work; `/test-pipeline` validates the orchestration is healthy; `/new-skill` scaffolds a new skill when a real gap surfaces.
+
+### Multi-engineer guarantee
+Because `.engineering-os/` is committed and pulled, **the team knows about every feature and challenge across all engineers** — your agents see Priya's bounces and Karan's decisions the same as your own. `/team-digest` is the overview; `/recall-similar` is the deep pull. Two engineers won't unknowingly collide or repeat a solved problem.
+
+> The mental model: **you bring intent and judgment; the team brings memory, knowledge, skills, and execution.** The more the team runs, the smarter its shared memory gets — for everyone.
+
 ---
-*See [docs/operating-system.md](docs/operating-system.md) for the full operating manual and [docs/REBUILD-PROMPT.md](docs/REBUILD-PROMPT.md) to regenerate the team from scratch.*
+*See [docs/operating-system.md](docs/operating-system.md) for the full operating manual, [docs/team-collaboration.md](docs/team-collaboration.md) for the multi-engineer model, and [docs/REBUILD-PROMPT.md](docs/REBUILD-PROMPT.md) to regenerate the team from scratch.*

@@ -2,7 +2,7 @@
 
 An **AI engineering team** delivered as a Claude Code plugin. Orchestrates a 10-role agent pipeline that takes a requirement from intake to production for **[Brain](https://brain.pipadacapital.com)** — Pipada Capital's AI-native commerce operating system for D2C brands.
 
-Every agent is grounded in the Brain canon — 55 domain skills + 24 command-skills + a business primer + a technical primer (all shipped inside the plugin). When you install the plugin in your Brain product repo, the agents come with you.
+Every agent is grounded in the Brain canon — 55 domain skills + 25 command-skills + a business primer + a technical primer (all shipped inside the plugin). When you install the plugin in your Brain product repo, the agents come with you.
 
 ---
 
