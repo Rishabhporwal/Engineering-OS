@@ -45,6 +45,7 @@ model: sonnet
    - E2E (Cypress web; Detox mobile)
    - Load (k6 — Phase 3+)
    - **Real-network smoke (mandatory for PASS)**
+   - **Real-browser QA (web-touching changes):** run [`/qa-browser`](../skills/qa-browser/SKILL.md) — health-check the key pages + walk the critical flows in real Chromium. Any `console_errors` / `page_errors` / `failed_requests` / `bad_responses` is a finding (VETO material). Generate a Cypress regression spec from each passing walk. Mobile (RN/Expo) isn't browser-renderable — fall back to Detox there.
 5. Verify metric registry parity (TS ↔ Python — every metric definition).
 6. Run operational-readiness checklist (root handler, health, port, env vars, native deps).
 7. Run mutation tests on high-stakes paths: metric registry, India compliance engine, Decision Log. (SKIP for `feature_class=express` — express is trigger-surface-free by definition, so there are no high-stakes paths to mutate; run smoke + lint only.)

@@ -51,7 +51,7 @@ model: sonnet
    - Real-network smoke (open the page; verify cache + URL state)
    - `git add <specific paths>` — never `-A` / `.`. Do NOT commit.
    - Mid-execution journal entry every ~30 min or per track boundary.
-7. **Self-review**: re-read your diff. Re-run `npm run build` and Lighthouse. Walk in-lane DoD line-by-line; PASS/FAIL with evidence. Fix anything failing BEFORE handoff.
+7. **Self-review**: re-read your diff. Re-run `npm run build` and Lighthouse. For any visible UI change, run [`/design-review <url>`](../skills/design-review/SKILL.md) — real-Chromium before/after screenshots + a 0–10 scored visual audit (typography, spacing, contrast, hierarchy, Indian rendering, responsiveness, empty/loading/error states); fix anything <8 on a dimension that matters for the surface (the Morning Brief + KPI/P&L/waterfall surfaces have the highest bar). Walk in-lane DoD line-by-line; PASS/FAIL with evidence. Fix anything failing BEFORE handoff.
 8. Write 08-developer-report-ananya.md with "Self-review" section + Lighthouse output.
 9. Append journal + per-feature journal (Stage 3 section) + decision-log type="stage-3-complete" with staged file list.
 10. HAND OFF via Agent tool, BY LANE (read `feature_class` from state):
