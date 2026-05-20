@@ -32,8 +32,9 @@ from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-CHALLENGE_HINTS = ("bounce", "bounced", "violation", "rollback", "reject",
-                   "challenge", "blocked", "fail")
+CHALLENGE_HINTS = ("bounce", "bounced", "veto", "violation", "rollback", "reject",
+                   "challenge", "blocked", "fail", "remediation")
+TERMINAL_STATUS = ("shipped", "rejected", "killed", "done")
 
 
 def eos_root() -> Path:
@@ -65,19 +66,24 @@ def _within(ts: str, cutoff: datetime | None) -> bool:
 def collect(eos: Path, days: int | None) -> dict:
     cutoff = (datetime.now(timezone.utc) - timedelta(days=days)) if days else None
 
-    # in-flight
-    in_flight = []
+    # in-flight (terminal/shipped statuses are split out, not counted as in-flight)
+    in_flight, completed_state = [], []
     state = eos / "state" / "active.json"
     if state.exists():
         try:
             data = json.loads(state.read_text())
             for r in data.get("active_requirements", []):
-                in_flight.append({
+                status = (r.get("status") or "").lower()
+                row = {
                     "req_id": r.get("req_id"), "stage": r.get("stage"),
                     "status": r.get("status"),
                     "owner": r.get("current_owner_persona") or r.get("current_owner"),
-                    "last": r.get("last_journal_entry_at"),
-                })
+                    "last": r.get("last_journal_entry_at") or r.get("last_journal_at"),
+                }
+                if any(t in status for t in TERMINAL_STATUS):
+                    completed_state.append(row)
+                else:
+                    in_flight.append(row)
         except Exception:
             pass
 
@@ -89,9 +95,11 @@ def collect(eos: Path, days: int | None) -> dict:
         for d in runs.iterdir():
             if not d.is_dir():
                 continue
+            # tolerate both 3-part (ts__req__operator) and 4-part (ts__hex__req__operator)
             parts = d.name.split("__")
-            if len(parts) >= 4:
-                req_id, operator = parts[2], parts[3]
+            if len(parts) >= 3:
+                req_id, operator = parts[-2], parts[-1]
+                operator = operator.split("-via-")[0]  # normalize delegated form
                 by_engineer[operator].add(req_id)
                 feature_engineers[req_id].add(operator)
 
@@ -126,6 +134,13 @@ def collect(eos: Path, days: int | None) -> dict:
     ll = eos / "lessons-learned.md"
     if ll.exists():
         lessons = len(re.findall(r"^##\s", ll.read_text(), re.M))
+
+    # fold state-derived completions (status terminal) into shipped, dedupe by req_id
+    seen_ship = {s["req_id"] for s in shipped}
+    for r in completed_state:
+        if r["req_id"] not in seen_ship:
+            shipped.append({"req_id": r["req_id"], "type": r["status"], "ts": r.get("last") or ""})
+            seen_ship.add(r["req_id"])
 
     return {"in_flight": in_flight, "by_engineer": {k: sorted(v) for k, v in by_engineer.items()},
             "feature_engineers": {k: sorted(v) for k, v in feature_engineers.items()},
