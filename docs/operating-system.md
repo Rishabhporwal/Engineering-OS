@@ -168,6 +168,10 @@ Decisions are categorized by where they sit on the autonomy axis.
 
 Each stage is its own document — see [workflow.md](workflow.md) for stage-by-stage execution detail (inputs, outputs, expected duration, escalation triggers, artifact templates).
 
+### Feature tiering (lanes) — not every requirement runs all 8 stages
+
+At Stage 1, Rohan assigns a **lane** by risk: **Express** (trivial + zero trigger-surface → skips Architect, Security, Final-review), **Standard** (normal feature, full pipeline lean), or **High-stakes** (touches a trigger surface → full rigor + mutation tests + 2 personas + mandatory Shreya VETO). The conservative tie-break routes any ambiguity to the higher-rigor lane; trigger surfaces force high-stakes mechanically. The Founder gate and 48h monitor run in every lane. This is the Speed & Cost track — it removes ceremony for trivial work, nothing from risky work. Full rules: [feature-tiering.md](feature-tiering.md).
+
 ---
 
 ## Quality Gates
@@ -353,7 +357,7 @@ If you're a new teammate just cloning the repo, read these in this order:
 2. [docs/operating-system.md](operating-system.md) — *this file*.
 3. [docs/business-context.md](business-context.md) — Brain primer.
 4. [docs/technical-context.md](technical-context.md) — stack primer.
-5. [docs/workflow.md](workflow.md) — stage-by-stage.
+5. [docs/workflow.md](workflow.md) — stage-by-stage (then [docs/feature-tiering.md](feature-tiering.md) — the lanes that decide which stages run).
 6. [docs/quality-gates.md](quality-gates.md) — what to expect at every gate.
 7. [docs/escalation-rules.md](escalation-rules.md) — when to bounce, when to escalate.
 8. [docs/memory-and-git-sync.md](memory-and-git-sync.md) — how shared memory works.

@@ -2,7 +2,7 @@
 
 An **AI engineering team** delivered as a Claude Code plugin. Orchestrates a 10-role agent pipeline that takes a requirement from intake to production for **[Brain](https://brain.pipadacapital.com)** — Pipada Capital's AI-native commerce operating system for D2C brands.
 
-Every agent is grounded in the Brain canon — 49 domain skills + 14 command-skills + a business primer + a technical primer (all shipped inside the plugin). When you install the plugin in your Brain product repo, the agents come with you.
+Every agent is grounded in the Brain canon — 49 domain skills + 19 command-skills + a business primer + a technical primer (all shipped inside the plugin). When you install the plugin in your Brain product repo, the agents come with you.
 
 ---
 
@@ -60,6 +60,8 @@ All plugin-provided commands are invokable via Claude Code's plugin namespace:
 /brain-engineering-os:requirement Add abandoned cart recovery for COD orders in GCC
 /brain-engineering-os:status                              # what's in flight
 /brain-engineering-os:recall feat-abandoned-cart-recovery-gcc   # full history of one feature
+/brain-engineering-os:recall-similar re-engage customers who didn't check out   # semantic search across all memory
+/brain-engineering-os:reindex                             # refresh the semantic memory index
 /brain-engineering-os:approve feat-abandoned-cart-recovery-gcc  # Founder gate (Stage 7)
 /brain-engineering-os:reject feat-... <reason>            # Founder rejection
 /brain-engineering-os:deploy feat-...                     # Stage 8 deploy
@@ -111,6 +113,18 @@ Names are continuous across runs and across teammates. Vikram is always Vikram, 
 ```
 
 Bounces between stages happen automatically when gate conditions fail. Anti-blind-agreement is enforced — every agent must push back on weak requirements.
+
+### Lanes (risk-based tiering)
+
+Not every requirement runs all 8 stages. At Stage 1, Rohan assigns a **lane** by risk:
+
+| Lane | When | Runs | Skips |
+|------|------|------|-------|
+| **Express** | trivial + zero trigger-surface (copy, docs, config, dep bump) | 1 → 3 → 5 → 7 → 8 | Architect, Security, Final-review |
+| **Standard** | normal feature, no trigger-surface | full 8, lean | — |
+| **High-stakes** | touches auth / money / multi-tenancy / PII / connectors / schema / India compliance | full 8 + mutation tests + 2 personas + mandatory Shreya VETO | — |
+
+Express skips the three Opus-heavy stages, cutting most of the time and token cost for the long tail of small work. The Founder gate and 48h monitor run in **every** lane. Full rules: [docs/feature-tiering.md](docs/feature-tiering.md).
 
 ---
 

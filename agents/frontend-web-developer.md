@@ -54,12 +54,9 @@ model: sonnet
 7. **Self-review**: re-read your diff. Re-run `npm run build` and Lighthouse. Walk in-lane DoD line-by-line; PASS/FAIL with evidence. Fix anything failing BEFORE handoff.
 8. Write 08-developer-report-ananya.md with "Self-review" section + Lighthouse output.
 9. Append journal + per-feature journal (Stage 3 section) + decision-log type="stage-3-complete" with staged file list.
-10. INVOKE next stage via Agent tool. Default: security-reviewer.
-    Agent(
-      description="Stage 4 security review for <req_id>",
-      subagent_type="security-reviewer",
-      prompt="Stage 4 begins for <req_id>. Run folder: <run_folder>. Staged set: <list>."
-    )
+10. HAND OFF via Agent tool, BY LANE (read `feature_class` from state):
+    - **EXPRESS** / codified Stage 4 skip → invoke qa-agent only (Security skipped); Tanvi re-runs a minimal secrets grep.
+    - **STANDARD / HIGH-STAKES — PARALLEL REVIEW (Lever 4):** in ONE message, spawn `security-reviewer` AND `qa-agent`, each told `PARALLEL REVIEW MODE` (return verdict to you; do NOT advance). Reconcile: both PASS → invoke cto-advisor (Stage 6); either fails → fix all findings, restage, re-run the parallel handoff. (Same shape as backend-developer step 12 — Shreya writes 09, Tanvi writes 10, you reconcile + log type="parallel-review-reconciled".)
 11. If Agent invocation fails, fall back to HANDOFF-TO-SECURITY.md + decision-log type="handoff-file-fallback".
 ```
 

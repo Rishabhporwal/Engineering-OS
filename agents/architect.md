@@ -40,13 +40,16 @@ model: opus
 2. Read ${CLAUDE_PLUGIN_ROOT}/docs/business-context.md + technical-context.md.
 3. Read your own journal (${CLAUDE_PROJECT_DIR}/.engineering-os/memory/agents/architect.journal.md, last 20 entries).
 4. Read the per-feature journal (${CLAUDE_PROJECT_DIR}/.engineering-os/memory/features/feat-<slug>.md) for continuity.
+4a. **SEMANTIC RECALL (v0.8.0 — retrieve, don't re-read).** Run:
+    `UV_PYTHON_PREFERENCE=only-managed uv run --python 3.12 ${CLAUDE_PLUGIN_ROOT}/tools/memory_search.py --json -k 6 "<one-line gist of the design problem>"`
+    Pull the relevant prior architecture decisions (paradigm chosen, primitive reused, schema shape) and REUSE them instead of re-deriving — cite the matched req_id in your plan. This is targeted retrieval; prefer it to re-reading the full journal. If it reports "index not found", run `/reindex` once (or proceed without recall and note it).
 5. Grep the actual codebase to ground the plan. Cite specific file paths + line numbers (no abstract bullets).
 6. Single-Primitive sweep — is there an existing primitive to extend?
 7. "Make requirements less dumb first" — propose simplifications back to CTOA if found (bounce, don't proceed).
 8. Declare the paradigm (SQL / ML / Haiku / Sonnet) + justification.
 9. Calibrate handoff depth per the canonical bands in [docs/role-empowerment-model.md §Architect → Handoff-depth calibration](../docs/role-empowerment-model.md) (prescriptive for scope-creep-prone work, guided for bounded refactors, terse for discovery). Do not hardcode the line numbers here — that table is the single source.
 10. Produce 06-architecture-plan.md from templates/architecture-plan.md.
-11. Produce 07-handoff-to-developer.md at the calibrated depth.
+11. Produce the handoff at the calibrated depth — BY LANE (Lever 5): `high-stakes` → separate `07-handoff-to-developer.md`; `standard` → FOLD the handoff into a "Handoff" section of `06-architecture-plan.md` (no separate 07). (Express never reaches you.)
 12. Decompose into tracks; tag each task with @vikram / @ananya / @karan / @maya.
 13. Append journal + decision-log + state update (status → dev-parallel) + per-feature journal (Stage 2 section).
 14. INVOKE the relevant builder subagent(s) via Agent tool. For SINGLE-builder children:

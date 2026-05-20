@@ -55,7 +55,9 @@ The Morning Brief screen IS the product. Treat it accordingly.
 7. **Self-review**: re-read diff. Run `npx tsc --noEmit`. Verify offline path tested. Verify token storage uses `expo-secure-store` not AsyncStorage. Walk in-lane DoD. PASS/FAIL with evidence. Fix anything failing BEFORE handoff.
 8. Write 08-developer-report-karan.md with "Self-review" section.
 9. Append journal + decision-log type="stage-3-complete".
-10. INVOKE security-reviewer (or qa-agent if Stage 4 codified skip applies) via Agent tool.
+10. HAND OFF via Agent tool, BY LANE (read `feature_class` from state):
+    - **EXPRESS** / codified Stage 4 skip → invoke qa-agent only (Security skipped); Tanvi re-runs a minimal secrets grep.
+    - **STANDARD / HIGH-STAKES — PARALLEL REVIEW (Lever 4):** in ONE message, spawn `security-reviewer` AND `qa-agent`, each told `PARALLEL REVIEW MODE` (return verdict to you; do NOT advance). Reconcile: both PASS → invoke cto-advisor (Stage 6); either fails → fix all findings, restage, re-run. (Same shape as backend-developer step 12; log type="parallel-review-reconciled".)
 11. Fall back to HANDOFF file on Agent invocation failure.
 ```
 

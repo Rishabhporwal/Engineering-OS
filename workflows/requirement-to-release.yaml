@@ -139,6 +139,51 @@ stages:
     next_on_clean_48h: shipped
     on_rollback: 4
 
+# ---------------------------------------------------------------------------
+# Lanes (v0.8.0 — risk-based tiering). Rohan assigns the lane at Stage 1.
+# The lane decides WHICH stages run. The 8-stage list above is the full path
+# (= high-stakes). Express and standard skip stages to cut wall-clock + tokens.
+# Classifier rules + trigger-surface list: ../docs/feature-tiering.md.
+# ---------------------------------------------------------------------------
+lanes:
+  express:
+    description: >
+      Trivial change with ZERO trigger-surface touch (copy, docs, config,
+      dependency bump, styling, pure refactor with no behavior change, or a
+      clear repeat of a registry pattern). Skips Architect (2), Security (4),
+      Final-review (6) — i.e. all three Opus-heavy stages.
+    requires_empty_trigger_surfaces: true   # any trigger surface ⇒ NOT express
+    stages: [1, 3, 5, 7, 8]
+    stage_notes:
+      1: "Rohan: classify + confirm trivial. 0 personas. No brainstorm. Hand straight to ONE dev."
+      3: "Single relevant builder only. No fan-out."
+      5: "Tanvi: real-network smoke + lint only. No mutation tests."
+      7: "Founder gate (or existing delegation auto-approve)."
+      8: "Jatin: standard deploy + 48h monitor."
+    personas: 0
+    mandatory_veto: []          # Shreya skipped — express never touches her surfaces
+    artifacts: combined          # 1 combined artifact, not the full numbered set
+
+  standard:
+    description: >
+      Normal feature, no trigger-surface touch. Full pipeline, lean. 0–1 persona.
+    requires_empty_trigger_surfaces: true
+    stages: [1, 2, 3, 4, 5, 6, 7, 8]
+    personas: "0-1"
+    mandatory_veto: [qa_agent]   # Shreya runs but rarely blocks; Tanvi always gates
+    artifacts: key               # key artifacts only
+
+  high-stakes:
+    description: >
+      Touches a trigger surface (auth, multi-tenancy, MCP tools, connectors,
+      outbound channels, PII, schema/proto, money, India compliance). Full rigor.
+    requires_empty_trigger_surfaces: false
+    stages: [1, 2, 3, 4, 5, 6, 7, 8]
+    personas: 2
+    mandatory_veto: [security_reviewer, qa_agent]
+    mutation_tests: required
+    artifacts: full
+
 terminal_states:
   - shipped
   - rejected

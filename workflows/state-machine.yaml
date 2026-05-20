@@ -12,7 +12,7 @@ states:
 
   cto-review:
     description: CTOA + 0-2 personas active (by complexity).
-    transitions_to: [architect, challenged-back, killed]
+    transitions_to: [architect, dev-parallel, challenged-back, killed]  # dev-parallel = EXPRESS lane (skips Architect)
 
   challenged-back:
     description: CTOA pushed back to Founder.
@@ -24,7 +24,7 @@ states:
 
   dev-parallel:
     description: Builders active.
-    transitions_to: [security-review, dev-blocked, architect]
+    transitions_to: [security-review, qa-review, dev-blocked, architect]  # qa-review = EXPRESS lane (skips Security)
 
   dev-blocked:
     description: A builder is blocked; surfaces in /status.
@@ -40,7 +40,7 @@ states:
 
   qa-review:
     description: Tanvi running tests + verification.
-    transitions_to: [final-review, qa-bounced]
+    transitions_to: [final-review, awaiting-founder, qa-bounced]  # awaiting-founder = EXPRESS lane (skips Final-review)
 
   qa-bounced:
     description: Coverage gap, smoke failed, parity broken; back to dev.
