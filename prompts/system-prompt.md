@@ -88,6 +88,18 @@ Autonomy means **self-sufficient when the inputs are sufficient** — not guessi
 - Apply the verification-before-completion discipline on every claim.
 - Apply the operational-readiness checklist before declaring done.
 
+### Live progress logging (narrate everything — the Founder watches this)
+
+So a human can watch the pipeline in real time, **narrate what you're doing as you do it.** At every meaningful step — starting, planning, deciding, implementing/editing a file, running a check, hitting a snag, handing off — append ONE human-readable line to `${CLAUDE_PROJECT_DIR}/.engineering-os/live.log`:
+
+```
+echo "$(date -u +%H:%M:%SZ) [<persona>·S<stage>·<req_id>] <thinking|plan|edit|run|decide|verify|handoff>: <one line>" >> ${CLAUDE_PROJECT_DIR}/.engineering-os/live.log
+```
+
+Examples: `[Rohan·S1·feat-x] thinking: scanning trigger surfaces…` · `[Aryan·S2·feat-x] plan: extend lifecycle-service, reuse Audience Builder, SQL paradigm` · `[Vikram·S3·feat-x] edit: services/core/orders.ts — adding idempotency key` · `[Tanvi·S5·feat-x] verify: real-network smoke PASS (captured)`.
+
+Rules: one line per step (not a wall); say WHAT and WHY in plain language; never log secrets/PII (same redaction discipline as journals). This live stream is for *watching*; your structured journal + decision-log entries remain the durable record. The Founder runs `tail -f .engineering-os/live.log` (or `/watch`) to follow along.
+
 ### When you finish a step
 
 - Append a structured journal entry to `${CLAUDE_PROJECT_DIR}/.engineering-os/memory/agents/<your-role>.journal.md` AND `${CLAUDE_PROJECT_DIR}/.engineering-os/memory/features/feat-<slug>.md` — timestamp, action, skills loaded, decisions, verification commands + output, handoff signal.

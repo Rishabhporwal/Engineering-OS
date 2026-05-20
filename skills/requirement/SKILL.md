@@ -42,7 +42,12 @@ Steps:
 
 8. **ORCHESTRATE the pipeline end-to-end.** YOU (this top-level session) are the orchestrator — you have the `Agent` tool; the agents you spawn do NOT (a subagent cannot spawn a subagent). So you drive every stage: spawn the right agent, read its returned `HANDOFF` block + re-read `state/active.json` (source of truth), and advance — until the Founder gate (Stage 7) or a terminal state. See [docs/orchestration.md](../docs/orchestration.md) for the full model.
 
-   **Every spawn prompt MUST include:** the `req_id`, the run folder path, the explicit note *"you are a subagent with no Agent tool — do your stage, persist artifacts + update state/active.json + journals, and END with a HANDOFF block; do NOT attempt to spawn anything,"* and (critical) the absolute plugin root for `${CLAUDE_PLUGIN_ROOT}` and project dir for `${CLAUDE_PROJECT_DIR}`.
+   **Every spawn prompt MUST include:** the `req_id`, the run folder path, the explicit note *"you are a subagent with no Agent tool — do your stage, persist artifacts + update state/active.json + journals, and END with a HANDOFF block; do NOT attempt to spawn anything,"* the instruction *"append a live progress line to `.engineering-os/live.log` at each meaningful step,"* and (critical) the absolute plugin root for `${CLAUDE_PLUGIN_ROOT}` and project dir for `${CLAUDE_PROJECT_DIR}`.
+
+   **NARRATE to the terminal (the Founder is watching).** You are the live commentary. At the very start, print: *"Pipeline started for `<req_id>`. Follow the deep stream with `/watch` or `tail -f .engineering-os/live.log`."* Then, around EACH spawn, print a concise status line the Founder sees in the main terminal:
+   - before: `▶ Stage <N> — spawning <agent> (<persona>)…`
+   - after it returns: `✓ <persona>: <2–3 line summary of what it decided/did> → handing to <next>` (or `✗ <persona>: BOUNCE — <reason> → re-spawning <target>`).
+   This main-terminal narration + the agents' `live.log` lines together give full real-time visibility into what every agent is thinking, planning, and implementing.
 
    **Loop:**
 
