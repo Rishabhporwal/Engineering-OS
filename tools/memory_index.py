@@ -110,7 +110,7 @@ def iter_chunks(eos: Path):
         if not d.is_dir():
             continue
         for f in sorted(d.glob("*.md")):
-            if f.name == "unknown.journal.md":
+            if f.name in ("unknown.journal.md", "auto.journal.md"):
                 continue  # auto-journal hook noise (unresolved agent name) — don't pollute recall
             rel = f.relative_to(eos).as_posix()
             raw = f.read_text(errors="replace")

@@ -9,9 +9,10 @@ Show the current state of the Brain Engineering OS pipeline.
 If `$ARGUMENTS` is empty:
 
 1. Read `.engineering-os/state/active.json`.
-2. Print a table with columns: `req_id`, `stage`, `status`, `current_owner`, `time_in_stage`, `last_journal_at`.
-3. Sort by `stage` ascending, then by `time_in_stage` descending (oldest stuck items first).
-4. Below the table, print a one-line summary: "N in flight; M blocked; oldest at stage X for D days."
+2. **Split by terminal status.** Entries whose `status` is terminal (contains `shipped` / `rejected` / `killed`) are DONE — exclude them from the in-flight table and list them in a one-line "Recently completed: …" note below. This avoids shipped items showing as in-flight (the same bug `/team-digest` had before v0.9.1; `active.json` retains terminal items until archived).
+3. Print the in-flight table with columns: `req_id`, `stage`, `status`, `current_owner`, `time_in_stage`, `last_journal_at`.
+4. Sort by `stage` ascending, then by `time_in_stage` descending (oldest stuck items first).
+5. Below the table, print a one-line summary: "N in flight; M blocked; K completed (awaiting archive); oldest at stage X for D days."
 
 If `$ARGUMENTS` is a req_id:
 

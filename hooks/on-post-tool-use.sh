@@ -55,13 +55,20 @@ SAFE=$(echo "$PAYLOAD" | sed -E \
 #   2. CLAUDE_SUBAGENT_TYPE — Claude Code 2.x may set this for nested agents
 #   3. CLAUDE_CONTEXT_AGENT — alternative name some versions set
 #   4. Parse subagent name from the JSON payload's 'agent' field if present
-#   5. Fall back to "auto" (not "unknown") so the file is clearly noise-only.
+#   5. If unresolved, SKIP entirely — do not write an unattributed entry.
 AGENT="${CLAUDE_AGENT_NAME:-${CLAUDE_SUBAGENT_TYPE:-${CLAUDE_CONTEXT_AGENT:-}}}"
 if [ -z "$AGENT" ]; then
   # Try to extract from payload
   AGENT=$(echo "$SAFE" | jq -r '.context.agent // .agent // .subagent_type // empty' 2>/dev/null)
 fi
-[ -z "$AGENT" ] && AGENT="auto"
+# v0.9.1: when the agent name can't be resolved, do NOT write. The unattributed
+# safety-net append produced ~1,439 noise entries (unknown/auto.journal.md) in
+# the Brain repo and polluted semantic recall. Agents author their own
+# structured journals by design; this net re-enables itself automatically once
+# Claude Code provides the agent name (CLAUDE_AGENT_NAME / subagent_type).
+case "$AGENT" in
+  "" | auto | unknown) exit 0 ;;
+esac
 
 # IMPORTANT: this is a safety-net file. Real agents author their own structured
 # journal entries in their named file (architect.journal.md, etc.). The file
