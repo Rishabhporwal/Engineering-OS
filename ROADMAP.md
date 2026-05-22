@@ -1,6 +1,6 @@
 # Brain Engineering OS — Implementation Roadmap
 
-> **⚠️ Business context RESET.** This roadmap is the *plugin's own* build history/plan. Any references to the old product/business (commerce-OS features, India economics, the "Morning Brief", specific feature walkthroughs) are **stale/illustrative** — the team is currently business-agnostic; re-derive product roadmap items from the new business canon when it's re-fed.
+> This roadmap is the *plugin's own* build history/plan (how the Engineering OS itself ships). The product it builds is **Brain** — the AI-native commerce OS for DTC brands, India-first with UAE/GCC sequenced (canon in `canon/business-requirements.md` + `canon/technical-requirements.md` + `canon/TECH/00–17`). Brain's own product roadmap (Phases 0–4) lives in `docs/business-context.md §11`; the walkthrough below uses a real Brain feature to illustrate the pipeline.
 
 > Section 8 of the build prompt. Scope by version + developer task breakdown + suggested tech stack + build sequence + risks/mitigations + rollout plan + one full end-to-end feature walkthrough.
 

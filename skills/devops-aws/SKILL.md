@@ -5,9 +5,24 @@ description: Brain's AWS infrastructure — AWS CDK (TypeScript) for IaC; EKS + 
 
 # DevOps + AWS — Brain's Platform
 
-**Stack is locked** (`canon/BRAIN_TECHNICAL.md`). Brain uses **AWS CDK (TypeScript)** for IaC and **EKS + Karpenter + ArgoCD** for orchestration — **different** from the prior plugin defaults of Terraform + ECS Fargate. Don't revert.
+**Stack is locked** (`canon/technical-requirements.md`). Brain uses **AWS CDK (TypeScript)** for IaC (NOT Terraform) and graduates to **EKS + Karpenter + ArgoCD** for orchestration at scale. IaC is CDK from day one; the orchestration/event-bus/CDC layers are **phased**.
 
-## Reference architecture
+## Phased infra — build the contracts now, run the smallest footprint (canon TECH/00 §3.3)
+
+The mature architecture below is the **destination**, not the day-one build. Run the smallest footprint that serves current scale and **graduate each heavy layer only when its trigger fires**.
+
+| Layer | Phase 0–1 (≤~25 brands) | Phase 2+ (graduate when…) |
+|---|---|---|
+| **Backend deployables** | **3 deployables** — `edge` (Node: api-gateway + core) + `data` (Python: ingestion + analytics + intelligence) + web + mobile. (Always 7 *logical* bounded contexts with proto contracts; splitting is mechanical.) | Split into the full **7 services** + add `lifecycle-service` at Phase 2 |
+| **Compute hosting** | **ECS Fargate** + Amplify/managed (web) + EAS (mobile) | **EKS + Karpenter** when Fargate cost crosses ~$1.5–2K/mo OR you need bin-packing across bursty pods |
+| **Event bus** | **MSK Serverless** + transactional outbox | **Provisioned MSK** when sustained throughput beats serverless cost OR you need Debezium + tiered-storage tuning |
+| **CDC** | none — ingestion writes Postgres + ClickHouse **directly** | **Debezium on MSK Connect** at Phase 2 when >1 consumer needs the 90-day mirror in ClickHouse |
+| **ClickHouse** | managed **ClickHouse Cloud**, single region | shard/rightsize per Phase-3 trigger |
+| **Region** | single region (**ap-south-1**) | multi-region per Phase 4 |
+
+Because gRPC contracts + the 7 logical contexts exist from day one, the split is "flip in-process call → network call," not a rewrite. Everything below this section is the **mature target** — apply the phase table when deciding what to actually provision today.
+
+## Reference architecture (mature target — Phase 2+)
 
 ```
 Route 53 + CloudFront (DNS + CDN + WAF) → ALB (L7; HTTP/2 + gRPC passthrough)
@@ -27,11 +42,11 @@ Route 53 + CloudFront (DNS + CDN + WAF) → ALB (L7; HTTP/2 + gRPC passthrough)
 
 **CDK manages cluster + AWS resources; ArgoCD manages app deployments.** Never put a `Deployment` in CDK or an IAM role in ArgoCD.
 
-## EKS service config (per service)
+## EKS service config (per service — Phase 2+; on Fargate in Phase 0–1)
 
 | Setting | Default |
 |---|---|
-| `replicas.min` | per canon/BRAIN_TECHNICAL.md (api-gateway 4, core 2, ingestion 4, analytics 3, intelligence 2, notifications 2, lifecycle 3) |
+| `replicas.min` | per canon/technical-requirements.md (api-gateway 4, core 2, ingestion 4, analytics 3, intelligence 2, notifications 2, lifecycle 3) |
 | `replicas.max` | 10× min (api-gateway up to 40 at peak) |
 | HPA | 60% CPU + 70% memory target |
 | `PodDisruptionBudget.minAvailable` | 1 |
@@ -51,18 +66,18 @@ ArgoCD app structure is Kustomize: `infra/k8s/<service>/base/` (deployment, serv
 
 CloudWatch composite alarm on (5xx rate > 2% AND p99 latency > 2s) → SNS → ArgoCD rollback hook → previous revision. Triggered automatically post-deploy; verifies for 10 minutes.
 
-## Mobile pipeline (canon/BRAIN_TECHNICAL.md)
+## Mobile pipeline (canon/technical-requirements.md)
 
 Path-filtered to `apps/mobile/**`: lint+typecheck → unit (Vitest + RNTL) → Detox E2E (macOS iOS sim + Linux Android emu) → `eas-build` (matrix: preview, production) → `eas-submit` (manual approval; App Store + Play Store) → `eas-update-ota` (JS-only patches).
 
-**OTA-vs-native rule (canon/BRAIN_TECHNICAL.md):** JS bugfix → `eas update --channel production`; new Expo SDK / native module / permission change / bundle id → native bump → store review.
+**OTA-vs-native rule (canon/technical-requirements.md):** JS bugfix → `eas update --channel production`; new Expo SDK / native module / permission change / bundle id → native bump → store review.
 
 ## MSK + OpenSearch (infra notes)
 
-- **MSK:** 3 brokers (`kafka.m7g.large`), 3 AZs, TLS in transit, `storageMode: TIERED` to S3. Per-topic retention: `-1` for `integrations.*.v1` (tiered to S3), 30d for `operations.*`/`notifications.*`. Partition key always `workspace_id` (canon/BRAIN_TECHNICAL.md). Glue Schema Registry `brain-schemas`.
+- **MSK:** **Phase 0–1 = MSK Serverless** + transactional outbox; graduate to **provisioned MSK** at Phase 2 (the broker topology below). Provisioned: 3 brokers (`kafka.m7g.large`), 3 AZs, TLS in transit, `storageMode: TIERED` to S3. Per-topic retention: `-1` for `integrations.*.v1` (tiered to S3), 30d for `operations.*`/`notifications.*`. Partition key always `workspace_id` (canon/technical-requirements.md). Glue Schema Registry `brain-schemas`.
 - **OpenSearch:** 3-node `t3.medium.search` (Phase 0) → `r6g.large.search` (Phase 3), multi-AZ; ISM hot 7d → warm 7d → cold-S3 after 14d; indices `brain-logs-<service>-<date>`; Fluent Bit DaemonSet dual-outputs to OpenSearch + CloudWatch with Lua PII redaction. Correlation IDs propagate via headers / gRPC metadata / Kafka envelope (see `observability`).
 
-## Cost (Phase summary — canon/BRAIN_TECHNICAL.md)
+## Cost (Phase summary — canon/technical-requirements.md)
 
 | Item | P0 | P1 | P2 | P3 | P4 |
 |---|---|---|---|---|---|
@@ -82,7 +97,7 @@ Path-filtered to `apps/mobile/**`: lint+typecheck → unit (Vitest + RNTL) → D
 - Anthropic > $500/mo before Phase 3 → verify prompt-caching hit rate; downgrade to Haiku where applicable
 - ClickHouse Cloud > $2K/mo before Phase 3 → shard utilization / rightsize replicas
 - NAT Gateway transfer > $500/mo → investigate egress; consider VPC endpoints
-- **Cost-routing dashboard** (canon/BRAIN_TECHNICAL.md): Frontier-LLM rate > 1% of total calls → tier-1 incident; coordinate with Maya on prompt audit
+- **Cost-routing dashboard** (canon/technical-requirements.md): Frontier-LLM rate > 1% of total calls → tier-1 incident; coordinate with Maya on prompt audit
 
 ## DR + chaos
 
@@ -100,7 +115,7 @@ Path-filtered to `apps/mobile/**`: lint+typecheck → unit (Vitest + RNTL) → D
 
 ## References
 
-- `canon/BRAIN_TECHNICAL.md` — log spine + X-Ray + Sentry + IAM, MSK topology, EAS Build + distribution + cert pinning, cost-discipline dashboard
+- `canon/technical-requirements.md` — log spine + X-Ray + Sentry + IAM, MSK topology, EAS Build + distribution + cert pinning, cost-discipline dashboard
 - `skills/observability/SKILL.md` — Fluent Bit + OpenSearch + X-Ray wiring
 - `skills/event-driven-kafka/SKILL.md` — MSK topic + Glue schema patterns
 - `skills/operational-readiness/SKILL.md` — service pre-handoff checklist

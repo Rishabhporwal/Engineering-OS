@@ -5,9 +5,9 @@ description: Brain's Plan Module forecasting — Prophet for trend + seasonality
 
 # Forecasting — Prophet + Isotonic + Probabilistic Models
 
-The Plan Module (canon/BRAIN_TECHNICAL.md) is Brain's forecasting engine. Phase 1: simple aMER bucketing (paradigm 1 SQL + percentile). Phase 2: Prophet (paradigm 2 ML). All forecasting is paradigm 1 or 2 — **never LLM.**
+The Plan Module (canon/TECH/05_intelligence_layer.md §2) is Brain's forecasting engine: **aMER response curve (isotonic) + returning-revenue model × festival multiplier**. Phase 1: simple aMER bucketing (paradigm 1 SQL + percentile). **Phase 3 (W25-32): Prophet with festival regressors** (paradigm 2 ML). Target **15% MAPE @30d** for active workspaces by Phase 3. All forecasting is paradigm 1 or 2 — **never LLM.**
 
-**Canonical doc:** `canon/BRAIN_TECHNICAL.md` §plan-module. This skill is operational.
+**Canonical doc:** `canon/TECH/05_intelligence_layer.md §2` (+ `canon/technical-requirements.md` §forecasting). This skill is operational.
 
 ## Phase 1 forecast (W7+ wedge) — paradigm 1, SQL + percentile
 
@@ -35,7 +35,7 @@ WHERE ad_spend_minor BETWEEN $2 * 0.8 AND $2 * 1.2;  -- spend bucket
 
 Confidence intervals = P25-P75 band. No model fitting.
 
-## Phase 2 forecast (W31-32) — Prophet with festival regressors
+## Phase 3 forecast (W25-32) — Prophet with festival regressors
 
 ```python
 from prophet import Prophet
@@ -93,6 +93,8 @@ amer_at_spend = iso.predict([proposed_spend_minor])
 
 ## LTV — BG/NBD + Gamma-Gamma (paradigm 2)
 
+**Monetary value is `CM2/order` (paisa), NOT gross order value** — Brain's LTV is contribution-margin LTV (canon TECH/03, TECH/05). Feeding gross AOV inflates LTV:CAC and breaks the spend decision.
+
 ```python
 from lifetimes import BetaGeoFitter, GammaGammaFitter
 
@@ -100,19 +102,20 @@ from lifetimes import BetaGeoFitter, GammaGammaFitter
 async def predict_ltv_30d(workspace_id, customer_id):
     # BG/NBD: probability customer is alive + frequency
     # Gamma-Gamma: expected monetary value given alive
+    # history.monetary_value = CM2 per order (minor units), not gross AOV
 
     bgf = BetaGeoFitter(penalizer_coef=0.0).fit(history.frequency, history.recency, history.T)
     ggf = GammaGammaFitter(penalizer_coef=0.0).fit(history.frequency, history.monetary_value)
 
     return ggf.customer_lifetime_value(
         bgf,
-        frequency, recency, T, monetary_value,
+        frequency, recency, T, monetary_value,  # CM2/order
         time=1,   # 1 month horizon
         discount_rate=0.0
     )
 ```
 
-Per-brand model; refit weekly.
+Per-brand model. **Requires min 6 months history + ≥500 repeat customers; train monthly; flag if MAPE > 40%** (canon technical-requirements §lifecycle). Below the data floor, fall back and label the estimate in the UI.
 
 ## Cohort survival — Kaplan-Meier
 
@@ -149,16 +152,19 @@ CREATE TABLE ai.forecast_accuracy (
   agent_name          TEXT NOT NULL,            -- 'aicmo-festival', 'aicfo-cashflow', etc.
   forecast_date       DATE NOT NULL,            -- when forecast was made
   target_date         DATE NOT NULL,            -- date being forecast
-  forecasted_value    NUMERIC,
-  actual_value        NUMERIC,
-  abs_pct_error       NUMERIC,                  -- |actual - forecast| / actual
+  metric_kind         TEXT NOT NULL,            -- 'money_minor' | 'ratio' (disambiguates the value columns)
+  forecasted_minor    BIGINT,                   -- money forecasts in minor units (NEVER NUMERIC/float for money)
+  actual_minor        BIGINT,
+  forecasted_ratio    DOUBLE PRECISION,         -- ratio forecasts (aMER, MER) only
+  actual_ratio        DOUBLE PRECISION,
+  abs_pct_error       DOUBLE PRECISION,         -- |actual - forecast| / actual
   model_version       TEXT NOT NULL,
   created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   PRIMARY KEY (workspace_id, agent_name, forecast_date, target_date)
 );
 ```
 
-**Phase 3 exit criterion: 30-day MAPE < 15% across active workspaces** (see canon/BRAIN_TECHNICAL.md, Phase 3).
+**Phase 3 exit criterion: 30-day MAPE < 15% across active workspaces** (canon TECH/05 §2). A workspace whose 30-day MAPE stays **> 25% for 7 days triggers an admin investigation alert**; LTV models that drift past **MAPE > 40%** are flagged and fall back.
 
 ## Anomaly detection — z-score with festival baseline
 
@@ -175,7 +181,7 @@ async def detect_anomaly(workspace_id, metric, date):
 
 Festival baseline matters: Diwali revenue isn't an anomaly; it's an expected lift.
 
-## Switching from Phase 1 (simple) → Phase 2 (Prophet)
+## Switching from Phase 1 (simple) → Phase 3 (Prophet)
 
 ```python
 def pick_forecast_model(workspace_id):
@@ -198,9 +204,9 @@ Don't run Prophet on < 18 months — overfits seasonal patterns.
 
 ## References
 
-- `canon/BRAIN_TECHNICAL.md` §plan-module — Plan Module spec
-- `canon/BRAIN_TECHNICAL.md` §AICMO-Festival + §AICOO-Inventory + §AICFO-Cashflow — agents that use these models
-- `canon/BRAIN_TECHNICAL.md` — festival calendar source
+- `canon/TECH/05_intelligence_layer.md` §2 — Plan Module spec (isotonic aMER + returning-revenue × festival multiplier, MAPE targets)
+- `canon/TECH/14_agent_roster.md` — AICMO-Festival + AICOO-Inventory + AICFO-Cashflow (agents that use these models)
+- `canon/TECH/04_regional_adapters.md` — festival calendar + learned-lift source (RegionAdapter)
 - `skills/cost-routing-paradigms/SKILL.md` — forecasting is paradigm 2; never paradigm 4
 - `skills/agentic-design/SKILL.md` — wiring forecasts into agent daily ticks
 - `skills/python-services/SKILL.md` — Prophet / sklearn / statsmodels / lifelines patterns

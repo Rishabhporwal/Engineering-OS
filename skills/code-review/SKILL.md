@@ -178,7 +178,7 @@ See `verification-before-completion` for the full red-flag inventory.
 | Concern | Owner | Reference |
 |---|---|---|
 | code-review (this skill, auto-loaded) | **Rohan** (Stage 6) + Shreya + Tanvi | this SKILL.md |
-| QA PASS/FAIL gate | **Tanvi** | canon/BRAIN_TECHNICAL.md (SLO + test gates) |
+| QA PASS/FAIL gate | **Tanvi** | canon/technical-requirements.md (SLO + test gates) |
 | Security VETO authority | **Shreya** | prompts/system-prompt.md (Iron Laws) |
 | Architectural pushback | **Aryan** | the ADR (architecture decision record) for the change |
 | Strategic pushback | **Rohan** | when ADR needs non-engineering perspective |

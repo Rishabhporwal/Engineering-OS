@@ -5,7 +5,7 @@ description: Brain's internal API protocol — gRPC over Protocol Buffers via bu
 
 # gRPC + buf — Brain's Internal API
 
-Brain uses **gRPC over HTTP/2** for all service-to-service communication. **buf** is the toolchain for proto management + codegen. This skill is operational; the canonical contract details are in `canon/BRAIN_TECHNICAL.md`.
+Brain uses **gRPC over HTTP/2** for all service-to-service communication. **buf** is the toolchain for proto management + codegen. This skill is operational; the canonical contract details are in `canon/technical-requirements.md`.
 
 ## Why gRPC (not REST internal)
 
@@ -102,7 +102,7 @@ api-gateway maps these to user-meaningful tRPC/HTTP errors — never leak an opa
 
 - **Server-streaming** (`returns (stream …)`): live dashboard refresh — api-gateway forwards to a tRPC subscription → SSE/WebSocket.
 - **Bidi-streaming** (`rpc Chat(stream …) returns (stream …)`): `intelligence-service.Chat` — Maya's agent streams intermediate tool calls + final response.
-- **MCP tool schemas generate from the same `.proto`** (via the buf-mcp plugin → `inputSchema`/`outputSchema` JSON Schema). Hand-writing MCP schemas = drift = production bugs (canon/BRAIN_TECHNICAL.md).
+- **MCP tool schemas generate from the same `.proto`** (via the buf-mcp plugin → `inputSchema`/`outputSchema` JSON Schema). Hand-writing MCP schemas = drift = production bugs (canon/technical-requirements.md).
 
 ## Auth metadata
 
@@ -120,7 +120,7 @@ Every gRPC call propagates: `authorization: Bearer <jwt>`, `workspace_id`, `trac
 
 ## References
 
-- `canon/BRAIN_TECHNICAL.md` — canonical gRPC + tRPC + MCP contract details, MCP schemas from proto
+- `canon/technical-requirements.md` — canonical gRPC + tRPC + MCP contract details, MCP schemas from proto
 - `skills/backend-fastify-trpc-grpc/SKILL.md` — Node gRPC server / client
 - `skills/python-services/SKILL.md` — Python gRPC server / client (grpcio + grpcio-tools)
 - `skills/mcp-protocol/SKILL.md` — MCP tool registration

@@ -5,7 +5,7 @@ description: Query optimization for Supabase Postgres (OLTP) and ClickHouse (OLA
 
 # SQL Query Optimization
 
-Brain's API queries MUST hit pre-aggregated tables in **<100ms p95** (canon/BRAIN_TECHNICAL.md, engineering invariants). When a query is slow, the answer is almost always one of: missing/wrong index, sequential scan over the primary key, `OFFSET` pagination, or aggregating in the request path instead of materializing upstream. This skill covers both Postgres (OLTP — orders, members, integrations, consent, decision_log) and ClickHouse (OLAP — events, rollups, cohort, waterfall).
+Brain's API queries MUST hit pre-aggregated tables in **<100ms p95** (canon/technical-requirements.md, engineering invariants). When a query is slow, the answer is almost always one of: missing/wrong index, sequential scan over the primary key, `OFFSET` pagination, or aggregating in the request path instead of materializing upstream. This skill covers both Postgres (OLTP — orders, members, integrations, consent, decision_log) and ClickHouse (OLAP — events, rollups, cohort, waterfall).
 
 ## Why this matters for Brain
 
@@ -138,7 +138,7 @@ Look for:
 
 ### 3. Materialized views, not request-path aggregations
 
-Never compute aggregates in API handlers. **Brain's golden rule (canon/BRAIN_TECHNICAL.md — compute close to data):**
+Never compute aggregates in API handlers. **Brain's golden rule (canon/technical-requirements.md — compute close to data):**
 
 ```sql
 -- The materialized view does the work overnight (or every N minutes)
@@ -209,9 +209,9 @@ For Supabase, use the **transaction pooler** (port 6543) for short queries from 
 
 | Concern | Owner | Reference |
 |---|---|---|
-| Postgres OLTP query review | **Vikram** + Aryan | canon/BRAIN_TECHNICAL.md (OLTP design) |
-| ClickHouse OLAP + MVs | **Maya** | canon/BRAIN_TECHNICAL.md (OLAP design), `clickhouse-olap` skill |
-| Metric engine query patterns | **Maya** | canon/BRAIN_TECHNICAL.md (metric registry) |
-| Connection pool config (EKS) | **Jatin** | canon/BRAIN_TECHNICAL.md |
+| Postgres OLTP query review | **Vikram** + Aryan | canon/technical-requirements.md (OLTP design) |
+| ClickHouse OLAP + MVs | **Maya** | canon/technical-requirements.md (OLAP design), `clickhouse-olap` skill |
+| Metric engine query patterns | **Maya** | canon/technical-requirements.md (metric registry) |
+| Connection pool config (EKS) | **Jatin** | canon/technical-requirements.md |
 
 Related Brain skills: `clickhouse-olap` (OLAP-specific patterns), `database-design` (schema decisions), `api-traffic-patterns` (cursor pattern).

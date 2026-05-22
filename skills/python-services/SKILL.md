@@ -48,7 +48,7 @@ apps/<service>/
 tests/{unit, integration (docker-compose conftest), smoke (real server + curl)}
 ```
 
-The `uv` workspace root declares `members = ["apps/*", "pylibs/*"]` with each shared lib (`brain_db`, `brain_clickhouse`, `brain_kafka`, `brain_metrics`, `brain_cost_router`, …) as `{ workspace = true }`. Full bootstrap (`main.py` running gRPC + uvicorn with graceful SIGTERM), `logger.py`, and `tracing.py` scaffolds are in canon/BRAIN_TECHNICAL.md — copy them rather than re-deriving.
+The `uv` workspace root declares `members = ["apps/*", "pylibs/*"]` with each shared lib (`brain_db`, `brain_clickhouse`, `brain_kafka`, `brain_metrics`, `brain_cost_router`, …) as `{ workspace = true }`. Full bootstrap (`main.py` running gRPC + uvicorn with graceful SIGTERM), `logger.py`, and `tracing.py` scaffolds are in canon/technical-requirements.md — copy them rather than re-deriving.
 
 ## The load-bearing safety patterns (NON-NEGOTIABLE)
 
@@ -88,11 +88,11 @@ await client.messages.create(
 
 - **httpx + `tenacity`** for outbound: `wait_exponential_jitter` retry, honor `Retry-After` on 429, `timeout=10.0`. Never block the event loop with sync I/O.
 - **aiokafka** consumers: `enable_auto_commit=False`, manual `consumer.commit(...)` only AFTER the ClickHouse/Postgres write succeeds (at-least-once + idempotent write).
-- **structlog** emits JSON with `request_id`/`trace_id`/`workspace_id`/`user_id` from `contextvars`, plus service + version. PII redaction at the logger (filter `email`, `phone`, `access_token`, `refresh_token`, `pan_card`, `aadhaar`) with a Fluent Bit Lua script as the second line of defense (canon/BRAIN_TECHNICAL.md).
+- **structlog** emits JSON with `request_id`/`trace_id`/`workspace_id`/`user_id` from `contextvars`, plus service + version. PII redaction at the logger (filter `email`, `phone`, `access_token`, `refresh_token`, `pan_card`, `aadhaar`) with a Fluent Bit Lua script as the second line of defense (canon/technical-requirements.md).
 
 ## Cost-routing — `@paradigm` decorator
 
-Every LLM/ML function carries `@paradigm(kind, model=..., token_budget=...)`. It registers into `PARADIGM_REGISTRY` (CI parses it for the cost-routing audit — see canon/BRAIN_TECHNICAL.md) and, for `small_llm`/`frontier_llm` kinds, runs a per-brand cap check before the call. Missing `@paradigm` = the cost-discipline dashboard can't track it = CI FAIL.
+Every LLM/ML function carries `@paradigm(kind, model=..., token_budget=...)`. It registers into `PARADIGM_REGISTRY` (CI parses it for the cost-routing audit — see canon/technical-requirements.md) and, for `small_llm`/`frontier_llm` kinds, runs a per-brand cap check before the call. Missing `@paradigm` = the cost-discipline dashboard can't track it = CI FAIL.
 
 ## Operational Readiness (pre-handoff)
 
@@ -116,7 +116,7 @@ Every LLM/ML function carries `@paradigm(kind, model=..., token_budget=...)`. It
 
 ## References
 
-- `canon/BRAIN_TECHNICAL.md` — service bootstrap scaffolds, log spine + X-Ray + Sentry wiring, Postgres + ClickHouse usage
+- `canon/technical-requirements.md` — service bootstrap scaffolds, log spine + X-Ray + Sentry wiring, Postgres + ClickHouse usage
 - `skills/grpc-buf/SKILL.md` — server / client patterns
 - `skills/cost-routing-paradigms/SKILL.md` — `@paradigm` decorator + token budgets
 - `skills/clickhouse-olap/SKILL.md` — query gateway

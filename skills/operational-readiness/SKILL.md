@@ -13,7 +13,7 @@ A service that 404s on `GET /` looks "broken" to a human hitting the URL. `GET /
 
 ## 2. Health checks are non-negotiable — four probe types
 
-EKS / ALB / CloudFront all need health endpoints (Brain's locked stack — canon/BRAIN_TECHNICAL.md). Without working liveness + readiness probes the service can't deploy. Implement K8s-style checks so broken pods restart, not-ready pods leave the LB, and ArgoCD auto-rolls-back when the composite alarm fires.
+EKS / ALB / CloudFront all need health endpoints (Brain's locked stack — canon/technical-requirements.md). Without working liveness + readiness probes the service can't deploy. Implement K8s-style checks so broken pods restart, not-ready pods leave the LB, and ArgoCD auto-rolls-back when the composite alarm fires.
 
 | Probe | Question | EKS action on failure | What to check in Brain |
 |---|---|---|---|
@@ -116,7 +116,7 @@ In-process mocks (Hono `app.request()`, NestJS `Test.createTestingModule`, FastA
 
 **Two test layers required:**
 1. **Integration** (fast, in-process) — your hot loop on every save.
-2. **Smoke** (slow, real network) — `spawn` the actual server on a real port, wait for the "listening" log, then `fetch`/`curl` `GET /health` (expect 200 + `status:ok`) and `GET /` (expect 200, not 404). Run before PASS and in CI post-deploy. (Node `child_process.spawn` template + the bash variant are in `testing-tdd` and canon/BRAIN_TECHNICAL.md.)
+2. **Smoke** (slow, real network) — `spawn` the actual server on a real port, wait for the "listening" log, then `fetch`/`curl` `GET /health` (expect 200 + `status:ok`) and `GET /` (expect 200, not 404). Run before PASS and in CI post-deploy. (Node `child_process.spawn` template + the bash variant are in `testing-tdd` and canon/technical-requirements.md.)
 
 ## 5. Native dependencies — declare the build trust list
 
@@ -202,8 +202,8 @@ If any is unchecked, the verdict is FAIL with the specific gap named.
 |---|---|---|
 | Fastify probes (api-gateway, core, notifications, lifecycle Node) | **Vikram** | |
 | FastAPI probes (ingestion, analytics, intelligence) | **Maya** | |
-| EKS probe config + composite alarm | **Jatin** | canon/BRAIN_TECHNICAL.md (SLOs + auto-rollback) |
-| Probe failure → page-or-rollback decision tree | **Jatin** | canon/BRAIN_TECHNICAL.md (incident playbook) |
+| EKS probe config + composite alarm | **Jatin** | canon/technical-requirements.md (SLOs + auto-rollback) |
+| Probe failure → page-or-rollback decision tree | **Jatin** | canon/technical-requirements.md (incident playbook) |
 | Pre-ship readiness checklist sign-off | **Vikram** → **Tanvi** | this skill |
 
 Related Brain skills: `observability` (probe metrics + the spine), `devops-aws` (EKS + ArgoCD config), `testing-tdd` (the smoke-test templates), `verification-before-completion` (the real-network smoke floor).

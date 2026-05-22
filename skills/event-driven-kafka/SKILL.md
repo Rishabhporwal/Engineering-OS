@@ -18,7 +18,7 @@ Brain uses Kafka for:
 - **CDC** — Debezium streams Postgres WAL → Kafka so analytics-service can mirror recent OLTP state
 
 Brain does NOT use Kafka for:
-- Synchronous service-to-service calls (gRPC instead — see canon/BRAIN_TECHNICAL.md)
+- Synchronous service-to-service calls (gRPC instead — see canon/technical-requirements.md)
 - Simple cron-triggered jobs (EventBridge Scheduler)
 - In-process job queues (we don't have BullMQ; if you need queues, push the event to Kafka)
 
@@ -226,7 +226,7 @@ Postgres WAL  →  Debezium connector (MSK Connect)  →  Kafka topic: cdc.publi
 
 Used for `audience`, `outreach`, `rfm_score`, `ai.decision_log` — analytics needs recent state without querying core-service's Postgres directly.
 
-## Monitoring (canon/BRAIN_TECHNICAL.md)
+## Monitoring (canon/technical-requirements.md)
 
 CloudWatch metrics emitted:
 - `MSK/KafkaConsumerLag` per consumer group per topic — alarm when > threshold
@@ -256,8 +256,8 @@ OpenSearch monitor:
 
 ## References
 
-- `canon/BRAIN_TECHNICAL.md` — canonical Kafka topology + per-source flows
-- `canon/BRAIN_TECHNICAL.md` §kafka + §debezium
+- `canon/technical-requirements.md` — canonical Kafka topology + per-source flows
+- `canon/technical-requirements.md` §kafka + §debezium
 - `skills/backend-fastify-trpc-grpc/SKILL.md` — TS KafkaJS patterns (Brain's Node services consume + produce here)
 - `skills/python-services/SKILL.md` §kafka — aiokafka patterns
 - `skills/integration-connectors/SKILL.md` — producer side (Maya's domain)

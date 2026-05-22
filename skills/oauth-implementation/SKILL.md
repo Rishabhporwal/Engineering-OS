@@ -10,7 +10,7 @@ Brain's end-user auth is **Supabase Auth** (see `auth-and-access`). This skill i
 ## Why this matters for Brain
 
 - **Every vendor has different OAuth quirks.** Shopify wants per-shop installs with HMAC-signed callbacks. Meta requires the System User flow for long-running tokens. Google Ads needs a developer token AND OAuth scope upgrades for each manager-account hop. Shiprocket has rotating API keys (not OAuth proper). Klaviyo uses Private API keys, NOT OAuth (Phase 4 may add OAuth).
-- **Token storage is a compliance + security surface.** Per-brand vendor tokens are encrypted at rest with AWS KMS envelope encryption, stored in `integrations.encrypted_credentials` (Postgres bytea), and decrypted only at the moment of an API call. Tokens NEVER live in logs, env vars, or memory beyond the active request.
+- **Token storage is a compliance + security surface.** Per-brand vendor tokens are encrypted with **AWS KMS envelope encryption and stored in AWS Secrets Manager** — the `core.integrations` row holds only an opaque `credential_secret_arn` reference, never the ciphertext itself. Reads go through a core-service decryption wrapper, decrypting only at the moment of an API call. Plaintext tokens NEVER live in logs, env vars, the DB row, or memory beyond the active request.
 - **Token failure breaks ingestion.** A Meta refresh-token expiry that goes unnoticed for 24h = a brand's MER chart silently freezes at the wrong number. Refresh-token monitoring is part of `observability`.
 
 ## OAuth flows in Brain
@@ -69,13 +69,15 @@ async def callback(request: Request):
     r.raise_for_status()
     tokens = r.json()
 
+    # KMS-envelope-encrypt the tokens INTO Secrets Manager; store only the ARN ref
+    secret_arn = await secrets.put_credential(workspace_id, "shopify", tokens)
     await integrations_repo.upsert(
         workspace_id=workspace_id,
-        source="shopify",
-        shop_domain=params["shop"],
-        encrypted_credentials=kms.encrypt(tokens),    # KMS envelope
-        scopes=tokens.get("scope"),
-        installed_at=datetime.utcnow(),
+        integration_type="shopify",
+        external_account_id=params["shop"],
+        credential_secret_arn=secret_arn,            # opaque ref; ciphertext lives in Secrets Manager
+        config={"scopes": tokens.get("scope")},
+        status="connected",
     )
     return RedirectResponse(f"{settings.WEB_URL}/integrations/shopify/connected")
 ```
@@ -83,19 +85,18 @@ async def callback(request: Request):
 ## Token storage (the Brain rule)
 
 ```sql
+-- core.integrations (canon TECH/01) — the row holds an ARN reference, NOT the ciphertext
 CREATE TABLE integrations (
-  id                   UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  workspace_id         UUID NOT NULL,
-  source               TEXT NOT NULL,                 -- shopify | meta | google | shiprocket | klaviyo
-  account_identifier   TEXT NOT NULL,                 -- shop domain, ad account id, etc.
-  encrypted_credentials BYTEA NOT NULL,               -- KMS-encrypted JSON
-  scopes               TEXT[],
-  installed_at         TIMESTAMPTZ NOT NULL,
-  refreshed_at         TIMESTAMPTZ,
-  expires_at           TIMESTAMPTZ,                   -- NULL for non-expiring tokens
-  status               TEXT NOT NULL DEFAULT 'active', -- active | revoked | expired | error
-  last_error           TEXT,
-  UNIQUE (workspace_id, source, account_identifier)
+  id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  workspace_id          UUID NOT NULL,
+  integration_type      TEXT NOT NULL,                 -- shopify | meta | google_ads | shiprocket | klaviyo
+  external_account_id   TEXT,                          -- shop domain, ad account id, etc.
+  credential_secret_arn TEXT NOT NULL,                 -- opaque ref; KMS-enveloped ciphertext lives in Secrets Manager
+  config                JSONB NOT NULL DEFAULT '{}',   -- scopes, per-resource settings
+  watermarks            JSONB NOT NULL DEFAULT '{}',
+  status                TEXT NOT NULL DEFAULT 'connected', -- connected | revoked | expired | error
+  last_sync_error       TEXT,
+  UNIQUE (workspace_id, integration_type, external_account_id)
 );
 
 ALTER TABLE integrations ENABLE ROW LEVEL SECURITY;
@@ -104,7 +105,7 @@ CREATE POLICY rls_integrations ON integrations
 ```
 
 **Brain rules:**
-- `encrypted_credentials` is **BYTEA**, KMS-envelope-encrypted. Decryption key access is per-task IAM role (the ingestion-service role only).
+- The DB row stores **only `credential_secret_arn`** — never the ciphertext. The KMS-envelope-encrypted token lives in **AWS Secrets Manager**; per-workspace DEK, KEK never exported. Decrypt access is per-task IAM role (the ingestion-service / core-service decryption wrapper only).
 - **Tokens never appear in logs.** `observability` `redact` config covers `*.access_token`, `*.refresh_token`, `*.api_key`.
 - **NEVER expose `client_secret` to the browser or mobile** — all OAuth happens in `ingestion-service`.
 - Connector dispatcher fetches credentials at call time, decrypts in-memory, never stores in-process beyond the request.
@@ -115,16 +116,14 @@ CREATE POLICY rls_integrations ON integrations
 # Brain pattern: refresh on 401, save the new token atomically
 async def get_valid_credentials(workspace_id: str, source: str) -> dict:
     record = await integrations_repo.get(workspace_id, source)
-    creds = kms.decrypt(record.encrypted_credentials)
+    # Decrypt through the core-service wrapper: fetch from Secrets Manager by ARN, KMS-decrypt in-memory
+    creds = await secrets.get_credential(record.credential_secret_arn)
 
-    if record.expires_at and record.expires_at < datetime.utcnow() + timedelta(minutes=10):
+    expires_at = creds.get("expires_at")
+    if expires_at and expires_at < datetime.utcnow() + timedelta(minutes=10):
         creds = await refresh_token(source, creds)
-        await integrations_repo.update_credentials(
-            workspace_id, source,
-            encrypted_credentials=kms.encrypt(creds),
-            expires_at=datetime.utcnow() + timedelta(seconds=creds["expires_in"]),
-            refreshed_at=datetime.utcnow(),
-        )
+        # Re-encrypt INTO Secrets Manager under the same ARN; DB row is untouched
+        await secrets.put_credential(workspace_id, source, creds, arn=record.credential_secret_arn)
 
     return creds
 
@@ -180,9 +179,9 @@ async def refresh_token(source: str, creds: dict) -> dict:
 
 | Concern | Owner | Reference |
 |---|---|---|
-| Connector OAuth flows | **Maya** | canon/BRAIN_TECHNICAL.md (OAuth + per-source auth) |
-| Token storage (Postgres + KMS) | **Maya** + **Vikram** | canon/BRAIN_TECHNICAL.md |
-| Per-task IAM (KMS decrypt) | **Jatin** | canon/BRAIN_TECHNICAL.md (secrets) |
+| Connector OAuth flows | **Maya** | canon/technical-requirements.md (OAuth + per-source auth) |
+| Token storage (Postgres + KMS) | **Maya** + **Vikram** | canon/technical-requirements.md |
+| Per-task IAM (KMS decrypt) | **Jatin** | canon/technical-requirements.md (secrets) |
 | Token failure alerting | **Maya** + **Jatin** | `observability` |
 | End-user auth (NOT this skill) | **Vikram** + **Shreya** | `auth-and-access` |
 

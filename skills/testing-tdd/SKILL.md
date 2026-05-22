@@ -46,14 +46,14 @@ describe('store.kpis', () => {
 ```
 
 - **Integration tests run against real Postgres + ClickHouse + Kafka via docker compose** — never mocked. Mocking the stores masks RLS + query-gateway + tenant-scoping bugs. Supertest hits a real Fastify server; pytest hits a real `brain_clickhouse` client; both assert the cross-workspace `403` and unscoped-query rejection.
-- **Python parity:** the analytics-service metric tests mirror the TS examples (e.g. `compute_amer` → `None` on zero acquisition spend, `2.0` on a 2:1 ratio). See canon/BRAIN_TECHNICAL.md for the full layer-by-layer test layout.
+- **Python parity:** the analytics-service metric tests mirror the TS examples (e.g. `compute_amer` → `None` on zero acquisition spend, `2.0` on a 2:1 ratio). See canon/technical-requirements.md for the full layer-by-layer test layout.
 
 ## E2E + load (Cypress / Detox / k6)
 
-These are pointers, not full configs — the canonical scaffolds live in the repo and canon/BRAIN_TECHNICAL.md:
+These are pointers, not full configs — the canonical scaffolds live in the repo and canon/technical-requirements.md:
 
 - **Web — Cypress** (`apps/frontend/cypress/e2e/`): critical journeys only — KPI load with RAG coloring, campaign drill-down drawer. Assert on `data-testid` + RAG class.
-- **Mobile — Detox** (`apps/mobile/e2e/`, canon/BRAIN_TECHNICAL.md): the Morning Brief journey — login → push deep link (`brain://morning-brief`) → three signal cards visible → swipe-approve writes a Decision Log row.
+- **Mobile — Detox** (`apps/mobile/e2e/`, canon/technical-requirements.md): the Morning Brief journey — login → push deep link (`brain://morning-brief`) → three signal cards visible → swipe-approve writes a Decision Log row.
 - **Load — k6** (`load-tests/`, Phase 3+ 5K RPS target): `constant-arrival-rate` at `rate: 5000`, thresholds `p(95)<500ms` and `http_req_failed rate<0.01` on `trpc.store.kpis`.
 
 ## Real-network smoke test — PASS gate (NON-NEGOTIABLE)
@@ -78,7 +78,7 @@ Tanvi's PASS gate: the smoke script ran in THIS session AND exited 0. Otherwise 
 
 ## Brain-specific verifications (mandatory on every relevant PR)
 
-- **Cost-routing paradigm audit** (canon/BRAIN_TECHNICAL.md): `tools/check-paradigm-audit.ts` parses `@paradigm(...)` decorators across `apps/` and FAILs any endpoint/agent action missing one, or routing Sonnet where ML/SQL suffices.
+- **Cost-routing paradigm audit** (canon/technical-requirements.md): `tools/check-paradigm-audit.ts` parses `@paradigm(...)` decorators across `apps/` and FAILs any endpoint/agent action missing one, or routing Sonnet where ML/SQL suffices.
 - **Metric registry parity (TS ↔ Python):** `tools/check-metrics-parity.py` diffs `packages/lib-metrics` exported names against `brain_metrics.registry.list_names()` — any drift FAILs.
 - **Multi-tenant isolation:** workspace A reading workspace B via tRPC returns `403`; the ClickHouse query gateway rejects any query without a `workspace_id` predicate (`rejects.toThrow(/workspace_id/)`).
 - **India compliance matrix** (any lifecycle touch): parametrized calling-hours boundaries (08:59 blocked, 09:00 ok, 21:00 blocked at IST `tz_offset=5.5`), 48h frequency cap, DLT-unregistered block. Detection: a lifecycle PR without `tests/compliance/` updates.
@@ -212,7 +212,7 @@ expect(isCallable(new Date('2026-05-13T21:00:01+05:30'))).toBe(false);
 
 ## References
 
-- `canon/BRAIN_TECHNICAL.md` — Definition of Done per layer + full test scaffolds
+- `canon/technical-requirements.md` — Definition of Done per layer + full test scaffolds
 - `skills/operational-readiness/SKILL.md` — pre-handoff checklist + real-network smoke
 - `skills/cost-routing-paradigms/SKILL.md` — paradigm audit verification
 - `skills/india-commerce-economics/SKILL.md` — compliance test matrix

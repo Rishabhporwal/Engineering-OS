@@ -120,8 +120,8 @@ brain-engineering-os/                        # THE PLUGIN
 │   └── deployment-report.md
 │
 ├── canon/                                   # SOURCE OF TRUTH — Brain canon (ships with plugin)
-│   ├── BRAIN_BUSINESS.md
-│   └── BRAIN_TECHNICAL.md
+│   ├── business-requirements.md
+│   └── technical-requirements.md
 │
 ├── ROADMAP.md
 └── README.md
@@ -182,8 +182,8 @@ Already created. Key fields:
     "shared-state-dir": ".engineering-os",
     "memory-model": "git-committed append-only journals",
     "canon-roots": [
-      "canon/BRAIN_BUSINESS.md",
-      "canon/BRAIN_TECHNICAL.md",
+      "canon/business-requirements.md",
+      "canon/technical-requirements.md",
       "skills"
     ],
     "team": { ... 10 personas ... }

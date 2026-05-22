@@ -8,7 +8,7 @@
 
 The Brain Engineering Operating System (Engineering OS) is an **AI engineering team delivered as a Claude Code plugin**. It takes a Founder's requirement and runs it through an 8-stage pipeline — CTO Advisor → Architect → Parallel Development → Security → QA → Final Review → Founder Approval → DevOps — producing production-grade code, audited and journaled, every time.
 
-It exists so that **Brain (Pipada Capital)** can ship the AI-native commerce OS for D2C brands **without hiring a large engineering team early**. The plugin is the team: 10 named agents (Rohan, Aryan, Vikram, Ananya, Karan, Maya, Shreya, Tanvi, Jatin, Priya) + a runtime persona generator, grounded in the Brain canon (`canon/BRAIN_BUSINESS.md`, `canon/BRAIN_TECHNICAL.md`) and a curated skill library.
+It exists so that **Brain (Pipada Capital)** can ship the AI-native commerce OS for D2C brands **without hiring a large engineering team early**. The plugin is the team: 10 named agents (Rohan, Aryan, Vikram, Ananya, Karan, Maya, Shreya, Tanvi, Jatin, Priya) + a runtime persona generator, grounded in the Brain canon (`canon/business-requirements.md`, `canon/technical-requirements.md`) and a curated skill library.
 
 Multiple teammates can use the plugin simultaneously. **All agent memory lives in `.engineering-os/` at the repo root and is committed to git.** When a teammate runs `git pull`, they receive the full state of every prior run.
 
@@ -19,7 +19,7 @@ Multiple teammates can use the plugin simultaneously. **All agent memory lives i
 1. **Memory is the moat.** The Decision Log and per-feature journals are append-only forever. Agents never forget.
 2. **No blind agreement.** Every agent must respectfully challenge a weak requirement using the [challenge framework](../prompts/challenge-framework.md).
 3. **Cost-routed paradigms.** SQL > ML > Haiku > Sonnet. Every feature passes the Q1–Q4 cost-routing audit. (See [skill: cost-routing-paradigms](../skills/cost-routing-paradigms/SKILL.md).)
-4. **Single-Primitive Rule.** Every cross-cutting concern is built once and consumed N times. (See [business-context.md §Single-Primitive Rule](business-context.md#the-single-primitive-rule-from-brain_businessmd-165).)
+4. **Single-Primitive Rule.** Every cross-cutting concern is built once and consumed N times — e.g. one audience/decision layer drives WhatsApp/email/SMS/calls/push/ad-audiences. (See [business-context.md §8 Lifecycle & WhatsApp](business-context.md) and [technical-context.md §3](technical-context.md).)
 5. **Multi-tenant `workspace_id` discipline.** Enforced at 4 layers (JWT → service-side → DB RLS → Kafka envelope).
 6. **India compliance is P0.** DND, NCPR, DLT, calling hours, GST — zero violations.
 7. **Goal-driven verification.** Every "done" claim runs a verification command and captures real output. (See [skill: verification-before-completion](../skills/verification-before-completion/SKILL.md).)

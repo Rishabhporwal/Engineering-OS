@@ -1,10 +1,8 @@
 # Brain Engineering Operating System
 
-An **AI engineering team** delivered as a Claude Code plugin. Orchestrates a 10-role agent pipeline that takes a requirement from intake to production for **Brain**.
+An **AI engineering team** delivered as a Claude Code plugin. Orchestrates an 11-agent pipeline that takes a requirement from intake to production for **Brain** — the AI-native commerce operating system for DTC brands (India-first; UAE/GCC sequenced).
 
-> **⚠️ Business context RESET — this is currently a technical engineering team with no business context.** `canon/BRAIN_BUSINESS.md` is blank (being re-fed); the team carries its engineering machinery (pipeline, orchestrator, skills, stack) but assumes **no** product/market/domain specifics until the business is re-fed.
-
-Every agent is grounded in the Brain canon — 55 domain skills + 28 command-skills + a business primer + a technical primer (all shipped inside the plugin). When you install the plugin in your Brain product repo, the agents come with you.
+Every agent is grounded in the **Brain canon** — the BRD (`canon/business-requirements.md`), the TRD (`canon/technical-requirements.md` + `canon/TECH/00–17`), and a curated skill library, all shipped inside the plugin. These Brain-docs *are* Brain's approved Phase-0 foundation. When you install the plugin in your Brain product repo, the agents come with you.
 
 ---
 
@@ -112,7 +110,7 @@ Names are continuous across runs and across teammates. Vikram is always Vikram, 
 1. Rohan (CTO Advisor, intake) + 0–2 dynamic personas (by complexity)
 2. Architect (Aryan)
 3. Parallel Development — Vikram (BE) ∥ Ananya (FE) ∥ Karan (Mobile) ∥ Maya (AI)
-4. Security (Shreya) — VETO on CRITICAL/HIGH + compliance (per business canon)
+4. Security (Shreya) — VETO on CRITICAL/HIGH + compliance (DPDP/PDPL/DLT/NCPR) + missing traceability
 5. QA (Tanvi) — VETO on missing verification
 6. CTO Advisor (final review)
 7. Founder Approval (you) — HUMAN GATE
@@ -129,7 +127,7 @@ Not every requirement runs all 8 stages. At Stage 1, Rohan assigns a **lane** by
 |------|------|------|-------|
 | **Express** | trivial + zero trigger-surface (copy, docs, config, dep bump) | 1 → 3 → 5 → 7 → 8 | Architect, Security, Final-review |
 | **Standard** | normal feature, no trigger-surface | full 8, lean | — |
-| **High-stakes** | touches auth / money / multi-tenancy / PII / connectors / schema / compliance (per business canon) | full 8 + mutation tests + 2 personas + mandatory Shreya VETO | — |
+| **High-stakes** | touches auth / money / multi-tenancy / PII / connectors / schema / compliance (DPDP/PDPL/DLT) / outbound channels / Decision Log / auto-execute | full 8 + mutation tests + 2 personas + mandatory Shreya VETO | — |
 
 Express skips the three Opus-heavy stages, cutting most of the time and token cost for the long tail of small work. The Founder gate and 48h monitor run in **every** lane. Full rules: [docs/feature-tiering.md](docs/feature-tiering.md).
 
@@ -172,10 +170,11 @@ For implementation details, see [docs/plugin-architecture.md](docs/plugin-archit
 1. **No blind agreement.** Every agent challenges weak requirements.
 2. **Memory is the moat.** Decision Log and per-feature journals are append-only forever.
 3. **Cost-routed paradigms.** SQL > ML > Haiku > Sonnet.
-4. **Single-Primitive Rule.** Every cross-cutting concern is built once, consumed N times.
-5. **Multi-tenant `workspace_id` discipline.** Enforced at 4 layers.
-6. **Compliance is P0 — per the business canon.** The specific regime is RESET (being re-fed); escalate compliance-sensitive work to the Founder.
-7. **Goal-driven verification.** Every "done" claim runs a real command and captures real output.
+4. **Single-Primitive Rule.** Every cross-cutting concern (Audience, Consent, Decision Log, Identity, Attribution, Integration Health, Notifications, Audit) is built once, consumed N times.
+5. **Multi-tenant `workspace_id` discipline.** Enforced at 4 layers (JWT → service assertion → Postgres RLS + ClickHouse gateway → Kafka envelope).
+6. **Compliance is P0.** DPDP / PDPL / TCCCPR-DLT / NCPR-DND / 9am–9pm calling hours / WhatsApp opt-in; India data in-region by default. Zero violations (Shreya VETO).
+7. **Truth + memory.** LLMs never invent numbers (deterministic metric registry); money is integer minor units; the Decision Log is the moat; one correlation ID end-to-end.
+8. **Goal-driven verification.** Every "done" claim runs a real command and captures real output.
 
 ---
 

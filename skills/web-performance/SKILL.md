@@ -16,7 +16,7 @@ Brain's web dashboard (Next.js 14 App Router, shadcn, Visx) is the workbench ope
 | CLS (Cumulative Layout Shift), p75 | <0.05 | 0.05–0.1 | >0.1 ever |
 | TTFB (BFF p95) | <200ms | 200–400ms | >400ms for 1h |
 | FCP | <1.5s | 1.5–2.0s | >2.0s |
-| Initial JS (any route) | <200 KB gz | 200–250 KB gz | >250 KB gz at deploy |
+| Initial JS (any route) | <100 KB gz | 100–150 KB gz | >150 KB gz at deploy |
 
 INP replaced FID as a Core Web Vital in March 2024. Brain measures **INP, not FID**.
 
@@ -81,7 +81,7 @@ Always set `width`/`height` to reserve layout (eliminates CLS); mark the LCP can
 pnpm dlx @next/bundle-analyzer   # after every PR touching app/ or components/
 ```
 
-Targets: initial JS for `/dashboard` < 200 KB gz; no single chunk > 500 KB gz; **Visx XOR Recharts** — pick one (Brain uses Visx per the locked stack). Watch list: `lodash` → named imports; `date-fns` → `date-fns/{fn}` direct paths; heavy SDKs → minimal entry (Sentry browser, not full).
+Targets: initial JS for `/dashboard` < 100 KB gz (canon route-JS budget); no single chunk > 500 KB gz; **Visx + Recharts coexist** — Recharts for ~90% of time-series/bar/line, Visx only for the specialty charts (CM waterfall, cohort heatmap) per the locked stack, and `dynamic`-import the Visx-heavy routes so the budget holds. Watch list: `lodash` → named imports; `date-fns` → `date-fns/{fn}` direct paths; heavy SDKs → minimal entry (Sentry browser, not full).
 
 ## Quick wins (always-on)
 
@@ -96,7 +96,7 @@ Targets: initial JS for `/dashboard` < 200 KB gz; no single chunk > 500 KB gz; *
 
 - Tune CloudFront cache headers per route; ISR for per-brand-cached static dashboard cells
 - Split the dashboard route into parallel routes with `loading.tsx` boundaries
-- Server-side waterfall pre-computation (Maya + Aryan — see canon/BRAIN_TECHNICAL.md)
+- Server-side waterfall pre-computation (Maya + Aryan — see canon/technical-requirements.md)
 
 ---
 
@@ -106,7 +106,7 @@ Run before merging any PR that touches `apps/web/app/`, `apps/web/components/`, 
 
 ### 1. Lighthouse CI (gate on PR)
 
-`treosh/lighthouse-ci-action` runs on PR to `apps/web/**` against the staging dashboard/orders/cohorts URLs with a `lighthouse-budget.json` (FCP 1500ms, LCP 2000ms, speed-index 2500ms, interactive 3000ms; script 200KB, total 600KB). **PR fails if the budget is exceeded** — fix the regression or bump the budget with reviewer approval.
+`treosh/lighthouse-ci-action` runs on PR to `apps/web/**` against the staging dashboard/orders/cohorts URLs with a `lighthouse-budget.json` (FCP 1500ms, LCP 2000ms, speed-index 2500ms, interactive 3000ms; script 100KB per the canon route-JS budget, total 600KB). **PR fails if the budget is exceeded** — fix the regression or bump the budget with reviewer approval.
 
 ### 2. Real-user metrics (RUM) via `web-vitals` + PostHog
 
@@ -135,7 +135,7 @@ Look for: the **LCP element** (image → `priority`? chart waiting on a slow tRP
 
 - [ ] Baseline measured (Lighthouse CI + PostHog RUM)
 - [ ] LCP element identified (image / chart / hero text)
-- [ ] Bundle analyzer run; no chunk > 500 KB gz; total initial < 200 KB gz
+- [ ] Bundle analyzer run; no chunk > 500 KB gz; total initial route JS < 100 KB gz (canon budget)
 - [ ] No `<img>`/`<Image>` without explicit width/height
 - [ ] CLS sources reviewed (fonts, charts)
 - [ ] Tested on slow 3G throttling (India-realistic) AND a real mid-tier Android device, not just iPhone
@@ -145,11 +145,11 @@ Look for: the **LCP element** (image → `priority`? chart waiting on a slow tRP
 
 | Concern | Owner | Reference |
 |---|---|---|
-| Dashboard performance + Visx rendering | **Ananya** | canon/BRAIN_TECHNICAL.md (Next.js BFF, design system, charts) |
+| Dashboard performance + Visx rendering | **Ananya** | canon/technical-requirements.md (Next.js BFF, design system, charts) |
 | PR-time Lighthouse gate | **Ananya** + **Jatin** | CI config |
 | RUM dashboards + alerts | **Ananya** + **Jatin** | `observability` |
-| BFF route handler latency (TTFB) | **Ananya** + **Vikram** | canon/BRAIN_TECHNICAL.md |
-| CloudFront cache config | **Jatin** | canon/BRAIN_TECHNICAL.md |
+| BFF route handler latency (TTFB) | **Ananya** + **Vikram** | canon/technical-requirements.md |
+| CloudFront cache config | **Jatin** | canon/technical-requirements.md |
 | ClickHouse query speed (often the LCP bottleneck) | **Maya** | `sql-query-optimization` |
 
 Related Brain skills: `observability` (alerts + RUM), `frontend-web` (broader Ananya playbook), `sql-query-optimization` (slow tRPC/Postgres/ClickHouse backend = slow LCP).

@@ -11,13 +11,13 @@ description: Brain's architecture patterns — Microservices + Monorepo + Event-
 - **DDD service internals** — every service organized by bounded context, never by technical layer (see `domain-driven-design`)
 - **Event-driven (Kafka primary)** — MSK + Glue Schema Registry; `integrations.*.v1` with infinite retention
 - **BFF at the edge** — api-gateway aggregates downstream via gRPC; serves tRPC to web + mobile
-- **MCP server inside api-gateway** — same auth + multi-tenancy as tRPC (see canon/BRAIN_TECHNICAL.md)
+- **MCP server inside api-gateway** — same auth + multi-tenancy as tRPC (see canon/technical-requirements.md)
 - **Contract-first** — `proto/` is the single source of truth for all internal contracts + MCP tool schemas
 - **OLTP / OLAP split** — Supabase Postgres + ClickHouse Cloud; analytics isolated in data-platform/
 - **CDC** — Debezium on MSK Connect for Postgres → Kafka where downstream wants recent OLTP mirror
 - **IaC** — AWS CDK + ArgoCD (NOT Terraform, NOT Helm); observability on CloudWatch/X-Ray/OpenSearch (NOT Prometheus/Grafana)
 
-**Pattern is locked.** Don't re-evaluate; see canon/BRAIN_TECHNICAL.md and raise an explicit architecture decision if you're proposing a change.
+**Pattern is locked.** Don't re-evaluate; see canon/technical-requirements.md and raise an explicit architecture decision if you're proposing a change.
 
 ## The 15 strict rules (architecture invariants)
 
@@ -40,7 +40,7 @@ description: Brain's architecture patterns — Microservices + Monorepo + Event-
 14. Enforce multi-tenancy — `workspace_id` at 4 layers (Postgres RLS, CH query gateway, Kafka envelope, MCP tenant check)
 15. Pass the cost-routing paradigm gate on every new path (`cost-routing-paradigms`)
 
-## The Single-Primitive Rule (NON-NEGOTIABLE — see canon/BRAIN_TECHNICAL.md)
+## The Single-Primitive Rule (NON-NEGOTIABLE — see canon/technical-requirements.md)
 
 > Every cross-cutting concern is built **once** and consumed by every channel, every agent, every workflow.
 
@@ -120,7 +120,7 @@ Each service:
 - Has its own deploy pipeline (GitHub Actions → ECR → ArgoCD via AWS CDK)
 - Has its own ECR image + EKS deployment + Kafka consumer group(s)
 - **Owns its own datastore — no shared DBs** (table below)
-- Has its own designated engineer-owner (see canon/BRAIN_TECHNICAL.md ownership matrix)
+- Has its own designated engineer-owner (see canon/technical-requirements.md ownership matrix)
 
 ## Per-service DB ownership (NON-NEGOTIABLE — no shared DBs)
 
@@ -226,7 +226,7 @@ Brain agents (intelligence-service)  →  api-gateway MCP server  →  gRPC to b
 
 See `skills/mcp-protocol/SKILL.md`.
 
-## Quarterly streamlining audit (see canon/BRAIN_TECHNICAL.md)
+## Quarterly streamlining audit (see canon/technical-requirements.md)
 
 Every quarter:
 - Review codebase for anti-pattern drift
@@ -254,7 +254,7 @@ When Aryan designs, he invokes peers as personas:
 
 ## Common failure modes
 
-- **Re-evaluating a locked pattern** — Aryan opens a "should we use microservices?" debate. The stack is locked (see canon/BRAIN_TECHNICAL.md); don't re-litigate without an explicit architecture decision.
+- **Re-evaluating a locked pattern** — Aryan opens a "should we use microservices?" debate. The stack is locked (see canon/technical-requirements.md); don't re-litigate without an explicit architecture decision.
 - **Per-channel forks (Single-Primitive violation)** — block at code review.
 - **Sync-via-Kafka antipattern** — using Kafka for request/response. Use gRPC for synchronous, Kafka for state changes.
 - **Cross-service DB reads** — service A queries service B's database directly. Always go through gRPC or published events.
@@ -263,7 +263,7 @@ When Aryan designs, he invokes peers as personas:
 
 ## References
 
-- `canon/BRAIN_TECHNICAL.md` — service map + scale design, Single-Primitive Rule, quarterly streamlining audit, MCP topology
+- `canon/technical-requirements.md` — service map + scale design, Single-Primitive Rule, quarterly streamlining audit, MCP topology
 - `skills/domain-driven-design/SKILL.md` — mandatory service-internal structure (bounded contexts, CQRS, tactical patterns)
 - `skills/grpc-buf/SKILL.md` — gRPC + proto patterns (proto/ is contract-first source of truth)
 - `skills/event-driven-kafka/SKILL.md` — Kafka topology

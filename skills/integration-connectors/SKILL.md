@@ -7,7 +7,7 @@ description: Brain's connector patterns for Shopify, Meta Ads, Google Ads, Shipr
 
 The Maya-owned layer. Source → canonical events → Kafka → downstream.
 
-**Canonical doc:** `canon/BRAIN_TECHNICAL.md`. This skill is operational.
+**Canonical doc:** `canon/TECH/02_integrations.md` (+ `canon/technical-requirements.md` §11). This skill is operational.
 
 ## Universal connector flow
 
@@ -19,16 +19,20 @@ Acquire OAuth token from core-service (KMS-decrypted; refresh if expired)
 Read source (webhook payload OR API pull with cursor)
    ▼
 Idempotency check: Redis SETNX with 24h TTL
-   key: f"sahil:{source}:{workspace_id}:{event_id}"
+   key: f"idempotency:{source}:{workspace_id}:{event_id}"
    ▼ [first time]
 Canonical transform: source row → canonical event (per protos/events/<topic>.avsc)
    ▼
-Publish to Kafka integrations.<entity>.v1 (Avro via Glue Schema Registry)
+Fan out to all sinks (idempotent UPSERT everywhere):
+   • S3 raw archive (brain-raw-archive)
+   • ClickHouse raw_<source>_<entity>_local
+   • Kafka integrations.<entity>.v1 (Avro via Glue Schema Registry)
+   • Postgres 90-day hot mirror (Phase 0–1; fast joins + webhook reconciliation)
    ▼
-UPSERT to ClickHouse raw_<source>_<entity>_local + S3 brain-raw-archive
-   ▼
-Persist cursor to Postgres connector_cursor table
+Persist cursor/watermark to Postgres integrations.watermarks table
 ```
+
+**Same `Connector` interface for every source** (`authenticate / refresh_token / sync(window) / receive_webhook / canonicalize / health_check`); **backfill == live — only the window changes** (bounded vs unbounded). The three-to-four sinks above are written idempotently so a replay never doubles a row.
 
 ## OAuth per source
 
@@ -39,8 +43,8 @@ Persist cursor to Postgres connector_cursor table
 | Google Ads | OAuth + Developer Token (gating; apply Week 0) | `https://www.googleapis.com/auth/adwords` |
 | Shiprocket | Token-based (email + password → JWT; refresh in-band) | n/a |
 | Klaviyo | OAuth or API key | `events:read, profiles:read, campaigns:read` |
-| TikTok Ads | OAuth | `report.read, audience.read, ad.read` |
-| Snapchat Ads | OAuth | `ads.basic, audience.read` |
+| TikTok Ads | OAuth | `report.read, audience.read, ad.read` — **region-gated: UAE/GCC only (TikTok is banned in India; never enable for `region=in`)** |
+| Snapchat Ads | OAuth | `ads.basic, audience.read` — GCC-first (AICMO-Snap, Phase 4) |
 
 **Tokens written to `core-service.integrations_oauth_tokens` (Postgres), envelope-encrypted with AWS KMS.** The ingestion-service never persists plaintext tokens; it asks core-service per poll, refreshes if expired, discards from memory.
 
@@ -79,7 +83,7 @@ async def publish_canonical_event(topic: str, workspace_id: str, event_id: str, 
 
 Compression: zstd. Retention: infinite (MSK tiered storage to S3).
 
-## Backfill discipline (canon/BRAIN_TECHNICAL.md)
+## Backfill discipline (canon/technical-requirements.md)
 
 - 2-year window in **< 2 hours**
 - Chunk size tuned per source:
@@ -118,13 +122,25 @@ Per-source overrides:
 - Google: gracefully handles `RESOURCE_EXHAUSTED`
 - Shiprocket: simple exponential backoff
 
-## Late-data handling (canon/BRAIN_TECHNICAL.md)
+## Late-data handling (canon/TECH/02_integrations.md)
 
-Refunds and RTO updates arrive late. Patterns:
+Refunds, RTO updates, and ad-attribution restatements arrive late. Each connector defines its own re-pull window:
 
-- Late-data window: 7 days standard; 30 days for refunds
-- Reconciliation MV runs at window close
-- `ingested_at` as version in `ReplicatedReplacingMergeTree` — latest wins
+- **Per-connector late-data windows:** Shopify 60d · **Meta 28d** (insights aren't final for 28 days — each incremental sync re-pulls the trailing 28d for active campaigns) · Google 7d · Razorpay 30d
+- Watermarks live in `integrations.watermarks` (Postgres); reconciliation MV runs at window close
+- `ingested_at` as version in `ReplicatedReplacingMergeTree` — latest wins (idempotent UPSERT)
+
+## Connector quality levels + freshness SLO (canon/TECH/02_integrations.md §quality)
+
+Every connector carries a quality grade that the UI surfaces:
+
+| Level | Meaning | Examples |
+|---|---|---|
+| **Green** | Clean, stable API | Shopify, Meta, Google, Razorpay, Amazon SP-API, Salla, Zid |
+| **Yellow** | Gated API — per-brand onboarding as access is granted | Myntra, Ajio, Meesho, Namshi, Talabat |
+| **Red** | No seller API → Gmail OAuth + PDF/CSV + LLM extraction; brittle by design; **notify brand within 1 hour of breakage** + explicit UI label | Nykaa, Blinkit, Zepto, Instamart, Ounass |
+
+**P0 connectors alert when freshness > 60 min.** `health_check` is "healthy" only when data is *fresh* — auth succeeding while data is stale is the canonical anti-pattern (a connector is NOT healthy just because the token is valid). Agents degrade gracefully and label stale data downstream.
 
 ## Canonical schema rules
 
@@ -189,8 +205,8 @@ Gzipped JSON. Lifecycle policy: Intelligent-Tiering after 30 days; Glacier after
 
 ## References
 
-- `canon/BRAIN_TECHNICAL.md` — canonical
-- `canon/BRAIN_TECHNICAL.md` §raw-event-store — raw table patterns
+- `canon/TECH/02_integrations.md` — canonical (Connector interface, sinks, quality levels, late-data windows, marketplace roster)
+- `canon/technical-requirements.md` §11 — integrations summary + raw event store
 - `skills/event-driven-kafka/SKILL.md` — MSK + Glue + Avro
 - `skills/clickhouse-olap/SKILL.md` — raw_* table patterns
 - `skills/python-services/SKILL.md` — asyncio + httpx + aiokafka

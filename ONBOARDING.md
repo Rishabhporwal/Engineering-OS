@@ -1,11 +1,11 @@
 # Brain Engineering OS — Onboarding
 
-> The complete picture of the AI engineering team. If you're new, read this top to bottom once. Current version: **v0.17.0**. (⚠️ **This is now a TECHNICAL engineering team with NO business context (RESET, v0.15.0–v0.17.0).** `canon/BRAIN_BUSINESS.md` + `docs/business-context.md` are blank; the system-prompt, anti-blind-agreement, the technical canon + primer (bannered), the domain skills, README/ONBOARDING, and the agents were all neutralized to assume no product/market/domain. The engineering machinery (pipeline, orchestrator, stack, generic skills) is fully intact. Re-feed the new business via the business canon. New since 0.7.1: risk-based lanes, semantic memory, parallel review, background workers, paradigm gate, browser/visual QA, the `/careful` guard, the pipeline doctor, 6 new domain skills, cross-engineer `/team-digest`, the **top-level orchestrator** (one `/requirement` runs the team end-to-end), **live activity logs** (`/watch`), **live monitoring mode** (`/monitor`), an **interactive PM-grade dashboard** (`/dashboard` — agent performance, bugs, features, tokens & cost), and **token-usage logging**. **Product engineers: jump to §12 — "Get the most from the team."**)
+> The complete picture of the AI engineering team. If you're new, read this top to bottom once. Current version: **v0.17.0**. The team builds **Brain** — the AI-native commerce operating system for DTC brands, **India-first** at launch with **UAE/GCC** sequenced for Phase 4. The full canon is `canon/business-requirements.md` (BRD) + `canon/technical-requirements.md` + `canon/TECH/00–17` (TRD/knowledge-base), condensed for agents in `docs/business-context.md` + `docs/technical-context.md`. New since 0.7.1: risk-based lanes, semantic memory, parallel review, background workers, paradigm gate, browser/visual QA, the `/careful` guard, the pipeline doctor, 6 new domain skills, cross-engineer `/team-digest`, the **top-level orchestrator** (one `/requirement` runs the team end-to-end), **live activity logs** (`/watch`), **live monitoring mode** (`/monitor`), an **interactive PM-grade dashboard** (`/dashboard` — agent performance, bugs, features, tokens & cost), and **token-usage logging**. **Product engineers: jump to §12 — "Get the most from the team."**
 
 ---
 
 ## 1. What it is
-An **AI engineering team delivered as a Claude Code plugin**. You give it a requirement; it runs that requirement through an 8-stage pipeline — intake → architecture → parallel build → security → QA → final review → Founder approval → deploy — producing production-grade, audited, journaled work every time. It exists so **Brain** can ship software without hiring a large engineering team early. *(Business context is RESET — the team is currently business-agnostic; the product/domain is re-fed via `canon/BRAIN_BUSINESS.md`.)*
+An **AI engineering team delivered as a Claude Code plugin**. You give it a requirement; it runs that requirement through an 8-stage pipeline — intake → architecture → parallel build → security → QA → final review → Founder approval → deploy — producing production-grade, audited, journaled work every time. It exists so **Brain** — the AI-native commerce OS for DTC brands (India-first, UAE/GCC sequenced) — can ship software without hiring a large engineering team early. The product/domain is the source of truth in `canon/business-requirements.md` (condensed in `docs/business-context.md`).
 
 ## 2. Distribution & memory model
 - **Installed, not cloned.** The plugin lives in `~/.claude/plugins/brain-engineering-os/`. You install it; you don't clone its source into your project. Everything it ships (agents, skills, canon, docs, prompts, templates, schemas, workflows, hooks) resolves via `${CLAUDE_PLUGIN_ROOT}`.
@@ -21,9 +21,9 @@ An **AI engineering team delivered as a Claude Code plugin**. You give it a requ
 | **Aryan** | Architect | opus | 2 | API/schema/paradigm/service-boundary decisions |
 | **Vikram** | Backend Developer (Node/Fastify) | sonnet | 3 | implementation within plan |
 | **Ananya** | Frontend Web (Next.js) | sonnet | 3 | component/state/UI within plan |
-| **Karan** | Mobile (React Native + Expo) | sonnet | 3 | the primary mobile surface (RESET) surface |
-| **Maya** | Intelligence Engineer (Python/AI) | sonnet | 3 | the 15 AI agents, RAG, cost-routing |
-| **Shreya** | Security Reviewer | opus | 4 | **VETO** on CRITICAL/HIGH + compliance (per business canon) |
+| **Karan** | Mobile (React Native + Expo) | sonnet | 3 | the Morning Brief — the primary product surface |
+| **Maya** | Intelligence Engineer (Python/AI) | sonnet | 3 | the 15 AICMO/AICOO/AICFO agents, RAG, cost-routing |
+| **Shreya** | Security Reviewer | opus | 4 | **VETO** on CRITICAL/HIGH + compliance (DPDP/PDPL/DLT/NCPR) |
 | **Tanvi** | QA Agent | sonnet | 5 | **VETO** on missing verification |
 | **Jatin** | Platform/DevOps | sonnet | 8 | deploy, infra, rollback |
 | **Priya** | Product Manager | sonnet | cross-cuts (not a stage) | release notes, tracker sync |
@@ -43,7 +43,7 @@ Founder /requirement
 ```
 Each stage **plans → executes → self-reviews → verifies → returns a `HANDOFF` block**; the **top-level `/requirement` orchestrator** reads it + `state/active.json` and spawns the next stage (subagents can't spawn subagents on this platform — orchestration lives at the top level; see [docs/orchestration.md](docs/orchestration.md)). The Founder intervenes only at Stage 7 and at the final push.
 
-## 5. The skill library — 83 folders (55 domain + 28 command)
+## 5. The skill library — 85 folders (57 domain + 28 command)
 **Domain skills** are model-auto-loaded per each agent's owned-skill list (see [docs/skill-mapping-matrix.md](docs/skill-mapping-matrix.md)). **Command-skills** carry `disable-model-invocation: true` and run only when a human types `/brain-engineering-os:<name>`.
 
 - **Architecture/discipline:** architecture-patterns, domain-driven-design, region-adapter, api-versioning-strategy, tech-stack-evaluation, engineering-discipline, code-review, writing-plans, verification-before-completion, systematic-debugging, subagent-orchestration, finishing-a-development-branch, cost-routing-paradigms
@@ -59,14 +59,14 @@ Each stage **plans → executes → self-reviews → verifies → returns a `HAN
 2. **No over-engineering** — build the minimum that solves the requirement; 10 STOP signals; Rohan runs an over-engineering audit at Stage 6.
 3. **Persona calibration** — 0/1/2 personas by complexity, capped at 2 (never 3+).
 4. **Plan-first + self-review + explicit handoff** — every agent plans before acting, self-reviews against its DoD, and invokes the next agent via `Agent()`.
-5. **Cost-routed paradigms** — SQL > ML > Haiku > Sonnet; every code path declares `@paradigm` (keeps LLM cost down; the pricing motivation is per the business canon — RESET).
+5. **Cost-routed paradigms** — SQL > ML > Haiku > Sonnet; every code path declares `@paradigm` (keeps LLM cost down — the engineering invariant behind Brain's realized-GMV %-pricing).
 6. **Single-Primitive Rule** — every cross-cutting concern built once, consumed N times.
-7. **Multi-tenant `workspace_id`** enforced at 4 layers; **compliance is P0 — per the business canon** (specific regime RESET — being re-fed).
+7. **Multi-tenant `workspace_id`** enforced at 4 layers; **compliance is P0** — DPDP Act 2023 + Rules 2025, TCCCPR/DLT + NCPR/DND + 9am–9pm calling window, WhatsApp opt-in, UAE/KSA PDPL.
 8. **Verification before completion** — no "done" claim without fresh captured command output.
 9. **UTC timestamp discipline**; **append-only journals**.
 
 ## 7. Canon, primers, gates & hooks
-- **Canon (source of truth):** `canon/BRAIN_BUSINESS.md`, `canon/BRAIN_TECHNICAL.md`.
+- **Canon (source of truth):** `canon/business-requirements.md`, `canon/technical-requirements.md`.
 - **Primers (what agents read — condensed):** `docs/business-context.md`, `docs/technical-context.md`.
 - **Quality gates (G0–G9):** [docs/quality-gates.md](docs/quality-gates.md) — pre-flight dependency check, Stage-4 fast-pass rules, QA re-runs skipped gates, Rohan re-runs QA's gates at Stage 6.
 - **Hooks:** `on-session-start` (rehydrate state), `on-post-tool-use` (journal append, skips read-only Bash), `on-pre-handoff` (handoff-event logger — observability only; enforcement lives in the agents).
@@ -76,13 +76,13 @@ Each stage **plans → executes → self-reviews → verifies → returns a `HAN
 - **Rule governance:** any agent can `/propose-rule`; the Founder `/adopt-rule` or `/reject-rule` (Founder-only). Adopted rules become durable rules.
 - `pending-founder-attention.md` surfaces items needing the Founder.
 
-## 9. What the team builds — Brain (technical shape; business RESET)
-> The product's **business/domain is RESET** (being re-fed). The **technical shape below stands** (it's engineering); the prior commerce-OS framing and "the moat" are re-derived from the new business canon when it lands.
+## 9. What the team builds — Brain (the AI-native commerce OS)
+> Brain helps DTC brands grow realized revenue, recover lost revenue, protect contribution margin, and compound decision quality across marketing, lifecycle, support, logistics, inventory, and finance. India-first at launch; UAE/GCC are first-class adapters activated in Phase 4. The **moat** is the **Decision Log** (no Brain action exists unless it's logged) + the **Brand Fingerprint** memory layer.
 
 A **7-service, DDD, event-driven** architecture:
-- **Services:** api-gateway, core-service, ingestion-service, analytics-service, intelligence-service, notifications-service, lifecycle-service (+ frontend-web, mobile). Each is DDD-structured by bounded context, owns its own DB, communicates via gRPC (sync) / Kafka (async). Realtime, background jobs, cron, and workflows live *inside* these services — not as separate services. *(Service responsibilities were business-derived — revisit on re-feed.)*
-- **Locked stack:** Fastify + FastAPI, AWS CDK + ArgoCD + EKS, MSK/Kafka, ClickHouse, Supabase Postgres + pgvector, CloudWatch/OpenSearch/X-Ray/Sentry/PostHog (+ OpenTelemetry instrumentation), Turborepo, Next.js + React Native/Expo, Redux, Anthropic Claude.
-- **Engineering invariants:** cost-routing paradigms, the Single-Primitive Rule, multi-tenant `workspace_id`, verification-before-completion. *(Domain "moat" knowledge is RESET — re-fed via the business canon.)*
+- **Services:** api-gateway, core-service, ingestion-service, analytics-service, intelligence-service, notifications-service, lifecycle-service (+ frontend-web, mobile). Each is DDD-structured by bounded context, owns its own DB, communicates via gRPC (sync) / Kafka (async). Realtime, background jobs, cron, and workflows live *inside* these services — not as separate services.
+- **Locked stack:** Fastify + FastAPI, AWS CDK + ArgoCD + EKS, MSK/Kafka, ClickHouse, Supabase Postgres + pgvector, CloudWatch/OpenSearch/X-Ray/Sentry/PostHog (+ OpenTelemetry instrumentation), Turborepo, Next.js + React Native/Expo, Redux, Anthropic Claude (Sonnet 4.6 synthesis + Haiku 4.5 bounded NL); region `ap-south-1`.
+- **Day-one invariants:** cost-routing paradigms, the Single-Primitive Rule, multi-tenant `workspace_id` (4 layers), integer minor-units money, the Decision Log, the region-adapter, the metric registry (TS↔Python parity), proto-defined gRPC contracts, OLTP/OLAP split, idempotency, and the Morning Brief as the primary surface.
 
 ## 10. Using it
 ```
@@ -102,9 +102,9 @@ A **7-service, DDD, event-driven** architecture:
 ## 11. Repo layout (the plugin)
 ```
 agents/      11 subagent definitions
-skills/      83 skill folders (55 domain + 28 command)  +  tools/  (uv scripts: memory, browse, pipeline_doctor, team_digest, paradigm_check, dashboard)
+skills/      85 skill folders (57 domain + 28 command)  +  tools/  (uv scripts: memory, browse, pipeline_doctor, team_digest, paradigm_check, dashboard)
 prompts/     system-prompt, anti-blind-agreement, challenge-framework
-canon/       BRAIN_BUSINESS.md, BRAIN_TECHNICAL.md (source of truth)
+canon/       business-requirements.md, technical-requirements.md (source of truth)
 docs/        operating manual, primers, matrix, quality-gates, role-empowerment, …
 templates/   per-stage artifact templates    schemas/  JSON schemas
 workflows/   requirement-to-release / state-machine / approval-flow (YAML)
@@ -128,9 +128,9 @@ You don't write the features — you direct the team and let it run. Here's how 
 
 ### Powers worth knowing
 - **Memory is shared and semantic.** Every decision/journal/challenge from every engineer is git-synced and searchable by *meaning* via `/recall-similar` (it self-refreshes — always current after a pull). Agents use it automatically in their pre-flight, so they reuse the team's prior work without you asking.
-- **Real-browser + visual QA.** Web changes get `/qa-browser` (walks real flows, catches console/network errors, generates a Cypress regression test) and `/design-review` (0–10 scored visual audit) — the primary mobile surface (RESET) + KPI surfaces have the highest bar.
+- **Real-browser + visual QA.** Web changes get `/qa-browser` (walks real flows, catches console/network errors, generates a Cypress regression test) and `/design-review` (0–10 scored visual audit) — the Morning Brief + KPI surfaces have the highest bar.
 - **Proactive workers.** Schedule `/worker-test-gap`, `/worker-canon-drift`, `/worker-compliance-drift` to scan the repo between requirements and file findings.
-- **Safety rails.** The `/careful` guard blocks catastrophic commands (rm -rf ~, force-push, DROP/TRUNCATE) with an easy override; the paradigm gate keeps cost discipline; `workspace_id` + compliance (per business canon) are enforced at every layer.
+- **Safety rails.** The `/careful` guard blocks catastrophic commands (rm -rf ~, force-push, DROP/TRUNCATE) with an easy override; the paradigm gate keeps cost discipline; `workspace_id` + compliance (DPDP/PDPL/DLT/NCPR) are enforced at every layer.
 - **Recover & validate.** `/resume <req-id>` picks up an interrupted pipeline with no lost work; `/test-pipeline` validates the orchestration is healthy; `/new-skill` scaffolds a new skill when a real gap surfaces.
 
 ### Multi-engineer guarantee

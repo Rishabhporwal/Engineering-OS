@@ -9,7 +9,7 @@ Brain has three contract surfaces, each with a slightly different versioning mod
 
 1. **tRPC** (web/mobile BFF) — typed end-to-end; drift surfaces as TS build errors
 2. **gRPC** between services (`.proto` via `buf`) — `buf breaking` enforces compatibility
-3. **MCP tools** (see canon/BRAIN_TECHNICAL.md) — external partners + agent inter-comms; tool name carries version
+3. **MCP tools** (see canon/technical-requirements.md) — external partners + agent inter-comms; tool name carries version
 
 Plus the special case: **Brain v1 (legacy single-tenant at brain.pipadacapital.com) ↔ Brain v2 (multi-tenant)** during Sugandh Lok's migration in W14–16.
 
@@ -120,7 +120,7 @@ External partner keys (Anthropic Claude native consumers, Enterprise tier) see t
 
 ## Brain v1 ↔ v2 reconciliation (the special case)
 
-Sugandh Lok is on **v1** (legacy single-tenant at brain.pipadacapital.com) through end of Phase 1. Migration is **W14–16** (shadow → cutover). Tanvi runs **parity tests** during the shadow window — every dashboard metric must be within 1% on v1 and v2 (canon/BRAIN_TECHNICAL.md). The window is:
+Sugandh Lok is on **v1** (legacy single-tenant at brain.pipadacapital.com) through end of Phase 1. Migration is **W14–16** (shadow → cutover). Tanvi runs **parity tests** during the shadow window — every dashboard metric must be within 1% on v1 and v2 (canon/technical-requirements.md). The window is:
 
 - **W14:** v2 runs in shadow — Sugandh's data flows into v1 AND v2; v1 is canonical
 - **W15:** Tanvi runs reconciliation tests daily; Founder spot-checks dashboards
@@ -179,10 +179,10 @@ Content-Type: application/json
 
 | Concern | Owner | Reference |
 |---|---|---|
-| tRPC versioning + deprecation headers | **Vikram** | canon/BRAIN_TECHNICAL.md (versioning) |
+| tRPC versioning + deprecation headers | **Vikram** | canon/technical-requirements.md (versioning) |
 | gRPC `buf breaking` + package versions | **Aryan** + Vikram | `grpc-buf`, `api-contract-testing` |
-| MCP tool versioning | **Vikram** + **Maya** | canon/BRAIN_TECHNICAL.md (tool registry) |
-| v1↔v2 reconciliation window | **Tanvi** + **Maya** | canon/BRAIN_TECHNICAL.md (reconciliation) |
+| MCP tool versioning | **Vikram** + **Maya** | canon/technical-requirements.md (tool registry) |
+| v1↔v2 reconciliation window | **Tanvi** + **Maya** | canon/technical-requirements.md (reconciliation) |
 | Migration guide authorship | feature owner + **Priya** | `docs/migrations/` |
 | Sunset audit log | **Vikram** | Decision Log |
 

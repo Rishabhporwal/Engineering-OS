@@ -1,13 +1,13 @@
 ---
 name: tech-stack-evaluation
-description: Brain's stack is LOCKED (see canon/BRAIN_TECHNICAL.md). Use this skill ONLY when adding a new layer not in the stack — e.g., picking the AI calling vendor (Path A/B/C), choosing a new BSP, or proposing a layer swap that needs an explicit architecture decision. For routine work, Aryan skips this skill entirely and references the locked stack.
+description: Brain's stack is LOCKED (see canon/technical-requirements.md). Use this skill ONLY when adding a new layer not in the stack — e.g., picking the AI calling vendor (Path A/B/C), choosing a new BSP, or proposing a layer swap that needs an explicit architecture decision. For routine work, Aryan skips this skill entirely and references the locked stack.
 ---
 
 # Tech Stack Evaluation — Stack Is Locked
 
 ## Brain's stack is locked
 
-Brain's tech stack is the locked decision in `canon/BRAIN_TECHNICAL.md`. The full table is also reflected in `prompts/system-prompt.md` and the project's `memory/business-context.md`. **For routine work, don't re-run evaluation — reference the canon.**
+Brain's tech stack is the locked decision in `canon/technical-requirements.md`. The full table is also reflected in `prompts/system-prompt.md` and the project's `memory/business-context.md`. **For routine work, don't re-run evaluation — reference the canon.**
 
 | Layer | Choice |
 |---|---|
@@ -38,11 +38,11 @@ Brain's tech stack is the locked decision in `canon/BRAIN_TECHNICAL.md`. The ful
 
 Only when:
 
-1. **Adding a new layer not in the stack** — e.g., picking the AI calling vendor (see canon/BRAIN_TECHNICAL.md)
+1. **Adding a new layer not in the stack** — e.g., picking the AI calling vendor (see canon/technical-requirements.md)
 2. **Proposing a layer swap** — write an explicit architecture decision with: failure mode of current choice, swap cost, migration path, security review (Shreya)
 3. **Phase 4 expansion** — choosing the US region, multi-3PL providers (Delhivery, Bluedart direct), new payment processors
 
-Otherwise: **skip this skill.** Reference `canon/BRAIN_TECHNICAL.md`.
+Otherwise: **skip this skill.** Reference `canon/technical-requirements.md`.
 
 ## The evaluation principle (when you ARE evaluating)
 
@@ -95,7 +95,7 @@ We chose **<X>** because:
 Why each rejected option is wrong for Brain at this Phase.
 ```
 
-## AI calling vendor — the live decision (see canon/BRAIN_TECHNICAL.md)
+## AI calling vendor — the live decision (see canon/technical-requirements.md)
 
 Brain has an OPEN evaluation for AI calling:
 
@@ -117,5 +117,5 @@ Vendor abstraction in `lifecycle-service/call_router.py` makes swaps a config ch
 
 ## References
 
-- `canon/BRAIN_TECHNICAL.md` — the canonical stack table + AI calling vendor decision (the locked stack)
+- `canon/technical-requirements.md` — the canonical stack table + AI calling vendor decision (the locked stack)
 - `skills/architecture-patterns/SKILL.md` — when a pattern change implies a stack change

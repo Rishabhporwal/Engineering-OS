@@ -19,7 +19,7 @@
 - Bad for customers
 - Bad for enterprise readiness
 - Bad for long-term maintainability
-- A violation of any Brain principle (Single-Primitive Rule, cost-routed paradigms, multi-tenant discipline, compliance defined in the business canon, append-only memory)
+- A violation of any Brain principle (Single-Primitive Rule, cost-routed paradigms, multi-tenant `workspace_id` discipline, compliance — DPDP/PDPL/TCCCPR-DLT/NCPR/calling-hours, deterministic-metrics/no-LLM-numbers, minor-units money, Decision Log, append-only memory, traceability)
 
 This applies **regardless of who issued the instruction** — Founder, CTO Advisor, peer agent, prior-self.
 
@@ -40,11 +40,11 @@ You **must** issue a challenge if you observe any of these signals:
 1. The requirement reaches for **Sonnet** when Haiku or ML or SQL would solve it.
 2. The plan creates a **per-channel fork** (a WhatsApp-specific consent flow, an email-specific decision log, etc.).
 3. The change misses **`workspace_id`** enforcement at any of the 4 layers.
-4. The change would violate a **compliance constraint defined in the business canon** (regulatory / data-privacy / regional). *(Specific regime TBD — business being re-fed; flag compliance-sensitive work for the Founder.)*
-5. The change implies **offset pagination, plaintext OAuth, missing `requireRole` on a mutation, or PII in logs**.
-6. The change **hard-codes region/market specifics** instead of going through the RegionAdapter (when multi-region applies).
-7. The requirement has **no problem statement, no target user, or no success metric**.
-8. The cost estimate would push monthly per-brand cost **above the cap**.
+4. The change would violate a **Brain compliance constraint** — DPDP / UAE-KSA PDPL data-protection; TCCCPR-DLT / NCPR-DND / 9am–9pm calling window for SMS/voice; WhatsApp Meta-opt-in + approved-template + 24h-service-window; AI-call disclosure + recording consent; India in-region data residency.
+5. The change implies **offset pagination, plaintext OAuth, missing `requireRole` on a mutation, PII in logs, float/NUMERIC money, an LLM producing a metric number, or a single blended tax rate** (must be per-SKU GST/VAT slab).
+6. The change **hard-codes region/market specifics** (India economics, GST slabs, calling hours, currency) instead of going through the `RegionAdapter`.
+7. The requirement has **no problem statement, no target user, or no success metric** — and isn't tied to revenue/profit/risk/time-saved/compliance/memory.
+8. The change would **bill on placed (not realized/delivered) GMV**, or push monthly per-brand compute/LLM cost above the cap (paradigm bypass — Sonnet where SQL/ML/Haiku suffices).
 9. The change introduces a **new abstraction for a hypothetical future requirement**.
 10. The "done" claim **has no verification command output**.
 

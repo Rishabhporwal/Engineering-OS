@@ -7,7 +7,7 @@ description: Brain's Next.js 14 web stack — App Router + tRPC client + Redux T
 
 The web stack for Brain's **workbench surface** — Ananya's domain. Web is the desktop surface operators use for Monday review + on-demand depth. Mobile is the daily heartbeat (Karan owns it).
 
-## Stack invariants (LOCKED — canon/BRAIN_TECHNICAL.md)
+## Stack invariants (LOCKED — canon/technical-requirements.md)
 
 | Layer | Choice | Reason |
 |---|---|---|
@@ -85,7 +85,7 @@ Every interactive element gets `data-testid` for Cypress.
 
 ## RAG (Red/Amber/Green) on every metric card
 
-Per `canon/BRAIN_TECHNICAL.md` (goals):
+Per `canon/technical-requirements.md` (goals):
 
 ```tsx
 <RagCell
@@ -97,7 +97,7 @@ Per `canon/BRAIN_TECHNICAL.md` (goals):
 />
 ```
 
-Calendar Report (canon/BRAIN_TECHNICAL.md) renders every cell with RAG. CSV exports preserve raw values + RAG metadata.
+Calendar Report (canon/technical-requirements.md) renders every cell with RAG. CSV exports preserve raw values + RAG metadata.
 
 ## CM Waterfall — Visx
 
@@ -105,7 +105,7 @@ Calendar Report (canon/BRAIN_TECHNICAL.md) renders every cell with RAG. CSV expo
 // components/charts/Waterfall.tsx
 import { BarStack } from '@visx/shape';
 import { Group } from '@visx/group';
-// ... layered horizontal step-down per the spec in canon/BRAIN_BUSINESS.md
+// ... layered horizontal step-down per the spec in canon/business-requirements.md
 ```
 
 Filter: `[All | New Customers | Returning Customers]`. The "wow" demo moment is showing the loss-making-new vs profitable-returning pattern.
@@ -139,11 +139,12 @@ These views don't translate to mobile:
 />
 ```
 
-## Performance targets (canon/BRAIN_TECHNICAL.md)
+## Performance targets (canon/technical-requirements.md — perf budget)
 
-- Lighthouse > 80 on every dashboard route
-- p95 < 500ms server-rendered initial paint
+- **LCP < 2s · INP < 200ms · CLS < 0.1 · route JS < 100KB gzipped** (the canonical budget; CI gates on it — see `web-performance`)
+- Cached dashboard p95 < 500ms server-rendered initial paint
 - First Contentful Paint < 1s on Wi-Fi
+- WCAG AA on every route
 - Skeleton placeholders for any query > 200ms
 
 ## Path layout
@@ -168,7 +169,7 @@ apps/frontend/
 
 ## References
 
-- `canon/BRAIN_TECHNICAL.md` — design system + BFF + multi-currency, KPI definitions + RAG + Calendar Report
-- `canon/BRAIN_BUSINESS.md` — every wedge feature's UI spec
+- `canon/technical-requirements.md` — design system + BFF + multi-currency, KPI definitions + RAG + Calendar Report
+- `canon/business-requirements.md` — every wedge feature's UI spec
 - `skills/india-commerce-economics/SKILL.md` §currency-format — numbering + GST display
 - `skills/testing-tdd/SKILL.md` — Vitest + RTL + Cypress patterns

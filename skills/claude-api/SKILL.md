@@ -7,14 +7,14 @@ description: Anthropic Messages API for the intelligence-service — streaming, 
 
 > **Note:** This is Brain's **local** `claude-api` skill (not the Claude Code bundled one). Brain-pinned model IDs (Sonnet 4.6 / Haiku 4.5), Brain's cost-router integration, Brain's per-brand monthly LLM cap enforcement. Always read this one over any generic bundled equivalent.
 
-Brain's intelligence layer (Maya, see canon/BRAIN_TECHNICAL.md) is built on Claude — **Sonnet 4.6** for multi-step synthesis and brand-voice, **Haiku 4.5** for bounded NL (classification, extraction, short rewrites). This skill is the operational depth for every call site that touches the Anthropic SDK.
+Brain's intelligence layer (Maya, see canon/technical-requirements.md) is built on Claude — **Sonnet 4.6** for multi-step synthesis and brand-voice, **Haiku 4.5** for bounded NL (classification, extraction, short rewrites). This skill is the operational depth for every call site that touches the Anthropic SDK.
 
 ## Why this matters for Brain
 
 - **GMV % pricing only works because most calls are SQL or ML, not LLM** (prompts/system-prompt.md, Iron Law #4). Every Claude call must be either (a) part of the human-language interface boundary (Morning Brief synthesis, AI Chat, agent narrative wrap) or (b) bounded NL routed to Haiku.
 - **Prompt caching is the single biggest cost lever.** 90% cost savings on the cached portion of repeated prompts. Brand Fingerprint context (~3–10K tokens) reused across every brief synthesis = enormous savings.
 - **Per-brand monthly LLM cap** (`memory/business-context.md`): ₹3K founding / ₹5K standard / ₹15K growth / ₹50K+ enterprise. Cap enforcement is in the SDK wrapper, NOT a downstream alert.
-- **Frontier-LLM creep above 1% of total calls is a tier-1 incident** (see canon/BRAIN_TECHNICAL.md). Every Sonnet call shows up in the cost-discipline dashboard.
+- **Frontier-LLM creep above 1% of total calls is a tier-1 incident** (see canon/technical-requirements.md). Every Sonnet call shows up in the cost-discipline dashboard.
 
 ## Brain model canon (NEVER use stale IDs)
 
@@ -160,7 +160,7 @@ const msg = await client.messages.create({
 if (msg.stop_reason === 'tool_use') {
   const toolUse = msg.content.find((b) => b.type === 'tool_use');
   // Route the tool call through Brain's MCP server, NOT a direct Anthropic Tool Use response
-  // (see canon/BRAIN_TECHNICAL.md — MCP is the contract; this Anthropic Tool Use is just the trigger)
+  // (see canon/technical-requirements.md — MCP is the contract; this Anthropic Tool Use is just the trigger)
   const result = await mcp.invoke(toolUse.name, toolUse.input);
 
   const follow = await client.messages.create({
@@ -241,7 +241,7 @@ async function callClaudeWithBudget(workspaceId: string, fn: () => Promise<...>)
 
 **The per-brand monthly LLM cap MUST be live before AI Chat ships in W18.** AI Chat is the single feature most likely to push a brand past their tier cap — a moderately engaged user moves from 5 msg/day → 50 msg/day, which alone climbs to ~₹1,500/brand/month (half the founding-cohort ₹3K cap, on chat alone).
 
-The throttle is Layer 3 of the four-layer cost control (per canon/BRAIN_TECHNICAL.md):
+The throttle is Layer 3 of the four-layer cost control (per canon/technical-requirements.md):
 - Layer 1 — paradigm decorator (`@paradigm`)
 - Layer 2 — per-feature token budget (max_tokens, cache reuse)
 - **Layer 3 — per-brand monthly cap (THIS — the `callClaudeWithBudget` wrapper above)**
@@ -288,10 +288,10 @@ Catch in the paradigm audit at PR time. Aryan blocks the PR.
 
 | Concern | Owner | Reference |
 |---|---|---|
-| intelligence-service call sites | **Maya** | canon/BRAIN_TECHNICAL.md |
-| Cost-cap registry + paradigm audit | **Maya** + **Aryan** | canon/BRAIN_TECHNICAL.md, `cost-routing-paradigms` |
-| MCP tool integration | **Vikram** + **Maya** | canon/BRAIN_TECHNICAL.md, `mcp-protocol` |
+| intelligence-service call sites | **Maya** | canon/technical-requirements.md |
+| Cost-cap registry + paradigm audit | **Maya** + **Aryan** | canon/technical-requirements.md, `cost-routing-paradigms` |
+| MCP tool integration | **Vikram** + **Maya** | canon/technical-requirements.md, `mcp-protocol` |
 | Prompt caching hit-rate dashboards | **Maya** + **Jatin** | `observability` |
-| Per-brand budget enforcement | **Maya** | canon/BRAIN_TECHNICAL.md (budget) |
+| Per-brand budget enforcement | **Maya** | canon/technical-requirements.md (budget) |
 
 Related Brain skills: `cost-routing-paradigms` (the @paradigm decorator), `mcp-protocol` (tool catalogue), `grpc-buf` (proto-driven schemas), `defense-in-depth-validation` (prompt injection guards), `observability` (token usage logging).

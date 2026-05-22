@@ -219,12 +219,12 @@ These are tRPC AND MCP transport headers — MCP clients respect `Retry-After` l
 
 | Concern | Owner | Reference |
 |---|---|---|
-| tRPC list endpoints + cursor | **Vikram** | canon/BRAIN_TECHNICAL.md (list endpoints) |
-| MCP tool list responses | **Vikram** + **Maya** | canon/BRAIN_TECHNICAL.md |
+| tRPC list endpoints + cursor | **Vikram** | canon/technical-requirements.md (list endpoints) |
+| MCP tool list responses | **Vikram** + **Maya** | canon/technical-requirements.md |
 | ClickHouse drill-down pagination | **Maya** | `clickhouse-olap` |
-| `useInfiniteQuery` / mobile infinite scroll | **Ananya** / **Karan** | canon/BRAIN_TECHNICAL.md |
-| Inbound api-gateway per-brand quotas | **Vikram** | canon/BRAIN_TECHNICAL.md (rate limit) |
-| Outbound connector + AI vendor throttling | **Maya** | canon/BRAIN_TECHNICAL.md (vendor quotas) |
+| `useInfiniteQuery` / mobile infinite scroll | **Ananya** / **Karan** | canon/technical-requirements.md |
+| Inbound api-gateway per-brand quotas | **Vikram** | canon/technical-requirements.md (rate limit) |
+| Outbound connector + AI vendor throttling | **Maya** | canon/technical-requirements.md (vendor quotas) |
 | Claude API budget enforcement | **Maya** | `cost-routing-paradigms` |
 
 Related Brain skills: `sql-query-optimization` (cursor needs the right index), `database-design` (schema + indexes), `mcp-protocol` (tool response envelopes + transport headers), `cost-routing-paradigms` (budget-aware throttling), `observability` (`429` rate as an SLO), `integration-connectors` (per-vendor limits), `auth-and-access` (refresh-storm protection uses the same limiter).

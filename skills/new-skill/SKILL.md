@@ -12,7 +12,7 @@ Scaffold a new domain skill. Skill name (kebab-case) + one-line intent:
 
 1. **Parse** the kebab-case `name` and a one-line intent from `$ARGUMENTS`. If missing, ask for them.
 2. **Prove the gap is real (anti-bloat gate).** Run `/recall-similar "<intent>"` and scan `docs/skill-mapping-matrix.md`. If an existing skill already covers it → **extend that skill, do NOT create a new one** (Single-Primitive for skills; recall v0.7.1 consolidated 59→49 deliberately). Only proceed if no existing skill fits.
-3. **Ground it in canon.** Identify the `canon/BRAIN_TECHNICAL.md` / `BRAIN_BUSINESS.md` section it derives from — a domain skill cites real Brain architecture, not generic advice.
+3. **Ground it in canon.** Identify the `canon/technical-requirements.md` / `business-requirements.md` section it derives from — a domain skill cites real Brain architecture, not generic advice.
 4. **Create `skills/<name>/SKILL.md`** in the house format (match an existing domain skill like `caching-strategy`): frontmatter (`name`, `description` — the description must say *when to auto-load*), then `# Title`, a one-paragraph intro, a key-patterns table, "rules" (non-negotiables, cross-linked to related skills via `[[name]]`-style markdown links), "anti-patterns", and "verify". Keep it ~50–70 lines, dense and Brain-specific.
 5. **Register it (3 places, or the doctor will not flag it but the matrix drifts):**
    - Add a row to the matrix table in `docs/skill-mapping-matrix.md` (domain category, primary owner, shared-with, exposed-as-command).

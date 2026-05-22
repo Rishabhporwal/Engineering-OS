@@ -167,7 +167,7 @@ Brain ships financial-adjacent metrics (CM2, MER, recovered-revenue) and a regul
 | Concern | Owner | Reference |
 |---|---|---|
 | Every builder's verification floor | Vikram, Maya, Ananya, Karan | their agent MDs + Iron Law #5 in prompts/system-prompt.md |
-| QA PASS/FAIL discipline | **Tanvi** | canon/BRAIN_TECHNICAL.md (SLO + test gates) |
+| QA PASS/FAIL discipline | **Tanvi** | canon/technical-requirements.md (SLO + test gates) |
 | Inverted-handoff verification (Bash-denied subagents) | orchestrator | prompts/system-prompt.md (Inverted-handoff fallback) |
 | Audit trail of verification claims | `memory/qa/<slug>.md` + Decision Log | |
 

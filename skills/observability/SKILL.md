@@ -44,7 +44,7 @@ export const logger = pino({
 });
 ```
 
-Python structlog mirrors this with `merge_contextvars` + `add_log_level` + `dict_tracebacks` + a `redact_pii` processor before `JSONRenderer`, bound with `service`/`env`/`version`. Full scaffolds in canon/BRAIN_TECHNICAL.md.
+Python structlog mirrors this with `merge_contextvars` + `add_log_level` + `dict_tracebacks` + a `redact_pii` processor before `JSONRenderer`, bound with `service`/`env`/`version`. Full scaffolds in canon/technical-requirements.md.
 
 ### Log levels + retention (Brain canon)
 
@@ -99,9 +99,9 @@ log().info({ count: events.length, source: 'shopify', latency_ms: t1 - t0, error
 
 ## Fluent Bit → OpenSearch (+ CloudWatch dual)
 
-Fluent Bit `tail`s container logs, applies the `kubernetes` filter, runs a **`redact.lua`** second-pass redaction (same field list as the logger), then fans out to the `opensearch` output (`brain-logs-${SERVICE_NAME}` index) and `cloudwatch_logs` (`/aws/eks/brain/${SERVICE_NAME}`). The conf + lua live in `infra/k8s/fluent-bit/` and canon/BRAIN_TECHNICAL.md.
+Fluent Bit `tail`s container logs, applies the `kubernetes` filter, runs a **`redact.lua`** second-pass redaction (same field list as the logger), then fans out to the `opensearch` output (`brain-logs-${SERVICE_NAME}` index) and `cloudwatch_logs` (`/aws/eks/brain/${SERVICE_NAME}`). The conf + lua live in `infra/k8s/fluent-bit/` and canon/technical-requirements.md.
 
-## Kibana saved views (canon/BRAIN_TECHNICAL.md)
+## Kibana saved views (canon/technical-requirements.md)
 
 1. **System Health** — error rate + p99 + throughput per service
 2. **Per-Service Deep Dive** — one service's logs over a window
@@ -171,7 +171,7 @@ Non-negotiable per service — verified before a service is "done" (`operational
 
 NEVER log: `access_token`/`refresh_token`/JWTs/API keys; `email` (SHA-256 hash if you need identity comparison); `phone` (India customer PII); `pan_card`/`aadhaar`; full card or order-total+name combos; addresses; WhatsApp message content (unless explicit per-call opt-in). Three layers: logger field filter → Fluent Bit Lua → OpenSearch field mapping at display.
 
-## SLOs (canon/BRAIN_TECHNICAL.md)
+## SLOs (canon/technical-requirements.md)
 
 | Service | SLO |
 |---|---|
@@ -180,7 +180,7 @@ NEVER log: `access_token`/`refresh_token`/JWTs/API keys; `email` (SHA-256 hash i
 | analytics-service | 99.5% availability; p99 < 500ms on metric reads (Redis cached) |
 | intelligence-service | 99% availability; daily tick completes by 07:15 IST |
 | lifecycle-service | 99.9% availability; **0** out-of-window dial attempts; **0** DND-blocked dials succeeded |
-| notifications-service | 99.5% availability; Morning Brief push delivered by 07:30 IST |
+| notifications-service | 99.5% availability; **Morning Brief delivered by 07:20 IST on >99.5% of brand-days** (canon SLO) |
 | Mobile app | < 1% crash rate; p95 cold-start < 3s |
 
 ## Common failure modes
@@ -198,14 +198,14 @@ NEVER log: `access_token`/`refresh_token`/JWTs/API keys; `email` (SHA-256 hash i
 
 | Concern | Owner | Reference |
 |---|---|---|
-| Node services log standard (pino) | **Vikram** | canon/BRAIN_TECHNICAL.md (logs) |
-| Python services log standard (structlog) | **Maya** | canon/BRAIN_TECHNICAL.md |
-| Fluent Bit → OpenSearch shipping + retention/cost | **Jatin** | canon/BRAIN_TECHNICAL.md (log shipping) |
-| PII redaction policy | **Shreya** | canon/BRAIN_TECHNICAL.md (privacy) |
+| Node services log standard (pino) | **Vikram** | canon/technical-requirements.md (logs) |
+| Python services log standard (structlog) | **Maya** | canon/technical-requirements.md |
+| Fluent Bit → OpenSearch shipping + retention/cost | **Jatin** | canon/technical-requirements.md (log shipping) |
+| PII redaction policy | **Shreya** | canon/technical-requirements.md (privacy) |
 
 ## References
 
-- `canon/BRAIN_TECHNICAL.md` — canonical log spine + logger scaffolds + Kibana dashboards + monitors + cost-discipline dashboard
+- `canon/technical-requirements.md` — canonical log spine + logger scaffolds + Kibana dashboards + monitors + cost-discipline dashboard
 - `skills/devops-aws/SKILL.md` — OpenSearch + Fluent Bit deployment; AWS FIS chaos (breaker behavior under failure)
 - `skills/security-baseline/SKILL.md` — PII redaction posture
 - `skills/operational-readiness/SKILL.md` — liveness/readiness/dependency probes

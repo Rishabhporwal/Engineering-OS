@@ -7,7 +7,7 @@ description: Brain's React Native + Expo stack — Expo Router + Tamagui + tRPC 
 
 The mobile stack for Brain's **primary product surface**. The Morning Brief is THE product workflow — three signals at 06:55–09:00 IST, approve / reject / edit, three-minute commitment, thumb-first.
 
-## Stack invariants (LOCKED — canon/BRAIN_TECHNICAL.md §1)
+## Stack invariants (LOCKED — canon/technical-requirements.md §1)
 
 | Layer | Choice | Reason |
 |---|---|---|
@@ -36,7 +36,7 @@ The mobile stack for Brain's **primary product surface**. The Morning Brief is T
 
 ## Morning Brief — the three-signal rule
 
-The Morning Brief is the highest-quality UI in all of Brain (canon/BRAIN_TECHNICAL.md mandate). Get it right:
+The Morning Brief is the highest-quality UI in all of Brain (canon/technical-requirements.md mandate). Get it right:
 
 - **Three signals max** — not five, not seven. The Synthesizer (Maya) picks top three by priority score.
 - **One-thumb operation** — swipe between cards; tap approve/reject; long-press to edit.
@@ -70,7 +70,7 @@ export function SignalCard({ signal }: { signal: Recommendation }) {
 }
 ```
 
-## Auth flow (canon/BRAIN_TECHNICAL.md §4)
+## Auth flow (canon/technical-requirements.md §4)
 
 ```typescript
 // apps/mobile/lib/auth/storage.ts
@@ -88,7 +88,7 @@ export async function storeRefreshToken(token: string) {
 - Refresh on app foreground + 5-min idle
 - Biometric re-prompt before sensitive views (Phase 2)
 
-## Push notifications (canon/BRAIN_TECHNICAL.md §7)
+## Push notifications (canon/technical-requirements.md §7)
 
 ```typescript
 // apps/mobile/lib/push/register.ts
@@ -107,7 +107,7 @@ export async function registerForPush() {
 
 Android channels: `alerts.critical` (high), `alerts.warning` (default), `digests` (low), `insights` (default).
 
-## OTA vs native bump policy (canon/BRAIN_TECHNICAL.md §9)
+## OTA vs native bump policy (canon/technical-requirements.md §9)
 
 | Change | Path |
 |---|---|
@@ -119,7 +119,7 @@ Android channels: `alerts.critical` (high), `alerts.warning` (default), `digests
 
 **Anti-pattern:** pushing OTA when a native module was added → silently breaks for users. Discipline: any `package.json` change to a native-touching dep → native bump.
 
-## Cert pinning rotation (CRITICAL — canon/BRAIN_TECHNICAL.md §11)
+## Cert pinning rotation (CRITICAL — canon/technical-requirements.md §11)
 
 Pin BOTH current + rotation cert. Rotation sequence:
 
@@ -149,9 +149,9 @@ const PINS = [
 />
 ```
 
-List in canon/BRAIN_TECHNICAL.md §3.
+List in canon/technical-requirements.md §3.
 
-## Versioning (canon/BRAIN_TECHNICAL.md §14)
+## Versioning (canon/technical-requirements.md §14)
 
 ```json
 {
@@ -248,8 +248,8 @@ describe('Morning Brief approve flow', () => {
 
 ## References
 
-- `canon/BRAIN_TECHNICAL.md` — the entire mobile spec
-- `canon/BRAIN_TECHNICAL.md` §push — notifications-service path
+- `canon/technical-requirements.md` — the entire mobile spec
+- `canon/technical-requirements.md` §push — notifications-service path
 - `skills/morning-brief-mobile/SKILL.md` — the Morning Brief UX rules in depth
 - `skills/security-baseline/SKILL.md` §MASVS
 - `skills/india-commerce-economics/SKILL.md` §currency-format

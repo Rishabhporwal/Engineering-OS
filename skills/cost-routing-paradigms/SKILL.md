@@ -1,13 +1,13 @@
 ---
 name: cost-routing-paradigms
-description: Brain's four-paradigm cost-routing gate. The engineering invariant that keeps LLM cost down (its motivation — the product's cost/pricing model — is defined in the business canon, currently being re-fed). Auto-load on every design + every PR that adds a new endpoint, agent action, or decision path. SQL > ML > Haiku >> Sonnet. Every feature passes Q1-Q4 audit before shipping. Build pipeline rejects PRs missing the @paradigm decorator or with a wrong-paradigm declaration. Cost ratio is 1:100:1,000:10,000.
+description: Brain's four-paradigm cost-routing gate. The engineering invariant behind %-of-GMV pricing — Brain bills a fraction of realized GMV, so per-decision LLM cost must stay near zero or the unit economics invert. Auto-load on every design + every PR that adds a new endpoint, agent action, or decision path. SQL ≫ ML ≫ Haiku ≫ Sonnet. Every feature passes Q1-Q4 audit before shipping. Build pipeline rejects PRs missing the @paradigm decorator or with a wrong-paradigm declaration. Cost ratio is 1:100:1,000:10,000.
 ---
 
 # Cost-Routing Paradigms — Brain's Engineering Invariant
 
-The product's cost economics depend on **most decisions running at SQL or ML cost**, not frontier-LLM cost. *(The specific pricing/cost model is defined in the business canon — currently being re-fed; this engineering discipline holds regardless.)* Most of what the industry calls "agentic AI" is statistics in an LLM costume — don't pay frontier-LLM prices for problems statistics solved 40 years ago.
+Brain bills **% of realized/delivered GMV** (Founding ~0.5% / Standard ~1.0% / Growth ~0.5% > ₹1Cr GMV / Enterprise custom) — never per-seat. That pricing only survives if **most decisions run at SQL or ML cost**, not frontier-LLM cost: a Sonnet call is ~10,000× an SQL query, so one mis-routed feature can eat a brand's entire monthly fee. Most of what the industry calls "agentic AI" is statistics in an LLM costume — don't pay frontier-LLM prices for problems statistics solved 40 years ago.
 
-**Canonical doc:** `canon/BRAIN_TECHNICAL.md`. This skill is the operational checklist.
+**Canonical doc:** `canon/TECH/12_cost_routing_compute.md` (+ `canon/technical-requirements.md` §9). This skill is the operational checklist.
 
 ## Phase-gate requirement (non-negotiable — from architecture review 2026-05-16)
 
@@ -20,7 +20,7 @@ The cost-routing audit only works if it's **measured from day one, not retrofitt
 
 - **Before any feature ships in Phase 1 that calls an LLM, the decorator + dashboard are live.** No "we'll add the telemetry in Phase 3" exceptions.
 
-- **A per-tenant monthly LLM cost cap (Layer 3 throttle) must be live before the highest-LLM-cost feature ships** (e.g. an AI chat). Without it, a tenant ramping usage can blow the product's cost model. (Specific thresholds come from the business canon — being re-fed.) See `skills/claude-api/SKILL.md` §"Per-brand monthly LLM cap".
+- **A per-workspace monthly LLM cost cap (Layer 3 throttle) must be live before the highest-LLM-cost feature ships** (e.g. AI Chat). Without it, a workspace ramping usage can blow past its %-of-GMV fee. Thresholds are per-tier (see the Layer 3 table below). See `skills/claude-api/SKILL.md` §"Per-brand monthly LLM cap".
 
 Frontier-LLM creep above **1% of total calls** is a tier-1 incident (Jatin pages on it).
 
@@ -100,7 +100,7 @@ export const computeDailyRevenue = paradigm('sql')(
 );
 ```
 
-## What "agentic" actually means in Brain (canon/BRAIN_TECHNICAL.md §3)
+## What "agentic" actually means in Brain (canon/TECH/12_cost_routing_compute.md §3)
 
 | Industry framing | Brain | Paradigm |
 |---|---|---|
@@ -111,7 +111,7 @@ export const computeDailyRevenue = paradigm('sql')(
 | "AI recommends budget reallocation" | Linear optimization over response curves | ML — **not LLM** |
 | "AI writes the Morning Brief" | Sonnet on ML outputs | **Frontier LLM — yes** |
 
-## Three layers of enforcement (canon/BRAIN_TECHNICAL.md §4)
+## Three layers of enforcement (canon/TECH/12_cost_routing_compute.md §4)
 
 ### Layer 1 — Default routing
 Every endpoint declares paradigm in code. Defaulting to cheapest paradigm that solves the problem. Upgrading the paradigm requires PR comment justification.
@@ -142,13 +142,13 @@ Soft warning at 80%; hard fail at 100% with graceful fallback (template or parad
 
 `pylibs/brain_cost_router/middleware.py` enforces. Above cap: only critical-path (Morning Brief, NL query, ticket auto-resolution) continues. System never breaks; it gets quieter.
 
-## Target paradigm distribution (canon/BRAIN_TECHNICAL.md §5)
+## Target paradigm distribution (canon/TECH/12_cost_routing_compute.md §5)
 
 **85% SQL, 12% ML, 2.5% Haiku, 0.5% Sonnet.**
 
 Frontier-LLM creep above 1% of total calls = tier-1 incident. Jatin investigates; Maya audits prompts.
 
-## Quarterly streamlining audit (canon/BRAIN_TECHNICAL.md §6)
+## Quarterly streamlining audit (canon/TECH/12_cost_routing_compute.md §6)
 
 Every quarter:
 - Review codebase for anti-pattern drift
@@ -166,7 +166,7 @@ Every quarter:
 
 ## References
 
-- `canon/BRAIN_TECHNICAL.md` — canonical
-- `canon/BRAIN_TECHNICAL.md` §1 — agent base pattern + paradigm decorator
+- `canon/TECH/12_cost_routing_compute.md` — canonical (four paradigms, three enforcement layers, target mix, quarterly audit)
+- `canon/technical-requirements.md` §9 — AI/LLM layer & cost-routing summary
 - `skills/agentic-design/SKILL.md` — how to wire @paradigm into agents
 - `skills/mcp-protocol/SKILL.md` — paradigm tagging on MCP tools

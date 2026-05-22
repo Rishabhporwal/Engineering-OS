@@ -12,7 +12,7 @@ Model Context Protocol (MCP) is Brain's contract for:
 3. **Agents reaching external systems** (Shopify, Meta, Razorpay, calling vendors) via MCP adapters
 4. **External clients** (Anthropic Claude native MCP, OpenAI Assistants, partner integrations, Enterprise tier) calling Brain agents
 
-**Canonical doc:** `canon/BRAIN_TECHNICAL.md`. This skill is the operational reference. It has two parts: **Part 1 — building an MCP server** (schemas, transport, errors, testing) and **Part 2 — wiring it into Brain** (auth, tenancy, Decision Log).
+**Canonical doc:** `canon/technical-requirements.md`. This skill is the operational reference. It has two parts: **Part 1 — building an MCP server** (schemas, transport, errors, testing) and **Part 2 — wiring it into Brain** (auth, tenancy, Decision Log).
 
 ---
 
@@ -107,7 +107,7 @@ A tool isn't done until every parameter is exercised (valid + invalid), the erro
 
 # Part 2 — Wiring it into Brain
 
-## Architecture (canon/BRAIN_TECHNICAL.md §2)
+## Architecture (canon/technical-requirements.md §2)
 
 ```
 External MCP clients (Claude, partners, Enterprise)        Brain agents (intelligence-service) as MCP clients
@@ -126,7 +126,7 @@ External MCP clients (Claude, partners, Enterprise)        Brain agents (intelli
               (routes via gRPC to analytics-service / core-service / lifecycle-service / intelligence-service)
 ```
 
-## Tool naming convention (canon/BRAIN_TECHNICAL.md §3)
+## Tool naming convention (canon/technical-requirements.md §3)
 
 ```
 <domain>.<resource>.<action>
@@ -178,7 +178,7 @@ export const buildAudience = mcpTool({
 });
 ```
 
-## Auth (canon/BRAIN_TECHNICAL.md §5) — four layers, all mandatory
+## Auth (canon/technical-requirements.md §5) — four layers, all mandatory
 
 1. **Auth** — JWT or brain_mcp_key valid?
 2. **Scope** — does the caller's scope include this tool's required scope?
@@ -202,7 +202,7 @@ brain:admin                  — superuser; rare; audited
 
 Default new key: `brain:analytics:read + brain:memory:read`. Higher scopes need Owner approval (audit-logged).
 
-## Streaming (canon/BRAIN_TECHNICAL.md §6)
+## Streaming (canon/technical-requirements.md §6)
 
 For long-running operations (agent reasoning, Morning Brief generation, AI Chat):
 
@@ -218,7 +218,7 @@ event: agent_recommendation data: { "action": "reduce_meta_budget", "amount_mino
 event: done               data: { "decision_log_id": "..." }
 ```
 
-## Inter-agent invocation (canon/BRAIN_TECHNICAL.md §7)
+## Inter-agent invocation (canon/technical-requirements.md §7)
 
 ```json
 {
@@ -236,7 +236,7 @@ Why MCP (not direct gRPC) for inter-agent? Inter-agent calls happen inside LLM r
 
 For non-LLM agent code paths, direct gRPC is acceptable.
 
-## Decision Log integration (canon/BRAIN_TECHNICAL.md §8) — MANDATORY
+## Decision Log integration (canon/technical-requirements.md §8) — MANDATORY
 
 **Every MCP write tool call writes a Decision Log entry via middleware.** Never bypass.
 
@@ -255,9 +255,9 @@ Decision Log entry includes:
 
 This is what makes the Decision Log Brain's single source of truth for "what did Brain do?"
 
-## Human-in-the-loop mode (canon/BRAIN_TECHNICAL.md §9)
+## Human-in-the-loop mode (canon/technical-requirements.md §9)
 
-For un-graduated agents (canon/BRAIN_TECHNICAL.md §6 graduation criteria not yet met):
+For un-graduated agents (canon/technical-requirements.md §6 graduation criteria not yet met):
 - Agent generates **recommendation** (Decision Log entry in `pending` state)
 - Owner sees it on Morning Brief or web app
 - Owner approves → MCP write tool fires with `decision_log_id` reference
@@ -265,7 +265,7 @@ For un-graduated agents (canon/BRAIN_TECHNICAL.md §6 graduation criteria not ye
 
 For graduated agents: write fires automatically; entry marked `auto_approved`.
 
-## Observability (canon/BRAIN_TECHNICAL.md §10)
+## Observability (canon/technical-requirements.md §10)
 
 Every MCP call emits:
 - `Brain/MCP/tool_calls_total{tool, status, paradigm}` (CloudWatch)
@@ -274,7 +274,7 @@ Every MCP call emits:
 - OpenSearch log entry with correlation IDs
 - X-Ray span via `traceparent` header
 
-## Versioning (canon/BRAIN_TECHNICAL.md §11)
+## Versioning (canon/technical-requirements.md §11)
 
 - Tool versions in URL: `memory.brand_fingerprint.query/v2` for breaking changes
 - Old versions supported ≥ 6 months after new version ships
@@ -290,7 +290,7 @@ Every MCP call emits:
 
 ## References
 
-- `canon/BRAIN_TECHNICAL.md` — canonical (architecture, gRPC + tRPC + MCP intersection, agent tool catalogues)
+- `canon/technical-requirements.md` — canonical (architecture, gRPC + tRPC + MCP intersection, agent tool catalogues)
 - `skills/agentic-design/SKILL.md` — `@mcp_tool` decorator wiring on agent methods
 - `skills/grpc-buf/SKILL.md` — proto codegen workflow (single source of truth for schemas)
 - `skills/agentic-actions-auditor/SKILL.md` — audit write tools before ship

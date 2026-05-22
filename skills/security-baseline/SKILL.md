@@ -1,13 +1,13 @@
 ---
 name: security-baseline
-description: Brain's security baseline — OWASP Top 10; Supabase Auth + JWT; multi-tenant `workspace_id` enforcement on Postgres (RLS) + ClickHouse (query gateway) + Kafka envelopes + MCP tool tenant check; MCP auth scopes (canon/BRAIN_TECHNICAL.md); AWS IAM/VPC/WAF/Secrets Manager; threat modeling (STRIDE); mobile MASVS Level 1 + Level 2; cert pinning rotation discipline; India compliance gates (DLT, NCPR, DND, 48h frequency cap, calling hours, recording consent, GST). Shreya VETO on CRITICAL/HIGH and any India compliance violation.
+description: Brain's security baseline — OWASP Top 10; Supabase Auth + JWT; multi-tenant `workspace_id` enforcement on Postgres (RLS) + ClickHouse (query gateway) + Kafka envelopes + MCP tool tenant check; MCP auth scopes (canon/technical-requirements.md); AWS IAM/VPC/WAF/Secrets Manager; threat modeling (STRIDE); mobile MASVS Level 1 + Level 2; cert pinning rotation discipline; India compliance gates (DLT, NCPR, DND, 48h frequency cap, calling hours, recording consent, GST). Shreya VETO on CRITICAL/HIGH and any India compliance violation.
 ---
 
 # Security Baseline — Brain
 
 This skill is the **security index + Shreya's review gate**. It owns the OWASP map, the Brain-specific security controls (Supabase Auth, OAuth token storage, India compliance VETO, MASVS, AWS baseline, STRIDE) and the verdict format. The two deep dives it links to:
 
-- **`auth-and-access`** — OWASP A01 (Broken Access Control) in depth: the Owner/Admin/Analyst/Viewer role model, JWT-claim + RLS enforcement, MCP tool roles, agency multi-workspace — plus the Supabase session lifecycle (cookies, refresh, revocation).
+- **`auth-and-access`** — OWASP A01 (Broken Access Control) in depth: the 5 level-ordered roles (viewer 1 < analyst 2 < agency 3 < operator 4 < owner 5), JWT-claim + RLS enforcement, `requireRole` on every mutation, MCP tool roles, agency multi-workspace — plus the Supabase session lifecycle (cookies, refresh, revocation).
 - **`defense-in-depth-validation`** — multi-tenant `workspace_id` isolation as the four-layer (entry → business → environment/RLS → audit) pattern, and the structural "make the bug impossible" approach.
 
 Don't duplicate those here — gate against them.
@@ -17,7 +17,7 @@ Don't duplicate those here — gate against them.
 | # | OWASP | Brain enforcement |
 |---|---|---|
 | A01 | Broken Access Control | `workspaceProcedure` on every tRPC procedure; `requireTenant` on every MCP tool; gRPC server handler asserts `request.workspace_id === metadata.workspace_id`; Postgres RLS as safety net; ClickHouse query gateway rejects unscoped queries |
-| A02 | Cryptographic Failures | TLS everywhere; RS256 JWT in prod via Supabase Auth; KMS envelope encryption for OAuth tokens in core-service `integrations_oauth_tokens` |
+| A02 | Cryptographic Failures | TLS everywhere; Supabase Auth JWT verified via JWKS; KMS envelope encryption for OAuth tokens — ciphertext in **AWS Secrets Manager**, only a `credential_secret_arn` ref in `core.integrations` |
 | A03 | Injection | Prisma parameterized queries; Zod validation on every input; asyncpg parameterized; ClickHouse query gateway |
 | A04 | Insecure Design | Postgres RLS + ClickHouse query gateway = defense in depth; never rely on one layer |
 | A05 | Security Misconfiguration | No debug in prod; Fastify-helmet security headers; MCP `scope` declared on every tool; `requireTenant` on every write |
@@ -33,7 +33,7 @@ Don't duplicate those here — gate against them.
 
 Shreya's tenant-isolation gate (every review): cross-workspace read returns `403`; the ClickHouse gateway rejects any unscoped query; every new workspace-scoped table has an RLS policy; every MCP write tool declares a scope.
 
-## Supabase Auth (canon/BRAIN_TECHNICAL.md)
+## Supabase Auth (canon/technical-requirements.md)
 
 - Access token: short-lived JWT (~1h)
 - Refresh token (web): httpOnly + secure + sameSite=lax cookie — **never** in JS
@@ -62,7 +62,7 @@ export async function verifyToken(token: string) {
 }
 ```
 
-## MCP Auth Scopes (canon/BRAIN_TECHNICAL.md)
+## MCP Auth Scopes (canon/technical-requirements.md)
 
 Every MCP tool declares a required scope:
 
@@ -83,26 +83,27 @@ Verification: a `*:read` scoped key returns 403 on `*:write` tool calls.
 
 This is the canonical scope **catalog**. How each MCP tool *declares* its `requiredScope` + `requiredRole`, and how the server middleware enforces both, is in **`auth-and-access`** (MCP tool scopes section).
 
-## OAuth Token Storage
+## OAuth Token Storage (canon: ARN ref, not ciphertext-in-DB)
 
-Tokens go to `core-service.integrations_oauth_tokens` (Postgres). Envelope-encrypted with AWS KMS via:
+Vendor tokens are **KMS-envelope-encrypted into AWS Secrets Manager**; the `core.integrations` row holds only an opaque `credential_secret_arn` reference — never the ciphertext. Per-workspace DEK; KEK in KMS, never exported. core-service owns a decryption wrapper:
 
 ```typescript
 // apps/core-service/src/integrations/oauth.ts
-import { KMSClient, EncryptCommand } from '@aws-sdk/client-kms';
+import { SecretsManagerClient, PutSecretValueCommand } from '@aws-sdk/client-secrets-manager';
 
-async function encryptToken(plaintext: string): Promise<string> {
-  const result = await kms.send(new EncryptCommand({
-    KeyId: process.env.OAUTH_KMS_KEY_ID,
-    Plaintext: Buffer.from(plaintext),
+// Encrypt → store in Secrets Manager (KMS CMK on the secret); return the ARN for the DB row
+async function putCredential(workspaceId: string, source: string, tokens: object): Promise<string> {
+  const res = await sm.send(new PutSecretValueCommand({
+    SecretId: `brain/integrations/${workspaceId}/${source}`,   // KMS-encrypted at rest
+    SecretString: JSON.stringify(tokens),
   }));
-  return result.CiphertextBlob.toString('base64');
+  return res.ARN!;   // store ONLY this in core.integrations.credential_secret_arn
 }
 ```
 
-Maya (ingestion) asks core-service for a fresh-decrypted token per poll, refreshes if expired, **discards from memory immediately**. Plaintext tokens never live long-lived in Python services.
+Maya (ingestion) asks core-service for a fresh-decrypted token per poll (fetched from Secrets Manager by ARN), refreshes if expired, **discards from memory immediately**. Plaintext tokens never live in the DB row, in logs, or long-lived in Python services. See `oauth-implementation` for the full flow.
 
-## India Compliance (canon/BRAIN_TECHNICAL.md) — VETO authority
+## India Compliance (canon/technical-requirements.md) — VETO authority
 
 Hard-coded into every calling / messaging path. Never feature-flagged.
 
@@ -118,7 +119,7 @@ Hard-coded into every calling / messaging path. Never feature-flagged.
 
 Test matrix mandatory for any lifecycle-service touch (see `testing-tdd` skill).
 
-## Mobile MASVS (canon/BRAIN_TECHNICAL.md) — Shreya pairs with Karan
+## Mobile MASVS (canon/technical-requirements.md) — Shreya pairs with Karan
 
 Brain targets MASVS Level 1 + key Level 2:
 
@@ -143,7 +144,7 @@ Brain targets MASVS Level 1 + key Level 2:
 
 Kill-switch endpoint (HTTP, NO pinning) for emergency pin fetch on cert errors.
 
-## AWS Security Baseline (canon/BRAIN_TECHNICAL.md)
+## AWS Security Baseline (canon/technical-requirements.md)
 
 ```
 VPC:    All services in private subnets; ALB only in public
@@ -207,5 +208,5 @@ Accepted by: <Founder / Shreya> on <YYYY-MM-DD>
 - `skills/auth-and-access/SKILL.md` — OWASP A01: role model + JWT/RLS + MCP tool roles + agency multi-workspace + session lifecycle
 - `skills/defense-in-depth-validation/SKILL.md` — multi-tenant `workspace_id` four-layer isolation pattern
 - `skills/india-commerce-economics/SKILL.md` — DLT + NCPR + DND compliance patterns
-- `canon/BRAIN_TECHNICAL.md` — canonical IAM + audit + log spine, MCP auth scopes, India compliance hard-codes, MASVS + cert pinning
+- `canon/technical-requirements.md` — canonical IAM + audit + log spine, MCP auth scopes, India compliance hard-codes, MASVS + cert pinning
 - `blueprints/threat-model.md` — STRIDE template

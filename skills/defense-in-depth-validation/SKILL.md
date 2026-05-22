@@ -119,7 +119,7 @@ The Stripe-grade test is: **can you write a malicious curl that bypasses Layers 
 | Surface | L1 — entry | L2 — business | L3 — environment | L4 — audit |
 |---|---|---|---|---|
 | Every tRPC mutation | Zod `.strict()` schema | Service assertions | Postgres RLS | `ai.decision_log` row |
-| Every MCP write tool (canon/BRAIN_TECHNICAL.md) | Tool input schema | MCP auth scope check | RLS + scope check | Decision Log + MCP-specific audit |
+| Every MCP write tool (canon/technical-requirements.md) | Tool input schema | MCP auth scope check | RLS + scope check | Decision Log + MCP-specific audit |
 | ClickHouse insert path | Avro schema (Glue Schema Registry) | brain_clickhouse query gateway | Materialized view dedup | Kafka offset + ClickHouse `INSERT_TIME` |
 | Every outbound message (call/SMS/WhatsApp) | Channel payload validator | India compliance engine (calling hours, DLT, NCPR, 48h cap) | Per-vendor rate limit | `lifecycle.outbound_log` |
 | Auth refresh | Zod refresh-token shape | Supabase signature check | Refresh rate limit | session.refreshed audit |
@@ -214,15 +214,15 @@ res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
 
 | Concern | Owner | Reference |
 |---|---|---|
-| tRPC `.strict()` + Zod schemas | **Vikram** + **Ananya** (input shape) | canon/BRAIN_TECHNICAL.md (input validation) |
-| MCP tool schemas | **Vikram** + **Maya** | canon/BRAIN_TECHNICAL.md |
-| Postgres RLS policy review | **Shreya** + Aryan | canon/BRAIN_TECHNICAL.md (multi-tenancy) |
-| ClickHouse query gateway | **Maya** | canon/BRAIN_TECHNICAL.md (OLAP discipline) |
-| Decision Log row spec | **Aryan** + Vikram | canon/BRAIN_TECHNICAL.md (Decision Log) |
-| India compliance engine guards | **Maya** + Shreya | canon/BRAIN_TECHNICAL.md |
-| Web XSS surface + sanitizer in `packages/ui` | **Ananya** | canon/BRAIN_TECHNICAL.md (frontend security) |
+| tRPC `.strict()` + Zod schemas | **Vikram** + **Ananya** (input shape) | canon/technical-requirements.md (input validation) |
+| MCP tool schemas | **Vikram** + **Maya** | canon/technical-requirements.md |
+| Postgres RLS policy review | **Shreya** + Aryan | canon/technical-requirements.md (multi-tenancy) |
+| ClickHouse query gateway | **Maya** | canon/technical-requirements.md (OLAP discipline) |
+| Decision Log row spec | **Aryan** + Vikram | canon/technical-requirements.md (Decision Log) |
+| India compliance engine guards | **Maya** + Shreya | canon/technical-requirements.md |
+| Web XSS surface + sanitizer in `packages/ui` | **Ananya** | canon/technical-requirements.md (frontend security) |
 | CSP config | **Ananya** + **Shreya** | this skill (Layer 5) + `security-baseline` |
-| Mobile WebView usage | **Karan** | canon/BRAIN_TECHNICAL.md (avoid where possible) |
+| Mobile WebView usage | **Karan** | canon/technical-requirements.md (avoid where possible) |
 | PR-time XSS payload test | **Tanvi** | Cypress payload assertions |
 
 Related Brain skills (security trio): `security-baseline` (the index + Shreya's gate — this skill is its multi-tenant + output-safety deep dive), `auth-and-access` (role-level access + `workspace_id` from JWT). Also: `idempotency-handling` (Layer 1 for retries), `mcp-protocol`, `frontend-web` (where Layer 5 lives).

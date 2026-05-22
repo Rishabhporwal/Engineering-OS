@@ -89,7 +89,7 @@ eos-init, propose-rule, adopt-rule, reject-rule. Maintain docs/skill-mapping-mat
 authoritative skill→role binding (table + per-role owned-skill lists).
 
 == WHAT THE TEAM BUILDS (canon) ==
-Author canon/BRAIN_BUSINESS.md + canon/BRAIN_TECHNICAL.md (full source of truth) and condensed
+Author canon/business-requirements.md + canon/technical-requirements.md (full source of truth) and condensed
 agent-facing primers docs/business-context.md + docs/technical-context.md.
 Brain = a 7-service, DDD, event-driven D2C commerce OS:
   Services: api-gateway, core-service, ingestion-service, analytics-service, intelligence-service,
@@ -143,5 +143,5 @@ every agent's owned-skill list matches the matrix. Version it (semantic) in plug
 
 ## What this prompt deliberately leaves to judgment
 - Exact prose/examples inside each skill and canon doc (regenerate in house style).
-- Phase-specific Brain detail (Phase 0–4 roadmap, the 15 named AI agents, exact metric formulas) — pull from `canon/BRAIN_TECHNICAL.md` if it exists, or have the CTO Advisor + Architect derive them.
+- Phase-specific Brain detail (Phase 0–4 roadmap, the 15 named AI agents, exact metric formulas) — pull from `canon/technical-requirements.md` if it exists, or have the CTO Advisor + Architect derive them.
 - Anything the Founder later changes (stack swaps, new region, new service) goes through the normal pipeline + ADR, not a rebuild.

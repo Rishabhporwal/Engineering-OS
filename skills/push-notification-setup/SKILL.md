@@ -26,7 +26,7 @@ A Morning Brief that fails to arrive is **the** product failure: the Founder bui
         Fastify + Kafka consumer                                     (Karan's app)
 ```
 
-Brain does NOT use raw Firebase SDK or APNS APIs directly. Expo's managed workflow is the locked stack (see canon/BRAIN_TECHNICAL.md) — easier OTA updates, single dispatch API, free for Brain's volume.
+Brain does NOT use raw Firebase SDK or APNS APIs directly. Expo's managed workflow is the locked stack (see canon/technical-requirements.md) — easier OTA updates, single dispatch API, free for Brain's volume.
 
 ## Client side (Karan — Expo)
 
@@ -268,10 +268,10 @@ Brain defines channels per push category so users can mute "Alerts" without muti
 
 | Concern | Owner | Reference |
 |---|---|---|
-| Mobile client (permission, channels, handlers) | **Karan** | canon/BRAIN_TECHNICAL.md (push) |
-| Producer (notifications-service) | **Vikram** | canon/BRAIN_TECHNICAL.md (push) |
-| Morning Brief snippet (Haiku) | **Maya** | canon/BRAIN_TECHNICAL.md (synthesis) |
-| Schedule (EventBridge → trigger) | **Jatin** | canon/BRAIN_TECHNICAL.md (scheduling) |
+| Mobile client (permission, channels, handlers) | **Karan** | canon/technical-requirements.md (push) |
+| Producer (notifications-service) | **Vikram** | canon/technical-requirements.md (push) |
+| Morning Brief snippet (Haiku) | **Maya** | canon/technical-requirements.md (synthesis) |
+| Schedule (EventBridge → trigger) | **Jatin** | canon/technical-requirements.md (scheduling) |
 | Receipt monitoring + dead-token cleanup | **Vikram** | BullMQ job |
 | PII redaction in payloads | **Shreya** | `observability` + `security-baseline` |
 

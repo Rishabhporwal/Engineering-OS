@@ -172,10 +172,10 @@ Brain runs this hourly via pg_cron in Supabase. Alert if row count > 10M (someth
 
 | Concern | Owner | Reference |
 |---|---|---|
-| Ingestion connectors (Shopify/Meta/Google/Shiprocket/Klaviyo) | **Maya** | canon/BRAIN_TECHNICAL.md (idempotent UPSERT) |
-| MCP write tools | **Vikram** | canon/BRAIN_TECHNICAL.md (Decision Log discipline) |
-| Lifecycle outbound (calls, WhatsApp, SMS, email) | **Maya** | canon/BRAIN_TECHNICAL.md (frequency cap + dedup) |
-| Notifications fan-out | **Vikram** | canon/BRAIN_TECHNICAL.md |
-| ClickHouse insert dedup | **Maya** | canon/BRAIN_TECHNICAL.md (ReplacingMergeTree) |
+| Ingestion connectors (Shopify/Meta/Google/Shiprocket/Klaviyo) | **Maya** | canon/technical-requirements.md (idempotent UPSERT) |
+| MCP write tools | **Vikram** | canon/technical-requirements.md (Decision Log discipline) |
+| Lifecycle outbound (calls, WhatsApp, SMS, email) | **Maya** | canon/technical-requirements.md (frequency cap + dedup) |
+| Notifications fan-out | **Vikram** | canon/technical-requirements.md |
+| ClickHouse insert dedup | **Maya** | canon/technical-requirements.md (ReplacingMergeTree) |
 
 Related Brain skills: `event-driven-kafka` (Kafka producer dedup keys), `integration-connectors` (per-vendor retry semantics), `security-baseline` (idempotency keys are not auth — never derive them from session tokens).

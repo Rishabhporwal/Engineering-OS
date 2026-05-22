@@ -43,7 +43,7 @@ You MUST complete each phase before proceeding to the next.
 
 **BEFORE attempting ANY fix:**
 
-1. **Read errors carefully** — Brain logs land in OpenSearch (Fluent Bit → OpenSearch per canon/BRAIN_TECHNICAL.md). The exact error message + stack trace + `request_id` + `workspace_id` is almost always already there. Don't paraphrase. Don't skim. Read every line.
+1. **Read errors carefully** — Brain logs land in OpenSearch (Fluent Bit → OpenSearch per canon/technical-requirements.md). The exact error message + stack trace + `request_id` + `workspace_id` is almost always already there. Don't paraphrase. Don't skim. Read every line.
 
 2. **Reproduce consistently**
    - Can you trigger it reliably? In staging? In a specific tenant?
@@ -66,7 +66,7 @@ You MUST complete each phase before proceeding to the next.
    - ingestion-service → vendor: log endpoint, status, retry count
    ```
 
-   Brain's single correlation ID (see canon/BRAIN_TECHNICAL.md) runs across all surfaces — use it. Search OpenSearch for `request_id:abc123` and you see every hop.
+   Brain's single correlation ID (see canon/technical-requirements.md) runs across all surfaces — use it. Search OpenSearch for `request_id:abc123` and you see every hop.
 
 5. **Trace data flow backwards** — see "Backward root-cause tracing" below. When the error is deep in the call stack, the fix usually isn't there. Trace up until you find the original trigger.
 
@@ -156,7 +156,7 @@ Use `logger.error()` not `print()` so it lands in OpenSearch with the `request_i
 
 ### Cross-service tracing in Brain
 
-Brain runs **a single correlation ID** across web BFF → api-gateway → gRPC → service → Kafka → consumer (canon/BRAIN_TECHNICAL.md). Search OpenSearch for one `request_id` and you get the complete chain across all 7 services — a failure in `analytics-service` at hop 5 ties back to the originating tRPC call at hop 1 and the dashboard click at hop 0. For span timing use AWS X-Ray:
+Brain runs **a single correlation ID** across web BFF → api-gateway → gRPC → service → Kafka → consumer (canon/technical-requirements.md). Search OpenSearch for one `request_id` and you get the complete chain across all 7 services — a failure in `analytics-service` at hop 5 ties back to the originating tRPC call at hop 1 and the dashboard click at hop 0. For span timing use AWS X-Ray:
 ```bash
 aws xray get-trace-summaries --start-time $(date -u -d '-1 hour' +%s) --end-time $(date +%s)
 ```
@@ -247,9 +247,9 @@ But: 95% of "no root cause" cases are incomplete investigation.
 
 | Concern | Owner | Reference |
 |---|---|---|
-| Incident debugging | **Jatin** | canon/BRAIN_TECHNICAL.md (incident playbook) |
+| Incident debugging | **Jatin** | canon/technical-requirements.md (incident playbook) |
 | Service-level debugging | each builder for their service | service-specific skill |
-| Cross-service correlation | request_id + workspace_id everywhere | canon/BRAIN_TECHNICAL.md (correlation) |
+| Cross-service correlation | request_id + workspace_id everywhere | canon/technical-requirements.md (correlation) |
 | Postmortems with root cause | **Jatin** + the builder | `blueprints/postmortem.md` |
 
 Related Brain skills: `defense-in-depth-validation` (post-RC, add structural prevention), `verification-before-completion` (verify the fix is real), `observability` (where the logs/traces live).

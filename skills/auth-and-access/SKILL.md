@@ -1,6 +1,6 @@
 ---
 name: auth-and-access
-description: Brain's identity + authorization layer — Supabase Auth (JWT + refresh token) session lifecycle (cookie config, mobile secure-store, token refresh, revocation/invalidate-all) AND role-based access control (Owner/Admin/Analyst/Viewer per workspace + agency multi-workspace) enforced structurally in JWT claims + Postgres RLS + MCP tool scopes, never in an in-process map. Use when wiring web cookie flows (Ananya), mobile token storage (Karan), token refresh, logout, adding a permission, designing an admin endpoint, wiring an MCP tool's scope, giving an agency user cross-brand access, or debugging JWT signature mismatch, refresh storms, cookie domain bugs, leaked tokens.
+description: Brain's identity + authorization layer — Supabase Auth (JWT + refresh token) session lifecycle (cookie config, mobile secure-store, token refresh, revocation/invalidate-all) AND role-based access control (5 level-ordered roles viewer<analyst<agency<operator<owner per workspace + agency multi-workspace) enforced structurally in JWT claims + Postgres RLS + MCP tool scopes, never in an in-process map. Use when wiring web cookie flows (Ananya), mobile token storage (Karan), token refresh, logout, adding a permission, designing an admin endpoint, wiring an MCP tool's scope, giving an agency user cross-brand access, or debugging JWT signature mismatch, refresh storms, cookie domain bugs, leaked tokens.
 ---
 
 # Auth and Access
@@ -122,17 +122,20 @@ After global signout, mobile clients get 401 on the next protected call, clear s
 
 ## Part 2 — Role-based access control
 
-### Brain role model (canonical)
+### Brain role model (canonical — R2: 5 roles, ordered by level)
 
-| Role | Within a workspace, can… |
-|---|---|
-| **Owner** | Everything — approve consent transitions, approve agency invites, change billing, delete the workspace. (Usually the brand's founder.) |
-| **Admin** | Everything except billing + workspace deletion. Approve writebacks, change integration configs, manage members. |
-| **Analyst** | Read all data, trigger ad-hoc reports. Cannot mutate (no budget changes, no audience triggers, no outbound). |
-| **Viewer** | Read dashboards. No PII drill-down. (Read-only stakeholder access.) |
-| **Service Bot** (internal) | Per-task Supabase service role; bypasses RLS for backfills + scheduled jobs only. |
+Brain has **exactly 5 roles**, level-ordered. There is **no `admin` role** — the 4-role owner/admin/analyst/viewer model was explicitly rejected (R2). `requireRole` enforces a **minimum level** on every mutation.
 
-**Agency context:** an agency user has rows in `workspace_members` for each brand they manage, with potentially-different roles. The JWT carries the **current** workspace_id + role for the active session; switching workspaces re-issues the session.
+| Role | Level | Within a workspace, can… |
+|---|---|---|
+| **Viewer** | 1 | Limited reports only. **No PII**, no exports, no actions. (Read-only stakeholder access.) |
+| **Analyst** | 2 | Read dashboards + comment. No approvals, no settings writes, no outbound. |
+| **Agency** | 3 | **Scoped** per-brand read/write as granted by the Owner; **every action tagged + audited**. (Cross-brand agency user.) |
+| **Operator** | 4 | Operational write, approve/reject, lifecycle campaigns, inbox. **Cannot** change billing or delete the brand. |
+| **Owner** | 5 | Full control — billing, integrations, users, costs, **auto-execute enablement**, consent transitions, agency invites, deletion. (Usually the brand's founder.) |
+| **Service Bot** (internal) | — | Per-task Supabase service role; bypasses RLS for backfills + scheduled jobs only. Not a user-assignable role. |
+
+**Agency context:** an agency user (level 3) has rows in `workspace_members` for each brand they manage, with potentially-different roles. The JWT carries the **current** workspace_id + role for the active session; switching workspaces re-issues the session. Every agency action is tagged with the acting agency + audited.
 
 ### Enforce in JWT + RLS — NOT in application code
 
@@ -140,7 +143,7 @@ After global signout, mobile clients get 401 on the next protected call, clear s
 CREATE TABLE workspace_members (
   workspace_id UUID NOT NULL,
   user_id      UUID NOT NULL,
-  role         TEXT NOT NULL CHECK (role IN ('owner','admin','analyst','viewer')),
+  role         TEXT NOT NULL CHECK (role IN ('viewer','analyst','agency','operator','owner')),
   invited_by   UUID,
   joined_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   PRIMARY KEY (workspace_id, user_id)
@@ -162,26 +165,34 @@ await db.query("SELECT set_config('app.workspace_id', $1, true), set_config('app
 Application code does NOT compute "can the user do this?" — it asserts the role and lets RLS / service logic enforce.
 
 ```typescript
-function requireRole(roles: Array<'owner'|'admin'|'analyst'|'viewer'>) {
+// Roles are LEVEL-ORDERED (R2). requireRole enforces a MINIMUM level — never array membership.
+const ROLE_LEVEL = { viewer: 1, analyst: 2, agency: 3, operator: 4, owner: 5 } as const;
+type Role = keyof typeof ROLE_LEVEL;
+
+function requireRole(minRole: Role) {
   return t.middleware(({ ctx, next }) => {
-    if (!roles.includes(ctx.role)) throw new TRPCError({ code: 'FORBIDDEN', message: `Required role: ${roles.join('|')}` });
+    if (ROLE_LEVEL[ctx.role as Role] < ROLE_LEVEL[minRole])
+      throw new TRPCError({ code: 'FORBIDDEN', message: `Required role ≥ ${minRole}` });
     return next();
   });
 }
-export const ownerProcedure   = t.procedure.use(requireRole(['owner']));
-export const adminProcedure   = t.procedure.use(requireRole(['owner','admin']));
-export const analystProcedure = t.procedure.use(requireRole(['owner','admin','analyst']));
-export const viewerProcedure  = t.procedure.use(requireRole(['owner','admin','analyst','viewer']));
+export const viewerProcedure   = t.procedure.use(requireRole('viewer'));   // level ≥ 1
+export const analystProcedure  = t.procedure.use(requireRole('analyst'));  // level ≥ 2
+export const agencyProcedure   = t.procedure.use(requireRole('agency'));   // level ≥ 3 (scoped + tagged)
+export const operatorProcedure = t.procedure.use(requireRole('operator')); // level ≥ 4
+export const ownerProcedure    = t.procedure.use(requireRole('owner'));    // level 5
 
-// Usage — procedure declares the role; RLS is the structural bottom
+// Usage — procedure declares the MINIMUM role; RLS is the structural bottom
 export const adsRouter = router({
   spend: router({
     list:   analystProcedure.query(/* analyst+ reads */),
-    adjust: adminProcedure.input(adjustInput).mutation(/* admin+ writes */),
+    adjust: operatorProcedure.input(adjustInput).mutation(/* operator+ writes */),
   }),
   consent: router({ grant: ownerProcedure.input(consentInput).mutation(/* owner-only */) }),
 });
 ```
+
+**`requireRole` on every mutation** is non-negotiable (canon §15 Definition of Done).
 
 If a future bug skips the middleware, RLS + the Decision Log audit still catch it (`defense-in-depth-validation`).
 
@@ -193,7 +204,7 @@ Each MCP write tool declares the role it requires; external partner keys carry s
 mcp.registerTool({ name: 'analytics.waterfall.compute.v2', inputSchema: WaterfallV2Input,
   requiredScope: 'analytics:read', requiredRole: 'analyst', handler: async (i, ctx) => { /* ... */ } });
 mcp.registerTool({ name: 'ads.spend.adjust',
-  requiredScope: 'ads:write', requiredRole: 'admin', handler: async (i, ctx) => { /* ... */ } });
+  requiredScope: 'ads:write', requiredRole: 'operator', handler: async (i, ctx) => { /* ... */ } });
 ```
 
 ### Agency multi-workspace pattern
@@ -226,19 +237,19 @@ This is also what makes the system reviewable for SOC 2 T1 (Phase 4).
 ## Best practices
 
 - **Least privilege** — start every new role at Viewer, escalate only on need; review role grants quarterly.
-- **Role hierarchies** (`admin` ⊃ `analyst` ⊃ `viewer`) reduce middleware duplication; cache role-check decisions per request (in `ctx`), never across requests.
+- **Role hierarchies are level-ordered** (`owner` 5 ⊃ `operator` 4 ⊃ `agency` 3 ⊃ `analyst` 2 ⊃ `viewer` 1) — a single `requireRole(minRole)` level check replaces N membership arrays; cache role-check decisions per request (in `ctx`), never across requests.
 - **Separate authN from authZ** — Supabase Auth answers "who"; RBAC answers "can they."
 
 ## Brain wiring
 
 | Concern | Owner | Reference |
 |---|---|---|
-| api-gateway JWT verification + refresh endpoint | **Vikram** | canon/BRAIN_TECHNICAL.md (auth) |
-| Next.js BFF cookie flow + agency switch | **Ananya** | canon/BRAIN_TECHNICAL.md (BFF + auth) |
-| Mobile secure-store + refresh | **Karan** | canon/BRAIN_TECHNICAL.md (token storage) |
-| Role taxonomy + middleware | **Vikram** + **Shreya** | canon/BRAIN_TECHNICAL.md (auth) |
-| Postgres RLS policy review | **Shreya** + Aryan | canon/BRAIN_TECHNICAL.md (multi-tenancy) |
-| MCP tool scope catalogue | **Vikram** + **Maya** | canon/BRAIN_TECHNICAL.md (scopes) |
-| Revocation, audit, SOC 2 prep | **Shreya** + Jatin | canon/BRAIN_TECHNICAL.md (audit) |
+| api-gateway JWT verification + refresh endpoint | **Vikram** | canon/technical-requirements.md (auth) |
+| Next.js BFF cookie flow + agency switch | **Ananya** | canon/technical-requirements.md (BFF + auth) |
+| Mobile secure-store + refresh | **Karan** | canon/technical-requirements.md (token storage) |
+| Role taxonomy + middleware | **Vikram** + **Shreya** | canon/technical-requirements.md (auth) |
+| Postgres RLS policy review | **Shreya** + Aryan | canon/technical-requirements.md (multi-tenancy) |
+| MCP tool scope catalogue | **Vikram** + **Maya** | canon/technical-requirements.md (scopes) |
+| Revocation, audit, SOC 2 prep | **Shreya** + Jatin | canon/technical-requirements.md (audit) |
 
 Related Brain skills: `security-baseline` (broader posture; this is its OWASP A01 deep dive), `defense-in-depth-validation` (the four-layer `workspace_id` pattern backstopping every check), `api-traffic-patterns` (refresh-storm rate limiting), `mcp-protocol` (tool scopes), `database-design` (RLS + `app.workspace_id` GUC).

@@ -13,14 +13,14 @@ Brain's data layer:
 | **ClickHouse Cloud** | OLAP: raw_<source>_<entity>_local, orders_local, ads_local, shipments_local, daily_metrics_local, cohort_aggregates_local, first_product_attribution_local, pincode_reliability_local, customer_states_local | analytics-service (Maya); ingestion-service raw writes (Maya) |
 | **CDC** | Postgres → Kafka via Debezium on MSK Connect — for recent OLTP mirror in CH if needed | Jatin |
 
-**No service queries another service's database directly.** Cross-service data flows via published Kafka events or gRPC APIs (see canon/BRAIN_TECHNICAL.md).
+**No service queries another service's database directly.** Cross-service data flows via published Kafka events or gRPC APIs (see canon/technical-requirements.md).
 
 ## PostgreSQL (Supabase) — OLTP
 
 ### Naming Conventions
 - Tables: `snake_case`, plural (`<entities>`, `<entity>_<relation>`)
 - Primary keys: `id` (UUID v7 preferred, `bigserial` if hot-write loop)
-- Tenant column: `<tenant_id>` (UUID, NOT NULL, indexed) — on every business table; column name set per-project in `memory/business-context.md` (e.g., `brand_id`, `org_id`, `account_id`)
+- Tenant column: **`workspace_id`** (UUID, NOT NULL, indexed) — on every workspace-scoped business table. Brain's tenant = workspace = brand = billing unit; the `<tenant_id>` placeholder in the generic templates below is always `workspace_id` in Brain.
 - Timestamps: `created_at`, `updated_at` (timestamptz), default `now()`
 - Soft delete: `deleted_at` (timestamptz, nullable) when business needs it; otherwise hard delete
 
@@ -165,15 +165,7 @@ WHERE orders.<tenant_col> = $1
 
 Store `ordered_at` as `timestamptz`. Never store `text` ISO strings for time-bucketed queries — you lose the index and you lose timezone math.
 
-### SQLite (dev/Speed Mode)
-```sql
-SELECT COALESCE(SUM(net_revenue), 0)
-FROM orders
-WHERE <tenant_col> = ?
-  AND ordered_at >= datetime('now', 'start of day', ?)        -- ?2 = e.g. '-5 hours -30 minutes' from tenants.timezone
-  AND ordered_at <  datetime('now', 'start of day', ?, '+1 day');
-```
-Resolve the offset from the tenant's IANA timezone in application code (Luxon / date-fns-tz / `Intl.DateTimeFormat`) — SQLite has no timezone database.
+**Brain default: IST (`Asia/Kolkata`).** India-first by sequencing, but the timezone is always read from the workspace's region (RegionAdapter), never hardcoded — UAE/GCC workspaces resolve to their own zone. "Today's revenue" is always bucketed in the workspace's local day, expressed as a UTC range. (Brain's stack is Postgres + ClickHouse only — no SQLite; the patterns below are the two engines Brain runs.)
 
 ### ClickHouse
 ```sql
@@ -219,7 +211,7 @@ Rules:
 - Partition by month (`toYYYYMM`) for time-series tables. Daily partitions for >100M rows/day.
 - Use `LowCardinality(String)` for enum-like columns (status, country, channel)
 - Use `Enum8` for fixed sets
-- `Float64` for currency (yes, even though it's lossy — match upstream)
+- **Money = `Int64` minor units (paisa) + a `currency_code` column — NEVER `Float64`/`Decimal` for money** (Brain canonical fact; float money is a code-review blocker). Ratios (MER/aMER/AOV) may be `Float64`.
 
 ### Materialized Views (the analytics pattern)
 ```sql
@@ -242,10 +234,10 @@ GROUP BY <tenant_id>, date;
 - Use `PREWHERE` for very selective filters
 - For top-N: `ORDER BY ... LIMIT N` is cheap because of sort key
 
-## Cache Layer (Redis Upstash)
-- Cache key: `<entity>:{<tenantId>}:{<key>}` — never user-id-keyed without tenant scope
-- TTL: 5 min for dashboards, 1 hour for static lookups
-- Invalidation: explicit, not TTL-only (publish to Kafka `<app>.cache.invalidate.<entity>` topic)
+## Cache Layer (Redis — ElastiCache)
+- Cache key: `<entity>:{workspace_id}:{<key>}` — workspace-scoped; never user-id-keyed without tenant scope
+- TTL: ~60s for hot metric cache, 5 min for dashboards, 1 hour for static lookups
+- Invalidation: explicit, not TTL-only (invalidate on write; see `caching-strategy`)
 
 ## When You Hit a Wall
 1. `EXPLAIN ANALYZE` the slow query
@@ -257,11 +249,11 @@ GROUP BY <tenant_id>, date;
 
 | Concern | Owner | Reference |
 |---|---|---|
-| Schema + migrations for core-service | **Vikram** | canon/BRAIN_TECHNICAL.md (OLTP design) |
-| RLS policy review | **Shreya** + Aryan | canon/BRAIN_TECHNICAL.md (multi-tenancy) |
-| Connection pooler config | **Jatin** + Vikram | canon/BRAIN_TECHNICAL.md (connection) |
+| Schema + migrations for core-service | **Vikram** | canon/technical-requirements.md (OLTP design) |
+| RLS policy review | **Shreya** + Aryan | canon/technical-requirements.md (multi-tenancy) |
+| Connection pooler config | **Jatin** + Vikram | canon/technical-requirements.md (connection) |
 | Slow query alerting | **Jatin** | `observability` |
-| Memory Layer (pgvector) | **Maya** | canon/BRAIN_TECHNICAL.md |
+| Memory Layer (pgvector) | **Maya** | canon/technical-requirements.md |
 | pg_cron job inventory | **Jatin** | scheduled tasks doc |
 
 Related Brain skills: `sql-query-optimization` (query-shape rules), `clickhouse-olap` (deep CH patterns), `security-baseline` (RLS + secret handling), `idempotency-handling` (key TTL + cleanup), `auth-and-access` (`workspace_id` from JWT into the `app.workspace_id` GUC), `api-traffic-patterns` (cursor pagination).

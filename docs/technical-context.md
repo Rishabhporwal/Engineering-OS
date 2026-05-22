@@ -1,406 +1,184 @@
-# Brain — Technical Context (Agent Primer)
+# Brain — Technical Context (condensed primer)
 
-**Read this before writing code, designing a service, or reviewing a PR.** Every agent loads this at the start of every task. Condensed, load-bearing extract from `canon/BRAIN_TECHNICAL.md`. When in doubt, the original document wins.
-
-> **⚠️ BUSINESS CONTEXT RESET.** This is now a **technical engineering team with no business context**. The product's business/domain (market, customers, domain economics, pricing, compliance regime, product surfaces) is **undefined — being re-fed**. The **technical architecture, stack, and patterns below stand** (they're engineering, not business), but anything below that reads as a *domain/business* assumption (e.g., specific compliance rules, the "the primary product surface (RESET)", domain economics, "the moat") is **stale/illustrative** until the business canon is re-fed. Do **not** assume business specifics — challenge them back to the Founder.
+> **Read this before writing code, designing a service, or reviewing a PR.** Every agent loads it at the start of every task. It is the agent-loadable condensation of `canon/technical-requirements.md` (Consolidated v2.1) + `canon/TECH/00–17`. **The canon folder is the only source of truth** — when this primer and the canon disagree, the canon wins (re-read `canon/technical-requirements.md` and the relevant `canon/TECH/NN_*.md`).
+> Updated 2026-05-23.
 
 ---
 
-## Stack snapshot
+## 0. The four obligations (everything serves these)
+
+1. **Truth** — every number is auditable, reproducible, traceable to source events. **LLMs never invent numbers.**
+2. **Memory** — every recommendation, action, response, and outcome compounds into the **Decision Log** + **Brand Fingerprint** (the moat).
+3. **Execution** — Brain can recommend → queue → execute → reverse commerce actions, with guardrails.
+4. **Profit quality** — surfaces privilege CM2/CM3, recovered revenue, reduced RTO/waste, retained customers over vanity metrics.
+
+The single most important invariant: **most decisions run at SQL/ML cost; LLMs enter only at the human-language boundary.** This is what makes %-of-GMV pricing survive.
+
+## 1. Build the contracts from day one; run the infra at the smallest footprint (TECH/00)
+
+The **mature target stack** (Phase 3–4) is the destination. **Do not build all of it on day one.** Build the *invariants/contracts* now; graduate each *heavy infra layer* only when its trigger fires.
+
+**Non-negotiable from day one (retrofitting these is brutal):**
+1. `workspace_id` on every row/event/cache-key/log + Postgres RLS + ClickHouse query-gateway.
+2. **Integer minor-units money** (BIGINT in PG, Int64 in CH) + `currency_code`. **Never float/NUMERIC for money.**
+3. **Decision Log** append-only schema (`ai.decision_log`).
+4. **Region-adapter interface** (even with only India implemented).
+5. **Metric registry** with TS↔Python parity (one definition per metric).
+6. **Cost-routing `@paradigm`** discipline + per-workspace LLM caps.
+7. **OLTP/OLAP split** (Postgres + ClickHouse) — the analytics product needs OLAP from the first dashboard.
+8. **Proto-defined gRPC contracts** for every bounded context (makes the later service split mechanical).
+9. **Idempotency** on every connector write + mutating endpoint.
+10. **Mobile Morning Brief** as the primary surface (Phase 1).
+
+## 2. Stack snapshot (mature target)
 
 | Layer | Locked choice |
 |-------|--------------|
-| **Web frontend** | Next.js 14+ (App Router) + React 18 + TypeScript |
-| **Mobile** | React Native + Expo (PWA fallback for Phase 0–1; native via EAS Build Phase 1+) |
-| **Node services** | Node 20 + Fastify + tRPC + Prisma + grpc-js + KafkaJS + Zod |
-| **Python services** | Python 3.12 + FastAPI + grpcio + asyncpg + clickhouse-driver + aiokafka + httpx + structlog + Anthropic SDK |
-| **API style (internal)** | gRPC + Protobuf via **buf** (single source of truth for all internal contracts AND MCP tool schemas) |
-| **API style (external)** | tRPC (web/mobile ↔ api-gateway) |
-| **OLTP** | Supabase Postgres (managed RDS, AWS) |
-| **OLAP** | ClickHouse Cloud (or self-hosted on EKS via Altinity Operator) |
-| **Streaming** | AWS MSK (Kafka) + Glue Schema Registry + Avro |
-| **Cache** | ElastiCache Redis (cluster mode) |
-| **Object storage** | S3 (encryption, versioning, lifecycle policies, cross-region replication Phase 4) |
-| **Container orchestration** | EKS + Karpenter (spot autoscaling) + ArgoCD (GitOps) |
-| **IaC** | AWS CDK (**TypeScript**) — *NOT Terraform, NOT Pulumi* |
-| **Monorepo** | Turborepo (TS) + uv workspaces (Python) |
-| **Package manager** | pnpm (TS) + uv (Python) |
-| **CI/CD** | GitHub Actions (lint → typecheck → test → build → ECR push) → ArgoCD sync |
-| **LLMs** | Claude **Sonnet 4.6** (synthesis) + Claude **Haiku 4.5** (bounded NL) |
-| **Mobile build** | EAS Build + EAS Submit + EAS Update (OTA for JS-only) |
+| **Monorepo** | Turborepo + pnpm (TS) · uv workspace (Python) · **Buf** (proto→TS+Python codegen) |
+| **Web** | Next.js 14 App Router · tRPC client · TanStack Query · nuqs · Redux Toolkit · shadcn/Tailwind · Recharts + Visx |
+| **Mobile** | React Native + Expo · Expo Router · Tamagui · victory-native · expo-secure-store · Expo Push · EAS |
+| **Edge/API** | Fastify + tRPC (BFF) · **MCP server in api-gateway** · Zod |
+| **Internal** | gRPC over Protobuf (buf) · Pydantic (Python) |
+| **OLTP** | Postgres (Supabase) + pgvector |
+| **OLAP** | ClickHouse Cloud |
+| **Cache** | Redis (ElastiCache) |
+| **Object store** | S3 |
+| **Events** | Amazon MSK (Kafka) + Glue Schema Registry (Avro) + Debezium CDC |
+| **Intelligence** | Anthropic **Claude Sonnet 4.6** (synthesis) + **Haiku 4.5** (bounded NL) · Prophet/sklearn/lifetimes/lifelines/XGBoost/statsmodels |
+| **Infra** | EKS + Karpenter (Fargate early) · AWS CDK (TypeScript) · GitHub Actions → ECR → ArgoCD · **ap-south-1** |
+| **Observability** | OpenTelemetry → CloudWatch/X-Ray · Sentry · PostHog · OpenSearch (logs) |
+| **Secrets** | AWS Secrets Manager + KMS (envelope encryption of vendor tokens) |
 
-> Stack is **LOCKED.** Use [`tech-stack-evaluation`](../skills/tech-stack-evaluation/SKILL.md) *only* when adding a new layer not in the stack (e.g., picking the AI calling vendor — Bolna vs Vapi vs native).
+> Stack is **LOCKED** (canonical resolutions in TECH/00 §5). Use [`tech-stack-evaluation`](../skills/tech-stack-evaluation/SKILL.md) *only* for a layer not in the stack (e.g., the AI-calling vendor — Bolna/Vapi/native, TECH/11 §5). Not Terraform/Pulumi; not Nx; not Zustand; not a separate vector DB.
 
----
+## 3. The 7 backend bounded contexts — phased into deployables (TECH/00 §3, R11)
 
-## The 7 microservices
+The system is **always 7 logically-separate backend bounded contexts** (+ web + mobile), each its own DDD context with its own gRPC contract in `protos/` from day one. What changes by phase is **how many deployables they run as** — *logical separation now, physical separation later*.
 
-Each is independently deployable, horizontally scalable, owns its own database (no service touches another's), and is **DDD-structured by bounded context** (see [`domain-driven-design`](../skills/domain-driven-design/SKILL.md) — never controllers/services/models). The topology is fixed at these 7 services (background jobs, cron, realtime, and long-running workflows are handled *inside* these services — Kafka consumers, the daily tick, EventBridge Scheduler — not as separate services).
+| # | Service | Lang | Owns |
+|---|---------|------|------|
+| 1 | `api-gateway` | TS/Fastify | BFF: tRPC (web+mobile) + **MCP server**; auth + multi-tenancy + rate-limit choke point; gRPC fan-out. **No business logic / no AI orchestration here.** |
+| 2 | `core-service` | TS/Fastify | Orgs, workspaces, users, roles, settings, costs, goals, integrations registry, consent, audit, **billing/metering**. OLTP. |
+| 3 | `ingestion-service` | Python | Connector framework, sync, webhooks, canonicalization, raw archive, integration health. |
+| 4 | `analytics-service` | Python | ClickHouse materializations, metric engine, RFM, lifecycle states, LTV, attribution, regional math, **Decision Log writes**. |
+| 5 | `intelligence-service` | Python | Memory Layer (pgvector), the 15 AICMO/AICOO/AICFO agents, anomaly, forecasts, LLM orchestration, internal MCP tools. |
+| 6 | `lifecycle-service` | Node (orchestration) + Python (RFM/LLM) | **[MOAT]** Audience builder, channel routers, AI calling, compliance engine, inbound inbox, recovered-revenue attribution. Phase-2 build. |
+| 7 | `notifications-service` | TS/Fastify | Alerts, **Morning Brief assembly + delivery**, digests, push, exports, outbound webhooks. |
 
-| # | Service | Lang | Owner | Owns | DB |
-|---|---------|------|-------|------|----|
-| 1 | `api-gateway` | TS/Fastify | Vikram | BFF: tRPC (web/mobile) + MCP server. Auth + multi-tenancy + rate limit. gRPC fan-out. **No business logic, no AI orchestration here.** | — |
-| 2 | `core-service` | TS/Fastify | Vikram | Workspaces, users, integrations, settings, goals, costs, campaigns, festivals, permissions. OLTP. | PostgreSQL |
-| 3 | `ingestion-service` | Python | Maya | Connectors (Shopify/Meta/Google/Shiprocket/Klaviyo/…). OAuth, sync, canonicalize, produce to Kafka. | PostgreSQL + S3 |
-| 4 | `analytics-service` | Python | Maya | ClickHouse query gateway. Materialized views. KPI/forecasting/attribution/anomaly. **Isolated from OLTP.** | ClickHouse |
-| 5 | `intelligence-service` | Python | Maya | The 15 AICMO/AICOO/AICFO agents. Daily tick. Claude calls. RAG + Memory Layer. | PostgreSQL + pgvector |
-| 6 | `notifications-service` | TS/Fastify | Vikram | Email, SMS, push, in-app, WhatsApp (BSP). Templates + delivery + receipts. | PostgreSQL |
-| 7 | `lifecycle-service` | Python | Maya | **[MOAT]** RFM scoring, audience builder, channel routers, AI calling, compliance engine, inbox. | PostgreSQL |
+*(Plus `web` (Next.js, Ananya) + `mobile` (RN+Expo, Karan) — presentation only.)*
 
-*(Plus `frontend-web` (Next.js, Ananya) and `mobile` (RN+Expo, Karan) — presentation only.)*
+**Boundary resolution (R4):** `lifecycle-service` (revenue execution) is **distinct** from `notifications-service` (alerts/digests/push/exports).
 
-**Communication rules (contract-first):** frontend → **api-gateway** only · api-gateway → services via **gRPC** · services → services via **Kafka events** (versioned, e.g. `campaigns.created.v1`, + DLQ + retries). Services **never** call each other via REST and **never** share a database.
+**Phased deployables:** **Phase 0–1** = **3 backend deployables** — `edge` (Node: api-gateway + core) + `data` (Python: ingestion + analytics + intelligence) + web + mobile — on **ECS Fargate**, **MSK Serverless** (+ transactional outbox), managed ClickHouse, single region. **Phase 2–3** = split into the full 7 services; add `lifecycle-service`; migrate to **EKS + Karpenter**, provisioned **MSK** + Debezium CDC. Because gRPC contracts exist from day one, splitting is mechanical (flip in-process call → network call), not a rewrite. Graduate each heavy layer only when its **trigger** fires (TECH/00 §3.3).
 
-**Language split discipline:** TypeScript/Fastify for I/O-heavy (gateway, core, notifications, web). Python/FastAPI for analytics/ML/agents (ingestion, analytics, intelligence, lifecycle).
+**Communication (contract-first):** frontend → **api-gateway** only · gateway → services via **gRPC** · service ↔ service via **Kafka** events (versioned `.vN` + DLQ + retries). Services **never** call each other via REST and **never** share a database.
 
----
+## 4. DDD by bounded context (mandatory — code-review blocker if violated)
 
-## Enterprise architecture invariants (v0.7.0)
+Every backend service is organized **by domain**, never by technical layers. Layering inside each service:
+`bootstrap/` (server wiring, DI, config, health probes) · `domain/` (entities, value-objects, aggregates, domain events, policies — pure) · `application/` (use-cases / commands / queries (CQRS), orchestration) · `infrastructure/` (repositories, gRPC clients, Kafka producers/consumers, DB, external APIs) · `interfaces/` (gRPC handlers / tRPC routers / Kafka consumers / HTTP). **A `controllers/`-style technical-layer folder is a blocker.** See [`domain-driven-design`](../skills/domain-driven-design/SKILL.md).
 
-The full doctrine is in [`architecture-patterns`](../skills/architecture-patterns/SKILL.md) + [`domain-driven-design`](../skills/domain-driven-design/SKILL.md). The non-negotiables:
+## 5. Multi-tenancy & RBAC — `workspace_id` is law (enforced at 4 layers)
 
-1. **DDD by bounded context.** Every backend service: `bootstrap / domain/<context>/{entities,services,repositories,value-objects,dto,validators,mappers,events,policies,exceptions,factories,aggregates} / application/{commands,queries,workflows,orchestrators,handlers,use-cases} / infrastructure / interfaces/{rest,grpc,consumers,producers,websocket,jobs} / observability / security / testing`. **Never** controllers/services/models technical layers.
-2. **One service = one domain = one database.** No service reads another service's DB. Cross-service data via gRPC (sync) or Kafka (async) only.
-3. **Contract-first.** `proto/` (buf) is the single source of truth; never duplicate contracts. Kafka topics versioned + DLQ + retries.
-4. **Independent deployability + horizontal scale.** Every service: OTel instrumentation, metrics, tracing, structured logging, retries, circuit breakers, health checks. K8s-ready (EKS + ArgoCD).
-5. **Separation of concerns (hard rules):** no business logic in frontend; no AI orchestration in api-gateway; no analytics logic in frontend-facing services; infra (CDK) separate from domain logic.
-6. **Topology is the locked 7 services.** Realtime (WS/SSE), background jobs, cron, and long-running workflows live *inside* those services (Kafka consumers, the daily tick, EventBridge Scheduler) — NOT as separate realtime/worker/scheduler/workflow-orchestrator services.
-7. **Stack stays locked** (the moat + the Founder's decisions): AWS CDK + ArgoCD (not Terraform/Helm); CloudWatch/OpenSearch/X-Ray/Sentry/PostHog with OTel as the instrumentation API (not Prometheus/Grafana/Loki/Tempo); Fastify with DDD on top (not NestJS); Redux Toolkit (not Zustand); pgvector (not a separate vector DB); Turborepo only (not Nx). Single-Primitive Rule + cost-routing + compliance (per business canon, RESET) all still apply.
+Hierarchy: **Organisation → Brand/Workspace → Store/Channel/Integration → records.** Workspace = tenant = brand = billing unit.
 
----
+1. **JWT** (Supabase) carries `user_id`, `active_workspace_id`, `role`, accessible-workspace list.
+2. **api-gateway** validates JWT; propagates `workspace_id`/`user_id`/`request_id` via gRPC metadata; `requireRole(ctx, ws, minRole)` on **every mutation**.
+3. **Postgres RLS** on every workspace-scoped table (`workspace_id = current_setting('app.workspace_id')`).
+4. **ClickHouse query gateway** (`pylibs/brain_clickhouse`) rejects any query lacking a `workspace_id` predicate. Redis keys + S3 paths workspace-scoped. Kafka consumers assert `workspace_id` from the envelope.
 
-## Data layer — `workspace_id` is law
+**5 canonical roles (R2):** `viewer`(1) → `analyst`(2) → `agency`(3, scoped+tagged) → `operator`(4) → `owner`(5). Approval matrix per action class enforced in `application/` use-cases. Auth: email/password, magic link, Google OAuth, SSO/SAML + SCIM (enterprise). Web: HttpOnly cookies. Mobile: refresh token in expo-secure-store, access token in memory.
 
-### Supabase Postgres (OLTP)
-Schemas: `auth` (Supabase-managed), `core`, `notifications`, `ai`, `memory` (pgvector).
+## 6. Data model
 
-**Rules:**
-- `workspace_id` is the **first column** of the primary key on every workspace-scoped table.
-- **Row-Level Security (RLS) on every table.** Set `app.workspace_id` via `SET LOCAL` per request.
-- **Every mutation endpoint** calls `requireRole(ctx, workspaceId, minimumRole)`. Role checks on read are optional; on write they are **mandatory**.
-- OAuth tokens stored **AES-256-GCM** with per-brand key from AWS Secrets Manager. Plaintext tokens never in logs.
-- Migrations via Prisma Migrate (TS) or Alembic (Python). **2 reviewers required** for migrations, proto changes, infra, and LLM-cost-impacting changes.
-- Pooling: PgBouncer transaction mode (10K client → 200 backend connections).
+### Postgres (OLTP) — bounded-context schemas (R3)
+`core`, `ai`, `lifecycle`, `support`, `billing`, `audit` (+ Supabase `auth`). Every workspace-scoped table has `workspace_id` + RLS. **Money = BIGINT minor units + `currency_code`.** Historical facts live in ClickHouse; Postgres keeps a **90-day hot mirror** for fast joins + webhook reconciliation. OAuth tokens via **KMS envelope encryption** (only a `credential_secret_arn` in `core.integrations`; plaintext never logged).
+
+**`ai.decision_log` (the moat)** — written before any recommendation is displayed; updated on approve/edit/execute/reverse; nightly 7d/30d outcome backfills. Key fields: `workspace_id, agent_group, agent_name, decision_type, action_type, status` (proposed/approved/rejected/edited/queued/auto_executed/blocked/executed/reversed/failed/observed), `priority_score, confidence, risk_level, reversibility, channel, title, explanation, input_snapshot, evidence_refs, proposed_action, expected_impact, user_response, executed_action, reversal, outcome_7d, outcome_30d, attributed_revenue_minor, attributed_cm2_minor, recovered_revenue_*_minor, learning_note`. **A workflow that cannot write here is not a Brain action.** Memory: `ai.brand_fingerprint` (16-dim daily vector), `ai.condition_outcome` (pgvector), `ai.cross_brand_pattern` (k≥5 anonymity), `ai.auto_execute_policies/log`. Billing: `billing.gmv_meter` (placed/realized/billable GMV), `billing.invoices`, `billing.usage_passthrough`, `billing.plan`.
 
 ### ClickHouse (OLAP)
-Schemas: `raw.*` (infinite retention), `agg.*` (materialized aggregations).
-
-**Rules:**
-- Primary key ordering: `(workspace_id, date/event_timestamp, entity_id)` for fast range scans.
-- Timestamps: `DateTime64(3, 'UTC')` or `DateTime64(3, 'Asia/Kolkata')` — **never ambiguous timezone**.
-- Partition by month: `PARTITION BY toYYYYMM(date)`.
-- `LowCardinality` codec for high-cardinality categorical fields (platform, status, payment_method).
-- **Query gateway (`pylibs/brain_clickhouse`) rejects any query missing a `workspace_id =` predicate.**
-- `max_execution_time = 30s` for dashboard reads. Queries scanning >100M rows without LIMIT are rejected.
-- Cluster: 3 shards × 1 replica (Phase 0–1) → 6 shards (Phase 3).
+`ReplicatedMergeTree` family; `Distributed` over `cityHash64(workspace_id)`; ordering key **leads with `workspace_id`**; `ReplacingMergeTree(version)` for late-data dedup (read with `FINAL`); `LowCardinality(String)` for repeated values; money = Int64 minor units. Raw facts (`raw_orders`…, append-only mirror, ZSTD + SHA-256), canonical facts (`orders`, `line_items`, `order_costs`…), derived aggregates (`daily_metrics` master, `customer_states`, `cohort_aggregates`, `pincode_reliability`, `festival_lift_factors`…). MVs for simple aggregates; scheduled Python rollups for join-heavy metrics (MER/aMER/CM2). Query gateway rejects any query missing `workspace_id =`. `max_execution_time = 30s` for dashboard reads.
 
 ### Redis (ElastiCache)
-- Hot metric cache (60s TTL, ~99% hit rate target).
-- Session cache (30 min TTL).
-- Rate limits (sliding window, 70s TTL).
-- Idempotency keys (24 h TTL).
-- Cluster: 3 shards initially → 12.
+Hot metric cache (~60s TTL), sessions, rate-limit (sliding window), idempotency keys (24h TTL), feature flags. A cached metric is an LLM/ClickHouse call you didn't pay for (cost lever).
 
 ### S3 lifecycle
-- Raw payloads: 90 d → Glacier → delete 7 y.
-- Exports: 30 d.
-- Kafka tiered storage backend.
-- Call recordings: 1 y, per-brand KMS key.
-- Logical backups: 90 d.
+Raw payloads 90d → Glacier → delete 7y; exports 30d; Kafka tiered storage; call recordings 1y per-brand KMS key; audit mirror.
 
----
+## 7. Event spine — Kafka (MSK)
 
-## Kafka — async backbone
+Topic `<domain>.<entity>.<event>.v<n>`; **partition key = `workspace_id`** (per-workspace ordering, required for version-based dedup); Avro schemas in `protos/events/` + Glue Schema Registry. Standard envelope: `event_id, event_type, workspace_id, occurred_at, produced_at, producer_service, trace_id, schema_version, idempotency_key, payload`. **Retention:** raw integration + Decision Log topics = **infinite** (MSK tiered storage → S3); transient (sync/digest) = 30–90d. Backward-compatible changes within `.vN`; breaking → `.v(n+1)` + dual-write. Every consumer idempotent (envelope `idempotency_key` + ClickHouse version dedup) + DLQ + replay tool. **Phase 0–1:** MSK Serverless + transactional outbox; Debezium CDC + provisioned MSK graduate per TECH/00 triggers.
 
-- **Platform:** AWS MSK + AWS Glue Schema Registry + Avro.
-- **Naming:** `<domain>.<entity>.<event_type>.v<version>` (e.g., `integrations.orders.v1`, `intelligence.decision.logged.v1`).
-- **Partition key:** **always `workspace_id`** → guarantees per-workspace ordering.
-- **Retention:**
-  - `integrations.*` — infinite (S3 tiered storage). Every downstream materialization is replayable.
-  - `operations.*`, `notifications.*` — 30 days.
-  - `intelligence.decision.logged.v1` — **forever**. This is the Decision Log; the moat.
-- **Exactly-once:** Idempotent producer (`enable.idempotence=true`) + transactional consumer groups with offset commits in the **same Postgres transaction** as the side-effect.
-- **Schema evolution:** backward-compatible by default. Breaking changes require new `.v2` topic + dual-publish window.
+## 8. Metric engine & region adapters
 
----
+**Metric registry is the single source of truth** — one definition computed identically in TS (`packages/lib-metrics`) and Python (`pylibs/brain_metrics`); **CI enforces parity.** No metric defined twice; LLMs never produce metric numbers. **GST/VAT extracted per line item by SKU slab** via `RegionAdapter.extract_net_revenue()` — India GST 2.0 slabs **0/5/18/40** (never a single blended rate). Realized/Delivered Revenue is the honest number **and the billing base**.
 
-## AI / LLM layer
+**`RegionAdapter` interface** (TECH/04): `extract_net_revenue` (per-SKU tax), `classify_payment_method`, `is_high_risk_payment`, `map_shipment_status`, `compute_logistics_cost`, `normalize_postal_code`, `postal_code_metadata`, `get_seasonal_events`, `tax_reconciliation_report`, currency/timezone. `get_adapter(region)` in `pylibs/brain_regional`. **India implemented first** (GST 2.0 per-SKU, INR lakh/crore, COD/prepaid fees, RTO cost model + state machine, pincode reliability ≥5 shipments, NDR, festival calendar + learned lift, DLT/NCPR/9am–9pm/WhatsApp opt-in). **UAE/GCC = Phase 4** (per-country VAT, AED/SAR, Ramadan/Eid, Arabic/RTL, Tabby/Tamara, cross-border duties, PDPL). Adding a region = new adapter + seasonal seed + tests; the metric engine/frontend/intelligence/notifications need **zero** changes.
 
-- **Primary:** Claude **Sonnet 4.6** for strategic synthesis (the primary product surface (RESET) Synthesizer, multi-step reasoning).
-- **Secondary:** Claude **Haiku 4.5** for narrow tasks, classification, bounded NL understanding.
-- **Prompt caching:** Anthropic prompt caching is the single biggest cost lever — **enable for Brand Fingerprint queries, decision log context, repeated context vectors. Aim for ~30× reduction.**
-
-### Cost-routed paradigm (the engineering invariant)
-
-| Paradigm | Relative cost | When to use |
-|----------|--------------|-------------|
-| 1. **SQL** | 1 | Any deterministic computation over structured data. |
-| 2. **ML (sklearn, Prophet, pgvector)** | ~100 | When patterns exist but rules don't. |
-| 3. **Haiku** | ~1,000 | Bounded natural-language understanding (intent classification, summarization of one document). |
-| 4. **Sonnet** | ~10,000 | Multi-step reasoning, planning, synthesis across many documents. |
-
-**Enforcement:**
-- Every code path declares `@paradigm("sql"|"ml"|"haiku"|"sonnet")` decorator.
-- CI rejects PRs missing the decorator or with a wrong-paradigm declaration.
-- Every PR passes the Q1–Q4 cost-routing audit (see [`cost-routing-paradigms`](../skills/cost-routing-paradigms/SKILL.md)).
-- Per-brand token cap: **soft throttle at 70%** (lower-priority features pause), **hard throttle at 100%** (only critical-path LLM features). System never breaks; it gets quieter.
-
-### Agentic design
-
-15 specialist agents inside `intelligence-service`:
-
-- **AICMO** sub-agents: Meta, Google, TikTok, Snap, Cross-Channel, Creative, Pricing, Festival.
-- **AICOO** sub-agents: Logistics, Returns, Inventory, Marketplace.
-- **AICFO** sub-agents: Conversion, Cashflow, Pricing-Margin.
-
-**Daily tick:** 06:55–07:15 IST agent fan-out → 07:15 IST Sonnet synthesis → push delivered 07:00–09:00 IST.
-
-**Auto-execute (Phase 3):** 8 reversible actions with kill switch + per-action spend caps + immutable Auto-Execute Log + 7d/30d outcome tracking.
-
----
-
-## Security baseline (Shreya has VETO)
-
-### Auth
-- **Provider:** Supabase Auth (email/password + Google OAuth + Apple OAuth). SSO/SAML Phase 3.
-- **Token storage:** HttpOnly cookies (XSS-immune). Refresh tokens server-side only.
-- **JWT claims:** `sub`, `email`, `active_workspace_id`, `active_role`, `available_workspaces`, `exp`.
-- **OAuth state:** 10-min TTL, single-use.
-
-### Authorization
-- **Roles (numeric hierarchy):** `readonly`(1) → `analyst`(2) → `agency`(3) → `operator`(4) → `owner`(5).
-- **Standard guards** on every mutation endpoint: `requireWorkspaceMember()`, `requireRole()`, `requireFeature()`.
-
-### Multi-tenancy enforced at 4 layers
-1. JWT claim validation (`active_workspace_id`).
-2. Service-side assertion (`request.workspace_id == metadata.workspace_id`).
-3. Database RLS (Postgres) + query gateway (ClickHouse).
-4. Kafka consumer asserts `workspace_id` from event payload.
-
-### Input validation
-- **Zod schemas** on every API input (tRPC + gRPC).
-- Date range bounds: client-side reject > 2 y; server-side reject > 5 y.
-
-### Encryption
-- **At rest:** AES-256 (Postgres, ClickHouse, S3 with KMS-managed keys).
-- **In transit:** TLS 1.2+ at ALB; **mTLS between services Phase 3** via App Mesh.
-- **Sensitive payloads:** OAuth tokens AES-256-GCM with per-brand KMS key. Call recordings per-brand KMS key.
-
-### Compliance gates
-- **DPDP Act 2023:** Brain = Data Processor.
-- **GDPR:** SCCs + sub-processor list. EU residency (`eu-central-1`) on Enterprise tier Phase 4.
-- **CCPA:** Same as GDPR for CA residents.
-- **SOC 2 Type II:** Phase 1 kickoff, 9–12 month timeline.
-- **ISO 27001:** post-SOC 2.
+## 9. AI / LLM layer & cost-routing (the engineering invariant)
 
-### Compliance (P0 — any violation pages immediately) — REGIME RESET
-> The specific compliance regime was cleared with the business (the prior business was India telecom + data-privacy: calling hours, two-layer DND/NCPR, AI-call disclosure, recording consent, DLT registration, frequency cap). **Redefine the concrete rules from the new business canon.** Until then, treat any compliance-sensitive work (outbound channels, regulated/PII data) as a **Founder escalation** — do not assume the old India rules.
-
-### API security
-- **CSRF:** tRPC default. Explicit CSRF token for non-tRPC routes.
-- **Rate limits:** user 1K rpm, workspace 5K rpm, AI Chat 50 msg/min. Redis sliding window.
-- **Webhook validation:** HMAC (Shopify, Klaviyo), token (Shiprocket), signature (Razorpay, WooCommerce).
-
-> **Shreya VETO** on any CRITICAL/HIGH security finding or compliance (per business canon, RESET) violation.
-
----
-
-## Observability
-
-| Pillar | Tool | Notes |
-|--------|------|-------|
-| **Logs** | Fluent Bit → OpenSearch | Structured JSON. `request_id` + `workspace_id` + `trace_id` + `user_id` on every line. PII redaction at logger + Fluent Bit Lua script. 30 d in OpenSearch; S3 archive for longer. |
-| **Metrics** | CloudWatch + custom | Request rate/latency p50/p95/p99, error rate per endpoint, Kafka consumer lag, Postgres query duration, ClickHouse query duration + bytes scanned, LLM token usage per workspace, auto-execute counts. |
-| **Traces** | AWS X-Ray | Propagated via gRPC metadata + Kafka headers. 100% sample on errors, 5% on success in production. |
-| **Errors** | Sentry | Error grouping, source map upload, release tracking. |
-| **Product analytics** | PostHog | Feature usage, funnels, RUM Core Web Vitals. |
-
-**Single correlation ID:** `request_id` + `trace_id` + `workspace_id` + `user_id` propagated end-to-end through HTTP headers, gRPC metadata, and Kafka envelope.
-
-### Health checks
-- `GET /health` — process responsive.
-- `GET /health/ready` — checks Postgres, ClickHouse, Kafka.
-
-### SLOs
-- API p95 latency (dashboard reads) < **100 ms**.
-- ClickHouse p95 query < **500 ms**.
-- Service availability > **99.9%** monthly.
-- Data freshness (integration lag) < **1 hour**.
-- the primary product surface (RESET) delivery < **20 min** from data pull.
-- LLM error rate < **0.5%**.
-- Auto-execute accuracy > **80%**.
-
-### Alarms (CloudWatch → SNS → PagerDuty/Slack)
-- Error rate >1% for 5 min → page.
-- p95 latency >2 s for 5 min → page.
-- Kafka consumer lag >10K msg for 10 min → page.
-- Postgres connection pool exhaustion → page.
-- ClickHouse query timeout >0.1% → page.
-- LLM cost >1.5× monthly cap / 30 per day → page.
-- Integration stale >1 h → page per workspace.
-- **DND violation in calling → P0 page.**
-
----
-
-## Testing strategy
-
-- **Coverage mandate:** >70% on new features.
-- **Layers:**
-  - Unit: SQL, ML, metrics functions.
-  - Integration: connector end-to-end (with synthetic + live credentials).
-  - Contract: gRPC messages (`buf breaking`), tRPC schemas, MCP tool schemas (Pact).
-  - E2E: Cypress (web), Detox (mobile).
-  - Load: k6 (Phase 3+ at 5K RPS target).
-- **Real-network smoke tests** — mandatory for PASS. In-memory tests mask real-network bugs.
-- **Metric registry parity:** TS↔Python parity for the lowest-level metric definitions stored in `packages/lib-metrics/` + `pylibs/brain_metrics/`. If two parts of the system calculate the same metric differently, the system is broken.
-- **Model validation:** LTV/forecasting models flag unreliable on MAPE >40% on held-out month.
-- **Mutation testing:** Stryker (TS, Vitest runner) + mutmut (Python, pytest) for high-stakes paths (metric registry, compliance (per business canon, RESET) engine, Decision Log).
-
----
-
-## Reliability patterns
-
-- **Idempotency:** Redis idempotency key cache (24 h TTL), lookup before processing mutations.
-- **Rate limiting:** user 1K rpm / workspace 5K rpm / AI Chat 50 msg/min. Redis sliding window.
-- **Pagination:** **Cursor only.** Offset is banned in prod paths. Date ranges > 90 d aggregated weekly server-side.
-- **API versioning:** proto names + `.v1`; breaking changes → `.v2` (same file). Kafka topics include `.v1`/`.v2`. REST (if any, Phase 4) uses `/v1/workspace/{slug}/…`.
-- **Graceful degradation:** LLM cap hit → SQL + ML paths continue; LLM-dependent features (the primary product surface (RESET), AI Chat, insights) queue or degrade.
-
----
-
-## Infrastructure
-
-**AWS-only.** All IaC via **AWS CDK (TypeScript)**. Stacks:
-- `network-stack` (VPC, subnets, NAT, peering).
-- `eks-stack` (EKS, Karpenter, ArgoCD bootstrap).
-- `data-stack` (RDS/Supabase peering, ClickHouse, ElastiCache, S3).
-- `streaming-stack` (MSK, Glue Schema Registry).
-- `observability-stack` (CloudWatch, X-Ray, OpenSearch, Sentry IAM).
-- `security-stack` (Secrets Manager, KMS keys per brand, WAF, Shield).
-
-**Multi-region (Phase 4):** primary `ap-south-1` (India), secondary `us-east-1` (US/EU). Cross-region via DMS (Postgres async), ClickHouse native replication, MirrorMaker 2 (Kafka), S3 CRR.
-
-**Environments:** `dev` (docker-compose local) → `staging` (EKS) → `production` (EKS).
-
-**Mobile pipeline:** EAS Build → TestFlight + Play Internal → manual approval → EAS Submit. OTA via EAS Update for JS-only changes.
-
----
-
-## Integrations
-
-**Phase 1 commit (every connector follows the standard pattern):**
-
-| Vendor | Auth | API | Webhooks |
-|--------|------|-----|----------|
-| **Shopify** | OAuth 2.0 (Partner app) | GraphQL Admin API 2025-01 | Yes |
-| **Meta Ads** | OAuth 2.0 | Graph API v22.0 | No (poll) |
-| **Google Ads** | OAuth 2.0 + PKCE + long-lived refresh | GAQL | No (poll) |
-| **Shiprocket** | Credential-based | REST | Yes (token-validated) |
-| **Klaviyo** | API key | REST v2023-10 | No (poll) |
-| **Razorpay** | API key | REST | Yes (signature-validated) |
-| **WooCommerce** | Consumer key/secret | REST v3 | Yes (HMAC-validated) |
-
-**Standard connector pattern:**
-1. `authenticate()` / `refresh_token()`
-2. `list_resources()`
-3. `sync(window)` — same code path for live (unbounded window) AND backfill (bounded window).
-4. `receive_webhook()` with vendor-specific signature validation.
-5. `canonicalize()` — normalize to Brain's internal schema.
-6. `produce_to_kafka()` — emit to `integrations.<entity>.v1` partitioned by `workspace_id`.
-7. `health_check()` — feeds the 1h-stale alert.
-
-**Sync scheduling (EventBridge Scheduler):** Shopify 15m, Meta/Google 6h, Shiprocket 30m, Razorpay daily.
-
-**Phase 2+ quality gradient:**
-- **Green** (clean API): Salla, Zid, Amazon SP-API, Flipkart v3, Noon, BigBasket.
-- **Yellow** (gated): Myntra, Ajio, Meesho, Namshi, Talabat.
-- **Red** (no API): Nykaa, Blinkit, Zepto, Instamart, Ounass — Gmail OAuth + LLM PDF extraction workaround. UI disclaimer for Red.
-
----
-
-## Definition of Done (composite — Tanvi and CTO Advisor both gate on this)
-
-A change is **Done** only when **all** of these are true:
-
-### Code
-- [ ] All new code declares `@paradigm` decorator (TS) / `@paradigm(...)` (Python).
-- [ ] Per-feature LLM token budget set (soft 80%, hard fail 100%).
-- [ ] Idempotency keys cached for all write operations.
-- [ ] Zod schema on every API input; server-side re-validation.
-- [ ] All timestamps explicit (UTC or `Asia/Kolkata`); no ambiguity.
-- [ ] `workspace_id` assertion in every gRPC handler.
-- [ ] `requireRole(...)` on every mutation endpoint.
-- [ ] Rate limit enforcement (endpoint-level or inherited from api-gateway).
-- [ ] CloudWatch custom metrics + Sentry instrumentation present.
-
-### Tests
-- [ ] >70% coverage on the new code.
-- [ ] Real-network smoke test passes.
-- [ ] Contract tests (`buf breaking` for proto; Pact for service-to-service; Zod schema diff for tRPC; MCP tool schema diff).
-- [ ] Mutation tests pass for high-stakes paths.
-
-### Integrations (if applicable)
-- [ ] Standard connector pattern followed.
-- [ ] Tested with mock + live credentials (Red integrations: 1 h staleness alert).
-- [ ] OAuth tokens AES-256-GCM with per-brand KMS key.
-- [ ] Webhook signatures validated.
-
-### Security (Shreya)
-- [ ] No CRITICAL/HIGH findings in vulnerability scan.
-- [ ] No compliance (per business canon, RESET) violation (DLT, NCPR, DND, hours, GST).
-- [ ] PII not in logs.
-- [ ] Standard auth guards present and tested.
-
-### Ops (Jatin)
-- [ ] Health endpoints respond.
-- [ ] Pre-handoff checklist (see [`operational-readiness`](../skills/operational-readiness/SKILL.md)) all green.
-- [ ] Dashboard added/updated if a new metric is emitted.
-- [ ] Alarm registered if a new SLO is implied.
-
-### Process
-- [ ] Decision Log entry written.
-- [ ] Per-feature journal updated in `.engineering-os/memory/features/`.
-- [ ] CTO Advisor final review attached.
-- [ ] Founder approval recorded.
-
----
-
-## Load-bearing conventions (forbidden anti-patterns)
-
-These are *explicitly* called out in `BRAIN_TECHNICAL.md` and are caught at design review:
-
-- ❌ "The email version of the audience builder" → build once; have email consume the single audience builder.
-- ❌ "The call-specific consent flow" → extend the unified consent model.
-- ❌ "A new notification service for SMS alerts" → extend the existing notification framework.
-- ❌ "Per-channel customer profiles" → use the unified customer record with per-channel engagement scores.
-- ❌ "Sequential DB queries in page layout" → use `Promise.all()` for parallel fetching.
-- ❌ "OAuth token plaintext storage" → AES-256-GCM + per-brand key in Secrets Manager.
-- ❌ "Role checks only on reads" → role checks must be on **every mutation endpoint**.
-- ❌ "Hard-coded India economics in the metric engine" → use `RegionAdapter`; new region = implement the interface.
-- ❌ Offset pagination in production paths → cursor only.
-- ❌ Direct service-to-service REST → gRPC for sync, Kafka for async.
-
-> **Quarterly audit:** the codebase is reviewed for anti-pattern drift. Refactoring time is allocated explicitly each quarter; it is **not optional**.
-
----
-
-## Verification before completion (Iron Law #5)
-
-Every "done"/"ready"/"tests pass"/"should work" claim runs a verification command and captures real output. See [`verification-before-completion`](../skills/verification-before-completion/SKILL.md).
-
-A run is **not complete** until the agent posts:
-1. The exact command(s) executed.
-2. The actual output.
-3. A line confirming the output matches the expected success criterion.
-
----
-
-## When in doubt
-
-1. **Re-read this primer.**
-2. **Open `canon/BRAIN_TECHNICAL.md`** — source of truth; this is the curated summary.
-3. **Open the relevant curated skill** (see [skill-mapping-matrix.md](skill-mapping-matrix.md)).
-4. **Escalate to Aryan (Architect)** if it's an architectural call.
-5. **Escalate to Shreya** for a security call.
-6. **Escalate to CTO Advisor** if priorities conflict.
-7. **Escalate to Founder/Rishabh** if the tech stack itself is being changed (ADR-001 update required).
+| Paradigm | Relative cost | When |
+|----------|--------------|------|
+| 1. **SQL** | ~1 ($0) | Any deterministic computation over structured data — metrics are always SQL. |
+| 2. **ML** (sklearn/Prophet/lifetimes/pgvector) | ~100 | Patterns exist but rules don't (forecast, LTV, RTO risk, anomaly, response modelling). |
+| 3. **Haiku** | ~1,000 | Bounded NL (intent classification, message personalization, single-doc summary). |
+| 4. **Sonnet** | ~10,000 | Multi-step reasoning / synthesis across many docs (the Morning Brief synthesis step). |
+
+**Cost ratio ≈ 1 : 100 : 1,000 : 10,000.** Every endpoint/agent declares `@paradigm("sql"|"ml"|"haiku"|"sonnet")`; **CI/PR blocks** if a cheaper paradigm would suffice (paradigm bypass = anti-pattern). Three enforcement layers: default routing · per-feature token budget (soft 80% / hard 100% → degrade) · per-workspace monthly cap (soft 70% throttle non-critical / hard 100% critical-path only: Morning Brief, NL query, ticket resolution). **Target mix: 85% SQL · 12% ML · 2.5% Haiku · 0.5% Sonnet.** Prompt caching is the biggest LLM cost lever (Brand Fingerprint queries, Decision Log context).
+
+**15 product agents** in `intelligence-service` — AICMO(8): Meta, Google, TikTok(GCC), Snap(GCC), Cross-Channel, Creative, Pricing, Festival · AICOO(4): Logistics, Returns, Inventory, Marketplace · AICFO(3): Conversion, Cashflow, Pricing-Margin · + AI CX. Each: daily-tick + memory query + paradigm-appropriate model + Decision Log write + `@paradigm`/`@mcp_tool` decorators + graduation tracker. **Daily Intelligence Loop (SLO-critical):** 06:55 freshness → 07:00 Brand Fingerprint (SQL+numpy) → 07:05 memory query (pgvector) → 07:10 agents in parallel → 07:15 **Morning Brief synthesized by Sonnet** (the only frontier-LLM step) → push 07:00–09:00 IST · 18:00 Evening Pulse · 23:55 7d/30d outcome attribution. **SLO: Morning Brief delivered by 07:20 IST on >99.5% of days.** **Sale/Event Mode** = a higher-cadence configuration of the same primitives (hourly Path-A rollup + ML anomaly + Sonnet only at digest), with the margin-trap alert (CM2 below threshold even as revenue rises).
+
+**Auto-execute (Phase 3):** OFF by default; Owner enables per action class. Initial actions + confidence: pause ad 0.90 · reduce budget ≤X% 0.85 · abandoned-cart discount 0.80 · lifecycle send 0.85 · courier switch 0.85 · replacement-under-policy 0.90 · refund-under-cap 0.95 (irreversible → Owner) · draft PO 0.90. Guardrails: caps, consent/policy/freshness checks, **global+per-action kill switch (Owner pauses all in 60s)**, **auto-revert to recommend-only** if reversal/error rate crosses threshold, Decision Log + audit per action, per-tool per-brand **graduation**.
+
+## 10. API contracts (TECH/06)
+
+**tRPC** (web+mobile, same router; mobile additive: `registerPushToken`, `app.minVersion`, `featureFlags`); procedure tiers `public → authed → workspace → owner`; **cursor pagination (OFFSET banned in prod)**; money fields `bigint` minor units + `currency_code` (superjson); SSE/WS for AI chat + live dashboards. **gRPC** (internal, buf): `WorkspaceService`, `MetricsService` (incl. `StreamMetricUpdates`), `IntelligenceService` (incl. bidi `Chat`), `NotificationsService`, `IntegrationsService`, `LifecycleService`; metadata `x-workspace-id/x-user-id/x-request-id/x-traceparent`; `TenancyInterceptor` rejects missing workspace. **MCP** in api-gateway (shares auth/tenancy/rate-limit; tool schemas generated from the **same protos** — cannot drift); read tools + action tools; **every write tool auto-writes Decision Log via middleware**; default read-only, write needs Owner/Operator. **Public REST** (Phase 4) = thin tRPC adapter; hashed tokens + HMAC webhooks.
+
+## 11. Integrations (TECH/02)
+
+One `Connector` interface; **backfill == live (only the window changes).** `authenticate / refresh_token / sync(window) / receive_webhook / canonicalize / health_check`. Each fans out to S3 raw + ClickHouse raw + Kafka `integrations.*.v1` + (Phase 0–1) Postgres 90-day mirror. Idempotent (UPSERT on payload hash; ClickHouse `ReplacingMergeTree(version)`). Watermarks + per-connector late-data window (Shopify 60d, Meta 28d, Google 7d, Razorpay 30d). **Quality levels:** Green (clean API), Yellow (gated/per-brand onboarding), Red (no API → Gmail/PDF/CSV + LLM extraction + 1h breakage alert + explicit UI label). **P0 connectors alert at freshness > 60 min.** Agents degrade gracefully and label stale data. **TikTok Ads is region-gated (UAE/GCC only — banned in India).** Onboarding data-quality gate (TECH §7.5): reports labelled "estimated" until order/ad reconciliation + **≥80% SKU-cost coverage** + identity-join + tz/currency/tax + consent pass.
+
+## 12. Frontend & mobile (TECH/07, TECH/10)
+
+**Web:** Next.js 14 App Router (Server Components default; Client Components for interactive charts/filters/chat); `createCaller()` server-side tRPC; state = TanStack Query (server) + nuqs (URL filters/date) + Redux Toolkit (UI/chat/drilldown); shadcn + Tailwind tokens; Recharts + Visx (waterfall, cohort heatmap); currency-aware `formatMoney` (₹ lakh/crore vs locale); region-aware routing. Perf budget LCP<2s, INP<200ms, CLS<0.1, route JS<100KB; WCAG AA. Hosting: managed (Amplify) Phase 0–2 → EKS Phase 3.
+
+**Mobile — the Morning Brief IS the product:** RN + Expo, Expo Router tab nav; the **Morning Brief screen is the highest-quality UI in Brain** (three signals, approve/reject/edit, three-minute thumb-first 06:55–09:00 IST flow). Phase 1 read-only + push → Phase 2 chat + approvals + biometric → Phase 3 plan/pincode → Phase 4 widgets/watch. Refresh token in `expo-secure-store`, access token in memory; magic-link deep links; **cert pinning** (current + rotation pin); **MASVS L1 + key L2**; Expo Push (APNS+FCM); offline: online-only Phase 1 → cached reads Phase 2 → optimistic queue Phase 3. EAS Build + OTA (JS-only) vs store review (native bump). Desktop-only views (cohort heatmap, waterfall, COGS bulk editor) link out gracefully.
+
+## 13. Security, privacy & compliance (TECH/09, TECH/16)
+
+**Never store:** card numbers, CVV, full UPI IDs, full bank accounts, plaintext passwords, national IDs (Aadhaar), special-category data, full customer addresses unless explicitly required+approved (default **pincode/city-level**), PII in logs. **PII handling:** hash email/phone by default; plaintext only where outreach enabled + consent/legal basis exists; redaction at logger + Fluent Bit; per-workspace KMS; recordings only with consent; **India data in-region (ap-south-1) by default** (DPDP + KSA/UAE transfer restrictions).
+
+**Applicable regimes (consolidated — TECH/16):** India **DPDP Act 2023 + Rules 2025** (phased to ~May 2027; consent-based, minimization, retention limits, erasure, breach notification; Consent-Manager-compatible ~Nov 2026) · India **TCCCPR 2018 (amended 12 Feb 2025)**: **DLT** registration for A2P SMS/voice, **NCPR/DND** scrubbing, **9am–9pm** promotional window · UAE **PDPL** (45/2021) & KSA **PDPL** (enforced Sep 2024): explicit revocable opt-in, erasure, cross-border restrictions · **Channel-specific outbound:** WhatsApp = Meta opt-in + approved templates + 24h service window; SMS/voice = DLT + NCPR/DND + calling hours; AI voice = disclosure + human handoff. Consent primitive: per customer/channel/purpose/source/timestamp/region/withdrawal (append-only; opt-out overrides all marketing). Cross-brand benchmarks aggregate-only, k≥5, opt-in. **Compliance SLO: 0 DND/out-of-window violations, 0 cross-brand leaks.**
+
+> **Shreya VETO** on any CRITICAL/HIGH security finding, any compliance violation (DPDP/PDPL/DLT/NCPR/calling-hours/recording-consent), or **missing traceability**.
+
+## 14. Observability & SLOs (TECH/09)
+
+One correlation ID — `request_id` + `trace_id` + `workspace_id` + `user_id` — propagates **HTTP headers → gRPC metadata → Kafka envelope → LLM call**. Stack: OTel → CloudWatch/X-Ray, Sentry, PostHog, OpenSearch (PII-redacted). Track API p50/95/99, error rate, Kafka lag, connector freshness, CH query duration/bytes, Redis hit-rate, **LLM tokens/cost by workspace+feature**, agent run success, Decision Log write success, auto-execute count/failures/reversals, WhatsApp delivery/reply/conversion, ticket FRT/CSAT, **DND/compliance violations**.
+
+| SLO | Target |
+|---|---|
+| P0 integration freshness | < 1 hour |
+| Cached dashboard p95 | < 500ms |
+| API p95 | < 2s |
+| **Morning Brief delivered** | by **07:20 IST, >99.5% days** |
+| Decision Log write availability | > 99.99% |
+| Agent daily run success | > 99% |
+| Cross-brand leaks / compliance violations | **0** |
+| Auto-execute reversal rate | < 8% (alert 15%) |
+
+## 15. Definition of Done (Tanvi + CTO Advisor gate on this)
+
+A task is **done** only when it: uses Brain-only language · carries `workspace_id` isolation (4 layers) · reuses shared primitives (no per-channel forks) · **writes to Decision Log** if it's a recommendation/action/lifecycle-send/support-resolution/outcome · has RBAC checks (`requireRole` on mutations) · declares its **`@paradigm`** · uses **minor-units money** · handles regional behavior via **adapter** · has tests for success + permission-failure + stale-data + provider-failure + idempotency · emits structured logs + metrics with the **correlation ID** (trace-instrumented end-to-end) · degrades gracefully on missing/stale data · has reversal/rollback where possible · is documented for the next builder. Real-network smoke is mandatory for PASS; metric-registry TS↔Python parity preserved; mutation tests on high-stakes paths (metric registry, compliance engine, Decision Log).
+
+## 16. Anti-patterns to reject (code-review blockers — TECH §26)
+
+Per-channel audience/consent/attribution/profile fork · agent recs without Decision Log · lifecycle sends without attribution · **LLM-generated metric numbers** · region-specific forks of metric code · **NUMERIC/float money** · single blended tax rate (must be per-SKU slab) · billing on placed (not realized) GMV · integration "healthy" because auth works but data is stale · auto-execute without kill switch · **frontier-LLM where SQL/ML suffices (paradigm bypass)** · `controllers/`-style folders · **OFFSET pagination in prod** · cross-brand data visible to another brand · sequential DB queries in a layout (use `Promise.all`) · service-to-service REST (gRPC sync / Kafka async).
+
+## 17. How Brain is built — the Engineering OS (TECH/17)
+
+You are the **Engineering OS** — the AI team that builds Brain. **These Brain-docs ARE Brain's approved Phase-0 foundation** (`business-requirements.md` = BRD; `technical-requirements.md` + `TECH/` = the knowledge-base). The recurring **8-stage pipeline**: 1 intake+brainstorm (Rohan +0–2 personas) → 2 binding plan (Aryan, `06-architecture-plan.md`) → 3 build (devs, trace-instrumented) → 4 security review (Shreya **VETO** on CRITICAL/HIGH + compliance + missing traceability) → 5 QA (Tanvi **VETO** on missing real-network verification + metric-registry parity + trace IDs end-to-end) → 6 final review (Rohan **VETO**) → 7 deploy gate (Founder `/approve`) → 8 deploy + 48h monitor + auto-rollback (Jatin). **Plan-binding:** stages 3–8 execute the Stage-2 plan; deviations route through Aryan's amendment loop — never freelancing. **PLAN-phase web research** (WebSearch/WebFetch) is allowed in Stage 1–2 (and Phase 0) only — a build-time fact that would change the design routes back through Aryan, never an ad-hoc drift. **Escalation is Rohan-gated, last-resort** (`/escalate` → Founder `/decide`). The product's 15 agents (AICMO/AICOO/AICFO) are **not** this 11-agent build team — never conflate them.
+
+## 18. When in doubt
+
+1. Re-read this primer. 2. Open `canon/technical-requirements.md` + the relevant `canon/TECH/NN_*.md` (the source of truth). 3. Open the relevant skill (see [skill-mapping-matrix.md](skill-mapping-matrix.md)). 4. PLAN-phase: WebSearch/WebFetch to validate a market/stack/compliance fact. 5. Escalate to **Aryan** (architecture), **Shreya** (security/compliance), **Rohan** (priorities/cross-team), **Founder/Rishabh** (changing the stack or a non-negotiable).

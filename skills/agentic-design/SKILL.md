@@ -1,21 +1,29 @@
 ---
 name: agentic-design
-description: The product-internal AI-agent build pattern — agent base class, @paradigm + @mcp_tool decorators, daily-tick orchestration, Memory Layer (pgvector) query pattern, graduation/alert-vs-execute. Business-agnostic and intact. NOTE — the specific agent roster was RESET (was 15 AICMO/AICOO/AICFO recommenders); redefine it from the new business canon. Auto-load when creating/modifying a product-internal agent.
+description: Brain's product-internal AI-agent build pattern — the 15 AICMO/AICOO/AICFO + AI CX recommenders that live in intelligence-service. Agent base class, @paradigm + @mcp_tool decorators, the daily tick (06:55→07:15 IST fan-out → Sonnet Morning Brief synthesis), Memory Layer (Brand Fingerprint via pgvector) query pattern, graduation tracker, Decision Log writes, recommendation-only-until-graduated. These are PRODUCT agents, NOT the Engineering OS build team. Auto-load when creating/modifying a product-internal agent.
 ---
 
 # Agentic Design — Brain's Product-Internal AI Agents
 
-This skill covers **the product's internal AI agents** — the AI recommenders the product ships (the specific roster is RESET — was 15 AICMO/AICOO/AICFO; redefine from the new business canon). These are product features, NOT engineering team members. Maya implements them; Aryan reviews the contracts. The build pattern below is business-agnostic.
+This skill covers **the product's internal AI agents** — the 15 AICMO/AICOO/AICFO + AI CX recommenders that Brain ships, living in `intelligence-service`. These are product features, NOT engineering-team members. Maya implements them; Aryan reviews the contracts. **Do not conflate these product agents with the 11-agent Engineering OS build team** (TECH/17) — they are different things.
 
-**Canonical doc:** `canon/BRAIN_TECHNICAL.md`. This skill is operational.
+**Canonical doc:** `canon/TECH/14_agent_roster.md` (+ `canon/TECH/05_intelligence_layer.md`, `canon/technical-requirements.md` §9). This skill is operational.
 
-## The agent roster — RESET (to be defined per the new business)
+## The agent roster — 15 product agents (canon/TECH/14)
 
-> The specific product-agent roster was cleared on a Founder reset (the prior business shipped 15 AICMO/AICOO/AICFO recommenders). **Redefine the roster + phase mapping from the new business canon** once it's re-fed. The **build pattern below is business-agnostic and stays** — it's how you build *any* product-internal agent.
+Three groups + AI CX, all in `intelligence-service`. Every agent runs the daily tick, queries the Memory Layer, picks the cheapest paradigm per task (mostly ML), writes the Decision Log, and is **recommendation-only until graduated** (auto-execute is Phase 3, per-tool, per-brand, Owner-enabled).
 
-> _(roster to be defined)_
+**AICMO — Marketing Intelligence (8):** Meta · Google · TikTok *(GCC only — banned in India)* · Snap *(GCC only)* · Cross-Channel · Creative · Pricing · Festival.
 
-## Universal agent pattern (canon/BRAIN_TECHNICAL.md §1, §8)
+**AICOO — Operations Intelligence (4):** Logistics · Returns · Inventory · Marketplace.
+
+**AICFO — Financial Intelligence (3):** Conversion · Cashflow · Pricing-Margin.
+
+**+ AI CX** — support-as-revenue agent (ticket classification → commerce-truth enrichment → impact estimate → autonomous/draft/escalate), counted alongside the 15 group agents.
+
+> Phase mapping (TECH/14 §rollout): Phase 3 W23-26 brings Meta/Google/Conversion (alert-only); W27-30 Cross-Channel/Logistics/Returns/Cashflow; W31-36 Creative/Pricing/Inventory/Pricing-Margin; **Phase 4** TikTok/Snap/Festival/Marketplace + first auto-execute graduations. Every agent ships human-in-the-loop first.
+
+## Universal agent pattern (canon/TECH/14_agent_roster.md §1, §5)
 
 ```python
 # apps/intelligence-service/src/agents/_base/agent.py
@@ -73,7 +81,7 @@ class AICMOMeta(Agent):
         ...
 ```
 
-## Daily Tick Orchestration (canon/BRAIN_TECHNICAL.md §8)
+## Daily Tick Orchestration (canon/TECH/05_intelligence_layer.md; canon/technical-requirements.md §9)
 
 ```
 06:55 IST — daily_tick.py fires
@@ -91,19 +99,19 @@ Top-3 priority-scored across all agents per workspace
 @paradigm("frontier_llm", model="claude-sonnet-4-6", token_budget=2000)
    Sonnet synthesizes plain-English Morning Brief: action + magnitude + outcome + safety
    ▼
-notifications-service receives ai.morning_brief.generated.v1 → push at 07:00 IST
+notifications-service receives ai.morning_brief.generated.v1 → push 07:00–09:00 IST
 ```
 
-**The Morning Brief Synthesizer is the only Frontier-LLM call in the daily loop.** Everything upstream is paradigm 1 or 2.
+**The Morning Brief Synthesizer is the only Frontier-LLM call in the daily loop.** Everything upstream is paradigm 1 or 2. SLO: Morning Brief delivered by **07:20 IST on >99.5% of days**. (18:00 Evening Pulse · 23:55 7d/30d outcome attribution backfill run the same primitives at lower cadence.)
 
-## Memory Layer (canon/BRAIN_TECHNICAL.md — Maya owns the schema)
+## Memory Layer (canon/TECH/05_intelligence_layer.md — Maya owns the schema)
 
 ```sql
 -- Brand Fingerprint: one vector per brand per day
 CREATE TABLE memory.brand_fingerprint (
   workspace_id        UUID NOT NULL,
   as_of_date          DATE NOT NULL,
-  fingerprint         vector(128) NOT NULL,    -- pgvector
+  fingerprint         vector(16) NOT NULL,     -- pgvector; 16-dim daily brand-state vector (canon TECH/05)
   metrics_snapshot    JSONB NOT NULL,
   outcomes_7d         JSONB,
   outcomes_30d        JSONB,
@@ -163,7 +171,7 @@ input → guardrails(in) → RAG retrieve (pgvector k-NN, paradigm 1/2)
 
 Vectors stay on **pgvector** in `intelligence-service`'s Postgres (per-service DB ownership — `architecture-patterns`). Do NOT add a dedicated vector DB; do NOT replace the base class with LangGraph.
 
-## Graduation framework (canon/BRAIN_TECHNICAL.md §6)
+## Graduation framework (canon/TECH/14_agent_roster.md §6)
 
 Per-agent, per-tool, per-brand. 90-day rolling window.
 
@@ -199,7 +207,7 @@ class Recommendation:
     paradigm: str                       # which @paradigm produced this
 ```
 
-## Cross-agent choreography (canon/BRAIN_TECHNICAL.md §5)
+## Cross-agent choreography (canon/TECH/14_agent_roster.md §5)
 
 ```
 AICMO-Meta detects creative fatigue (ML)
@@ -241,10 +249,10 @@ Includes:
 
 ## References
 
-- `canon/BRAIN_TECHNICAL.md` — canonical roster + graduation framework
-- `canon/BRAIN_TECHNICAL.md` — Memory Layer + Plan Module + AI Chat
-- `canon/BRAIN_TECHNICAL.md` — MCP tool registration + Decision Log
-- `canon/BRAIN_TECHNICAL.md` — paradigm decorator
+- `canon/TECH/14_agent_roster.md` — canonical 15-agent roster + graduation framework + rollout
+- `canon/TECH/05_intelligence_layer.md` — Memory Layer (Brand Fingerprint, condition_outcome), daily loop, Plan Module, AI Chat
+- `canon/TECH/13_mcp_protocol.md` — MCP tool registration + Decision Log middleware
+- `canon/TECH/12_cost_routing_compute.md` — paradigm decorator
 - `skills/cost-routing-paradigms/SKILL.md` — the four-paradigm gate
 - `skills/forecasting-prophet/SKILL.md` — Prophet for AICMO-Festival, AICOO-Inventory, AICFO-Cashflow
 - `skills/mcp-protocol/SKILL.md` — agent.invoke + tool schemas

@@ -9,7 +9,7 @@ Brain has three contract surfaces:
 
 1. **gRPC** between services (`.proto` files compiled via `buf` to TS + Python — see `grpc-buf` skill)
 2. **tRPC** for the web/mobile BFF (Zod-inferred end-to-end types)
-3. **MCP tools** for agent inter-comms + external partners (see canon/BRAIN_TECHNICAL.md)
+3. **MCP tools** for agent inter-comms + external partners (see canon/technical-requirements.md)
 
 A breaking change in any of these silently propagates: Maya ships a new `OrderEvent.timestamp_field` rename, the analytics-service stops materializing, the dashboard MER value drops to zero, and the Founder notices three days later. Contract testing is the structural alternative to "we'll review carefully."
 
@@ -63,7 +63,7 @@ The remaining gap: when the **same procedure** changes its output shape between 
 - **Removing/renaming fields:** treat as a breaking change. Add the new field, deploy both, wait one release, then remove.
 - **`.strict()` on inputs only.** Outputs should be `.passthrough()` (extra fields are OK; missing required is a bug).
 
-### 3. MCP tool contracts (canon/BRAIN_TECHNICAL.md)
+### 3. MCP tool contracts (canon/technical-requirements.md)
 
 MCP tools are versioned via the tool name + schema version. External partners (Anthropic Claude native, Enterprise tier customers) consume these.
 
@@ -180,10 +180,10 @@ Brain's external API surface is mostly tRPC + MCP. For partner integrations that
 
 | Concern | Owner | Reference |
 |---|---|---|
-| `.proto` contracts + `buf` | **Aryan** + Vikram | canon/BRAIN_TECHNICAL.md (contracts), `grpc-buf` skill |
-| Pact broker config | **Jatin** | canon/BRAIN_TECHNICAL.md |
-| MCP tool versioning | **Vikram** + **Maya** + Aryan | canon/BRAIN_TECHNICAL.md (tool registry) |
+| `.proto` contracts + `buf` | **Aryan** + Vikram | canon/technical-requirements.md (contracts), `grpc-buf` skill |
+| Pact broker config | **Jatin** | canon/technical-requirements.md |
+| MCP tool versioning | **Vikram** + **Maya** + Aryan | canon/technical-requirements.md (tool registry) |
 | Cross-language semantic checks | **Tanvi** | metric-registry parity etc. |
-| External OpenAPI doc | **Vikram** | canon/BRAIN_TECHNICAL.md |
+| External OpenAPI doc | **Vikram** | canon/technical-requirements.md |
 
 Related Brain skills: `grpc-buf` (the proto stack), `mcp-protocol` (tool catalogue + auth scopes), `testing-tdd`, `verification-before-completion`.

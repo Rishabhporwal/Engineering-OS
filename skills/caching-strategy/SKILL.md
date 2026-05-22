@@ -5,7 +5,7 @@ description: Brain's ElastiCache (Redis) caching layer (canon §12.2) — cache-
 
 # Caching Strategy — ElastiCache (Redis)
 
-Brain runs **one ElastiCache (Redis) cluster** (canon/BRAIN_TECHNICAL.md §12.2). Caching is both a **performance** and a **cost** lever: a cached daily-metric is a ClickHouse query you didn't run; a cached agent answer is a Sonnet call you didn't pay for (ties to [`cost-routing-paradigms`](../cost-routing-paradigms/SKILL.md)).
+Brain runs **one ElastiCache (Redis) cluster** (canon/technical-requirements.md §12.2). Caching is both a **performance** and a **cost** lever: a cached daily-metric is a ClickHouse query you didn't run; a cached agent answer is a Sonnet call you didn't pay for (ties to [`cost-routing-paradigms`](../cost-routing-paradigms/SKILL.md)).
 
 ## What lives in Redis
 
