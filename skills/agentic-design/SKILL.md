@@ -1,26 +1,19 @@
 ---
 name: agentic-design
-description: Brain's product-internal agent pattern — the 15 AICMO/AICOO/AICFO agents that live inside intelligence-service. Auto-load whenever creating a new agent, modifying the agent base class, wiring the daily tick (06:55–07:15 IST), implementing graduation tracker, registering MCP tools, or querying the Memory Layer (Brand Fingerprint via pgvector). Every agent action carries @paradigm + @mcp_tool decorators.
+description: The product-internal AI-agent build pattern — agent base class, @paradigm + @mcp_tool decorators, daily-tick orchestration, Memory Layer (pgvector) query pattern, graduation/alert-vs-execute. Business-agnostic and intact. NOTE — the specific agent roster was RESET (was 15 AICMO/AICOO/AICFO recommenders); redefine it from the new business canon. Auto-load when creating/modifying a product-internal agent.
 ---
 
 # Agentic Design — Brain's Product-Internal AI Agents
 
-This skill covers **Brain's product-internal AI agents** — the 15 AICMO/AICOO/AICFO recommenders Brain ships (see canon/BRAIN_TECHNICAL.md). These are product features, NOT engineering team members. Maya implements them; Aryan reviews the contracts.
+This skill covers **the product's internal AI agents** — the AI recommenders the product ships (the specific roster is RESET — was 15 AICMO/AICOO/AICFO; redefine from the new business canon). These are product features, NOT engineering team members. Maya implements them; Aryan reviews the contracts. The build pattern below is business-agnostic.
 
 **Canonical doc:** `canon/BRAIN_TECHNICAL.md`. This skill is operational.
 
-## The 15 agents
+## The agent roster — RESET (to be defined per the new business)
 
-**AICMO (Marketing Intelligence) — 8:**
-- AICMO-Meta · AICMO-Google · AICMO-TikTok · AICMO-Snap · AICMO-Cross-Channel · AICMO-Creative · AICMO-Pricing · AICMO-Festival
+> The specific product-agent roster was cleared on a Founder reset (the prior business shipped 15 AICMO/AICOO/AICFO recommenders). **Redefine the roster + phase mapping from the new business canon** once it's re-fed. The **build pattern below is business-agnostic and stays** — it's how you build *any* product-internal agent.
 
-**AICOO (Operations Intelligence) — 4:**
-- AICOO-Logistics · AICOO-Returns · AICOO-Inventory · AICOO-Marketplace
-
-**AICFO (Financial Intelligence) — 3:**
-- AICFO-Conversion · AICFO-Cashflow · AICFO-Pricing-Margin
-
-Phase mapping (canon/BRAIN_TECHNICAL.md §7): Phase 1–2 ship NO agents — wedge features only. Phase 3 W23–36 ships them progressively, alert-only at first. Phase 4 = first auto-execute graduations.
+> _(roster to be defined)_
 
 ## Universal agent pattern (canon/BRAIN_TECHNICAL.md §1, §8)
 

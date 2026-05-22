@@ -1,11 +1,11 @@
 ---
 name: cost-routing-paradigms
-description: Brain's four-paradigm cost-routing gate. The engineering invariant behind GMV % pricing. Auto-load on every design + every PR that adds a new endpoint, agent action, or decision path. SQL > ML > Haiku >> Sonnet. Every feature passes Q1-Q4 audit before shipping. Build pipeline rejects PRs missing the @paradigm decorator or with a wrong-paradigm declaration. Cost ratio is 1:100:1,000:10,000.
+description: Brain's four-paradigm cost-routing gate. The engineering invariant that keeps LLM cost down (its motivation — the product's cost/pricing model — is defined in the business canon, currently being re-fed). Auto-load on every design + every PR that adds a new endpoint, agent action, or decision path. SQL > ML > Haiku >> Sonnet. Every feature passes Q1-Q4 audit before shipping. Build pipeline rejects PRs missing the @paradigm decorator or with a wrong-paradigm declaration. Cost ratio is 1:100:1,000:10,000.
 ---
 
 # Cost-Routing Paradigms — Brain's Engineering Invariant
 
-Brain's pricing model survives **only because most decisions run at SQL or ML cost.** Most of what the industry calls "agentic AI" is statistics in an LLM costume. Brain refuses to pay frontier-LLM prices for problems statistics solved 40 years ago.
+The product's cost economics depend on **most decisions running at SQL or ML cost**, not frontier-LLM cost. *(The specific pricing/cost model is defined in the business canon — currently being re-fed; this engineering discipline holds regardless.)* Most of what the industry calls "agentic AI" is statistics in an LLM costume — don't pay frontier-LLM prices for problems statistics solved 40 years ago.
 
 **Canonical doc:** `canon/BRAIN_TECHNICAL.md`. This skill is the operational checklist.
 
@@ -20,7 +20,7 @@ The cost-routing audit only works if it's **measured from day one, not retrofitt
 
 - **Before any feature ships in Phase 1 that calls an LLM, the decorator + dashboard are live.** No "we'll add the telemetry in Phase 3" exceptions.
 
-- **Per-brand monthly LLM cap (Layer 3 throttle) MUST be live before W18** (AI Chat ships W18 per `canon/BRAIN_TECHNICAL.md`). AI Chat is the single feature most likely to push a brand past ₹3K/month — without the cap, a brand that goes from 5 msg/day to 50 msg/day eats half the founding cap on Chat alone. See `skills/claude-api/SKILL.md` §"Per-brand monthly LLM cap".
+- **A per-tenant monthly LLM cost cap (Layer 3 throttle) must be live before the highest-LLM-cost feature ships** (e.g. an AI chat). Without it, a tenant ramping usage can blow the product's cost model. (Specific thresholds come from the business canon — being re-fed.) See `skills/claude-api/SKILL.md` §"Per-brand monthly LLM cap".
 
 Frontier-LLM creep above **1% of total calls** is a tier-1 incident (Jatin pages on it).
 

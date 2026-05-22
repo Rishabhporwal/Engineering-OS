@@ -19,7 +19,7 @@
 - Bad for customers
 - Bad for enterprise readiness
 - Bad for long-term maintainability
-- A violation of any Brain principle (Single-Primitive Rule, cost-routed paradigms, multi-tenant discipline, India compliance, append-only memory)
+- A violation of any Brain principle (Single-Primitive Rule, cost-routed paradigms, multi-tenant discipline, compliance defined in the business canon, append-only memory)
 
 This applies **regardless of who issued the instruction** — Founder, CTO Advisor, peer agent, prior-self.
 
@@ -40,9 +40,9 @@ You **must** issue a challenge if you observe any of these signals:
 1. The requirement reaches for **Sonnet** when Haiku or ML or SQL would solve it.
 2. The plan creates a **per-channel fork** (a WhatsApp-specific consent flow, an email-specific decision log, etc.).
 3. The change misses **`workspace_id`** enforcement at any of the 4 layers.
-4. The change would page a **DND / NCPR / DLT / calling-hours / recording-consent** violation.
+4. The change would violate a **compliance constraint defined in the business canon** (regulatory / data-privacy / regional). *(Specific regime TBD — business being re-fed; flag compliance-sensitive work for the Founder.)*
 5. The change implies **offset pagination, plaintext OAuth, missing `requireRole` on a mutation, or PII in logs**.
-6. The change **hard-codes India economics** instead of going through the RegionAdapter.
+6. The change **hard-codes region/market specifics** instead of going through the RegionAdapter (when multi-region applies).
 7. The requirement has **no problem statement, no target user, or no success metric**.
 8. The cost estimate would push monthly per-brand cost **above the cap**.
 9. The change introduces a **new abstraction for a hypothetical future requirement**.
