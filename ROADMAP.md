@@ -1,5 +1,7 @@
 # Brain Engineering OS — Implementation Roadmap
 
+> **⚠️ Business context RESET.** This roadmap is the *plugin's own* build history/plan. Any references to the old product/business (commerce-OS features, India economics, the "Morning Brief", specific feature walkthroughs) are **stale/illustrative** — the team is currently business-agnostic; re-derive product roadmap items from the new business canon when it's re-fed.
+
 > Section 8 of the build prompt. Scope by version + developer task breakdown + suggested tech stack + build sequence + risks/mitigations + rollout plan + one full end-to-end feature walkthrough.
 
 ---

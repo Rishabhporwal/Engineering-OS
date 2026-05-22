@@ -1,6 +1,8 @@
 # Brain — Technical Context (Agent Primer)
 
-**Read this before writing code, designing a service, or reviewing a PR.** Every agent loads this at the start of every task. Condensed, load-bearing extract from `canon/BRAIN_TECHNICAL.md` (4,557 lines). When in doubt, the original document wins.
+**Read this before writing code, designing a service, or reviewing a PR.** Every agent loads this at the start of every task. Condensed, load-bearing extract from `canon/BRAIN_TECHNICAL.md`. When in doubt, the original document wins.
+
+> **⚠️ BUSINESS CONTEXT RESET.** This is now a **technical engineering team with no business context**. The product's business/domain (market, customers, domain economics, pricing, compliance regime, product surfaces) is **undefined — being re-fed**. The **technical architecture, stack, and patterns below stand** (they're engineering, not business), but anything below that reads as a *domain/business* assumption (e.g., specific compliance rules, the "the primary product surface (RESET)", domain economics, "the moat") is **stale/illustrative** until the business canon is re-fed. Do **not** assume business specifics — challenge them back to the Founder.
 
 ---
 
@@ -63,7 +65,7 @@ The full doctrine is in [`architecture-patterns`](../skills/architecture-pattern
 4. **Independent deployability + horizontal scale.** Every service: OTel instrumentation, metrics, tracing, structured logging, retries, circuit breakers, health checks. K8s-ready (EKS + ArgoCD).
 5. **Separation of concerns (hard rules):** no business logic in frontend; no AI orchestration in api-gateway; no analytics logic in frontend-facing services; infra (CDK) separate from domain logic.
 6. **Topology is the locked 7 services.** Realtime (WS/SSE), background jobs, cron, and long-running workflows live *inside* those services (Kafka consumers, the daily tick, EventBridge Scheduler) — NOT as separate realtime/worker/scheduler/workflow-orchestrator services.
-7. **Stack stays locked** (the moat + the Founder's decisions): AWS CDK + ArgoCD (not Terraform/Helm); CloudWatch/OpenSearch/X-Ray/Sentry/PostHog with OTel as the instrumentation API (not Prometheus/Grafana/Loki/Tempo); Fastify with DDD on top (not NestJS); Redux Toolkit (not Zustand); pgvector (not a separate vector DB); Turborepo only (not Nx). Single-Primitive Rule + cost-routing + India compliance all still apply.
+7. **Stack stays locked** (the moat + the Founder's decisions): AWS CDK + ArgoCD (not Terraform/Helm); CloudWatch/OpenSearch/X-Ray/Sentry/PostHog with OTel as the instrumentation API (not Prometheus/Grafana/Loki/Tempo); Fastify with DDD on top (not NestJS); Redux Toolkit (not Zustand); pgvector (not a separate vector DB); Turborepo only (not Nx). Single-Primitive Rule + cost-routing + compliance (per business canon, RESET) all still apply.
 
 ---
 
@@ -124,7 +126,7 @@ Schemas: `raw.*` (infinite retention), `agg.*` (materialized aggregations).
 
 ## AI / LLM layer
 
-- **Primary:** Claude **Sonnet 4.6** for strategic synthesis (Morning Brief Synthesizer, multi-step reasoning).
+- **Primary:** Claude **Sonnet 4.6** for strategic synthesis (the primary product surface (RESET) Synthesizer, multi-step reasoning).
 - **Secondary:** Claude **Haiku 4.5** for narrow tasks, classification, bounded NL understanding.
 - **Prompt caching:** Anthropic prompt caching is the single biggest cost lever — **enable for Brand Fingerprint queries, decision log context, repeated context vectors. Aim for ~30× reduction.**
 
@@ -191,20 +193,15 @@ Schemas: `raw.*` (infinite retention), `agg.*` (materialized aggregations).
 - **SOC 2 Type II:** Phase 1 kickoff, 9–12 month timeline.
 - **ISO 27001:** post-SOC 2.
 
-### India compliance (P0 — any violation pages immediately)
-- Calling hours 09:00–21:00 IST, **hard-coded at queue level**.
-- Two-layer DND block: brand opt-out + TRAI NCPR.
-- Disclosure ("this is an automated assistant") on every AI call.
-- Recording consent offered; declined → call proceeds, no audio retained.
-- DLT registration per brand per template.
-- Max 1 Brain-driven call / customer / 48 h (Owner override for VIP only).
+### Compliance (P0 — any violation pages immediately) — REGIME RESET
+> The specific compliance regime was cleared with the business (the prior business was India telecom + data-privacy: calling hours, two-layer DND/NCPR, AI-call disclosure, recording consent, DLT registration, frequency cap). **Redefine the concrete rules from the new business canon.** Until then, treat any compliance-sensitive work (outbound channels, regulated/PII data) as a **Founder escalation** — do not assume the old India rules.
 
 ### API security
 - **CSRF:** tRPC default. Explicit CSRF token for non-tRPC routes.
 - **Rate limits:** user 1K rpm, workspace 5K rpm, AI Chat 50 msg/min. Redis sliding window.
 - **Webhook validation:** HMAC (Shopify, Klaviyo), token (Shiprocket), signature (Razorpay, WooCommerce).
 
-> **Shreya VETO** on any CRITICAL/HIGH security finding or India compliance violation.
+> **Shreya VETO** on any CRITICAL/HIGH security finding or compliance (per business canon, RESET) violation.
 
 ---
 
@@ -229,7 +226,7 @@ Schemas: `raw.*` (infinite retention), `agg.*` (materialized aggregations).
 - ClickHouse p95 query < **500 ms**.
 - Service availability > **99.9%** monthly.
 - Data freshness (integration lag) < **1 hour**.
-- Morning Brief delivery < **20 min** from data pull.
+- the primary product surface (RESET) delivery < **20 min** from data pull.
 - LLM error rate < **0.5%**.
 - Auto-execute accuracy > **80%**.
 
@@ -257,7 +254,7 @@ Schemas: `raw.*` (infinite retention), `agg.*` (materialized aggregations).
 - **Real-network smoke tests** — mandatory for PASS. In-memory tests mask real-network bugs.
 - **Metric registry parity:** TS↔Python parity for the lowest-level metric definitions stored in `packages/lib-metrics/` + `pylibs/brain_metrics/`. If two parts of the system calculate the same metric differently, the system is broken.
 - **Model validation:** LTV/forecasting models flag unreliable on MAPE >40% on held-out month.
-- **Mutation testing:** Stryker (TS, Vitest runner) + mutmut (Python, pytest) for high-stakes paths (metric registry, India compliance engine, Decision Log).
+- **Mutation testing:** Stryker (TS, Vitest runner) + mutmut (Python, pytest) for high-stakes paths (metric registry, compliance (per business canon, RESET) engine, Decision Log).
 
 ---
 
@@ -267,7 +264,7 @@ Schemas: `raw.*` (infinite retention), `agg.*` (materialized aggregations).
 - **Rate limiting:** user 1K rpm / workspace 5K rpm / AI Chat 50 msg/min. Redis sliding window.
 - **Pagination:** **Cursor only.** Offset is banned in prod paths. Date ranges > 90 d aggregated weekly server-side.
 - **API versioning:** proto names + `.v1`; breaking changes → `.v2` (same file). Kafka topics include `.v1`/`.v2`. REST (if any, Phase 4) uses `/v1/workspace/{slug}/…`.
-- **Graceful degradation:** LLM cap hit → SQL + ML paths continue; LLM-dependent features (Morning Brief, AI Chat, insights) queue or degrade.
+- **Graceful degradation:** LLM cap hit → SQL + ML paths continue; LLM-dependent features (the primary product surface (RESET), AI Chat, insights) queue or degrade.
 
 ---
 
@@ -350,7 +347,7 @@ A change is **Done** only when **all** of these are true:
 
 ### Security (Shreya)
 - [ ] No CRITICAL/HIGH findings in vulnerability scan.
-- [ ] No India compliance violation (DLT, NCPR, DND, hours, GST).
+- [ ] No compliance (per business canon, RESET) violation (DLT, NCPR, DND, hours, GST).
 - [ ] PII not in logs.
 - [ ] Standard auth guards present and tested.
 

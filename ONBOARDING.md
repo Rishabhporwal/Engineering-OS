@@ -1,11 +1,11 @@
 # Brain Engineering OS — Onboarding
 
-> The complete picture of the AI engineering team. If you're new, read this top to bottom once. Current version: **v0.16.0**. (⚠️ **Business RESET (v0.15.0–v0.16.0)** — `canon/BRAIN_BUSINESS.md` + `docs/business-context.md` are blank; the system-prompt, anti-blind-agreement rules, the 6 domain skills (india-commerce-economics, lifecycle-revenue-layer, morning-brief-mobile, kpi-dashboard-design reset; cost-routing-paradigms + agentic-design kept engineering core), and the cto-advisor + security-reviewer triggers were neutralized to be business-agnostic. Awaiting a new business plan; some descriptive sections below + a few agents (mobile/frontend) still mention the old Brain business and get rewritten on re-feed. New since 0.7.1: risk-based lanes, semantic memory, parallel review, background workers, paradigm gate, browser/visual QA, the `/careful` guard, the pipeline doctor, 6 new domain skills, cross-engineer `/team-digest`, the **top-level orchestrator** (one `/requirement` runs the team end-to-end), **live activity logs** (`/watch`), **live monitoring mode** (`/monitor`), an **interactive PM-grade dashboard** (`/dashboard` — agent performance, bugs, features, tokens & cost), and **token-usage logging**. **Product engineers: jump to §12 — "Get the most from the team."**)
+> The complete picture of the AI engineering team. If you're new, read this top to bottom once. Current version: **v0.17.0**. (⚠️ **This is now a TECHNICAL engineering team with NO business context (RESET, v0.15.0–v0.17.0).** `canon/BRAIN_BUSINESS.md` + `docs/business-context.md` are blank; the system-prompt, anti-blind-agreement, the technical canon + primer (bannered), the domain skills, README/ONBOARDING, and the agents were all neutralized to assume no product/market/domain. The engineering machinery (pipeline, orchestrator, stack, generic skills) is fully intact. Re-feed the new business via the business canon. New since 0.7.1: risk-based lanes, semantic memory, parallel review, background workers, paradigm gate, browser/visual QA, the `/careful` guard, the pipeline doctor, 6 new domain skills, cross-engineer `/team-digest`, the **top-level orchestrator** (one `/requirement` runs the team end-to-end), **live activity logs** (`/watch`), **live monitoring mode** (`/monitor`), an **interactive PM-grade dashboard** (`/dashboard` — agent performance, bugs, features, tokens & cost), and **token-usage logging**. **Product engineers: jump to §12 — "Get the most from the team."**)
 
 ---
 
 ## 1. What it is
-An **AI engineering team delivered as a Claude Code plugin**. You give it a requirement; it runs that requirement through an 8-stage pipeline — intake → architecture → parallel build → security → QA → final review → Founder approval → deploy — producing production-grade, audited, journaled work every time. It exists so **Brain (Pipada Capital)** can ship its AI-native D2C commerce OS without hiring a large engineering team early.
+An **AI engineering team delivered as a Claude Code plugin**. You give it a requirement; it runs that requirement through an 8-stage pipeline — intake → architecture → parallel build → security → QA → final review → Founder approval → deploy — producing production-grade, audited, journaled work every time. It exists so **Brain** can ship software without hiring a large engineering team early. *(Business context is RESET — the team is currently business-agnostic; the product/domain is re-fed via `canon/BRAIN_BUSINESS.md`.)*
 
 ## 2. Distribution & memory model
 - **Installed, not cloned.** The plugin lives in `~/.claude/plugins/brain-engineering-os/`. You install it; you don't clone its source into your project. Everything it ships (agents, skills, canon, docs, prompts, templates, schemas, workflows, hooks) resolves via `${CLAUDE_PLUGIN_ROOT}`.
@@ -21,9 +21,9 @@ An **AI engineering team delivered as a Claude Code plugin**. You give it a requ
 | **Aryan** | Architect | opus | 2 | API/schema/paradigm/service-boundary decisions |
 | **Vikram** | Backend Developer (Node/Fastify) | sonnet | 3 | implementation within plan |
 | **Ananya** | Frontend Web (Next.js) | sonnet | 3 | component/state/UI within plan |
-| **Karan** | Mobile (React Native + Expo) | sonnet | 3 | the Morning Brief surface |
+| **Karan** | Mobile (React Native + Expo) | sonnet | 3 | the primary mobile surface (RESET) surface |
 | **Maya** | Intelligence Engineer (Python/AI) | sonnet | 3 | the 15 AI agents, RAG, cost-routing |
-| **Shreya** | Security Reviewer | opus | 4 | **VETO** on CRITICAL/HIGH + India compliance |
+| **Shreya** | Security Reviewer | opus | 4 | **VETO** on CRITICAL/HIGH + compliance (per business canon) |
 | **Tanvi** | QA Agent | sonnet | 5 | **VETO** on missing verification |
 | **Jatin** | Platform/DevOps | sonnet | 8 | deploy, infra, rollback |
 | **Priya** | Product Manager | sonnet | cross-cuts (not a stage) | release notes, tracker sync |
@@ -59,9 +59,9 @@ Each stage **plans → executes → self-reviews → verifies → returns a `HAN
 2. **No over-engineering** — build the minimum that solves the requirement; 10 STOP signals; Rohan runs an over-engineering audit at Stage 6.
 3. **Persona calibration** — 0/1/2 personas by complexity, capped at 2 (never 3+).
 4. **Plan-first + self-review + explicit handoff** — every agent plans before acting, self-reviews against its DoD, and invokes the next agent via `Agent()`.
-5. **Cost-routed paradigms** — SQL > ML > Haiku > Sonnet; every code path declares `@paradigm` (this is what makes GMV-% pricing work).
+5. **Cost-routed paradigms** — SQL > ML > Haiku > Sonnet; every code path declares `@paradigm` (keeps LLM cost down; the pricing motivation is per the business canon — RESET).
 6. **Single-Primitive Rule** — every cross-cutting concern built once, consumed N times.
-7. **Multi-tenant `workspace_id`** enforced at 4 layers; **India compliance is P0** (DLT/NCPR/DND/calling-hours/GST).
+7. **Multi-tenant `workspace_id`** enforced at 4 layers; **compliance is P0 — per the business canon** (specific regime RESET — being re-fed).
 8. **Verification before completion** — no "done" claim without fresh captured command output.
 9. **UTC timestamp discipline**; **append-only journals**.
 
@@ -76,11 +76,13 @@ Each stage **plans → executes → self-reviews → verifies → returns a `HAN
 - **Rule governance:** any agent can `/propose-rule`; the Founder `/adopt-rule` or `/reject-rule` (Founder-only). Adopted rules become durable rules.
 - `pending-founder-attention.md` surfaces items needing the Founder.
 
-## 9. What the team builds — Brain
-A **7-service, DDD, event-driven** D2C commerce OS:
-- **Services:** api-gateway, core-service, ingestion-service, analytics-service, intelligence-service, notifications-service, lifecycle-service (+ frontend-web, mobile). Each is DDD-structured by bounded context, owns its own DB, communicates via gRPC (sync) / Kafka (async). Realtime, background jobs, cron, and workflows live *inside* these services — not as separate services.
+## 9. What the team builds — Brain (technical shape; business RESET)
+> The product's **business/domain is RESET** (being re-fed). The **technical shape below stands** (it's engineering); the prior commerce-OS framing and "the moat" are re-derived from the new business canon when it lands.
+
+A **7-service, DDD, event-driven** architecture:
+- **Services:** api-gateway, core-service, ingestion-service, analytics-service, intelligence-service, notifications-service, lifecycle-service (+ frontend-web, mobile). Each is DDD-structured by bounded context, owns its own DB, communicates via gRPC (sync) / Kafka (async). Realtime, background jobs, cron, and workflows live *inside* these services — not as separate services. *(Service responsibilities were business-derived — revisit on re-feed.)*
 - **Locked stack:** Fastify + FastAPI, AWS CDK + ArgoCD + EKS, MSK/Kafka, ClickHouse, Supabase Postgres + pgvector, CloudWatch/OpenSearch/X-Ray/Sentry/PostHog (+ OpenTelemetry instrumentation), Turborepo, Next.js + React Native/Expo, Redux, Anthropic Claude.
-- **The moat:** India-commerce economics (RTO/COD/GST/festivals/DLT), cost-routing paradigms, the Morning Brief, the Single-Primitive Rule.
+- **Engineering invariants:** cost-routing paradigms, the Single-Primitive Rule, multi-tenant `workspace_id`, verification-before-completion. *(Domain "moat" knowledge is RESET — re-fed via the business canon.)*
 
 ## 10. Using it
 ```
@@ -126,9 +128,9 @@ You don't write the features — you direct the team and let it run. Here's how 
 
 ### Powers worth knowing
 - **Memory is shared and semantic.** Every decision/journal/challenge from every engineer is git-synced and searchable by *meaning* via `/recall-similar` (it self-refreshes — always current after a pull). Agents use it automatically in their pre-flight, so they reuse the team's prior work without you asking.
-- **Real-browser + visual QA.** Web changes get `/qa-browser` (walks real flows, catches console/network errors, generates a Cypress regression test) and `/design-review` (0–10 scored visual audit) — the Morning Brief + KPI surfaces have the highest bar.
+- **Real-browser + visual QA.** Web changes get `/qa-browser` (walks real flows, catches console/network errors, generates a Cypress regression test) and `/design-review` (0–10 scored visual audit) — the primary mobile surface (RESET) + KPI surfaces have the highest bar.
 - **Proactive workers.** Schedule `/worker-test-gap`, `/worker-canon-drift`, `/worker-compliance-drift` to scan the repo between requirements and file findings.
-- **Safety rails.** The `/careful` guard blocks catastrophic commands (rm -rf ~, force-push, DROP/TRUNCATE) with an easy override; the paradigm gate keeps cost discipline; `workspace_id` + India compliance are enforced at every layer.
+- **Safety rails.** The `/careful` guard blocks catastrophic commands (rm -rf ~, force-push, DROP/TRUNCATE) with an easy override; the paradigm gate keeps cost discipline; `workspace_id` + compliance (per business canon) are enforced at every layer.
 - **Recover & validate.** `/resume <req-id>` picks up an interrupted pipeline with no lost work; `/test-pipeline` validates the orchestration is healthy; `/new-skill` scaffolds a new skill when a real gap surfaces.
 
 ### Multi-engineer guarantee

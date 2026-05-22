@@ -1,40 +1,26 @@
 ---
 name: data-privacy-dpdp
-description: India's Digital Personal Data Protection Act (DPDP 2023) + PII lifecycle for Brain — lawful consent, purpose limitation, data minimization, retention limits, right-to-erasure, breach response, and PII redaction everywhere (logs, journals, caches, embeddings). Distinct from telecom compliance (DLT/NCPR/DND). Use when handling customer PII (phone/email/address/order data), wiring a connector that ingests customers, building erasure, or reviewing where PII flows. Shreya VETO surface alongside security-baseline.
+description: Data-privacy & PII engineering discipline — consent capture, purpose limitation, data minimization, retention limits, right-to-erasure paths, breach response, and PII redaction everywhere (logs, journals, caches, embeddings). Business-agnostic engineering practice. NOTE — the specific regulatory regime (was India DPDP Act + telecom) is RESET; bind the concrete obligations to the new business canon when re-fed.
 ---
 
-# Data Privacy — India DPDP Act + PII lifecycle
+# Data Privacy & PII Handling (engineering discipline)
 
-Brain ingests real customer PII (phones, emails, addresses, order history) from connectors. India's **DPDP Act 2023** governs this — separate from the **telecom** compliance (DLT/NCPR/DND) covered in [`india-commerce-economics`](../india-commerce-economics/SKILL.md). Both apply; this skill is the *data-protection* half. Shreya gates on it.
+The reusable **engineering** practice for handling personal data is intact; the **specific regulatory regime was reset** (the prior business was India: DPDP Act 2023 + telecom). Bind concrete obligations (which laws, retention windows, consent semantics, cross-border rules) to the new business canon once re-fed. Until then, treat PII conservatively and escalate regime-specific questions to the Founder.
 
-## DPDP obligations (engineering-relevant)
-
-| Principle | What it means in Brain |
-|---|---|
-| **Lawful consent** | Customer PII is processed for a stated purpose; the brand is the Data Fiduciary, Brain a Processor. Consent state is recorded (`consent_event`). |
-| **Purpose limitation** | Use PII only for the purpose collected (e.g., order fulfilment, opted-in lifecycle messaging) — not arbitrary new uses. |
-| **Data minimization** | Ingest/store only the PII a feature needs. Don't hoard fields "just in case." |
-| **Retention limits** | PII has a retention window; expired PII is deleted/anonymized (pairs with raw-archive TTL). |
-| **Right to erasure** | A customer (via the brand) can request deletion — there must be a path to erase across Postgres, ClickHouse, S3 raw archive, caches, and the Memory Layer. |
-| **Breach response** | A suspected leak is a P0 page (cross-tenant leak path in [`multi-tenancy-isolation`](../multi-tenancy-isolation/SKILL.md)). |
-
-## Engineering rules
-
-1. **PII never in logs/journals/decision-log.** Redact at the logger + Fluent Bit ([`observability`](../observability/SKILL.md)) and in the Engineering OS journals (the hook redacts secrets; PII discipline is on you).
-2. **PII encrypted at rest**; OAuth tokens AES-256-GCM with per-brand KMS ([`security-baseline`](../security-baseline/SKILL.md)).
+## Business-agnostic rules (always apply)
+1. **PII never in logs/journals/decision-log.** Redact at the logger + log pipeline ([`observability`](../observability/SKILL.md)) and in the Engineering OS journals.
+2. **PII encrypted at rest**; secrets/tokens via a managed KMS ([`security-baseline`](../security-baseline/SKILL.md)).
 3. **PII never in cache keys; encrypted if cached as values** ([`caching-strategy`](../caching-strategy/SKILL.md)).
-4. **Embeddings of PII** in the Memory Layer must be `workspace_id`-scoped and within retention ([`memory-layer-pgvector`](../memory-layer-pgvector/SKILL.md)).
-5. **Erasure is a first-class path**, not an afterthought — design new PII-touching tables knowing they must be erasable.
-6. **Cross-border**: keep India customer PII in-region unless a lawful transfer basis exists ([`region-adapter`](../region-adapter/SKILL.md)).
+4. **Data minimization** — collect/store only what a feature needs.
+5. **Retention + erasure are first-class** — every PII-touching table has a documented retention window + an erasure path (Postgres + OLAP + object storage + caches + any embeddings).
+6. **Consent is recorded** where the domain requires it; purpose-limit usage to what was consented.
+7. **Breach = P0** — a suspected leak (incl. cross-tenant, see [`multi-tenancy-isolation`](../multi-tenancy-isolation/SKILL.md)) is a page.
 
-## Anti-patterns
-
-- Logging a customer phone/email/address anywhere.
-- Storing PII with no retention/erasure plan.
-- Reusing PII for a purpose the customer didn't consent to.
-- Embedding raw PII into the Memory Layer with no scoping or expiry.
+## To bind to the new business (when re-fed)
+> _(define: which regulations apply, lawful bases, retention windows, cross-border transfer rules, any sector-specific obligations)_
 
 ## Verify
-
 - Grep new code paths + sample log lines for PII leakage (phone/email/address patterns) — none present.
-- A new PII-touching table has a documented retention + erasure path. Erasure test: a deletion request removes the row from Postgres + CH + S3 raw + cache + embeddings.
+- A new PII-touching table has a documented retention + erasure path; an erasure request removes the row everywhere it propagated.
+
+*Prior India-DPDP-specific content retained in git history.*

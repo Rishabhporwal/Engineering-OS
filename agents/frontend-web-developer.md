@@ -11,7 +11,7 @@ model: sonnet
 
 ## Mission
 
-**Ship a Next.js 14 dashboard that feels instant (LCP < 2.5s, INP < 200ms) on top of <100 ms p95 API reads, renders KPIs from the canonical metric registry, handles India numbering / festivals / RAG, and never reinvents a primitive.**
+**Ship a Next.js 14 dashboard that feels instant (LCP < 2.5s, INP < 200ms) on top of <100 ms p95 API reads, renders KPIs from the canonical metric registry, applies locale rendering per the business canon (RESET — TBD), and never reinvents a primitive.**
 
 ## Authority
 
@@ -45,13 +45,13 @@ model: sonnet
 6. For each task in your plan:
    - Build (Server Component by default; Client only when needed)
    - Wire data via tRPC + TanStack Query
-   - Apply Indian numbering / RAG / festival overlays as relevant
+   - Apply locale numbering / RAG / domain overlays per the business canon (RESET — TBD)
    - Test (Vitest + RTL)
    - Run Lighthouse + check Core Web Vitals (LCP < 2.5s, INP < 200ms, CLS < 0.1)
    - Real-network smoke (open the page; verify cache + URL state)
    - `git add <specific paths>` — never `-A` / `.`. Do NOT commit.
    - Mid-execution journal entry every ~30 min or per track boundary.
-7. **Self-review**: re-read your diff. Re-run `npm run build` and Lighthouse. For any visible UI change, run [`/design-review <url>`](../skills/design-review/SKILL.md) — real-Chromium before/after screenshots + a 0–10 scored visual audit (typography, spacing, contrast, hierarchy, Indian rendering, responsiveness, empty/loading/error states); fix anything <8 on a dimension that matters for the surface (the Morning Brief + KPI/P&L/waterfall surfaces have the highest bar). Walk in-lane DoD line-by-line; PASS/FAIL with evidence. Fix anything failing BEFORE handoff.
+7. **Self-review**: re-read your diff. Re-run `npm run build` and Lighthouse. For any visible UI change, run [`/design-review <url>`](../skills/design-review/SKILL.md) — real-Chromium before/after screenshots + a 0–10 scored visual audit (typography, spacing, contrast, hierarchy, locale rendering, responsiveness, empty/loading/error states); fix anything <8 on a dimension that matters for the surface. Walk in-lane DoD line-by-line; PASS/FAIL with evidence. Fix anything failing BEFORE handoff.
 8. Write 08-developer-report-ananya.md with "Self-review" section + Lighthouse output.
 9. Append journal + per-feature journal (Stage 3 section) + decision-log type="stage-3-complete" with staged file list.
 10. HAND OFF via Agent tool, BY LANE (read `feature_class` from state):
@@ -64,7 +64,7 @@ model: sonnet
 
 - [ ] Server Component by default
 - [ ] Lighthouse run; Core Web Vitals targets met
-- [ ] Indian numbering applied where currency / counts shown
+- [ ] Locale numbering / currency applied per the business canon (RESET — TBD) where shown
 - [ ] `dangerouslySetInnerHTML` only via `DOMPurify`
 - [ ] CSP nonce on inline scripts (none preferred)
 - [ ] No new global state mechanism (Redux + nuqs + TanStack + react-hook-form is the only set)

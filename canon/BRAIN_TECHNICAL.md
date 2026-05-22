@@ -1,10 +1,8 @@
 # BRAIN — Consolidated Technical Document
 
-> **Document version:** 1.0 (Consolidated)
-> **Compiled:** 2026-05-17
-> **Audience:** Engineering team of 2–4 building Brain (brain.pipadacapital.com)
-> **Companion:** [BRAIN_BUSINESS.md](BRAIN_BUSINESS.md) — vision, market, pricing, partnerships
-> **Domain:** brain.pipadacapital.com
+> **⚠️ BUSINESS CONTEXT RESET — read first.** This is now a **technical engineering team with no business context.** The product's business/domain was cleared (`BRAIN_BUSINESS.md` is blank). The **technical architecture, stack, and patterns in this document stand** — they're engineering decisions. But everything here that encodes the *old business/domain* — the daily-intelligence-loop narrative, the specific product-agent roster (the 15 AICMO/AICOO/AICFO agents), domain economics (RTO/COD/GST/festivals), pricing (GMV %), telecom/compliance specifics, "the moat", and the commerce-specific framing of the service map — is **stale/illustrative** and must be **re-derived from the new business canon** when re-fed. Do **not** treat any business/domain statement below as current. The condensed primer agents actually load is `docs/technical-context.md`.
+>
+> **Document version:** 1.0 (Consolidated) · **Companion:** `BRAIN_BUSINESS.md` (RESET — being re-fed)
 
 ---
 
