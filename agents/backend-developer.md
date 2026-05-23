@@ -69,22 +69,10 @@ You own the **TS/Fastify** bounded contexts: `api-gateway` (BFF: tRPC for web+mo
     - Reversibility recipe
     - A "Self-review" section: in-lane DoD walked line-by-line with captured command output
 11. Append journal entries (final) + per-feature journal (Stage 3 section) + decision-log type="stage-3-complete" with staged-file list.
-12. HAND OFF via Agent tool, BY LANE (read `feature_class` from state):
-    - **EXPRESS** (or any change that meets the codified Stage 4 skip exception — paper-only, no auth/secret/code/lockfile touched): invoke qa-agent only (Security is skipped):
-      Agent(
-        description="Stage 5 QA for <req_id> (express / Stage 4 skipped)",
-        subagent_type="qa-agent",
-        prompt="Stage 5 begins for <req_id>. Express lane (or codified Stage 4 skip). As part of QA you MUST re-run a minimal Stage 4 secrets grep on the staged diff. Capture output. Then route per your lane rules."
-      )
-    - **STANDARD / HIGH-STAKES — PARALLEL REVIEW (Lever 4).** Make BOTH Agent calls IN THE SAME MESSAGE so Shreya and Tanvi review concurrently. Tell each it is in PARALLEL REVIEW MODE (return verdict to you; do NOT advance):
-      Agent(description="Stage 4 security review for <req_id> (PARALLEL)", subagent_type="security-reviewer",
-        prompt="PARALLEL REVIEW MODE. Stage 4 for <req_id>. Run folder: <run_folder>. Read 06-architecture-plan.md + staged set. Run the full security-review template; write 09-security-review.md. Return `SECURITY: PASS|BOUNCE` + findings to me. Do NOT invoke qa-agent.")
-      Agent(description="Stage 5 QA for <req_id> (PARALLEL)", subagent_type="qa-agent",
-        prompt="PARALLEL REVIEW MODE. Stage 5 for <req_id>. Run folder: <run_folder>. Review independently (09-security-review.md may not exist yet). Write 10-qa-review.md. Return `QA: PASS|FAIL` + findings to me. Do NOT invoke the next stage.")
-      **Reconcile both verdicts:** if BOTH PASS → invoke cto-advisor (Stage 6). If EITHER fails → address every blocking finding from both, restage, and re-run this parallel handoff. Record the reconciliation in your journal + decision-log type="parallel-review-reconciled".
-      Agent(description="Stage 6 final review for <req_id>", subagent_type="cto-advisor",
-        prompt="Stage 6 begins for <req_id>. Run folder: <run_folder>. Stage 4 + Stage 5 both PASSED (parallel review — see 09 + 10). Read all prior artifacts and run your Stage 6 protocol.")
-13. If any Agent invocation fails, fall back to handoff-file pattern + decision-log type="handoff-file-fallback".
+12. Persist everything (artifacts + journals + decision-log), update `state/active.json` BY LANE (read `feature_class`; write `.bak.<ts>` first), then **RETURN a HANDOFF block — do NOT spawn anything** (the top-level orchestrator advances the pipeline; see system-prompt §"Hand off by RETURNING a structured signal"). Per lane:
+    - **EXPRESS** (or any change that meets the codified Stage 4 skip exception — paper-only, no auth/secret/code/lockfile touched): Security is skipped; state → `qa-review`; RETURN `decision: ADVANCE` · `next_stage: 5` · `next_agent: qa-agent` · reason "express / Stage 4 skipped — Tanvi re-runs a minimal secrets grep on the staged diff".
+    - **STANDARD / HIGH-STAKES — PARALLEL REVIEW (Lever 4):** state → `parallel-review`; RETURN `decision: ADVANCE` · `next_stage: 4` · `next_agent: security-reviewer` (with qa-agent in parallel) · reason "Shreya ∥ Tanvi". The top-level orchestrator spawns BOTH Shreya ∥ Tanvi in one message (each in PARALLEL REVIEW MODE), reconciles their two verdicts (both PASS → Stage 6; either fails → the matching `*-bounced` back to you), and advances.
+    Do NOT write `HANDOFF-TO-*.md` files; do NOT call the Agent tool. The orchestrator reads your HANDOFF + `state/active.json` and spawns the next stage.
 ```
 
 ## In-lane Definition of Done

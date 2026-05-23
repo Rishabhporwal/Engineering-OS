@@ -24,15 +24,19 @@ states:
 
   dev-parallel:
     description: Builders active.
-    transitions_to: [security-review, qa-review, dev-blocked, architect]  # qa-review = EXPRESS lane (skips Security)
+    transitions_to: [parallel-review, security-review, qa-review, dev-blocked, architect]  # parallel-review = STANDARD/HIGH-STAKES (Security ∥ QA); qa-review = EXPRESS lane (skips Security)
 
   dev-blocked:
     description: A builder is blocked; surfaces in /status.
     transitions_to: [dev-parallel, architect, cto-review]
 
+  parallel-review:
+    description: STANDARD/HIGH-STAKES lane — Shreya (Security, Stage 4) ∥ Tanvi (QA, Stage 5) reviewing CONCURRENTLY; the top-level orchestrator spawns both in one message and reconciles the two verdicts (both PASS → final-review; either fails → the matching *-bounced).
+    transitions_to: [final-review, security-bounced, qa-bounced]
+
   security-review:
-    description: Shreya reviewing.
-    transitions_to: [qa-review, security-bounced]
+    description: Shreya reviewing (sequential path / express edge cases; standard & high-stakes use parallel-review).
+    transitions_to: [qa-review, parallel-review, security-bounced]
 
   security-bounced:
     description: Shreya found CRITICAL/HIGH or compliance gap; back to dev.
@@ -63,8 +67,16 @@ states:
     transitions_to: [cto-review, architect, dev-parallel]  # CTOA picks based on reason
 
   approved:
-    description: Founder approved; DevOps takes over.
-    transitions_to: [deploying-staging]
+    description: Founder approved; DevOps (Jatin) takes over for Stage 8.
+    transitions_to: [awaiting-founder-commit, deploying-staging]  # awaiting-founder-commit if Jatin stages product code for the Founder to commit; deploying-staging if product code is already committed (e.g. Founder committed at the Stage-7 gate)
+
+  awaiting-founder-commit:
+    description: Stage 8 — Jatin staged the product code + committed the `.engineering-os/` audit trail (chore(eos)); the Founder commits + pushes the PRODUCT code (governance gate — agents never commit product code). The Founder retains commit authority.
+    transitions_to: [deploying-staging, awaiting-push-fix]
+
+  awaiting-push-fix:
+    description: The push-success gate failed (e.g. 403 / remote ahead); the Founder resolves remote/auth, then re-pushes. Jatin re-verifies with `git push --dry-run`.
+    transitions_to: [deploying-staging, awaiting-founder-commit]
 
   deploying-staging:
     description: CI passed; staging deploy in flight.

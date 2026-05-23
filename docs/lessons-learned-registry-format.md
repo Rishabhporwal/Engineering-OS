@@ -50,10 +50,10 @@ Tags (`applies_to`) — pick all that apply:
 - `code` — implementation patterns
 - `security` — auth / secrets / multi-tenancy
 - `india-compliance` — DLT / NCPR / DND / GST / RTO
-- `numeric-parity` — paisa-level parity vs Sugandh Lok dashboard
+- `numeric-parity` — paisa-level parity vs an external/reference dashboard
 - `cost-routing` — paradigm choice (SQL/ML/Haiku/Sonnet)
 - `single-primitive` — Single-Primitive Rule violations or near-misses
-- `migration` — Looqus → Brain shape changes
+- `migration` — legacy → Brain shape changes
 - `agent-discipline` — agents over-engineering / under-engineering / silently skipping gates
 - `pipeline-mechanics` — handoff / state / decision-log / git
 - `infra` — AWS / hooks / observability

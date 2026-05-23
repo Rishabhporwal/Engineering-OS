@@ -1,6 +1,6 @@
 ---
 name: api-traffic-patterns
-description: Brain's list + traffic discipline for every API surface (tRPC, gRPC, MCP) — cursor (keyset) pagination (OFFSET is banned in prod paths) AND rate limiting (token bucket / sliding window, ElastiCache-backed distributed state, per-tier quotas, per-vendor outbound throttling). Use when adding a list endpoint (orders, customers, decision_log, audiences), shipping infinite-scroll UI, an OFFSET endpoint slows down, implementing per-brand quotas, protecting api-gateway from abuse, enforcing tier limits (founding 0.5% / standard 1.0% / growth / enterprise), or preventing connector spikes from blowing vendor quotas.
+description: Brain's list + traffic discipline for every API surface (tRPC, gRPC, MCP) — cursor (keyset) pagination (OFFSET is banned in prod paths) AND rate limiting (token bucket / sliding window, ElastiCache-backed distributed state, per-tier quotas, per-vendor outbound throttling). Use when adding a list endpoint (orders, customers, decision_log, audiences), shipping infinite-scroll UI, an OFFSET endpoint slows down, implementing per-brand quotas, protecting api-gateway from abuse, enforcing tier limits (Launch 1.0% / Growth 0.75% / Scale 0.5% / Enterprise of realized GMV), or preventing connector spikes from blowing vendor quotas.
 ---
 
 # API Traffic Patterns
@@ -157,13 +157,13 @@ const SLIDING_WINDOW_LUA = `local c = redis.call('INCR', KEYS[1])
   return c`;
 
 const TIER_LIMITS: Record<string, { max: number; windowSec: number }> = {
-  founding: { max: 60, windowSec: 60 }, standard: { max: 120, windowSec: 60 },
-  growth:   { max: 600, windowSec: 60 }, enterprise: { max: 6000, windowSec: 60 },
+  launch: { max: 60, windowSec: 60 }, growth: { max: 120, windowSec: 60 },
+  scale:  { max: 600, windowSec: 60 }, enterprise: { max: 6000, windowSec: 60 },
 };
 
 export const rateLimitPlugin: FastifyPluginAsync = async (app) => {
   app.addHook('preHandler', async (req, reply) => {
-    const limit = TIER_LIMITS[req.workspace?.tier ?? 'standard'];
+    const limit = TIER_LIMITS[req.workspace?.tier ?? 'launch'];
     const key = `rl:${req.workspaceId}:${Math.floor(Date.now() / 1000 / limit.windowSec)}`;
     const count = (await redis.eval(SLIDING_WINDOW_LUA, 1, key, limit.windowSec)) as number;
     reply.header('X-RateLimit-Limit', limit.max)
@@ -199,10 +199,10 @@ These are tRPC AND MCP transport headers — MCP clients respect `Retry-After` l
 
 | Tier | GMV fee | Request budget per brand | Notes |
 |---|---|---|---|
-| Founding | 0.5% | 60 rpm | Anchor + cohort #1 |
-| Standard | 1.0% | 120 rpm | Default |
-| Growth | 0.5% above ₹1Cr GMV | 600 rpm | High-volume DTC |
-| Enterprise | Negotiated | 6,000 rpm or custom | Per-contract |
+| Launch | ~1.0% of realized GMV | 60 rpm | Default entry tier |
+| Growth | ~0.75% of realized GMV | 120 rpm | Scaling DTC |
+| Scale | ~0.5% of realized GMV | 600 rpm | High-volume DTC |
+| Enterprise | Custom | 6,000 rpm or custom | Per-contract |
 
 ## Rate-limiting best practices
 

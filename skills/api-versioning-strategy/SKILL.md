@@ -1,6 +1,6 @@
 ---
 name: api-versioning-strategy
-description: API versioning across Brain's three surfaces — tRPC (web/mobile BFF), gRPC (internal services via buf), MCP tools (external partners + agent inter-comms). Deprecation timelines, the v1↔v2 reconciliation window during Sugandh migration W14–16, safe vs breaking changes, sunset headers. Use when bumping a procedure/tool, when proto changes, when planning the v1 shutdown after migration completes.
+description: API versioning across Brain's three surfaces — tRPC (web/mobile BFF), gRPC (internal services via buf), MCP tools (external partners + agent inter-comms). Deprecation timelines, the v1↔v2 reconciliation window during a legacy-tenant migration, safe vs breaking changes, sunset headers. Use when bumping a procedure/tool, when proto changes, when planning the v1 shutdown after migration completes.
 ---
 
 # API Versioning Strategy
@@ -11,7 +11,7 @@ Brain has three contract surfaces, each with a slightly different versioning mod
 2. **gRPC** between services (`.proto` via `buf`) — `buf breaking` enforces compatibility
 3. **MCP tools** (see canon/technical-requirements.md) — external partners + agent inter-comms; tool name carries version
 
-Plus the special case: **Brain v1 (legacy single-tenant at brain.pipadacapital.com) ↔ Brain v2 (multi-tenant)** during Sugandh Lok's migration in W14–16.
+Plus the special case: **Brain v1 (legacy single-tenant at `{BRAIN_DOMAIN}`) ↔ Brain v2 (multi-tenant)** during a legacy single-tenant → multi-tenant migration.
 
 ## Why this matters for Brain
 
@@ -20,7 +20,7 @@ Plus the special case: **Brain v1 (legacy single-tenant at brain.pipadacapital.c
 | tRPC | Web/mobile breaks for users on the old client; bad for releases that span > a deploy |
 | gRPC | Service A starts; service B hasn't restarted yet → cross-service breakage during deploy |
 | MCP tools | External partner (Anthropic Claude native, Enterprise tier) hits 4xx silently |
-| v1↔v2 | Sugandh sees inconsistent CM2 between brain v1 dashboard and v2 dashboard during migration — Founder loses trust |
+| v1↔v2 | a migrating brand sees inconsistent CM2 between the v1 and v2 dashboards during migration — the Founder loses trust |
 
 ## Versioning by surface
 
@@ -120,9 +120,9 @@ External partner keys (Anthropic Claude native consumers, Enterprise tier) see t
 
 ## Brain v1 ↔ v2 reconciliation (the special case)
 
-Sugandh Lok is on **v1** (legacy single-tenant at brain.pipadacapital.com) through end of Phase 1. Migration is **W14–16** (shadow → cutover). Tanvi runs **parity tests** during the shadow window — every dashboard metric must be within 1% on v1 and v2 (canon/technical-requirements.md). The window is:
+A migrating legacy tenant is on **v1** (legacy single-tenant at `{BRAIN_DOMAIN}`) through end of Phase 1. Migration is **W14–16** (shadow → cutover). Tanvi runs **parity tests** during the shadow window — every dashboard metric must be within 1% on v1 and v2 (canon/technical-requirements.md). The window is:
 
-- **W14:** v2 runs in shadow — Sugandh's data flows into v1 AND v2; v1 is canonical
+- **W14:** v2 runs in shadow — the tenant's data flows into v1 AND v2; v1 is canonical
 - **W15:** Tanvi runs reconciliation tests daily; Founder spot-checks dashboards
 - **W16:** Cutover — v2 becomes canonical; v1 read-only; v1 shutdown follows the 6-month timeline above
 
@@ -145,7 +145,7 @@ Content-Type: application/json
 {
   "error": "VERSION_SUNSET",
   "message": "This endpoint was sunset on 2026-07-01. Migrate to /api/trpc/orders.listV2.",
-  "migration_url": "https://docs.brain.pipadacapital.com/migrations/orders-v1-to-v2"
+  "migration_url": "https://docs.{BRAIN_DOMAIN}/migrations/orders-v1-to-v2"
 }
 ```
 

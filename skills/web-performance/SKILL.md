@@ -61,7 +61,7 @@ const CohortHeatmap = dynamic(() => import('@/components/cohort-heatmap'), {
 Always set `width`/`height` to reserve layout (eliminates CLS); mark the LCP candidate `priority`. Next.js Image emits AVIF/WebP via the optimizer at the CloudFront edge.
 
 ```tsx
-<Image src="/brand-logos/sugandh-lok.png" alt="Sugandh Lok"
+<Image src="/brand-logos/{brand-slug}.png" alt="{Brand}"
   width={120} height={40} priority sizes="(max-width: 600px) 100vw, 120px" />
 ```
 
@@ -125,7 +125,7 @@ PostHog dashboard **"Web Vitals by route"** — p50/p75/p95 by route segment; al
 ### 3. On-incident manual audit
 
 ```bash
-pnpm dlx lighthouse https://staging.brain.pipadacapital.com/dashboard \
+pnpm dlx lighthouse https://staging.{BRAIN_DOMAIN}/dashboard \
   --preset=desktop --only-categories=performance --output html --output-path /tmp/lhci.html
 ```
 

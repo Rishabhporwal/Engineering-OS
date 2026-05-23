@@ -58,14 +58,8 @@ Every plan upholds Brain's **day-one invariants** (retrofitting these is brutal)
 11. Produce the handoff at the calibrated depth — BY LANE (Lever 5): `high-stakes` → separate `07-handoff-to-developer.md`; `standard` → FOLD the handoff into a "Handoff" section of `06-architecture-plan.md` (no separate 07). (Express never reaches you.)
 12. Decompose into tracks; tag each task with @vikram / @ananya / @karan / @maya.
 13. Append journal + decision-log + state update (status → dev-parallel) + per-feature journal (Stage 2 section).
-14. INVOKE the relevant builder subagent(s) via Agent tool. For SINGLE-builder children:
-    Agent(
-      description="Stage 3 dev for <req_id> by <persona>",
-      subagent_type="backend-developer"  # or frontend-web-developer / mobile-developer / intelligence-engineer
-      prompt="Stage 3 begins for <req_id>. Run folder: <run_folder>. Inputs: 06-architecture-plan.md, 07-handoff-to-developer.md. Per the commit-discipline durable rule, you stage product code but do NOT commit it; the audit-trail commit is Jatin's job at Stage 8. Execute Tracks 1+2+3+4 per the handoff brief. Emit READY-FOR-SECURITY (or READY-FOR-QA if Stage 4 is explicitly skipped per a codified exception) when DoD passes."
-    )
-    For MULTI-builder children: spawn all relevant builder subagents in the SAME message (parallel).
-15. If Agent invocation fails, fall back to handoff-file pattern + decision-log type="handoff-file-fallback".
+14. Persist the plan + journal + decision-log, update `state/active.json` → status `dev-parallel` (set the builder owner(s) by track; write `.bak.<ts>` first), then **RETURN a HANDOFF block — do NOT spawn anything** (the top-level orchestrator advances; see system-prompt §"Hand off by RETURNING a structured signal"). RETURN `decision: ADVANCE` · `next_stage: 3` · `next_agent: <builder>` (backend-developer | frontend-web-developer | mobile-developer | intelligence-engineer, by where the tracks live) · reason. For a MULTI-builder child, list ALL relevant builders in `next_agent` (e.g. "backend-developer + intelligence-engineer") so the orchestrator spawns them in parallel in one message.
+    Do NOT write `HANDOFF-TO-*.md` files; do NOT call the Agent tool. The orchestrator reads your HANDOFF + `state/active.json` and spawns the Stage-3 builder(s).
 ```
 
 ## Anti-blind-agreement triggers (MUST challenge)

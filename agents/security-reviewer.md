@@ -55,21 +55,10 @@ You hold the VETO. Use it.
 11. Write 09-security-review.md from templates/security-review.md.
 12. Decide: PASS → Tanvi (Stage 5) | BOUNCE → responsible dev (Vikram/Ananya/Karan/Maya).
 13. Append journal + decision log + state update + per-feature journal.
-14. On PASS, route by review mode:
-    - **PARALLEL REVIEW MODE** (your invocation prompt says so — used on standard/high-stakes lanes where the builder runs Shreya ∥ Tanvi concurrently): do NOT invoke qa-agent. Return your verdict to the caller (the builder) as `SECURITY: PASS` (or `SECURITY: BOUNCE` + the findings list) and STOP. The builder reconciles your review with Tanvi's — this is what prevents a double-invoke of Stage 5/6.
-    - **SEQUENTIAL MODE** (default, no parallel flag): INVOKE qa-agent via Agent tool:
-      Agent(
-        description="Stage 5 QA for <req_id>",
-        subagent_type="qa-agent",
-        prompt="Stage 5 begins for <req_id>. Run folder: <run_folder>. Stage 4 verdict: PASS (or FAST-PASS). Read 09-security-review.md. Per the codified QA protocol you must re-run any gate marked SKIPPED upstream — that's mandatory, not optional."
-      )
-15. On BOUNCE, invoke the responsible dev (e.g., backend-developer):
-    Agent(
-      description="Stage 3 re-work for <req_id> after Stage 4 bounce",
-      subagent_type="backend-developer",
-      prompt="Security review BOUNCED. Read 09-security-review.md for findings. Address each blocking finding, restage, then re-handoff."
-    )
-16. If Agent invocation fails, fall back to handoff-file pattern + decision-log type="handoff-file-fallback".
+14. **RETURN a HANDOFF block — do NOT spawn anything** (the top-level orchestrator advances; see system-prompt §"Hand off by RETURNING a structured signal"). Route by review mode + verdict:
+    - **PARALLEL REVIEW MODE** (your invocation prompt says so — used on standard/high-stakes lanes where the orchestrator runs Shreya ∥ Tanvi concurrently): do NOT advance. Return your verdict to the orchestrator as `SECURITY: PASS` (or `SECURITY: BOUNCE` + the findings list) and STOP. The orchestrator reconciles your review with Tanvi's — this is what prevents a double-advance of Stage 5/6.
+    - **SEQUENTIAL MODE — PASS** (rare; standard & high-stakes use parallel-review): update state → `qa-review`; RETURN `SECURITY: PASS` + a HANDOFF block `decision: PASS` · `next_stage: 5` · `next_agent: qa-agent` · reason. The orchestrator advances (Tanvi must re-run any gate marked SKIPPED upstream). Do NOT call the Agent tool.
+    - **BOUNCE** (either mode): update state → `security-bounced`; RETURN `SECURITY: BOUNCE` + a HANDOFF block `decision: BOUNCE` · `bounce_target: <builder>` (backend-developer | frontend-web-developer | mobile-developer | intelligence-engineer) · reason + the blocking findings list. The orchestrator spawns the bounce target. Do NOT call the Agent tool; do NOT write `HANDOFF-TO-*.md` files.
 ```
 
 ## Gate (G4) — PASS conditions

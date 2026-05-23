@@ -63,7 +63,7 @@ BACKLOG → IN_BUILD → IN_SECURITY (if auth/PII) → IN_QA → READY → DEPLO
 | `design_path` | `memory/designs/<slug>.md` |
 | `adr_link` | `memory/decisions/ADR-NNN-<slug>.md` |
 | `platform` | `web` \| `mobile` \| `api-gateway` \| `core-service` \| `notifications-service` \| `ingestion-service` \| `analytics-service` \| `intelligence-service` \| `lifecycle-service` \| `infra` |
-| `owner_agent` | `priya` \| `aryan` \| `jatin` \| `vikram` \| `ananya` \| `karan` \| `sahil` \| `kabir` \| `maya` \| `neel` \| `shreya` \| `tanvi` \| `aarav` \| `rohan` \| `learning-retro` |
+| `owner_agent` | `priya` \| `rohan` \| `aryan` \| `vikram` \| `ananya` \| `karan` \| `maya` \| `shreya` \| `tanvi` \| `jatin` \| `learning-retro` |
 | `mode` | `SPEED` \| `SCALE` |
 | `sev` | `P0` \| `P1` \| `P2` \| `P3` |
 
@@ -76,10 +76,10 @@ BACKLOG → IN_BUILD → IN_SECURITY (if auth/PII) → IN_QA → READY → DEPLO
 Examples (Brain canon):
 - `[VIKRAM][api-gateway] Add 'ads.spend.adjust' tRPC mutation in services/api-gateway/src/trpc/routers/ads.ts`
 - `[ANANYA][web] Wire <CohortHeatmap/> in apps/web/components/charts/cohort-heatmap.tsx`
-- `[KABIR][analytics-service] Add mer_daily_mv materialized view in services/analytics-service/src/materializations/mer_daily_mv.sql`
-- `[SAHIL][ingestion-service] Add Shopify orders webhook in services/ingestion-service/src/routers/webhooks.py — Verify: uv run pytest tests/test_shopify_webhook.py`
+- `[MAYA][analytics-service] Add mer_daily_mv materialized view in services/analytics-service/src/materializations/mer_daily_mv.sql`
+- `[MAYA][ingestion-service] Add Shopify orders webhook in services/ingestion-service/src/routers/webhooks.py — Verify: uv run pytest tests/test_shopify_webhook.py`
 - `[MAYA][intelligence-service] Add Morning Brief synthesis with cached system prompt in services/intelligence-service/src/synthesis/morning_brief.py`
-- `[NEEL][lifecycle-service] Add 09:00–21:00 IST calling-hours guard in services/lifecycle-service/src/compliance/calling_hours.py`
+- `[MAYA][lifecycle-service] Add 09:00–21:00 IST calling-hours guard in services/lifecycle-service/src/compliance/calling_hours.py`
 
 ## Idempotency
 
