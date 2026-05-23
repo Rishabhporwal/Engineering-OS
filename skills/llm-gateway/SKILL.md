@@ -118,6 +118,13 @@ The daily loop must deliver the **Morning Brief by 07:20 IST on >99.5% of days**
 
 Moving the cheap tier off Haiku (~$1/$5 per 1M) to **Nova Micro (~$0.035/$0.14)** or **Gemini Flash-Lite (~$0.10/$0.40)** is **10–30× cheaper** on the small tier, for **~25–35% total LLM savings at Phase 3** — without touching the frontier quality bar (Sonnet stays the default there). The win comes from routing each tier to its cheapest eval-passing model, not from downgrading what frontier does.
 
+## Production hardening (LiteLLM is battle-tested — but self-hosting means you own these)
+LiteLLM is production-proven (1B+ requests, on the AWS Marketplace), but a self-hosted gateway has real production failure modes — harden for them:
+- **Supply chain (P0 — this has bitten LiteLLM):** a **March 2026 PyPI supply-chain attack compromised LiteLLM 1.82.7/1.82.8** with credential-stealing malware. So: **pin the image by digest** (not a floating tag), build from a verified base, run **`vulnerability-scanning`** (Trivy/Snyk/pip-audit) + SBOM on the gateway image in CI, and treat any gateway dependency bump under the **`version-upgrade-policy`** EOL/security watch (avoid the compromised range). The gateway holds every provider key — it is the highest-value supply-chain target in the stack.
+- **Throughput / GIL:** Python's GIL caps single-process throughput; benches show good P95 to ~1K RPS/replica. Run **2+ stateless replicas behind the ALB** (state in Redis/Postgres), autoscale on RPS/latency, and treat the gateway as **not a SPOF**. Brain's cost-routing keeps ~97% of calls off the LLM path, so the gateway sees modest RPS — but the daily-tick agent fan-out is bursty, so size for the 07:10–07:15 IST spike.
+- **Graduation trigger:** if sustained RPS or latency outgrows the self-hosted proxy, evaluate LiteLLM Enterprise (SLA) or a managed gateway — a `tech-stack-evaluation` ADR, not a reactive swap. The OpenAI-format client makes that reversible.
+- **Ops:** the gateway's Postgres (keys/spend) + Redis (cache) need the same backup/rotation/alerting as any service; rotate provider keys via `secrets-rotation`; trace it through OTel like everything else.
+
 ## Anti-patterns (code-review blockers)
 
 - **App code instantiates `AsyncAnthropic()` / imports `anthropic` directly** → bypasses routing/fallback/budget/cache/cost-ledger. Call the gateway via the OpenAI-format client.
