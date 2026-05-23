@@ -41,8 +41,8 @@ Two ordered tests at Stage 1:
 | `outbound-channels` | call, WhatsApp, email, SMS, ad-audience push |
 | `pii` | customer phone/email/address, order data |
 | `schema-proto` | Postgres/ClickHouse migration, `.proto` change, Kafka topic |
-| `money` | pricing, billing, GMV %, refunds, financial impact |
-| `india-compliance` | DLT, NCPR, DND, calling hours, recording consent, GST |
+| `money` | **moving/charging money** — pricing, billing/metering, GMV-% fee, invoices, refunds, payouts, settlement. *(Computing a money-DERIVED number — e.g. a CM/RTO/break-even metric over minor-units inputs — is NOT a money trigger; nearly every metric consumes money, so a money-side-effect, not money-math, is what escalates. A new metric helper is `standard`.)* |
+| `india-compliance` | DPDP / UAE-KSA PDPL data-protection; DLT, NCPR, DND, calling hours (9am–9pm), recording consent; WhatsApp opt-in/template approval; GST per-SKU; India in-region data residency |
 
 → **Any hit ⇒ `high-stakes`.** Record the hits in `trigger_surfaces_touched`. Stop.
 

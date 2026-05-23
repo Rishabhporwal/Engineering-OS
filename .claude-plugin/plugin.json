@@ -1,6 +1,6 @@
 {
   "name": "brain-engineering-os",
-  "version": "0.18.0",
+  "version": "0.18.1",
   "description": "An AI engineering team delivered as a Claude Code plugin that builds Brain — the AI-native commerce operating system for DTC brands (India-first; UAE/GCC sequenced). Orchestrates 11 agents (Rohan/CTO-Advisor, Aryan/Architect, Vikram/Backend, Ananya/Web, Karan/Mobile, Maya/Intelligence, Shreya/Security, Tanvi/QA, Jatin/DevOps, Priya/PM, dynamic personas) through an 8-stage requirement-to-release pipeline grounded in the Brain canon (BRD + TRD + TECH/00-17 + a curated skill library). Install once, use in any Brain product repo. Shared memory lives in the consuming project's `.engineering-os/` (committed to git).",
   "author": {
     "name": "Brain (Pipada Capital)",
