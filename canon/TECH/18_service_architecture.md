@@ -189,3 +189,108 @@ Same discipline as `version-upgrade-policy` + TECH/00: build the invariant/seam 
 ## 7. Service-readiness DoD (every service, before it's "production")
 
 A service is ready only when it: is DDD-structured by bounded context (no `controllers/`); owns its own schema (no cross-service DB reads); enforces `workspace_id` at every layer it touches; declares `@paradigm` on any compute path; uses minor-units money; emits/consumes events idempotently (envelope key + dedup) with a DLQ; exposes the 4 health probes (liveness/readiness/startup/deep); is trace-instrumented end-to-end (correlation ID); has a runbook (`blueprints/runbook.md`) + an SLO with an error budget; degrades gracefully on a dependency outage; has a reversibility/rollback path; and passes its contract tests (`buf breaking` / Pact / Zod / MCP-schema). (Composes the global DoD in `../technical-requirements.md` §25.)
+
+---
+
+## Appendix A — Per-service data ownership & key tables
+
+Every store has exactly one **writer** service. No service reads another's schema — cross-service data is gRPC (sync) or Kafka (async). **Full DDL lives in `TECH/01`** (Postgres + ClickHouse); this is the ownership map + the load-bearing tables.
+
+| Service | Store(s) it WRITES | Key tables / objects |
+|---|---|---|
+| `core-service` | Postgres `core`, `billing`, `audit`, `consent` | `core.organisations`, `core.workspaces`, `core.workspace_members`, `core.integrations` (credential_secret_arn only), `core.oauth_states`, `core.product_cogs`, `core.cost_settings`, `core.goals` · `billing.gmv_meter`, `billing.invoices`, `billing.usage_passthrough`, `billing.plan` · `audit.audit_log` (WORM, 7y) · `consent` primitive |
+| `ingestion-service` | ClickHouse `raw_*` · S3 raw archive · (Phase 0–1) Postgres 90-day mirror · watermarks | `raw_orders/customers/products/shipments/shipment_events/refunds/ads_insights/campaigns` (ZSTD + SHA-256 hash); S3 `raw/{workspace_id}/{provider}/{date}/…`; `integration.watermarks` (JSONB on `core.integrations`, written via core) |
+| `analytics-service` | ClickHouse canonical + derived · Postgres `ai.decision_log` | canonical: `orders`, `line_items`, `customers`, `products`, `refunds`, `shipments`, `shipment_events`, `campaigns`, `campaign_insights_daily`, `order_costs` · derived: `daily_metrics` (master), `customer_states`, `cohort_aggregates`, `first_product_attribution`, `customer_lifetime_value`, `pincode_reliability`, `festival_lift_factors`, `support_daily`, `lifecycle_outreach_daily` · **`ai.decision_log`** (the moat — analytics is its writer) |
+| `intelligence-service` | Postgres `ai.*` + **pgvector** | `ai.brand_fingerprint` (vector(16), HNSW), `ai.condition_outcome` (HNSW), `ai.cross_brand_pattern` (k≥5), `ai.insights`, `ai.forecasts`, `ai.forecast_accuracy`, `ai.anomalies`, `ai.workspace_llm_budget`, `ai.auto_execute_policies`, `ai.auto_execute_log` |
+| `lifecycle-service` | Postgres `lifecycle.*`, `support.*` | `lifecycle.audience`, `lifecycle.audience_member` (frozen rfm_score_snapshot + assigned_channel), `lifecycle.outreach`, `lifecycle.call`, `lifecycle.rfm_score`, `lifecycle.consent_event` (append-only), `lifecycle.customer_consent_current` · `support.tickets`, `support.messages` |
+| `notifications-service` | Postgres (delivery state) · S3 (exports) | `notifications.deliveries`, `notifications.push_tokens` (`mobile_push_tokens`), `notifications.digests`; S3 `exports/{workspace_id}/…` |
+| `api-gateway` | — (stateless) | Redis only: sessions, rate-limit counters, idempotency keys, hot-metric cache (all `workspace_id`-prefixed) |
+| shared infra | Redis · S3 · MSK | not a schema — every key/path/event carries `workspace_id` |
+
+**Cross-store sync (Phase 2):** Debezium CDC mirrors the dual-store tables Postgres→ClickHouse. **Replay:** any ClickHouse materialization is rebuildable from the ∞-retained Kafka raw topics + S3 archive.
+
+---
+
+## Appendix B — Kafka topic catalog with payload contracts
+
+**Standard envelope (every event):** `event_id` (uuid) · `event_type` · `workspace_id` (**partition key**) · `occurred_at` · `produced_at` · `producer_service` · `trace_id` (correlation) · `schema_version` · `idempotency_key` · `payload`. Avro in `protos/events/`, registered with Glue Schema Registry. Consumers dedup on `idempotency_key` + ClickHouse `version`.
+
+| Topic | Producer | Consumers | Retention | Payload contract (key fields) |
+|---|---|---|---|---|
+| `integrations.orders.v1` | ingestion | analytics, intelligence | ∞ | order_id, customer_ref, placed_at, status, payment_method (cod/prepaid), currency_code, total_minor, discount_minor, line_item_refs[], channel, region |
+| `integrations.line_items.v1` | ingestion | analytics | ∞ | order_id, sku, product_id, variant_id, qty, unit_price_minor, tax_slab, discount_minor |
+| `integrations.customers.v1` | ingestion | analytics, intelligence | ∞ | customer_id, email_hash, phone_hash, first_seen_at, region, pincode, consent_refs[] |
+| `integrations.products.v1` | ingestion | analytics | ∞ | product_id, variant_id, sku, category, tax_slab, price_minor, inventory_qty |
+| `integrations.refunds.v1` | ingestion | analytics, intelligence | ∞ | refund_id, order_id, amount_minor, reason, refunded_at |
+| `integrations.ads_insights.v1` | ingestion | analytics, intelligence | ∞ | platform, campaign_id, adset_id, ad_id, date, spend_minor, impressions, clicks, conversions, attributed_revenue_minor |
+| `integrations.campaigns.v1` | ingestion | analytics, intelligence | ∞ | platform, campaign_id, name, objective, classification (acquisition/retention/brand/…), status |
+| `integrations.shipments.v1` | ingestion | analytics, intelligence, lifecycle | ∞ | shipment_id, order_id, courier, status, pincode, cod_flag, shipped_at |
+| `integrations.shipment_events.v1` | ingestion | analytics, intelligence, lifecycle | ∞ | shipment_id, event_type (ndr/rto/delivered/…), occurred_at, attempt_no, reason |
+| `integrations.payments.v1` | ingestion | analytics, intelligence, core(billing) | ∞ | payment_id, order_id, method, status, amount_minor, fee_minor, settled_at |
+| `integrations.sync.completed.v1` / `.failed.v1` | ingestion | core, notifications | 30–90d | integration_id, provider, window, records, lag_seconds, error? |
+| `integrations.dlq.v1` | ingestion | core, notifications | 30–90d | source_topic, raw_payload_ref(S3), error, attempts |
+| `core.settings_changed.v1` | core | analytics | 30–90d | what (cost_settings/goals/region/…), changed_by, effective_from |
+| `analytics.metrics.daily_materialized.v1` | analytics | intelligence, notifications, api-gateway(cache) | 30–90d | date, metric_keys[], dimensions, freshness_at |
+| `analytics.customer_state.changed.v1` | analytics | intelligence, lifecycle | 30–90d | customer_id, old_state, new_state (new/returning/reactivated/at-risk/churned), rfm_segment |
+| `intelligence.insight.generated.v1` | intelligence | notifications | 30–90d | insight_id, decision_log_id, title, priority_score, expected_cm2_minor, confidence |
+| `intelligence.anomaly.detected.v1` | intelligence | notifications | 30–90d | anomaly_id, metric, magnitude, baseline, severity, root_cause? |
+| `intelligence.action.recommended.v1` | intelligence | analytics, notifications, audit | ∞ | decision_log_id, agent_name, action_type, proposed_action, confidence, risk_level, reversibility |
+| `intelligence.action.executed.v1` | intelligence/lifecycle | analytics, notifications, audit | ∞ | decision_log_id, executed_action, channel, provider_ref, executed_at, auto_executed? |
+| `intelligence.decision.logged.v1` | intelligence/lifecycle | analytics, notifications, audit | **∞ (the moat)** | the full Decision-Log row delta (status transition + fields) |
+| `lifecycle.outreach.completed.v1` | lifecycle | analytics, intelligence | ∞ | outreach_id, decision_log_id, audience_id, channel, sent/delivered/replied counts, cost_minor |
+| `lifecycle.recovered_revenue.attributed.v1` | lifecycle | analytics, intelligence | ∞ | decision_log_id, window (7d/30d), recovered_revenue_minor, recovered_cm2_minor |
+| `support.ticket.created.v1` / `.resolved.v1` | lifecycle | analytics, intelligence | ∞ | ticket_id, decision_log_id, channel, ticket_type, resolution_type?, csat?, support_protected_cm2_minor? |
+| `notifications.digest.sent.v1` / `.alert.fired.v1` | notifications | audit | 30–90d | digest_id/alert_id, kind, channel, delivered_at, recipient_role |
+
+> Convention recap: topic = `<domain>.<entity>.<event>.vN`; breaking change → `.v(n+1)` + dual-write window; backward-compatible additions stay in-version (new fields have defaults). `cdc.*` topics (Debezium) appear at Phase 2.
+
+---
+
+## Appendix C — Sequence diagrams (the two critical flows)
+
+**Flow B — Daily tick → Morning Brief (SLO-critical: delivered by 07:20 IST, >99.5%)**
+```
+EventBridge   intelligence        analytics        LiteLLM-gw     notifications      mobile
+    │ 06:55 tick   │                   │                │              │               │
+    ├─────────────▶│ freshness check   │                │              │               │
+    │              ├──gRPC GetMetrics──▶│ (today/MTD)    │              │               │
+    │              │◀──daily_metrics────┤                │              │               │
+    │ 07:00        ├─ build Brand Fingerprint → PG ai.brand_fingerprint (HNSW upsert)  │
+    │ 07:05        ├─ memory query: HNSW k-NN on ai.condition_outcome                  │
+    │ 07:10        ├─ 15 agents in parallel; each:                                     │
+    │              │    • gRPC metric reads ─▶ analytics                               │
+    │              │    • WRITE Decision-Log row (status=proposed) ─▶ analytics(ai.decision_log)
+    │              │    • emit intelligence.action.recommended.v1 (Kafka)              │
+    │ 07:15        ├─ assemble Top-3 → frontier synthesis ──▶│ (Claude default, cached)│
+    │              │◀──────────── synthesized brief ─────────┤              │           │
+    │              ├─ emit intelligence.insight.generated.v1 ──────────────▶│ (consume) │
+    │ 07:00–09:00  │                   │                │     assemble brief├──push────▶│ open
+    │              │                   │                │              │      (Expo)   │ (3-min)
+  Fallback: if LiteLLM-gw stalls → fallback model in-chain; if still down → degrade to
+  a SQL+ML brief (no frontier) so the 07:20 SLO still holds.
+```
+
+**Flow C — Approve → execute → attribute (the moat loop)**
+```
+mobile/web   api-gateway    analytics(DecisionLog)   lifecycle        provider      analytics/intel
+   │ Approve     │                  │                    │               │              │
+   ├──tRPC──────▶│ authZ+tenancy    │                    │               │              │
+   │             ├──gRPC UpdateDecision(status=approved)─▶│ ai.decision_log row→approved│
+   │             ├──emit intelligence.action.recommended? no → triggers lifecycle:      │
+   │             │                  │   (consume customer_state / approved action)      │
+   │             │                  │                    ├─ BuildAudience (once) → lifecycle.audience(_member frozen)
+   │             │                  │                    ├─ COMPLIANCE ENGINE (pre-send):│
+   │             │                  │                    │   consent re-check · DLT · NCPR/DND · 9am–9pm · freq-cap
+   │             │                  │                    ├─ route per customer (call/WA/email)
+   │             │                  │                    ├─ personalize via LiteLLM-gw   │
+   │             │                  │                    ├──────────── send ────────────▶│ (channel)
+   │             │                  │                    ├─ emit lifecycle.outreach.completed.v1
+   │             │                  │  Decision-Log row→executed (executed_action)       │
+   │  …7d/30d nightly (23:55)…       │                    ├─ attribute placed→realized→recovered
+   │             │                  │                    ├─ emit lifecycle.recovered_revenue.attributed.v1
+   │             │                  │◀── update SAME Decision-Log row: outcome_7d/30d, recovered_*_minor
+   │             │                  │   intelligence: write ai.condition_outcome (feedback → next rec improves)
+  Guardrails: every step idempotent + Decision-Log'd; partial-reversibility (stop future sends);
+  Owner kill switch pauses all in 60s; reversal/error breach → auto-revert to recommend-only.
+```
+
