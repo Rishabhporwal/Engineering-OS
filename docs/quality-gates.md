@@ -199,7 +199,7 @@ This document defines each gate's:
 - [ ] All unit tests green (`pnpm vitest`, `pytest`).
 - [ ] All integration tests green.
 - [ ] All contract tests green (`buf breaking`, Pact, tRPC schema diff, MCP schema diff).
-- [ ] All E2E green (Cypress for web, Detox for mobile).
+- [ ] All E2E green (Playwright for web, Detox for mobile).
 - [ ] Load tests pass (Phase 3+ at 5K RPS target).
 - [ ] **Real-network smoke output captured**. No "should work" — actual output.
 - [ ] **Metric registry parity** confirmed (TS ↔ Python).

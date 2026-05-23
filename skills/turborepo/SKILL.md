@@ -255,6 +255,6 @@ turbo run build --cache-dir=/tmp/turbo   # custom cache location
 | Remote cache config | **Jatin** | CI infra |
 | Per-package script discipline | each builder | their service/package |
 | proto:generate task | **Aryan** + Vikram | `grpc-buf` skill |
-| Cypress / Detox / k6 (uncached) tasks | **Tanvi** | `testing-tdd` |
+| Playwright / Detox / k6 (uncached) tasks | **Tanvi** | `testing-tdd` |
 
 Related Brain skills: `grpc-buf` (proto codegen task), `python-services` (uv counterpart), `operational-readiness` (CI build gates).

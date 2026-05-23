@@ -26,7 +26,7 @@ The web stack for Brain's **workbench surface** — Ananya's domain. Web is the 
 | Date | date-fns + date-fns-tz (`Asia/Kolkata`) | IST handling for India workspaces |
 | Currency | `packages/lib-formatters` — Indian numbering (`₹4,82,000`) | NEVER `₹482,000` |
 | Unit tests | Vitest + RTL | |
-| E2E | **Cypress** (critical journeys) | |
+| E2E | **Playwright** (`@playwright/test`, critical journeys) | Cross-browser (Chromium/Firefox/WebKit), auto-wait + web-first assertions, trace viewer for flake |
 | Deploy | AWS Amplify or EKS (SSR) — Jatin owns | |
 
 ## State ownership rules (NON-NEGOTIABLE)
@@ -123,7 +123,7 @@ if (!data?.metrics?.length) return <EmptyState title="No data yet" />;
 return <KpiCard {...data.metrics[0]} />;
 ```
 
-Every interactive element gets `data-testid` for Cypress.
+Every interactive element gets `data-testid` for Playwright (`getByTestId`).
 
 ## RAG (Red/Amber/Green) on every metric card
 
@@ -214,4 +214,4 @@ apps/frontend/
 - `canon/technical-requirements.md` — design system + BFF + multi-currency, KPI definitions + RAG + Calendar Report
 - `canon/business-requirements.md` — every wedge feature's UI spec
 - `skills/india-commerce-economics/SKILL.md` §currency-format — numbering + GST display
-- `skills/testing-tdd/SKILL.md` — Vitest + RTL + Cypress patterns
+- `skills/testing-tdd/SKILL.md` — Vitest + RTL + Playwright patterns

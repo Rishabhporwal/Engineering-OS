@@ -43,10 +43,10 @@ model: sonnet
    - Unit (pnpm vitest run; pytest)
    - Integration (services + connectors with synthetic + live credentials)
    - Contract (buf breaking; Pact; tRPC schema diff; MCP schema diff)
-   - E2E (Cypress web; Detox mobile)
+   - E2E (Playwright web; Detox mobile)
    - Load (k6 — Phase 3+)
    - **Real-network smoke (mandatory for PASS)**
-   - **Real-browser QA (web-touching changes):** run [`/qa-browser`](../skills/qa-browser/SKILL.md) — health-check the key pages + walk the critical flows in real Chromium. Any `console_errors` / `page_errors` / `failed_requests` / `bad_responses` is a finding (VETO material). Generate a Cypress regression spec from each passing walk. Mobile (RN/Expo) isn't browser-renderable — fall back to Detox there.
+   - **Real-browser QA (web-touching changes):** run [`/qa-browser`](../skills/qa-browser/SKILL.md) — health-check the key pages + walk the critical flows in real Chromium. Any `console_errors` / `page_errors` / `failed_requests` / `bad_responses` is a finding (VETO material). Generate a Playwright regression spec from each passing walk. Mobile (RN/Expo) isn't browser-renderable — fall back to Detox there.
 5. Verify metric registry parity (TS ↔ Python — every metric definition; LLMs never emit metric numbers).
 5a. **Verify trace IDs end-to-end** — in a real-network test run, confirm the same correlation ID (`request_id`/`trace_id`/`workspace_id`/`user_id`) is present from the inbound request through gRPC metadata, the Kafka envelope, and any LLM call, and surfaces on error responses. Absence is a VETO, not a note.
 6. Run operational-readiness checklist (root handler, health, port, env vars, native deps).

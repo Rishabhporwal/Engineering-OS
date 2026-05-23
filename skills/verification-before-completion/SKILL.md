@@ -43,7 +43,7 @@ These match the locked stack. Use these in handoff signals and PR descriptions.
 ```bash
 # TypeScript / Node services (api-gateway, core, notifications, lifecycle Node)
 pnpm test
-pnpm test:e2e        # Cypress for web; Detox for mobile
+pnpm test:e2e        # Playwright for web; Detox for mobile
 pnpm typecheck
 pnpm lint
 pnpm build
@@ -84,7 +84,7 @@ For the **inverted-handoff fallback** (subagent Bash denied per prompts/system-p
 | "Type check passes" | Fresh `pnpm typecheck` / `mypy` exit 0 | "I followed the types" |
 | "Bug fixed" | Test reproducing the original symptom now passes | Code changed, assumed fixed |
 | "Regression test works" | Red-green cycle: revert fix → test FAILS → restore fix → test PASSES | Test passes once |
-| "Tanvi PASS" | k6 smoke + Cypress/Detox green + paradigm-audit verified + metric-parity check | Component tests green |
+| "Tanvi PASS" | k6 smoke + Playwright/Detox green + paradigm-audit verified + metric-parity check | Component tests green |
 | "Shreya APPROVED" | Threat-model findings each have a verification snippet AND the snippet's assertion succeeds | "Looks safe" |
 | "Sub-agent done" | Diff inspected (`git diff`) + the verification commands re-run by orchestrator | Sub-agent's success report |
 | "Requirements met" | Line-by-line spec checklist with each item verified | "Tests pass, must be done" |

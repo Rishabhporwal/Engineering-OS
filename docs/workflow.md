@@ -238,7 +238,7 @@ These three responsibilities together = **smooth autonomous flow**. The pipeline
    - Unit tests (`pnpm vitest`, `pytest`).
    - Integration tests (services + connectors with synthetic + live credentials).
    - Contract tests (`buf breaking`, Pact, tRPC schema diff, MCP schema diff).
-   - E2E (Cypress for web, Detox for mobile).
+   - E2E (Playwright for web, Detox for mobile).
    - Load (k6 — Phase 3+).
    - **Real-network smoke tests (mandatory for PASS).**
 3. Verify **metric registry parity** (TS ↔ Python).

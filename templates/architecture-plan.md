@@ -143,7 +143,7 @@
 | **Unit** | {{TEST_UNIT}} |
 | **Integration** | {{TEST_INTEGRATION}} |
 | **Contract** | {{TEST_CONTRACT}}  *(`buf breaking`, Pact, tRPC schema diff, MCP schema diff)* |
-| **E2E (web)** | {{TEST_E2E_WEB}}  *(Cypress)* |
+| **E2E (web)** | {{TEST_E2E_WEB}}  *(Playwright)* |
 | **E2E (mobile)** | {{TEST_E2E_MOBILE}}  *(Detox)* |
 | **Load** | {{TEST_LOAD}}  *(k6 — Phase 3+)* |
 | **Real-network smoke** | {{TEST_SMOKE}}  *(mandatory for PASS)* |

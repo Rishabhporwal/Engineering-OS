@@ -44,7 +44,7 @@ Match the existing skills (see `skills/verification-before-completion/SKILL.md` 
 7. **Brain wiring** — owner + reference table tying it to roles/agents.
 8. **The bottom line** + **Related** links.
 
-Keep it grounded in Brain's locked stack (pnpm/uv/buf/dbt/Cypress/Detox/Expo/k6, ClickHouse, Supabase, India compliance) — generic advice that ignores the stack is low-value.
+Keep it grounded in Brain's locked stack (pnpm/uv/buf/dbt/Playwright/Detox/Expo/k6, ClickHouse, Supabase, India compliance) — generic advice that ignores the stack is low-value.
 
 ## Registration checklist (a new domain skill isn't done until)
 

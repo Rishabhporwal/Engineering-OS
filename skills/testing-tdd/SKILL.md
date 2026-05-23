@@ -1,6 +1,6 @@
 ---
 name: testing-tdd
-description: Brain's testing discipline — Vitest (Node + Web + RNTL), pytest (Python), Cypress (web E2E), Detox (mobile E2E), k6 (load — Phase 3+ 5K RPS target), real-network smoke tests (mandatory for PASS), the testing anti-patterns catalog, mutation testing for test effectiveness (Stryker for TS, mutmut for Python), metric registry parity (TS↔Python), cost-routing paradigm audit verification, India compliance test matrix. Auto-load whenever Tanvi or any builder is writing tests.
+description: Brain's testing discipline — Vitest (Node + Web + RNTL), pytest (Python), Playwright (web E2E), Detox (mobile E2E), k6 (load — Phase 3+ 5K RPS target), real-network smoke tests (mandatory for PASS), the testing anti-patterns catalog, mutation testing for test effectiveness (Stryker for TS, mutmut for Python), metric registry parity (TS↔Python), cost-routing paradigm audit verification, India compliance test matrix. Auto-load whenever Tanvi or any builder is writing tests.
 ---
 
 # Testing — Brain's TDD Discipline
@@ -16,7 +16,7 @@ description: Brain's testing discipline — Vitest (Node + Web + RNTL), pytest (
 
 ```
                     ▲
-            E2E (Cypress + Detox) — critical journeys only
+            E2E (Playwright + Detox) — critical journeys only
         Integration (Supertest + pytest) — real Postgres + ClickHouse + Kafka (docker compose)
                 Unit (Vitest + pytest) — business logic + utilities
                     ▼
@@ -48,11 +48,11 @@ describe('store.kpis', () => {
 - **Integration tests run against real Postgres + ClickHouse + Kafka via docker compose** — never mocked. Mocking the stores masks RLS + query-gateway + tenant-scoping bugs. Supertest hits a real Fastify server; pytest hits a real `brain_clickhouse` client; both assert the cross-workspace `403` and unscoped-query rejection.
 - **Python parity:** the analytics-service metric tests mirror the TS examples (e.g. `compute_amer` → `None` on zero acquisition spend, `2.0` on a 2:1 ratio). See canon/technical-requirements.md for the full layer-by-layer test layout.
 
-## E2E + load (Cypress / Detox / k6)
+## E2E + load (Playwright / Detox / k6)
 
 These are pointers, not full configs — the canonical scaffolds live in the repo and canon/technical-requirements.md:
 
-- **Web — Cypress** (`apps/frontend/cypress/e2e/`): critical journeys only — KPI load with RAG coloring, campaign drill-down drawer. Assert on `data-testid` + RAG class.
+- **Web — Playwright** (`apps/web/e2e/`, `@playwright/test`): critical journeys only — KPI load with RAG coloring, campaign drill-down drawer. Assert with `page.getByTestId(...)` + web-first assertions (`await expect(locator).toBeVisible()`) on the RAG class. Cross-browser (Chromium/Firefox/WebKit), parallel + sharding in CI, trace viewer for flake.
 - **Mobile — Detox** (`apps/mobile/e2e/`, canon/technical-requirements.md): the Morning Brief journey — login → push deep link (`brain://morning-brief`) → three signal cards visible → swipe-approve writes a Decision Log row.
 - **Load — k6** (`load-tests/`, Phase 3+ 5K RPS target): `constant-arrival-rate` at `rate: 5000`, thresholds `p(95)<500ms` and `http_req_failed rate<0.01` on `trpc.store.kpis`.
 

@@ -169,8 +169,8 @@ pnpm test --shard 1/4         # narrow by shard
 for f in $(find . -name '*.test.ts' | sort); do
   echo "=== $f ===" && pnpm vitest run "$f" || break   # find the polluter
 done
-# Cypress/Detox flake hunt — run the suspect in isolation 20×
-for i in {1..20}; do pnpm test:e2e --spec cypress/e2e/morning-brief.cy.ts || echo "Failed at run $i"; done
+# Playwright/Detox flake hunt — run the suspect in isolation 20×
+for i in {1..20}; do pnpm test:e2e --spec e2e/morning-brief.spec.ts || echo "Failed at run $i"; done
 ```
 
 ### Real Brain example — the JWT entropy bug (slice-3)

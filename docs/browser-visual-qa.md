@@ -10,7 +10,7 @@ It closes the OS's biggest tooling gap: previously "QA" meant unit/contract/real
 
 - **Engine:** [`tools/browse.py`](../tools/browse.py) — Playwright driving real Chromium.
 - **Plugin-side dev tooling, NOT a Brain product dependency.** It lives in the plugin's `tools/` (alongside `memory_index.py`, `paradigm_check.py`) and runs via `uv`. It does **not** touch Brain's locked product stack — so no Brain ADR is needed. (The plugin's own tooling stack — uv, fastembed, sqlite-vec, playwright — is separate from Brain's product stack.)
-- **Complements, doesn't replace** unit/contract/real-network tests and Cypress/Detox E2E.
+- **Complements, doesn't replace** unit/contract/real-network tests and Playwright/Detox E2E.
 
 ---
 
@@ -34,7 +34,7 @@ First run auto-installs the Chromium binary (~150 MB), once. `EOS_NO_BROWSER_INS
 ## The two skills
 
 ### `/qa-browser` — Tanvi, Stage 5 (functional)
-Health-checks the key pages, walks the critical flows in real Chromium, and **generates a Cypress regression spec** from each passing walk. Any console/page/network error is a Stage-5 finding. The browser walk is *exploratory*; the durable regression test is **Cypress** (Brain's existing E2E framework — we do not add a parallel E2E system; Single-Primitive Rule).
+Health-checks the key pages, walks the critical flows in real Chromium, and **generates a Playwright regression spec** from each passing walk. Any console/page/network error is a Stage-5 finding. Both the exploratory browser walk and the durable regression spec are a Playwright spec — the same engine `browse.py` drives — so there's **one unified E2E engine, no parallel spec system** (Single-Primitive Rule).
 
 ### `/design-review` — Ananya, self-review (visual)
 Screenshots before/after a UI change, then **scores each design dimension 0–10** ("what would a 10 look like?") via vision — typography, spacing, contrast, hierarchy, Indian rendering (₹/GST/festival), responsiveness, empty/loading/error states — and applies the high-value fixes as an atomic commit. Highest bar on the **Morning Brief** and the KPI/P&L/waterfall surfaces.
@@ -59,5 +59,5 @@ Screenshots + JSON reports land in the feature's run folder (`.engineering-os/ru
 ## Why this fits the OS's values
 
 - **Git-native:** evidence in run folders, no external service.
-- **Single-Primitive:** durable regression tests stay in Cypress; Playwright is the exploratory/visual engine, not a second spec system.
+- **Single-Primitive:** both the exploratory browser walk and the durable regression spec are Playwright — one engine (the same one `browse.py` drives), not two spec systems to maintain.
 - **Verify-before-completion:** "QA passed" now includes *the page actually rendered without errors and looked right* — captured output, not a claim.

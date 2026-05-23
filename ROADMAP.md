@@ -164,7 +164,7 @@ Follow this order to derisk the dependency graph.
 | 2 plan | **Aryan** | Extend lifecycle-service `region=ae` (reuse Audience Builder — Single-Primitive); new `gcc.recovery_windows` table w/ RLS; SQL paradigm; observability + tests | `06-architecture-plan.md`, `07-handoff-to-developer.md` | → Stage 3 |
 | 3 build | **Vikram** ∥ **Maya** | BE route + calling-window assertion (Vikram challenges a missing agency-JWT guard, Aryan agrees); Python RFM lookup w/ short-history fallback. Both capture real-network smoke | `08-developer-report-vikram.md`, `08-developer-report-maya.md` | READY-FOR-SECURITY |
 | 4 security | **Shreya** | Finds HIGH: UAE DLT registration not wired → **BOUNCE** to Vikram; he fixes (UAE TRA vs India TRAI); re-review PASS | `09-security-review.md` | BOUNCE → PASS |
-| 5 QA | **Tanvi** | Unit + integration + Cypress E2E + real-network smoke + metric-registry parity + ops-readiness, all green | `10-qa-review.md` | PASS |
+| 5 QA | **Tanvi** | Unit + integration + Playwright E2E + real-network smoke + metric-registry parity + ops-readiness, all green | `10-qa-review.md` | PASS |
 | 6 final | **Rohan** | Paradigm audit (no Sonnet snuck in); over-engineering audit; spot-re-run 3 of Tanvi's gates; write retro | `11-final-review.md`, `14-retro.md` | APPROVE |
 | 7 gate | **Founder** | Reads `/status` + final review; `/approve` | `12-founder-decision.json` | APPROVED |
 | 8 ship | **Jatin** | Stage product code for Founder; commit `.engineering-os/` (chore-eos); CI → ArgoCD staging → canary → prod; 48h monitor + auto-rollback armed | `13-deployment-report.md` | shipped (after push verified) |

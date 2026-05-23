@@ -65,7 +65,7 @@ If you wrote a task and you can't immediately answer these in one sentence each,
 - ❌ "Build First Product Cascade page"
 - ✅ "[ANANYA][web] Add `app/(dashboard)/first-product-cascade/page.tsx` Server Component consuming `trpc.analytics.firstProductCascade.get` — verify: `pnpm --filter web typecheck`"
 - ✅ "[ANANYA][web] Add `<FirstProductCascadeTable>` component in apps/web/components/cascade/FirstProductCascadeTable.tsx — verify: `pnpm --filter web test -- FirstProductCascadeTable`"
-- ✅ "[ANANYA][web] Wire infinite scroll via TanStack Query `useInfiniteQuery` consuming cursor pagination — verify: Cypress test `cypress/e2e/first-product-cascade.cy.ts`"
+- ✅ "[ANANYA][web] Wire infinite scroll via TanStack Query `useInfiniteQuery` consuming cursor pagination — verify: Playwright test `e2e/first-product-cascade.spec.ts`"
 
 ### Mobile (Karan in apps/mobile)
 - ❌ "Add cascade widget to Morning Brief"

@@ -201,7 +201,7 @@ res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
 - [ ] Any new `dangerouslySetInnerHTML` wraps its value in `sanitizeRichText` / `sanitizeHeadline`
 - [ ] Any new `<a href={…}>` from data uses `safeURL()`; any new `<img src={…}>` validates the host against the CSP `img-src` allowlist
 - [ ] CSP unchanged OR change documented + Shreya-approved
-- [ ] Cypress test renders a known payload (`<script>alert(1)</script>`, `<img src=x onerror=alert(1)>`) and asserts it appears literally (escaped)
+- [ ] Playwright test renders a known payload (`<script>alert(1)</script>`, `<img src=x onerror=alert(1)>`) and asserts it appears literally (escaped)
 
 ## Anti-patterns
 
@@ -223,7 +223,7 @@ res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
 | Web XSS surface + sanitizer in `packages/ui` | **Ananya** | canon/technical-requirements.md (frontend security) |
 | CSP config | **Ananya** + **Shreya** | this skill (Layer 5) + `security-baseline` |
 | Mobile WebView usage | **Karan** | canon/technical-requirements.md (avoid where possible) |
-| PR-time XSS payload test | **Tanvi** | Cypress payload assertions |
+| PR-time XSS payload test | **Tanvi** | Playwright payload assertions |
 
 Related Brain skills (security trio): `security-baseline` (the index + Shreya's gate — this skill is its multi-tenant + output-safety deep dive), `auth-and-access` (role-level access + `workspace_id` from JWT). Also: `idempotency-handling` (Layer 1 for retries), `mcp-protocol`, `frontend-web` (where Layer 5 lives).
 
