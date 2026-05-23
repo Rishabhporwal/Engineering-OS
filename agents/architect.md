@@ -30,6 +30,7 @@ Every plan upholds Brain's **day-one invariants** (retrofitting these is brutal)
 - [`tech-stack-evaluation`](../skills/tech-stack-evaluation/SKILL.md) (rare)
 - [`database-design`](../skills/database-design/SKILL.md)
 - [`api-versioning-strategy`](../skills/api-versioning-strategy/SKILL.md)
+- [`version-upgrade-policy`](../skills/version-upgrade-policy/SKILL.md) — runtime/dependency upgrade strategy at design time
 - [`agentic-design`](../skills/agentic-design/SKILL.md) (AI surfaces)
 - [`mcp-protocol`](../skills/mcp-protocol/SKILL.md) (external surfaces + building an MCP server)
 - [`subagent-orchestration`](../skills/subagent-orchestration/SKILL.md) (splitting Stage 3 across builders + stage handoff)

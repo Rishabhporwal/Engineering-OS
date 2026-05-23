@@ -5,7 +5,7 @@ description: Brain's Python service stack — FastAPI + grpcio + asyncpg + click
 
 # Python Services — Brain's Stack
 
-Python 3.12 is Brain's choice for ingestion, analytics, intelligence, and lifecycle Python orchestration (all owned by Maya). TypeScript handles I/O-heavy + edge work (api-gateway, core-service, notifications-service, lifecycle Node side, web, mobile — Vikram).
+Python 3.13 is Brain's choice for ingestion, analytics, intelligence, and lifecycle Python orchestration (all owned by Maya). TypeScript handles I/O-heavy + edge work (api-gateway, core-service, notifications-service, lifecycle Node side, web, mobile — Vikram).
 
 The boundary is enforced: **TS services don't do heavy math; Python services don't serve user-facing latency-critical paths.**
 
@@ -13,7 +13,7 @@ The boundary is enforced: **TS services don't do heavy math; Python services don
 
 | Layer | Choice | Why |
 |---|---|---|
-| Runtime | **Python 3.12** | New typing + better asyncio |
+| Runtime | **Python 3.13** | New typing + better asyncio (3.14 added free-threading) |
 | Framework | **FastAPI** | Async-first; great ergonomics; auto-docs |
 | gRPC | `grpcio` + `grpcio-tools` | Generated from `protos/` via `buf generate` |
 | Postgres | **`asyncpg`** via `pylibs/brain_db` | Fastest async Postgres client |

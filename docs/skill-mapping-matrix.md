@@ -1,6 +1,6 @@
 # Section 2.1 — Skill Mapping Matrix
 
-This document is the **authoritative skill-to-role binding** for the Brain Engineering OS. It maps every one of the **57 domain skills** in [`skills/`](../skills/). (The **28 command-skills** carrying `disable-model-invocation: true` — requirement, status, recall, handoff, approve, reject, deploy, rollback, persona, invoke-skill, eos-init, propose-rule, adopt-rule, reject-rule, plus recall-similar, reindex, qa-browser, design-review, worker-test-gap, worker-canon-drift, worker-compliance-drift, test-pipeline, resume, new-skill, team-digest, watch, monitor, dashboard — are human/schedule-triggered and not mapped here. 57 + 28 = 85 skill folders.) Each domain skill is mapped to:
+This document is the **authoritative skill-to-role binding** for the Brain Engineering OS. It maps every one of the **70 domain skills** in [`skills/`](../skills/). (The **28 command-skills** carrying `disable-model-invocation: true` — requirement, status, recall, handoff, approve, reject, deploy, rollback, persona, invoke-skill, eos-init, propose-rule, adopt-rule, reject-rule, plus recall-similar, reindex, qa-browser, design-review, worker-test-gap, worker-canon-drift, worker-compliance-drift, test-pipeline, resume, new-skill, team-digest, watch, monitor, dashboard — are human/schedule-triggered and not mapped here. 70 + 28 = 98 skill folders.) Each domain skill is mapped to:
 
 - A **domain category** (one of 14).
 - One or more **primary role owners** (which agent must auto-load it).
@@ -48,7 +48,7 @@ This document is the **authoritative skill-to-role binding** for the Brain Engin
 
 ---
 
-## The matrix (57 domain skills)
+## The matrix (70 domain skills)
 
 | # | Skill | Domain | Primary | Shared with | Exposed as command |
 |---|-------|--------|---------|-------------|---------------------|
@@ -109,6 +109,24 @@ This document is the **authoritative skill-to-role binding** for the Brain Engin
 | 55 | [`data-privacy-dpdp`](../skills/data-privacy-dpdp/SKILL.md) | SEC + PROD | SEC | AIE, **ALL** | yes |
 | 56 | [`decision-log`](../skills/decision-log/SKILL.md) | AI + DATA + PROD | AIE | BE, ARC, SEC, **ALL** | yes |
 | 57 | [`billing-metering`](../skills/billing-metering/SKILL.md) | BE + PROD | BE | AIE, ARC, OPS | yes |
+
+### New group — operational / compliance / AI-quality skills (rows 58–70)
+
+| # | Skill | Domain | Primary | Shared with | Exposed as command |
+|---|-------|--------|---------|-------------|---------------------|
+| 58 | [`version-upgrade-policy`](../skills/version-upgrade-policy/SKILL.md) | OPS + ARCH | OPS, ARC | BE | yes |
+| 59 | [`llm-evals`](../skills/llm-evals/SKILL.md) | AI + TEST | AIE, QA | ARC | yes |
+| 60 | [`incident-response`](../skills/incident-response/SKILL.md) | OPS | OPS | CTOA, SEC | yes |
+| 61 | [`experimentation-holdouts`](../skills/experimentation-holdouts/SKILL.md) | AI + PROD | AIE, PM | CTOA | yes |
+| 62 | [`prompt-injection-defense`](../skills/prompt-injection-defense/SKILL.md) | SEC + AI | SEC, AIE | ARC | yes |
+| 63 | [`data-quality`](../skills/data-quality/SKILL.md) | DATA + AI | AIE | BE, QA | yes |
+| 64 | [`progressive-delivery`](../skills/progressive-delivery/SKILL.md) | OPS | OPS | ARC | yes |
+| 65 | [`accessibility`](../skills/accessibility/SKILL.md) | FE-W + FE-M | FEW, FEM | QA | yes |
+| 66 | [`i18n-rtl`](../skills/i18n-rtl/SKILL.md) | FE-W + FE-M | FEW, FEM | ARC, PM | yes |
+| 67 | [`pci-compliance-scope`](../skills/pci-compliance-scope/SKILL.md) | SEC | SEC | BE, ARC | yes |
+| 68 | [`audit-log-immutability`](../skills/audit-log-immutability/SKILL.md) | SEC + DATA | SEC, BE | AIE, ARC | yes |
+| 69 | [`data-residency-enforcement`](../skills/data-residency-enforcement/SKILL.md) | SEC + OPS | OPS, SEC | ARC | yes |
+| 70 | [`soc2-readiness`](../skills/soc2-readiness/SKILL.md) | SEC + DISC | SEC | OPS, CTOA | yes |
 
 > **New (being added in parallel):** rows 56–57. `decision-log` covers the moat — the append-only `ai.decision_log` (condition → recommendation → approval/edit → execution → reversal → 7d/30d outcome; no Brain action exists unless it is logged). `billing-metering` covers realized-GMV %-pricing — `billing.gmv_meter` (placed/realized/billable GMV), billing on the **realized/delivered** number only (never placed GMV), tier rates, and the CM2 affordability guardrail.
 

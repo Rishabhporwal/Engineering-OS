@@ -133,6 +133,69 @@ console.log('Cache writes:', msg.usage.cache_creation_input_tokens);
 
 Aim for **>70% cache_read rate** on Brain's high-frequency call sites.
 
+## Cost + capability features (now standard — Brain call sites)
+
+Beyond prompt caching, three Anthropic features are now standard and Brain-relevant. Each is still subject to the `@paradigm` gate + per-brand cap — they make an *already-justified* LLM call cheaper or more capable, never an excuse to skip SQL/ML.
+
+### Batch API — 50% cheaper, for non-interactive bulk work
+
+The Batch API runs a set of Messages requests asynchronously at **50% of standard token cost** (results typically within an hour, well under the 24h SLA). Use it for any LLM work that **isn't** on the interactive path:
+
+- **23:55 IST outcome-attribution backfill** — the nightly 7d/30d Decision Log outcome write-ups across all workspaces are a perfect batch (no user is waiting; halve the bill).
+- **Nightly insight generation** — bulk narrative/summary passes that feed the next morning's brief.
+
+Do **not** batch the 07:15 Morning Brief synthesis or AI Chat — those are latency-sensitive and stay on the synchronous path.
+
+```python
+# Python — submit a batch of synthesis/attribution jobs at 50% cost
+batch = client.messages.batches.create(requests=[
+    {
+        "custom_id": f"attribution-{workspace_id}-{date}",
+        "params": {
+            "model": "claude-sonnet-4-6",
+            "max_tokens": 1024,
+            "messages": [{"role": "user", "content": attribution_prompt(workspace_id, date)}],
+        },
+    }
+    for workspace_id, date in nightly_jobs
+])
+# poll batch.id → retrieve results; each still records tokens to the cost registry
+```
+
+### Extended / adaptive thinking (Sonnet 4.6)
+
+Sonnet 4.6 supports **extended (adaptive) thinking** — give the model a thinking budget for harder reasoning before it answers. Use it where the *reasoning* is the hard part, not the writing:
+
+- **Agent reasoning** on ambiguous multi-signal situations.
+- **Cross-channel budget allocation** (the AICMO-Cross-Channel reasoning over response curves before it narrates).
+
+```python
+msg = client.messages.create(
+    model="claude-sonnet-4-6",
+    max_tokens=4096,
+    thinking={"type": "enabled", "budget_tokens": 4000},  # adaptive reasoning budget
+    messages=[{"role": "user", "content": cross_channel_allocation_prompt(...)}],
+)
+```
+
+Thinking tokens count toward cost + the per-brand cap — budget them deliberately; don't enable thinking on bounded Haiku-class work.
+
+### Files API (vision / creative-benchmark flows)
+
+The **Files API** uploads a file once and references it by `file_id` across calls (instead of re-encoding bytes per request) — relevant to Brain's **vision / creative-benchmark** flows (e.g. evaluating ad creative). Cache-friendly and avoids re-sending large image payloads.
+
+```python
+f = client.beta.files.upload(file=("creative.png", open("creative.png", "rb"), "image/png"))
+msg = client.messages.create(
+    model="claude-sonnet-4-6",
+    max_tokens=1024,
+    messages=[{"role": "user", "content": [
+        {"type": "image", "source": {"type": "file", "file_id": f.id}},
+        {"type": "text", "text": "Score this creative against the brand benchmark."},
+    ]}],
+)
+```
+
 ## Tool use (AI Chat — MCP-mediated)
 
 ```typescript

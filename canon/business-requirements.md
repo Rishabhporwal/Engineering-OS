@@ -1574,7 +1574,7 @@ Outreach workflows must exclude opted-out or withdrawn customers. Analytics can 
 
 **Channel-specific outbound rules Brain must enforce:**
 
-- **WhatsApp:** Meta opt-in, approved templates, frequency caps, and the free 24h service window for replies.
+- **WhatsApp:** Meta opt-in, approved templates, frequency caps, and the free service window for replies (24h customer-service reply; 72h ad-click entry-point).
 - **SMS/voice:** DLT-registered headers/templates, NCPR/DND scrubbing, and the 9am–9pm promotional calling-hour window.
 - **AI voice calls:** the same calling-hour + DND rules, plus clear automated-agent disclosure and immediate human handoff on request.
 

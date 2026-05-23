@@ -80,7 +80,7 @@ FOR EACH action the agent can emit:
 |---|---|---|
 | `integrations.meta.pause_ad_set` | REVERSIBLE WRITE | human approve + Decision Log + idempotency key + resume wired |
 | `integrations.*.update_budget` | FINANCIAL | human approve + magnitude cap + Decision Log + idempotency |
-| lifecycle AI call | COMPLIANCE-GATED + IRREVERSIBLE | India matrix PASS (hours/DLT/NCPR/DND/consent/48h cap) **before** dial + Decision Log + recording-consent path |
+| lifecycle AI call | COMPLIANCE-GATED + IRREVERSIBLE | India matrix PASS (hours/DLT/NCPR/DND/consent/48h cap) **before** dial + Decision Log + recording-consent path. **TRAI's 2025/26 enforcement specifically targets AI-driven telemarketing — verify advance auto-dialer notification + call traceability + the disclosure/human-handoff before any AI call fires.** |
 | WhatsApp/SMS/email send | COMPLIANCE-GATED + IRREVERSIBLE | opt-in check + DLT template (SMS) + Decision Log + idempotency |
 | agent-generated SQL on OLAP | REVERSIBLE-ish | workspace_id scoping enforced by query gateway; read-only role; no DDL |
 | agent-generated migration | IRREVERSIBLE | human review + reversible-down + run in staging first |

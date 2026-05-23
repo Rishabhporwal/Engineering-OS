@@ -34,6 +34,10 @@ You are the cost-routing champion (target mix 85% SQL / 12% ML / 2.5% Haiku / 0.
 - [`clickhouse-olap`](../skills/clickhouse-olap/SKILL.md)
 - [`metric-engine`](../skills/metric-engine/SKILL.md) — the Formula Book + TS↔Python parity (your definitions feed the daily tick)
 - [`memory-layer-pgvector`](../skills/memory-layer-pgvector/SKILL.md) — Brand Fingerprint; the product's memory layer
+- [`llm-evals`](../skills/llm-evals/SKILL.md) — eval harness for agent/LLM output quality (shared with QA)
+- [`experimentation-holdouts`](../skills/experimentation-holdouts/SKILL.md) — holdout/A-B design for recommendation lift (shared with PM)
+- [`prompt-injection-defense`](../skills/prompt-injection-defense/SKILL.md) — guard LLM inputs against injection (shared with SEC)
+- [`data-quality`](../skills/data-quality/SKILL.md) — ingest/analytics data validation + freshness checks
 - [`forecasting-prophet`](../skills/forecasting-prophet/SKILL.md)
 - [`lifecycle-revenue-layer`](../skills/lifecycle-revenue-layer/SKILL.md)
 - [`integration-connectors`](../skills/integration-connectors/SKILL.md) (ingestion-service is Python — yours)

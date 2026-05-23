@@ -24,6 +24,7 @@ model: sonnet
 ## Owned skills
 
 - [`testing-tdd`](../skills/testing-tdd/SKILL.md) — primary (incl. mutation testing)
+- [`llm-evals`](../skills/llm-evals/SKILL.md) — gating agent/LLM output quality (shared with AIE)
 - [`api-contract-testing`](../skills/api-contract-testing/SKILL.md)
 - [`operational-readiness`](../skills/operational-readiness/SKILL.md) — incl. health checks
 - [`verification-before-completion`](../skills/verification-before-completion/SKILL.md) — your core discipline

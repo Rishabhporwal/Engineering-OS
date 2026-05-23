@@ -7,7 +7,9 @@ description: Brain's Morning Brief (canon/TECH/10) — THE primary product surfa
 
 Mobile is **THE primary surface for the product's defining workflow.** Web is the workbench (Monday review + on-demand depth); the phone is the daily heartbeat. The Morning Brief screen **must be the highest-quality piece of UI in all of Brain** — designed for the **06:55–09:00 IST coffee-in-hand, one-handed, three-minute** flow.
 
-**Canonical sources:** `canon/TECH/10_mobile_architecture.md` · `canon/business-requirements.md` §8.2. Tech stack: React Native + Expo (managed), Expo Router, Tamagui (tokens parity with web shadcn), `victory-native` (Recharts/Visx don't run on RN), `expo-secure-store`, `expo-notifications` (Expo Push → APNS + FCM).
+**Canonical sources:** `canon/TECH/10_mobile_architecture.md` · `canon/business-requirements.md` §8.2. Tech stack: React Native + **Expo SDK 56** (managed; **Hermes v1** default), Expo Router, Tamagui (tokens parity with web shadcn), `victory-native` (Recharts/Visx don't run on RN), `expo-secure-store`, `expo-notifications` (Expo Push → APNS + FCM).
+
+> **Hermes v1 (SDK 56) directly serves this surface:** ~29% faster cold startup + ~38% less memory means the brief renders sooner from a cold launch — load-bearing for the **<100ms-from-cache** open and the 3-minute SLO when a founder taps the 07:00 push and the app was killed overnight.
 
 ## The contract (business-requirements §8.2)
 

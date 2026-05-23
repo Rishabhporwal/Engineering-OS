@@ -52,7 +52,7 @@ Route 53 + CloudFront (DNS + CDN + WAF) → ALB (L7; HTTP/2 + gRPC passthrough)
 | `PodDisruptionBudget.minAvailable` | 1 |
 | `topologySpreadConstraints` | spread across 3 AZs |
 
-**Karpenter NodePool:** capacity-type `[spot, on-demand]` mix, `arch: arm64` (Graviton, cheaper), `consolidationPolicy: WhenUnderutilized`, `expireAfter: 720h`. On-demand baseline for HA-critical services; spot for ingestion + analytics workers.
+**Karpenter NodePool:** capacity-type `[spot, on-demand]` mix, `arch: arm64` (Graviton, cheaper), `consolidationPolicy: WhenEmptyOrUnderutilized` (renamed in Karpenter v1.0 — the old `WhenUnderutilized` breaks on upgrade), `expireAfter: 720h`. On-demand baseline for HA-critical services; spot for ingestion + analytics workers.
 
 ## CI/CD per service
 
@@ -60,7 +60,7 @@ GitHub Actions, path-filtered to `apps/<service>/**` on push to `main`, with gat
 
 ArgoCD app structure is Kustomize: `infra/k8s/<service>/base/` (deployment, service, hpa, pdb, serviceaccount/IRSA) + `overlays/{staging,production}/` + `argocd-app.yaml`.
 
-**Dockerfiles:** multi-stage — Node uses `node:20-alpine` (deps → builder `pnpm build` → non-root runner copying `dist/` + `node_modules`, with a `HEALTHCHECK` curling `/health`); Python uses `python:3.12-slim` + `uv sync --frozen`.
+**Dockerfiles:** multi-stage — Node uses `node:24-alpine` (deps → builder `pnpm build` → non-root runner copying `dist/` + `node_modules`, with a `HEALTHCHECK` curling `/health`); Python uses `python:3.13-slim` + `uv sync --frozen`.
 
 ## Auto-rollback
 
@@ -101,14 +101,28 @@ Path-filtered to `apps/mobile/**`: lint+typecheck → unit (Vitest + RNTL) → D
 
 ## DR + chaos
 
-- RTO 1h; RPO 15 min (Supabase PITR); daily 7d + cross-region weekly backups; S3 versioning + CRR for critical buckets; mobile kill-switch endpoint for emergency cert pin rotation.
+- RTO 1h; RPO 15 min (Supabase PITR); daily 7d + cross-region weekly backups; S3 versioning + CRR for critical buckets; mobile kill-switch endpoint for emergency cert pin rotation. Full restore-drill discipline in **Disaster recovery — restore drills** below.
 - **AWS FIS chaos (Scale Mode), before any Scale release:** kill 1/3 api-gateway pods (ArgoCD heals, ALB drains); throttle MSK broker network (consumers slow, no data loss); inject ClickHouse latency (dashboard degrades to Redis hot cache); block Anthropic (AI Chat → template responses); drop Supabase connections (PgBouncer + retries keep core green). Verdict RESILIENT or FRAGILE; FRAGILE loops back to the builder.
+
+## Disaster recovery — restore drills
+
+**An untested backup is not a backup.** The RTO 1h / RPO 15m targets are **proven by rehearsal, not assumed**. Run a **quarterly restore-from-backup drill** into an isolated account/namespace and record the wall-clock restore time + data delta against the targets.
+
+**The drill (each quarter):**
+1. **Postgres PITR** — restore Supabase to a timestamp ~10 min ago into a scratch instance; confirm the recovery point lands within RPO 15m and the restore completes within RTO 1h.
+2. **ClickHouse `BACKUP`/`RESTORE`** — `BACKUP TABLE <db>.<table> TO S3(...)` on schedule; in the drill, `RESTORE` the latest backup from S3 into a scratch cluster.
+3. **Verify against the metric registry** — recompute a sample of canonical metrics (daily_metrics, CM2, billable_gmv) on the restored data and assert they match production within tolerance. A backup that restores but yields wrong numbers is a failed drill.
+4. **Backup-integrity verification** — between drills, automate a checksum/row-count probe on each backup (Postgres snapshot + ClickHouse S3 backup manifest); alert on a corrupt or missing backup, don't wait for the quarter.
+
+**Cross-region failover runbook (Phase 4):** single region (ap-south-1) today; the Phase-4 multi-region step gets a written, rehearsed failover runbook — promote the cross-region Postgres replica, repoint Route 53, restore CH from CRR'd S3 backups, replay Kafka from S3 tiered storage — same RTO 1h / RPO 15m targets, proven by drill before it's relied on.
+
+Capture each drill's measured RTO/RPO + any gap in `blueprints/runbook.md`; a missed target routes to incident follow-up (`observability` error-budget review + the auto-rollback path above).
 
 ## Common failure modes
 
 - **Manual prod deploy** (encoded 2026-05-12) — `kubectl apply` / `aws eks ...` direct to production. `guard-bash.sh` blocks it. Fix the CI gap, don't override.
 - **OIDC role too broad** (encoded 2026-05-12) — `*:*` / `eks:*` / `AdministratorAccess` on a CI role is a blast-radius problem. Scope per environment, least privilege.
-- **Cost surprise on Karpenter spot** — interrupts long ingestion tasks. `consolidationPolicy: WhenUnderutilized` + tolerate eviction.
+- **Cost surprise on Karpenter spot** — interrupts long ingestion tasks. `consolidationPolicy: WhenEmptyOrUnderutilized` + tolerate eviction.
 - **OpenSearch hot tier full** — ISM mis-sized; new logs drop. Monitor cluster disk + index size weekly.
 - **CDK app drift vs ArgoCD** — k8s `Deployment` in CDK or AWS IAM in ArgoCD. Detection: `cdk diff` shows k8s resources, or the ArgoCD app shows AWS-managed resources.
 - **Bash-denied fallback** — sandbox denies Bash → write CDK + pipeline configs, list the exact `cdk diff` / `gh workflow run` / `eas build --profile production` commands, emit `→ ORCHESTRATOR (Bash denied — verify on my behalf)`. See prompts/system-prompt.md.

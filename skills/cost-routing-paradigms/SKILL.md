@@ -131,6 +131,17 @@ async def synthesize_morning_brief(workspace_id, signals):
 
 Soft warning at 80%; hard fail at 100% with graceful fallback (template or paradigm downgrade).
 
+#### Two cost levers inside paradigm 3/4 (apply once the LLM call is already justified)
+
+Picking the right paradigm is the first-order lever. Once a call is *correctly* an LLM call, two Anthropic features cut its cost further — they are **not** a substitute for choosing SQL/ML, but they materially lower the Sonnet/Haiku bill:
+
+| Lever | Saving | Where it applies in Brain |
+|---|---|---|
+| **Prompt caching** | ~90% on the cached portion of repeated prompts | The biggest LLM lever — cache the synthesis system prompt + tool catalogue + Brand Fingerprint context (~3–10K tokens) reused across every workspace's 06:55–07:15 brief. A cache miss on a stable prompt is a cost bug ([`claude-api`](../claude-api/SKILL.md) §prompt-caching). |
+| **Batch API** | **50% off** standard token cost | Any non-interactive bulk LLM work: the 23:55 outcome-attribution backfill + nightly insight generation. **Never** batch latency-sensitive paths (07:15 Morning Brief synthesis, AI Chat). |
+
+Both still record tokens to the cost registry and stay under the per-brand cap; they reduce the *cost per justified call*, leaving the target mix (85% SQL / 12% ML / 2.5% Haiku / 0.5% Sonnet) and the `@paradigm` gate unchanged.
+
 ### Layer 3 — Per-brand monthly cap
 
 | Tier | Monthly LLM cap (INR) | Throttle behavior |

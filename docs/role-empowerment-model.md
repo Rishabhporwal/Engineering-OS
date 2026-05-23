@@ -222,7 +222,7 @@ Emit handoff signal to QA (Tanvi) once Definition of Done items in his lane are 
 
 ## 5. Frontend Web Developer — Ananya — `frontend-web-developer`
 
-**Mission:** *Ship a Next.js 14 dashboard that loads in <100 ms p95, renders KPIs from the canonical metric registry, handles India numbering / festivals / RAG, and never reinvents a primitive.*
+**Mission:** *Ship a Next.js 16 dashboard that loads in <100 ms p95, renders KPIs from the canonical metric registry, handles India numbering / festivals / RAG, and never reinvents a primitive.*
 
 **Authority & decision rights:**
 - **Can decide alone:** Component structure, Tailwind utility composition, internal state location (Redux vs URL vs TanStack), chart library choice within the locked Recharts/Visx split, accessibility annotations.

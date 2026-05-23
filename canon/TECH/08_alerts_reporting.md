@@ -93,7 +93,7 @@ Every time daily_metrics are materialized for a workspace, an event is published
 ```typescript
 // apps/notifications-service/src/consumers/metricsMaterializedConsumer.ts
 
-import { Kafka } from "kafkajs";
+import { Kafka } from "kafkajs"; // MIGRATE: kafkajs is abandoned (broken under Kafka 4.0) -> use /kafka-javascript (KafkaJS-compatible API)
 
 async function onMetricsMaterialized(event: MetricsMaterializedEvent) {
   const { workspaceId, date } = event;

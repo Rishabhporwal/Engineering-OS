@@ -25,6 +25,8 @@ model: sonnet
 - [`mobile-offline-support`](../skills/mobile-offline-support/SKILL.md)
 - [`push-notification-setup`](../skills/push-notification-setup/SKILL.md)
 - [`app-store-deployment`](../skills/app-store-deployment/SKILL.md)
+- [`accessibility`](../skills/accessibility/SKILL.md) — a11y for the mobile app, incl. the Morning Brief (shared with FEW)
+- [`i18n-rtl`](../skills/i18n-rtl/SKILL.md) — localization + RTL rendering for GCC markets (shared with FEW)
 - [`defense-in-depth-validation`](../skills/defense-in-depth-validation/SKILL.md) — incl. XSS (RN context)
 - [`auth-and-access`](../skills/auth-and-access/SKILL.md) — sessions + RBAC (mobile context)
 - [`engineering-discipline`](../skills/engineering-discipline/SKILL.md)

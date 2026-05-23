@@ -62,7 +62,7 @@ The full decision + justification + phased adoption is in **`TECH/00_tech_stack_
 | Layer | Choice |
 |---|---|
 | Monorepo | Turborepo + pnpm (TS) · uv (Python) · Buf (proto codegen) |
-| Web | Next.js 14 App Router · tRPC client · TanStack Query · nuqs · Redux Toolkit · shadcn/Tailwind · Recharts + Visx |
+| Web | Next.js 16 App Router (React 19) · tRPC client · TanStack Query · nuqs · Redux Toolkit · shadcn/Tailwind · Recharts + Visx |
 | Mobile | React Native + Expo · Expo Router · Tamagui · victory-native · expo-secure-store · Expo Push · EAS |
 | Edge / API | Fastify + tRPC (BFF) · MCP server (in api-gateway) · Zod |
 | Internal | gRPC over Protobuf (buf) · Pydantic (Python) |
@@ -141,7 +141,7 @@ Provider APIs + webhooks
 ```text
 brain/
 ├── apps/
-│   ├── web/                     # Next.js 14
+│   ├── web/                     # Next.js 16
 │   ├── mobile/                  # React Native + Expo
 │   ├── api-gateway/             # Fastify + tRPC + MCP (Node)
 │   ├── core-service/            # Node
@@ -418,7 +418,7 @@ ai.decision_log(
 Rules: every recommendation creates a row before display; approvals/edits/executions/reversals update it; nightly 7d/30d jobs backfill outcomes; a workflow that cannot write here is not a Brain action.
 
 ### 9.4 Memory (`ai.*`, pgvector)
-`ai.brand_fingerprint(workspace_id, date, vector vector(16), components JSONB, PK(workspace_id,date))`; `ai.condition_outcome(... brand_fingerprint_at_decision vector(16), decision_log_id, outcome_7d/30d, recovered_revenue_*_minor)`; `ai.cross_brand_pattern(... brand_count CHECK (>=5))` (k-anonymity); `ai.insights`, `ai.forecasts`, `ai.forecast_accuracy`, `ai.anomalies`, `ai.workspace_llm_budget`. ivfflat cosine indexes on vectors. (TECH/05.)
+`ai.brand_fingerprint(workspace_id, date, vector vector(16), components JSONB, PK(workspace_id,date))`; `ai.condition_outcome(... brand_fingerprint_at_decision vector(16), decision_log_id, outcome_7d/30d, recovered_revenue_*_minor)`; `ai.cross_brand_pattern(... brand_count CHECK (>=5))` (k-anonymity); `ai.insights`, `ai.forecasts`, `ai.forecast_accuracy`, `ai.anomalies`, `ai.workspace_llm_budget`. HNSW cosine indexes on vectors (write-heavy, daily-growing tables — HNSW gives 95%+ recall out-of-box and absorbs inserts without a rebuild; keep ivfflat only as the >50M-vector/memory-constrained escape hatch). (TECH/05.)
 
 ### 9.5 Auto-execute (`ai.*`)
 `ai.auto_execute_policies(workspace_id, action_type, enabled DEFAULT false, min_confidence, daily_count_cap, daily_value_cap_minor, requires_owner_for_irreversible DEFAULT true, PK(workspace_id,action_type))`; `ai.auto_execute_log(... decision_log_id FK, action_payload, provider_response, executed_at, reversed_at, reversal_payload)`.
@@ -595,7 +595,7 @@ Rate limits per user/workspace/tier in Redis + WAF. Errors: stable codes mapped 
 ## 20. Frontend & Mobile
 
 ### 20.1 Web (TECH/07)
-Next.js 14 App Router; Server Components default, Client Components for interactive charts/filters/chat; `createCaller()` server-side tRPC over the same path as the browser. State: TanStack Query (server) + nuqs (URL filters/date) + Redux Toolkit (UI/chat/drilldown). Design: shadcn + Tailwind tokens; Recharts + Visx (waterfall, cohort heatmap); currency-aware `formatMoney` (₹ lakh/crore vs locale). Region-aware routing/sidebar. Hosting: managed (Amplify) Phase 0–2 → EKS Phase 3. Perf budget: LCP<2s, INP<200ms, CLS<0.1, route JS<100KB. WCAG AA. ~57-component library.
+Next.js 16 App Router; Server Components default, Client Components for interactive charts/filters/chat; `createCaller()` server-side tRPC over the same path as the browser. State: TanStack Query (server) + nuqs (URL filters/date) + Redux Toolkit (UI/chat/drilldown). Design: shadcn + Tailwind tokens; Recharts + Visx (waterfall, cohort heatmap); currency-aware `formatMoney` (₹ lakh/crore vs locale). Region-aware routing/sidebar. Hosting: managed (Amplify) Phase 0–2 → EKS Phase 3. Perf budget: LCP<2s, INP<200ms, CLS<0.1, route JS<100KB. WCAG AA. ~57-component library.
 
 ### 20.2 Mobile (TECH/10) — Morning Brief is the product
 React Native + Expo; Expo Router tab nav; **Morning Brief screen is the highest-quality UI in Brain** — three signals, approve/reject/edit, three-minute thumb-first 06:55–09:00 IST flow. Phase 1 read-only (Home/Acquisition/Calendar/Insights/Alerts) + push; Phase 2 chat + approvals + biometric; Phase 3 plan/pincode + rich notifications; Phase 4 widgets/watch. Auth: refresh token in `expo-secure-store`, access token in memory, magic-link deep links; **cert pinning** (current + rotation pin); **MASVS L1 + key L2**; push via Expo (APNS+FCM) → `mobile_push_tokens`; offline = online-only Phase 1 → cached reads Phase 2 → optimistic queue Phase 3. EAS Build + OTA (JS-only) vs store review (native bump). Desktop-only views (cohort heatmap, waterfall filters, COGS bulk editor) link out gracefully.
@@ -614,7 +614,7 @@ Hash email/phone by default; plaintext only where outreach is enabled + consent/
 - **India DPDP Act 2023 + Rules 2025** (phased to ~May 2027): consent-based processing, data minimization, retention limits, right to erasure, breach notification; Consent-Manager-compatible (registration ~Nov 2026).
 - **India TCCCPR 2018 (amended 12 Feb 2025):** DLT registration for A2P SMS/voice, NCPR/DND scrubbing, **9am–9pm** promotional window.
 - **UAE PDPL (45/2021) & KSA PDPL (enforced Sep 2024):** explicit revocable opt-in marketing, erasure, cross-border transfer restrictions.
-- **Channel-specific outbound:** WhatsApp = Meta opt-in + approved templates + 24h service window; SMS/voice = DLT + NCPR/DND + calling hours; AI voice = disclosure + human handoff.
+- **Channel-specific outbound:** WhatsApp = Meta opt-in + approved templates + free service window (24h customer-service reply; 72h ad-click entry-point); SMS/voice = DLT + NCPR/DND + calling hours; AI voice = disclosure + human handoff.
 
 ### 21.4 Consent & audit
 Consent primitive: per customer/channel/purpose/source/timestamp/region/withdrawal; append-only events; opt-out/withdrawn override all marketing. Cross-brand benchmarks: aggregate-only, k≥5, opt-in to contribute. Full audit log (§9.9). Compliance SLO: **0** DND/out-of-window violations, **0** cross-brand leaks.

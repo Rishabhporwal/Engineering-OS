@@ -1,6 +1,6 @@
 ---
 name: backend-fastify-trpc-grpc
-description: Brain's Node backend stack. Auto-load whenever editing apps/api-gateway, apps/core-service, apps/notifications-service, or apps/lifecycle-service Node side; or whenever wiring Fastify routes, tRPC procedures, gRPC servers/clients, Prisma migrations, KafkaJS producers/consumers, MCP tool implementations, or Zod schemas. Covers Brain's locked Node tech choices (Fastify + tRPC + Prisma + grpc-js + KafkaJS + Zod) and the operational pre-handoff checklist.
+description: Brain's Node backend stack. Auto-load whenever editing apps/api-gateway, apps/core-service, apps/notifications-service, or apps/lifecycle-service Node side; or whenever wiring Fastify routes, tRPC procedures, gRPC servers/clients, Prisma migrations, @confluentinc/kafka-javascript producers/consumers, MCP tool implementations, or Zod schemas. Covers Brain's locked Node tech choices (Fastify + tRPC + Prisma + grpc-js + @confluentinc/kafka-javascript + Zod) and the operational pre-handoff checklist.
 ---
 
 # Backend (Node) — Fastify + tRPC + Prisma + gRPC
@@ -11,14 +11,14 @@ The Node-side stack for **api-gateway, core-service, notifications-service, life
 
 | Layer | Choice | Why |
 |---|---|---|
-| Runtime | Node 20 LTS | Fastify v5 needs ≥18; LTS = stable security patches |
+| Runtime | Node 24 LTS | Fastify v5 needs ≥18; Node 20 is EOL Apr 2026; LTS = stable security patches |
 | Framework | **Fastify** | 5K+ RPS per pod; smaller surface than Express; better TS DX |
 | Edge API | **tRPC** | Type-safe end-to-end (web + mobile); no codegen step |
 | Internal API | **gRPC** via `@grpc/grpc-js` + protos from `protos/` via `buf generate` | Strong typing, multiplexing, deadlines, streaming |
 | MCP surface | Inside api-gateway, sharing auth + multi-tenancy + rate-limit | canon/technical-requirements.md |
-| ORM | **Prisma 5** | Type-safe queries; reliable migrations; Supabase Postgres-compatible |
+| ORM | **Prisma 7** | Type-safe queries; reliable migrations; Supabase Postgres-compatible. Prisma 7 dropped the Rust engine — smaller client + native edge runtime |
 | Validation | **Zod** | tRPC + MCP input + DTO + env validation |
-| Kafka | **KafkaJS** + Avro via `@kafkajs/confluent-schema-registry` → AWS Glue | Async backbone |
+| Kafka | **@confluentinc/kafka-javascript** + Avro via Glue Schema Registry | Async backbone. KafkaJS is abandoned/broken under Kafka 4.0 — use Confluent's client (KafkaJS-compatible API) |
 | Cache | Redis via `ioredis` | Rate limits, idempotency keys, hot metric cache |
 | Email | `@aws-sdk/client-sesv2` | AWS SES |
 | Push | `expo-server-sdk` | Expo Push API (APNS + FCM) |
@@ -168,7 +168,7 @@ CREATE POLICY tenant_isolation ON workspaces
 
 Connection pool sets `app.workspace_id` on acquisition.
 
-## KafkaJS producer + consumer
+## Kafka producer + consumer (@confluentinc/kafka-javascript)
 
 ```typescript
 // apps/core-service/src/kafka/producer.ts

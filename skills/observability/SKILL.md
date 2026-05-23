@@ -126,17 +126,17 @@ clickhouse-stale       — max(date) on daily_metrics < now() - 30 min
 
 ## Traces + errors
 
-- **X-Ray:** auto-instrument Fastify/gRPC/Kafka via the matching `@opentelemetry/instrumentation-*` packages + OTLP exporter; wrap business logic in manual spans (`tracer.start_as_current_span("amer_computation")`). Sampling: **5% prod, 100% staging** — never 100% prod ($$$).
+- **Traces:** auto-instrument Fastify/gRPC/Kafka via the matching `@opentelemetry/instrumentation-*` packages, exporting via the **ADOT (OTel) Collector** — NOT the X-Ray SDKs or the X-Ray Daemon (both enter **maintenance Feb 2026 / end-of-support Feb 2027**; do not add new instrumentation on them). Wrap business logic in manual spans (`tracer.start_as_current_span("amer_computation")`). The modern target is **CloudWatch Application Signals** (service-level SLOs/RED metrics) + **Transaction Search** (100%-sampled span search), with X-Ray as the underlying trace store. Sampling: **5% prod, 100% staging** — never blanket 100% prod ($$$); use Transaction Search for full-fidelity span lookups.
 - **Sentry:** `Sentry.init({ dsn, release: '<service>@<version>', tracesSampleRate: 0.05, beforeSend })`; `beforeSend` tags the event with `request_id`/`trace_id`/`workspace_id` from ALS so errors stitch to logs.
 
 ## OpenTelemetry as the instrumentation API (NOT a backend swap)
 
-OpenTelemetry is allowed **only as the vendor-neutral instrumentation API in code** — the OTel SDK + auto-instrumentation packages produce spans/metrics/logs, and the **OTLP exporter ships them to Brain's EXISTING AWS backends**: traces → **AWS X-Ray**, metrics → **CloudWatch**, logs → **OpenSearch** (via Fluent Bit). The instrumentation API is portable; the backends are locked.
+OpenTelemetry is allowed **only as the vendor-neutral instrumentation API in code** — the OTel SDK + auto-instrumentation packages produce spans/metrics/logs, and the **ADOT (OTel) Collector ships them to Brain's EXISTING AWS backends**: traces → **AWS X-Ray** (surfaced via CloudWatch **Application Signals** + **Transaction Search**), metrics → **CloudWatch**, logs → **OpenSearch** (via Fluent Bit). The instrumentation API is portable; the backends are locked. The **ADOT exporter is mandated** — the legacy X-Ray SDKs + Daemon enter maintenance Feb 2026 / EOS Feb 2027, so no new code targets them.
 
 ```
 code (OTel SDK: @opentelemetry/* / opentelemetry-python)
-  → OTLP exporter / ADOT Collector
-     → X-Ray (traces) + CloudWatch (metrics) + OpenSearch (logs)
+  → ADOT (OTel) Collector  [NOT the X-Ray SDK/Daemon — maintenance Feb 2026 / EOS Feb 2027]
+     → X-Ray (traces; via CloudWatch Application Signals + Transaction Search) + CloudWatch (metrics) + OpenSearch (logs)
 ```
 
 **Do NOT introduce Prometheus, Grafana, Loki, or Tempo.** OTel ≠ a new backend stack — it's the instrumentation layer in front of the backends Brain already runs. Anyone proposing a Prometheus/Grafana migration is changing a locked decision and needs an explicit ADR (and the answer is no).
@@ -193,6 +193,26 @@ NEVER log: `access_token`/`refresh_token`/JWTs/API keys; `email` (SHA-256 hash i
 - **No X-Ray sampling rule** — 100% prod = $$$. Default 5% prod, 100% staging.
 - **No circuit breaker on a cross-service call** — a slow downstream cascades into the caller's latency budget. Wrap every gRPC/vendor/DB call with a breaker + timeout.
 - **Proposing Prometheus/Grafana** — OTel is the instrumentation API; the backends (X-Ray/CloudWatch/OpenSearch) are locked. Don't swap the backend stack.
+
+## SLO error-budget policy
+
+An SLO without an error budget is a wish. Each named SLO converts to a **budget** = `(1 − target) × window`; burning it is what triggers action.
+
+| SLO | Target | Monthly error budget (30d) |
+|---|---|---|
+| Morning Brief delivered by 07:20 IST | >99.5% | ~0.15 brand-days/brand/mo (≈3.6h of "late") |
+| Decision-Log write availability | >99.99% | ~4.3 min/mo |
+| API p95 | <2s | <0.5% of reqs may exceed 2s |
+| P0 connector freshness | <1h | <0.5% of poll-windows stale >1h |
+| Auto-execute reversal rate | <8% | reversals are the budget; >8% burns it |
+
+**Burn-rate alerting (two-window):**
+- **Fast-burn** — consuming **2% of the monthly budget in 1h** → **page** (something is actively broken; e.g. Decision-Log writes failing).
+- **Slow-burn** — sustained drain that exhausts the budget before the window ends → **ticket**, not a page.
+
+**Budget-burn policy:** alert at **50% / 75% / 90%** budget consumed. When the budget is **exhausted**, the team **freezes non-critical releases** to the affected service until the SLI recovers and the budget regenerates, and runs a **postmortem** (root cause + an action that protects the budget next month) — see `systematic-debugging` and the incident path in `devops-aws` auto-rollback. The auto-execute reversal SLO is special: crossing 15% trips the canon **auto-revert to recommend-only**, not just a freeze.
+
+**Monthly error-budget review:** Jatin + the service owner review remaining budget per SLO; a chronically-exhausted budget is a signal to invest in reliability before features.
 
 ## Brain wiring
 

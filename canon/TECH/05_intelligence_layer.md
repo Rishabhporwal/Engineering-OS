@@ -34,7 +34,7 @@ CREATE TABLE brand_fingerprint (
   computed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   PRIMARY KEY (brand_id, date)
 );
-CREATE INDEX ON brand_fingerprint USING ivfflat (vector vector_cosine_ops) WITH (lists = 100);
+CREATE INDEX ON brand_fingerprint USING hnsw (vector vector_cosine_ops) WITH (m = 16, ef_construction = 64);
 ```
 
 **Dimensions (initial 16):**
@@ -86,7 +86,7 @@ CREATE TABLE condition_outcome (
   outcome_30d_recorded_at TIMESTAMPTZ
 );
 CREATE INDEX ON condition_outcome (brand_id, recorded_at DESC);
-CREATE INDEX ON condition_outcome USING ivfflat (brand_fingerprint_at_decision vector_cosine_ops);
+CREATE INDEX ON condition_outcome USING hnsw (brand_fingerprint_at_decision vector_cosine_ops) WITH (m = 16, ef_construction = 64);
 ```
 
 **Query pattern** every agent uses on every daily tick:
@@ -120,7 +120,7 @@ CREATE TABLE cross_brand_pattern (
   computed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   expires_at TIMESTAMPTZ
 );
-CREATE INDEX ON cross_brand_pattern USING ivfflat (pattern_signature_vector vector_cosine_ops);
+CREATE INDEX ON cross_brand_pattern USING hnsw (pattern_signature_vector vector_cosine_ops) WITH (m = 16, ef_construction = 64);
 CREATE INDEX ON cross_brand_pattern (pattern_type, category, region);
 ```
 

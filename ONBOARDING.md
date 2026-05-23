@@ -1,6 +1,6 @@
 # Brain Engineering OS — Onboarding
 
-> The complete picture of the AI engineering team. If you're new, read this top to bottom once. Current version: **v0.17.0**. The team builds **Brain** — the AI-native commerce operating system for DTC brands, **India-first** at launch with **UAE/GCC** sequenced for Phase 4. The full canon is `canon/business-requirements.md` (BRD) + `canon/technical-requirements.md` + `canon/TECH/00–17` (TRD/knowledge-base), condensed for agents in `docs/business-context.md` + `docs/technical-context.md`. New since 0.7.1: risk-based lanes, semantic memory, parallel review, background workers, paradigm gate, browser/visual QA, the `/careful` guard, the pipeline doctor, 6 new domain skills, cross-engineer `/team-digest`, the **top-level orchestrator** (one `/requirement` runs the team end-to-end), **live activity logs** (`/watch`), **live monitoring mode** (`/monitor`), an **interactive PM-grade dashboard** (`/dashboard` — agent performance, bugs, features, tokens & cost), and **token-usage logging**. **Product engineers: jump to §12 — "Get the most from the team."**
+> The complete picture of the AI engineering team. If you're new, read this top to bottom once. Current version: **v0.19.0**. The team builds **Brain** — the AI-native commerce operating system for DTC brands, **India-first** at launch with **UAE/GCC** sequenced for Phase 4. The full canon is `canon/business-requirements.md` (BRD) + `canon/technical-requirements.md` + `canon/TECH/00–17` (TRD/knowledge-base), condensed for agents in `docs/business-context.md` + `docs/technical-context.md`. New since 0.7.1: risk-based lanes, semantic memory, parallel review, background workers, paradigm gate, browser/visual QA, the `/careful` guard, the pipeline doctor, 6 new domain skills, cross-engineer `/team-digest`, the **top-level orchestrator** (one `/requirement` runs the team end-to-end), **live activity logs** (`/watch`), **live monitoring mode** (`/monitor`), an **interactive PM-grade dashboard** (`/dashboard` — agent performance, bugs, features, tokens & cost), and **token-usage logging**. **Product engineers: jump to §12 — "Get the most from the team."**
 
 ---
 
@@ -43,7 +43,7 @@ Founder /requirement
 ```
 Each stage **plans → executes → self-reviews → verifies → returns a `HANDOFF` block**; the **top-level `/requirement` orchestrator** reads it + `state/active.json` and spawns the next stage (subagents can't spawn subagents on this platform — orchestration lives at the top level; see [docs/orchestration.md](docs/orchestration.md)). The Founder intervenes only at Stage 7 and at the final push.
 
-## 5. The skill library — 85 folders (57 domain + 28 command)
+## 5. The skill library — 98 folders (70 domain + 28 command)
 **Domain skills** are model-auto-loaded per each agent's owned-skill list (see [docs/skill-mapping-matrix.md](docs/skill-mapping-matrix.md)). **Command-skills** carry `disable-model-invocation: true` and run only when a human types `/brain-engineering-os:<name>`.
 
 - **Architecture/discipline:** architecture-patterns, domain-driven-design, region-adapter, api-versioning-strategy, tech-stack-evaluation, engineering-discipline, code-review, writing-plans, verification-before-completion, systematic-debugging, subagent-orchestration, finishing-a-development-branch, cost-routing-paradigms
@@ -52,13 +52,14 @@ Each stage **plans → executes → self-reviews → verifies → returns a `HAN
 - **AI:** agentic-design, claude-api, forecasting-prophet, agentic-actions-auditor, memory-layer-pgvector
 - **Security:** security-baseline, auth-and-access, defense-in-depth-validation, vulnerability-scanning, oauth-implementation, data-privacy-dpdp
 - **Ops/testing/product:** devops-aws, observability, operational-readiness, testing-tdd, api-contract-testing, task-tracker-integration, lifecycle-revenue-layer, india-commerce-economics
+- **Operational / compliance / AI-quality (added v0.19.0):** version-upgrade-policy, incident-response, progressive-delivery, data-quality, llm-evals, experimentation-holdouts, prompt-injection-defense, accessibility, i18n-rtl, pci-compliance-scope, audit-log-immutability, data-residency-enforcement, soc2-readiness
 - **Command-skills (28):** requirement, status, recall, handoff, approve, reject, deploy, rollback, persona, invoke-skill, eos-init, propose-rule, adopt-rule, reject-rule, recall-similar, reindex, qa-browser, design-review, worker-test-gap, worker-canon-drift, worker-compliance-drift, test-pipeline, resume, new-skill, team-digest, watch, monitor, dashboard
 
 ## 6. Durable rules (the non-negotiables, in every agent's system prompt)
 1. **Commit discipline** — agents stage product code (`git add`, explicit paths, never `-A`); the **Founder** commits product code; agents commit only the `.engineering-os/` audit trail as `chore(eos):`; **never** rewrite git history.
 2. **No over-engineering** — build the minimum that solves the requirement; 10 STOP signals; Rohan runs an over-engineering audit at Stage 6.
 3. **Persona calibration** — 0/1/2 personas by complexity, capped at 2 (never 3+).
-4. **Plan-first + self-review + explicit handoff** — every agent plans before acting, self-reviews against its DoD, and invokes the next agent via `Agent()`.
+4. **Plan-first + self-review + explicit handoff** — every agent plans before acting, self-reviews against its DoD, and **RETURNS a `HANDOFF` block**; the top-level `/requirement` orchestrator reads it + `state/active.json` and spawns the next stage (subagents can't spawn subagents on this platform).
 5. **Cost-routed paradigms** — SQL > ML > Haiku > Sonnet; every code path declares `@paradigm` (keeps LLM cost down — the engineering invariant behind Brain's realized-GMV %-pricing).
 6. **Single-Primitive Rule** — every cross-cutting concern built once, consumed N times.
 7. **Multi-tenant `workspace_id`** enforced at 4 layers; **compliance is P0** — DPDP Act 2023 + Rules 2025, TCCCPR/DLT + NCPR/DND + 9am–9pm calling window, WhatsApp opt-in, UAE/KSA PDPL.
@@ -102,7 +103,7 @@ A **7-service, DDD, event-driven** architecture:
 ## 11. Repo layout (the plugin)
 ```
 agents/      11 subagent definitions
-skills/      85 skill folders (57 domain + 28 command)  +  tools/  (uv scripts: memory, browse, pipeline_doctor, team_digest, paradigm_check, dashboard)
+skills/      98 skill folders (70 domain + 28 command)  +  tools/  (uv scripts: memory, browse, pipeline_doctor, team_digest, paradigm_check, dashboard)
 prompts/     system-prompt, anti-blind-agreement, challenge-framework
 canon/       business-requirements.md, technical-requirements.md (source of truth)
 docs/        operating manual, primers, matrix, quality-gates, role-empowerment, …

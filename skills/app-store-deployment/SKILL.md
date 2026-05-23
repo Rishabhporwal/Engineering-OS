@@ -107,7 +107,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v3
       - uses: actions/setup-node@v4
-        with: { node-version: '20', cache: 'pnpm' }
+        with: { node-version: '24', cache: 'pnpm' }
       - uses: expo/expo-github-action@v8
         with:
           eas-version: latest

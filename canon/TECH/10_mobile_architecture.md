@@ -29,7 +29,7 @@ The rest of mobile (dashboards, alerts feed, AI Chat) remains complementary. But
 | Concern | Choice | Why |
 |---------|--------|-----|
 | **Framework** | **React Native + Expo (managed workflow)** | Single TS codebase for iOS + Android; reuses tRPC + Redux + TypeScript from web; one engineer ships both platforms |
-| **SDK version** | Expo SDK 51+ (or latest stable) | New Architecture (Fabric + TurboModules) enabled |
+| **SDK version** | Expo SDK 56+ (or latest stable) | New Architecture (Fabric + TurboModules) enabled |
 | **Workflow** | Managed → eject only if necessary | Avoid native code; Expo modules cover 95%+ of needs |
 | **Language** | TypeScript (strict) | Parity with web codebase |
 | **Navigation** | Expo Router (file-based) | Mirrors Next.js App Router mental model |

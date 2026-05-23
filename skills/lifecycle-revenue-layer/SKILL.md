@@ -46,7 +46,7 @@ NTILE(5) OVER (PARTITION BY brand_id ORDER BY cm2_contribution_365d ASC) AS m_sc
 
 ## Channel routers + CallProvider abstraction
 
-One router per channel (`whatsapp-router` → WhatsApp Cloud API, `email-router` → SES, `sms-router` → Gupshup/Kaleyra DLT-registered, `ad-audience-router` → Meta Custom Audience / Google Customer Match). AI calling hides the vendor behind a stable contract so swapping is config, not a rewrite:
+One router per channel (`whatsapp-router` → WhatsApp Cloud API — replies inside the **free service window** (24h customer-service reply; 72h ad-click entry-point) skip per-message template billing, `email-router` → SES, `sms-router` → Gupshup/Kaleyra DLT-registered, `ad-audience-router` → Meta Custom Audience / Google Customer Match). AI calling hides the vendor behind a stable contract so swapping is config, not a rewrite:
 
 ```python
 class CallProvider(ABC):
@@ -74,6 +74,8 @@ Shipped as core infrastructure on **every** calling/sending path (`lifecycle-ser
 | **48h frequency cap** | No customer contacted more than once / 48h by any Brain flow. Override only for VIP + Owner approval logged in audit. |
 
 `CallComplianceEngine.can_call()` returns `ok` / `deferred(reason)` / `blocked(reason)`. **Compliance SLO: 0 DND-blocked + 0 out-of-window dial attempts** — non-zero is a rule violation.
+
+> **TRAI is sharpening rules on AI-driven / robocall telemarketing** (advance auto-dialer notification, call traceability) — Brain's AI-calling is in scope; keep the calling-hours / DLT / NCPR / DND / 48h-cap discipline above and verify the advance-notification + traceability path before any AI call fires ([`agentic-actions-auditor`](../agentic-actions-auditor/SKILL.md)).
 
 ## The offer-governance ladder (always CM2-gated)
 

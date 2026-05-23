@@ -1,6 +1,6 @@
 ---
 name: frontend-mobile
-description: Brain's React Native + Expo stack — Expo Router + Tamagui + tRPC client + Redux Toolkit + TanStack Query + redux-persist (AsyncStorage) + expo-secure-store + expo-notifications + victory-native + EAS Build/Update. Use whenever Karan is building mobile screens, the Morning Brief surface, push notification handling, deep linking, cert pinning, MASVS controls, or anything in apps/mobile/. Covers the THREE-signal Morning Brief rule, OTA-vs-native bump policy, and the desktop-fallback pattern for views that don't translate.
+description: Brain's React Native + Expo stack (Expo SDK 56, RN 0.85, React 19.2, Hermes v1) — Expo Router + Tamagui + tRPC client + Redux Toolkit + TanStack Query + redux-persist (AsyncStorage) + expo-secure-store + expo-notifications + victory-native + EAS Build/Update. Use whenever Karan is building mobile screens, the Morning Brief surface, push notification handling, deep linking, cert pinning, MASVS controls, or anything in apps/mobile/. Covers the THREE-signal Morning Brief rule, OTA-vs-native bump policy, and the desktop-fallback pattern for views that don't translate.
 ---
 
 # Frontend Mobile — React Native + Expo (managed)
@@ -11,8 +11,10 @@ The mobile stack for Brain's **primary product surface**. The Morning Brief is T
 
 | Layer | Choice | Reason |
 |---|---|---|
-| Framework | **React Native + Expo SDK 51+** managed workflow | One TS codebase ships iOS + Android |
-| Architecture | New Architecture (Fabric + TurboModules) enabled | Better perf |
+| Framework | **React Native + Expo SDK 56** managed workflow (RN 0.85, React 19.2) | One TS codebase ships iOS + Android |
+| Architecture | **New Architecture (Fabric + TurboModules) is MANDATORY** — non-disableable since SDK 55 | The legacy architecture is gone; nothing to opt into |
+| JS engine | **Hermes v1** (default since SDK 56) | Faster startup + lower memory |
+| Styling | **Tamagui** stays Brain's choice; **NativeWind / Unistyles are now valid co-leads** if a screen prefers Tailwind-class or atomic styling | Tokens parity with web shadcn either way |
 | Navigation | **Expo Router** (file-based) | Mirrors Next.js App Router mental model |
 | Server state | **TanStack Query** via tRPC RN client | Same hooks pattern as web |
 | Client state | **Redux Toolkit + redux-persist** (AsyncStorage; whitelist `ui` + `mobile`) | Shared slices with web |

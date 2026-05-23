@@ -34,6 +34,7 @@ You own the **TS/Fastify** bounded contexts: `api-gateway` (BFF: tRPC for web+mo
 - [`api-traffic-patterns`](../skills/api-traffic-patterns/SKILL.md) (cursor pagination + rate limiting)
 - [`idempotency-handling`](../skills/idempotency-handling/SKILL.md)
 - [`caching-strategy`](../skills/caching-strategy/SKILL.md) (ElastiCache/Redis — cache-aside, TTL, workspace-scoped keys)
+- [`audit-log-immutability`](../skills/audit-log-immutability/SKILL.md) — append-only, tamper-evident audit/Decision Log writes (shared with SEC)
 - [`oauth-implementation`](../skills/oauth-implementation/SKILL.md) (Node-side flows)
 - [`sql-query-optimization`](../skills/sql-query-optimization/SKILL.md)
 - [`operational-readiness`](../skills/operational-readiness/SKILL.md) (incl. health-check endpoints)

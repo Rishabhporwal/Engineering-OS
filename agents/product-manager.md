@@ -23,6 +23,7 @@ You don't gate a stage. You cross-cut.
 ## Owned skills
 
 - [`task-tracker-integration`](../skills/task-tracker-integration/SKILL.md) — primary
+- [`experimentation-holdouts`](../skills/experimentation-holdouts/SKILL.md) (PM lens — measuring feature lift via holdouts; shared with AIE)
 - [`engineering-discipline`](../skills/engineering-discipline/SKILL.md)
 - [`india-commerce-economics`](../skills/india-commerce-economics/SKILL.md)
 - [`kpi-dashboard-design`](../skills/kpi-dashboard-design/SKILL.md) (PM lens)

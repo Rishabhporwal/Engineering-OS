@@ -1,6 +1,6 @@
 ---
 name: memory-layer-pgvector
-description: Brain's Memory Layer (canon/TECH/05 §0) — THE MOAT alongside the Decision Log. The 5 memory subsystems — Brand Fingerprint (16-dim daily vector, ai.brand_fingerprint), Condition-Outcome pairs (pgvector "find similar past conditions" on every tick, ai.condition_outcome), Cross-Brand Benchmarks (k≥5 anonymity, ai.cross_brand_pattern), Seasonal Codebook (per-brand festival uplift), Customer Segment Memory (daily RFM). ivfflat cosine indexes; almost all ops are SQL+ML (paradigm 1/2) — compounding learning at SQL economics. Use when wiring agent memory, embedding brand context, or doing semantic retrieval in intelligence-service.
+description: Brain's Memory Layer (canon/TECH/05 §0) — THE MOAT alongside the Decision Log. The 5 memory subsystems — Brand Fingerprint (16-dim daily vector, ai.brand_fingerprint), Condition-Outcome pairs (pgvector "find similar past conditions" on every tick, ai.condition_outcome), Cross-Brand Benchmarks (k≥5 anonymity, ai.cross_brand_pattern), Seasonal Codebook (per-brand festival uplift), Customer Segment Memory (daily RFM). HNSW cosine indexes; almost all ops are SQL+ML (paradigm 1/2) — compounding learning at SQL economics. Use when wiring agent memory, embedding brand context, or doing semantic retrieval in intelligence-service.
 ---
 
 # Memory Layer — the moat at SQL economics
@@ -36,7 +36,7 @@ CREATE TABLE ai.brand_fingerprint (
   computed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   PRIMARY KEY (workspace_id, date)
 );
-CREATE INDEX ON ai.brand_fingerprint USING ivfflat (vector vector_cosine_ops) WITH (lists = 100);
+CREATE INDEX ON ai.brand_fingerprint USING hnsw (vector vector_cosine_ops) WITH (m = 16, ef_construction = 64);
 ```
 
 The 16 dims (tunable): CM2 % · revenue trajectory (7d) · MER · aMER · CAC (delivered) · AOV · new-customer share · repeat share · COD share · RTO rate · active inventory days · discount depth · channel concentration (Herfindahl) · creative-fatigue (mean EWMA) · seasonality position (days from nearest festival) · cashflow runway. Each is **normalized to the brand's own history**, not industry benchmarks.
@@ -58,7 +58,7 @@ CREATE TABLE ai.condition_outcome (
   recovered_revenue_7d_minor BIGINT, recovered_revenue_30d_minor BIGINT,
   recorded_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-CREATE INDEX ON ai.condition_outcome USING ivfflat (brand_fingerprint_at_decision vector_cosine_ops);
+CREATE INDEX ON ai.condition_outcome USING hnsw (brand_fingerprint_at_decision vector_cosine_ops) WITH (m = 16, ef_construction = 64);
 ```
 
 **The query every agent runs on every tick** — "when this brand looked like it looks today, what did we recommend and did it work?":
@@ -102,7 +102,8 @@ Compounding learning at SQL economics ([`cost-routing-paradigms`](../cost-routin
 1. **`workspace_id`-scoped vectors, always.** Every retrieval filters by `workspace_id`. An unscoped vector search is a cross-brand leak — fail closed.
 2. **Source of truth stays relational.** The fingerprint/CO log are a retrieval *lens* over facts that also live as structured rows + the Decision Log — not the sole record.
 3. **Pinned vector definition.** The 16-dim layout is versioned; changing dimensions requires recomputing fingerprints (otherwise vectors are incomparable).
-4. **`ivfflat` cosine indexes** (`vector_cosine_ops`, `lists` tuned to row count); `workspace_id` predicate leads the query ([`database-design`](../database-design/SKILL.md)).
+4. **`HNSW` cosine indexes** (`vector_cosine_ops` with `m = 16, ef_construction = 64`); set `hnsw.ef_search` at query time to trade recall for latency (e.g. `SET LOCAL hnsw.ef_search = 64;`). HNSW is the 2026 default for Brain's write-heavy, daily-growing vectors (Brand Fingerprint + condition_outcome are queried every tick and stay <1M rows/workspace): **95%+ recall out-of-box, absorbs inserts without an index rebuild** (ivfflat needs periodic `REINDEX` as data grows and degrades on writes). `workspace_id` predicate leads the query ([`database-design`](../database-design/SKILL.md)).
+   - **Escape hatch:** keep `ivfflat (vector_cosine_ops) WITH (lists = N)` **only** at the >50M-vector / memory-constrained extreme — HNSW costs roughly 2–5× the memory of ivfflat, so at very large scale ivfflat's smaller footprint can win. Brain's per-workspace vectors are nowhere near that; default to HNSW.
 5. **Memory references the Decision Log**, never silently overwrites — the Decision Log is append-only.
 
 ## Anti-patterns

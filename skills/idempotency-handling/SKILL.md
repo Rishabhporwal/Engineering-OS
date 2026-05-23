@@ -32,7 +32,9 @@ export const idempotencyPlugin: FastifyPluginAsync = async (app) => {
     const cached = await redis.get(`idempotency:${key}`);
     if (cached) {
       const { status, body } = JSON.parse(cached);
-      reply.status(status).send(body);
+      // MUST return the reply — without it, a cached hit falls through and the
+      // handler double-executes (the exact double-write this skill exists to prevent).
+      return reply.status(status).send(body);
     }
   });
 

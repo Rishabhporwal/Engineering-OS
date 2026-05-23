@@ -140,9 +140,20 @@ Every event has a stable `event_id` per source:
 | Klaviyo events | `(workspace_id, event_id)` |
 | analytics rollups | `(workspace_id, table, date, customer_type, channel)` |
 
-Producer side (TS):
+Producer side — the primary guarantee is at the broker, the app-level check is a backstop:
+
+1. **Broker-level idempotent producer** — `enable.idempotence=true` (default-on since Kafka 3.0) + **`acks=all`**. This dedupes producer retries at the broker so a retry never double-publishes. This is the primary exactly-once-into-the-log guarantee, not Redis.
+2. **Transactional producer + `read_committed` consumers** for the outbox / Decision-Log cross-partition writes — wrap the produce(s) in `producer.transaction()` so a partial multi-partition write never becomes visible; downstream consumers set `isolation.level=read_committed` so they only ever see committed batches.
+3. **Redis SETNX is the app-level backstop only** (e.g., dedup across separate producer sessions / connector re-runs), NOT the primary guarantee:
+
 ```typescript
-// Redis SETNX before publishing
+// Confluent client — idempotent + acks=all (PRIMARY guarantee)
+const producer = kafka.producer({
+  'enable.idempotence': true,   // default-on since Kafka 3.0; dedupes retries at the broker
+  'acks': 'all',
+});
+
+// Redis SETNX — app-level backstop, NOT the primary dedup
 const key = `idempotency:${source}:${workspaceId}:${eventId}`;
 const setResult = await redis.set(key, '1', 'NX', 'EX', 86400);   // 24h TTL
 if (!setResult) return;                                            // already seen
@@ -172,7 +183,7 @@ consumer = AIOKafkaConsumer(
 ```
 
 ```typescript
-// TS — KafkaJS
+// TS — @confluentinc/kafka-javascript (KafkaJS is abandoned/broken under Kafka 4.0)
 const consumer = kafka.consumer({
   groupId: 'notifications-alerts',
   sessionTimeout: 30000,
@@ -246,7 +257,7 @@ OpenSearch monitor:
 ## Common failure modes
 
 - **Auto-commit producing data loss** — consumer crashes after commit, before processing. Use manual commit.
-- **Non-idempotent producer** — retry double-publishes. Redis SETNX before send.
+- **Non-idempotent producer** — retry double-publishes. Set `enable.idempotence=true` + `acks=all` (broker-level, primary); Redis SETNX is the app-level backstop.
 - **Schema-breaking change without bump** — Glue rejects. Use additive evolution; `.v2` for breaking.
 - **Missing workspace_id in envelope** — downstream can't partition. Producer call MUST include it.
 - **Cross-workspace ordering assumption** — don't make it. Partition key is workspace_id, not global.
@@ -258,7 +269,7 @@ OpenSearch monitor:
 
 - `canon/technical-requirements.md` — canonical Kafka topology + per-source flows
 - `canon/technical-requirements.md` §kafka + §debezium
-- `skills/backend-fastify-trpc-grpc/SKILL.md` — TS KafkaJS patterns (Brain's Node services consume + produce here)
+- `skills/backend-fastify-trpc-grpc/SKILL.md` — TS @confluentinc/kafka-javascript patterns (Brain's Node services consume + produce here)
 - `skills/python-services/SKILL.md` §kafka — aiokafka patterns
 - `skills/integration-connectors/SKILL.md` — producer side (Maya's domain)
 - `skills/clickhouse-olap/SKILL.md` §kafka-engine-tables — CH consumer engine pattern

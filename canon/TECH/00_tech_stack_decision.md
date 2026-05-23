@@ -46,7 +46,7 @@ Each row is the **final** choice with its business justification. §3 then seque
 |---|---|---|
 | Monorepo | **Turborepo + pnpm** (TS) · **uv** workspace (Python) | One repo; shared types/contracts across web, mobile, Node, Python; cached incremental builds. |
 | Edge/product language | **TypeScript (strict)** | End-to-end types web ↔ mobile ↔ api-gateway via tRPC; one language for all client + BFF code. |
-| Data/ML/agent language | **Python 3.12+** | Ecosystem for analytics, Prophet/sklearn/lifetimes/statsmodels, ClickHouse + Kafka drivers, Anthropic SDK. |
+| Data/ML/agent language | **Python 3.13+** | Ecosystem for analytics, Prophet/sklearn/lifetimes/statsmodels, ClickHouse + Kafka drivers, Anthropic SDK. |
 | Contract codegen | **Buf** (protobuf → TS + Python) | Internal contracts are generated, never hand-written; cannot drift across the TS↔Python boundary. |
 
 **Polyglot, not monolingual:** the product is half web/app (TS) and half data/ML (Python). Forcing one language would cripple one half. The monorepo + codegen makes the boundary safe.
@@ -55,7 +55,7 @@ Each row is the **final** choice with its business justification. §3 then seque
 
 | Layer | Choice | Why |
 |---|---|---|
-| Web | **Next.js 14+ App Router** | Server Components for data-heavy dashboards; streaming SSR; the analytics "workbench". |
+| Web | **Next.js 16+ App Router** | Server Components for data-heavy dashboards; streaming SSR; the analytics "workbench". |
 | Web state | **TanStack Query (via tRPC)** + **nuqs** (URL state) + **Redux Toolkit** (client/app state) | Three layers, three best-fit tools (server cache / URL / ephemeral UI). |
 | Web UI | **shadcn/ui + Tailwind**; **Recharts** (standard charts) + **Visx** (waterfall, cohort heatmap) | Polished, fast, composable; Visx for the bespoke profit visualizations. |
 | Mobile | **React Native + Expo (managed)** | One TS codebase for iOS+Android; reuses tRPC/Redux/types; the **Morning Brief** primary surface; EAS cloud builds + OTA. |

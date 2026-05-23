@@ -7,6 +7,8 @@ description: Brain's Plan Module forecasting — Prophet for trend + seasonality
 
 The Plan Module (canon/TECH/05_intelligence_layer.md §2) is Brain's forecasting engine: **aMER response curve (isotonic) + returning-revenue model × festival multiplier**. Phase 1: simple aMER bucketing (paradigm 1 SQL + percentile). **Phase 3 (W25-32): Prophet with festival regressors** (paradigm 2 ML). Target **15% MAPE @30d** for active workspaces by Phase 3. All forecasting is paradigm 1 or 2 — **never LLM.**
 
+> **Library maintenance note (May 2026):** **Prophet itself is now lightly maintained** — it still works and stays Brain's default, but if accuracy plateaus, **NeuralProphet** (neural, regressor-friendly) or **StatsForecast** (fast classical, Nixtla) are the alternatives. For LTV, **`lifetimes` is archived / maintenance-mode — migrate to PyMC-Marketing** (the official successor; same BG/NBD + Gamma-Gamma, actively maintained, Bayesian credible intervals), or `btyd` as a lighter alternative. See the LTV section below.
+
 **Canonical doc:** `canon/TECH/05_intelligence_layer.md §2` (+ `canon/technical-requirements.md` §forecasting). This skill is operational.
 
 ## Phase 1 forecast (W7+ wedge) — paradigm 1, SQL + percentile
@@ -91,28 +93,36 @@ amer_at_spend = iso.predict([proposed_spend_minor])
 
 **Why isotonic:** spend → aMER has diminishing returns (monotonic decreasing); we don't want overfitting through polynomial regression. Isotonic guarantees the curve doesn't turn upward.
 
-## LTV — BG/NBD + Gamma-Gamma (paradigm 2)
+## LTV — BG/NBD + Gamma-Gamma via PyMC-Marketing (paradigm 2)
 
 **Monetary value is `CM2/order` (paisa), NOT gross order value** — Brain's LTV is contribution-margin LTV (canon TECH/03, TECH/05). Feeding gross AOV inflates LTV:CAC and breaks the spend decision.
 
+> **Use `pymc-marketing`, not `lifetimes`.** `lifetimes` is archived / maintenance-mode; **PyMC-Marketing is the official successor** — same BG/NBD + Gamma-Gamma models, actively maintained, and it returns Bayesian **credible intervals** (better than `lifetimes`' point estimates for a spend decision). `btyd` is a lighter alternative if a full PyMC dependency is too heavy. The model choice (BG/NBD + Gamma-Gamma) and the CM2/order monetary input are unchanged.
+
 ```python
-from lifetimes import BetaGeoFitter, GammaGammaFitter
+from pymc_marketing.clv import BetaGeoModel, GammaGammaModel
 
 @paradigm("ml", model="bg_nbd_gg_v1")
 async def predict_ltv_30d(workspace_id, customer_id):
     # BG/NBD: probability customer is alive + frequency
     # Gamma-Gamma: expected monetary value given alive
-    # history.monetary_value = CM2 per order (minor units), not gross AOV
+    # rfm_df.monetary_value = CM2 per order (minor units), not gross AOV
 
-    bgf = BetaGeoFitter(penalizer_coef=0.0).fit(history.frequency, history.recency, history.T)
-    ggf = GammaGammaFitter(penalizer_coef=0.0).fit(history.frequency, history.monetary_value)
+    bg = BetaGeoModel(data=rfm_df)        # columns: customer_id, frequency, recency, T
+    bg.fit()
+    gg = GammaGammaModel(data=rfm_df)      # columns: customer_id, frequency, monetary_value (CM2/order)
+    gg.fit()
 
-    return ggf.customer_lifetime_value(
-        bgf,
-        frequency, recency, T, monetary_value,  # CM2/order
-        time=1,   # 1 month horizon
-        discount_rate=0.0
-    )
+    return gg.expected_customer_lifetime_value(
+        transaction_model=bg,
+        customer_id=rfm_df["customer_id"],
+        frequency=rfm_df["frequency"],
+        recency=rfm_df["recency"],
+        T=rfm_df["T"],
+        monetary_value=rfm_df["monetary_value"],  # CM2/order
+        time=1,                                    # 1 month horizon
+        discount_rate=0.0,
+    )  # returns a posterior → take the mean + a credible interval for the band
 ```
 
 Per-brand model. **Requires min 6 months history + ≥500 repeat customers; train monthly; flag if MAPE > 40%** (canon technical-requirements §lifecycle). Below the data floor, fall back and label the estimate in the UI.

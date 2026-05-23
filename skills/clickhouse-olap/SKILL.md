@@ -56,10 +56,10 @@ For sharded clusters, also create a `Distributed` engine table on top:
 
 ```sql
 CREATE TABLE orders ON CLUSTER brain_cluster AS orders_local
-ENGINE = Distributed(brain_cluster, default, orders_local, sipHash64(workspace_id));
+ENGINE = Distributed(brain_cluster, default, orders_local, cityHash64(workspace_id));
 ```
 
-Shard by `sipHash64(workspace_id)` so single-workspace queries hit one shard.
+Shard by `cityHash64(workspace_id)` so single-workspace queries hit one shard.
 
 ## Materialized view pattern (real-time aggregates from Kafka)
 
@@ -143,7 +143,7 @@ All monetary fields are `Int64` in paisa. Never use `Decimal` or `Float`. Displa
 
 - Phase 0–2: 3 shards × 2 replicas
 - Phase 3: scale to 6 shards × 2 replicas at 50K+ workspaces
-- Shard key: `sipHash64(workspace_id)` — single-workspace queries hit one shard
+- Shard key: `cityHash64(workspace_id)` — single-workspace queries hit one shard
 - Cross-workspace queries (admin-only) explicitly route to all shards
 
 ## Late-data handling (canon/technical-requirements.md)
@@ -156,13 +156,14 @@ CREATE TABLE shipments_local (
   shipment_id       String,
   status            LowCardinality(String),
   occurred_at       DateTime64(3),
-  ingested_at       DateTime64(3) DEFAULT now64()
-) ENGINE = ReplicatedReplacingMergeTree(ingested_at)
+  ingested_at       DateTime64(3) DEFAULT now64(),
+  is_deleted        UInt8 DEFAULT 0                 -- soft-delete tombstone for ReplacingMergeTree
+) ENGINE = ReplicatedReplacingMergeTree(ingested_at, is_deleted)
 PARTITION BY toYYYYMM(occurred_at)
 ORDER BY (workspace_id, shipment_id);
 ```
 
-`ingested_at` as version → latest update wins on merge. Reconciliation MV recomputes daily_metrics after late-data window closes (canon/technical-requirements.md).
+`ingested_at` as version → latest update wins on merge. The **`is_deleted UInt8` column** is the ReplacingMergeTree tombstone — passed as the second engine arg so a later row with `is_deleted=1` removes the record on merge / under `FINAL` (filter `WHERE is_deleted = 0` on read). For FINAL-read performance set **`do_not_merge_across_partitions_select_final = 1`** so `FINAL` merges within each partition only (cheaper, valid because the partition key is part of the dedup scope here). Reconciliation MV recomputes daily_metrics after late-data window closes (canon/technical-requirements.md).
 
 ## Performance budgets
 

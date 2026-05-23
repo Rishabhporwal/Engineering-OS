@@ -23,7 +23,7 @@ Scope:
 
 ---
 
-## 1. Framework: Next.js 14+ App Router
+## 1. Framework: Next.js 16+ App Router
 
 Hosted as a containerized app on EKS (with Karpenter for auto-scaling), fronted by CloudFront. Static assets and images cached at edge.
 

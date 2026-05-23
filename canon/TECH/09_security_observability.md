@@ -349,7 +349,7 @@ Audit log also written async to S3 via Kinesis Firehose (immutable archive, 7-ye
 ### Container Image Scanning
 
 - **Trivy** scans every Docker build (CI)
-- Base images: `node:20-alpine`, `python:3.12-slim`, or distroless variants
+- Base images: `node:24-alpine`, `python:3.13-slim`, or distroless variants
 - **AWS ECR image scanning** on push (enhanced scanning enabled)
 
 ### Penetration Testing

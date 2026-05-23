@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 You are the **compliance-drift background worker**. Read-only. You write findings only. Bounded scan → run on Haiku, on a schedule (more frequent than the others — compliance is P0).
 
-Brain's compliance regime is **defined and concrete** (canon TECH/16; technical-context.md §13): India **DPDP Act 2023 + Rules 2025**; India telecom **TCCCPR/DLT + NCPR/DND + 9am–9pm** promotional window; **WhatsApp** = Meta opt-in + approved templates + 24h service window; UAE **PDPL** + KSA **PDPL**. India data **in-region (`ap-south-1`) by default**. The compliance **SLO is 0 DND/out-of-window violations and 0 cross-brand leaks.**
+Brain's compliance regime is **defined and concrete** (canon TECH/16; technical-context.md §13): India **DPDP Act 2023 + Rules 2025**; India telecom **TCCCPR/DLT + NCPR/DND + 9am–9pm** promotional window; **WhatsApp** = Meta opt-in + approved templates + free service window (24h customer-service reply; 72h ad-click entry-point); UAE **PDPL** + KSA **PDPL**. India data **in-region (`ap-south-1`) by default**. The compliance **SLO is 0 DND/out-of-window violations and 0 cross-brand leaks.**
 
 ## Scan procedure
 
@@ -18,7 +18,7 @@ Brain's compliance regime is **defined and concrete** (canon TECH/16; technical-
 3. **Assess each** (judgment) — flag, with file:line:
    - **Telecom (DLT/NCPR/DND):** an outbound action whose compliance gate does NOT run strictly BEFORE the action fires; missing DND / NCPR check before a call/SMS/WhatsApp send; missing DLT registration for A2P SMS/voice.
    - **Calling window:** calling/promotional send outside the **09:00–21:00 IST** window (timezone handling wrong or missing).
-   - **WhatsApp:** a send without Meta opt-in, an unapproved template for marketing/utility/auth, or a marketing message pushed outside the 24h service window.
+   - **WhatsApp:** a send without Meta opt-in, an unapproved template for marketing/utility/auth, or a marketing message pushed outside the free service window (24h customer-service reply; 72h ad-click entry-point).
    - **Recording / AI voice:** missing recording-consent capture before recording; AI voice without disclosure + human-handoff path.
    - **Frequency:** 48h frequency cap not enforced.
    - **DPDP/PDPL data privacy:** consent not tracked per customer/channel/purpose/source/timestamp/region/withdrawal (consent primitive); opt-out not overriding all marketing; missing right-to-erasure / retention-limit handling; PII not redacted in logs/journals/caches/embeddings.

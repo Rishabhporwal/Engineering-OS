@@ -153,6 +153,27 @@ Every workspace exposes a value-proof view (web Home + monthly report + mobile):
 
 **No ML, no LLM anywhere in billing.** Billing must be deterministic and auditable.
 
+## FinOps: per-workspace cost-to-serve
+
+The `min_monthly_fee` floor is a *blunt* cost-to-serve guard. The sharper check — and the engineering defence of **%-of-GMV pricing at the brand level** — is attributing **infra cost per workspace** and comparing it to that workspace's **realized-GMV fee**. `cost-routing-paradigms` already governs LLM cost; this adds the **infra** side.
+
+**Cost-to-serve inputs (all already metered per `workspace_id`):**
+
+| Driver | Source counter |
+|---|---|
+| ClickHouse query **bytes scanned** | `ClickHouseQueryDuration`/bytes by workspace (observability) |
+| Kafka **throughput** (events × partition = `workspace_id`) | MSK per-key metrics |
+| EKS **compute** | pod CPU/mem × workspace request share (agent-tick attribution) |
+| **LLM tokens** | `billing.usage_passthrough.llm_cost_minor` (cost router) |
+| Messaging / call minutes | `usage_passthrough.{messaging,call_minutes}_cost_minor` |
+
+```
+cost_to_serve(ws, month) = ch_bytes_cost + kafka_cost + eks_compute_share + llm_cost + messaging_cost
+gross_margin(ws)         = realized_gmv_fee(ws) − cost_to_serve(ws)
+```
+
+**Margin alert:** when `cost_to_serve / realized_gmv_fee` crosses a threshold (e.g. >40%), the workspace is a unit-economics risk — flag for a tier/cap conversation **before** it goes negative, the same forward-looking discipline as the RTO true-up. A workspace whose cost-to-serve approaches its fee is the signal the flat floor alone can't see. This is reporting/FinOps, not the fee path — the fee stays **SQL-only and deterministic** (above). Ties to `cost-routing-paradigms` (LLM) — infra cost-to-serve is the missing other half.
+
 ## Anti-patterns (reject in review)
 
 - **Billing on placed GMV** — code-review **blocker**. The base is realized/delivered GMV (`placed − cancelled − RTO − refunds − failed_payments`), re-trued for RTO lag.

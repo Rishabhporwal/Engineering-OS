@@ -1,6 +1,6 @@
 ---
 name: data-privacy-dpdp
-description: Brain's full Compliance Engine (canon/TECH/16) — data privacy + telecom. India DPDP Act 2023 + Rules 2025 (consent-based, minimization, retention, right-to-erasure, breach notice, Consent-Manager-ready); India TCCCPR/DLT (A2P SMS/voice), NCPR/DND two-layer scrub, 9am–9pm window; WhatsApp Meta opt-in + approved templates + 24h service window; AI-voice disclosure + recording consent + human handoff; UAE/KSA PDPL; India data in-region (ap-south-1) by default; PII never stored (cards/CVV/UPI/bank/Aadhaar/passwords; addresses default pincode/city); consent primitive per customer/channel/purpose/source/timestamp/region/withdrawal; Compliance SLO 0 violations. A Shreya VETO surface. Use when handling PII, wiring outbound, or building erasure.
+description: Brain's full Compliance Engine (canon/TECH/16) — data privacy + telecom. India DPDP Act 2023 + Rules 2025 (consent-based, minimization, retention, right-to-erasure, breach notice, Consent-Manager-ready); India TCCCPR/DLT (A2P SMS/voice), NCPR/DND two-layer scrub, 9am–9pm window; WhatsApp Meta opt-in + approved templates + free service window (24h customer-service reply; 72h ad-click entry-point); AI-voice disclosure + recording consent + human handoff; UAE/KSA PDPL; India data in-region (ap-south-1) by default; PII never stored (cards/CVV/UPI/bank/Aadhaar/passwords; addresses default pincode/city); consent primitive per customer/channel/purpose/source/timestamp/region/withdrawal; Compliance SLO 0 violations. A Shreya VETO surface. Use when handling PII, wiring outbound, or building erasure.
 ---
 
 # Compliance Engine — DPDP · PDPL · DLT/TCCCPR · consent · residency
@@ -13,11 +13,11 @@ Brain processes large volumes of customer PII and does outbound voice/messaging 
 
 | Regime | Scope | Brain's obligations |
 |---|---|---|
-| **India DPDP Act 2023 + Rules 2025** (phased → Consent Managers ~Nov 2026 → core duties ~May 2027) | all Indian customer PII | consent-based processing, purpose limitation, minimization, retention limits, **right to erasure**, breach notification, Consent-Manager compatibility |
+| **India DPDP Act 2023 + Rules 2025** (phased → **13 Nov 2026** Consent Manager registration → **13 May 2027** substantive duties) | all Indian customer PII | consent-based processing, purpose limitation, minimization, retention limits, **right to erasure**, breach notification, Consent-Manager compatibility |
 | **India TCCCPR 2018 (amended 12 Feb 2025)** | A2P SMS + voice | **DLT** registration of headers + templates, **NCPR/DND** scrubbing, **9am–9pm** promotional window |
 | **UAE PDPL** (45/2021) | UAE PII | explicit revocable opt-in for marketing; erasure; cross-border transfer controls |
-| **KSA PDPL** (enforced 14 Sep 2024) | KSA PII | opt-in consent; sensitive-data prohibition for marketing; transfer restrictions; penalties to SAR 5M |
-| **Meta WhatsApp policy** | WhatsApp sends | user opt-in, approved templates, free 24h service window, quality-rating |
+| **KSA PDPL** (enforced 14 Sep 2024; **now in full active enforcement under SDAIA**) | KSA PII | opt-in consent; sensitive-data prohibition for marketing; **cross-border transfer needs SDAIA-approved SCCs/BCRs**; penalties to SAR 5M |
+| **Meta WhatsApp policy** | WhatsApp sends | user opt-in, approved templates, free service window (**24h customer-service reply; 72h ad-click entry-point**), quality-rating |
 
 ## The compliance engine (outbound gating — NOT feature-flaggable)
 
@@ -50,7 +50,7 @@ def can_contact(self, brand_id, customer_id, channel, segment, purpose) -> Compl
 
 | Channel | Enforced |
 |---|---|
-| **WhatsApp** | Meta opt-in; approved template per purpose; **free 24h service window** for replies; frequency cap. (NOT DLT.) |
+| **WhatsApp** | Meta opt-in; approved template per purpose; **free service window** (24h customer-service reply; 72h ad-click entry-point) for replies; frequency cap. India marketing per-message rate rose ~10% to ≈ **₹0.86** on **1 Jan 2026**. (NOT DLT.) |
 | **SMS** | DLT header + template on the **brand's** DLT entity (never commingled); NCPR/DND; 9am–9pm; cap. |
 | **Voice / AI calls** | **two-layer DND** (brand list + NCPR); 9am–9pm gated **at the queue, not the dialer**; **automated-agent disclosure** at call open; **recording consent** (proceed without retention if declined); **human handoff** path; cap. |
 | **Email** | opt-in/unsubscribe honored; suppression on withdrawal; CAN-SPAM-equivalent footer. |
@@ -89,12 +89,35 @@ Raw data never leaves a workspace partition. Benchmarks are aggregate + anonymiz
 
 DND/NCPR-blocked attempts that **leaked** · out-of-window send attempts · cross-brand data leaks · PII-in-logs incidents — **each must be 0**; non-zero is a rule violation.
 
+## PII data-catalog & lineage
+
+Erasure and breach-scope (above) are only as fast as your knowledge of **where PII lives**. Maintain a **field-level PII catalog** + **lineage map** so a DPDP request is a lookup, not an archaeology dig across billion-row ClickHouse.
+
+**Field-level catalog** (one row per PII field, versioned in repo, asserted in CI):
+
+| Field | Class | Default handling |
+|---|---|---|
+| `phone` | direct-identifier | `phone_hash` by default; plaintext only with outreach consent (KMS) |
+| `email` | direct-identifier | `email_hash` by default; plaintext only with consent (KMS) |
+| `address` | direct-identifier | stored **pincode/city-level** only; full address never |
+| `order_id` / order facts | linked-identifier | retained; tombstoned on erasure |
+| name + order-total combo | quasi-identifier | never co-logged |
+
+**Lineage — every copy a PII field makes:**
+```
+connector ingest → S3 raw payload (KMS) → ClickHouse raw_* → ClickHouse canonical (orders, customers)
+  → pgvector embeddings (intelligence-service Brand Fingerprint / condition_outcome)
+  → logs (redacted at logger + Fluent Bit) → exports (signed S3 bundle)
+```
+
+The lineage map **drives both DPDP workflows**: an **erasure** walks every node (PG tombstone + plaintext hard-delete → CH `ALTER … DELETE` → S3 purge → re-embed/evict pgvector rows derived from that customer → suppress in audiences/consent → keep the PII-free audit entry), and a **breach** uses the same map to compute notification scope (which fields × which stores × which brands) within the regime's window. A new connector or new derived table is **not done** until its PII fields are added to the catalog + lineage — that is what makes the erasure complete and the breach scope honest. Ties to the erasure/retention rules above.
+
 ## Anti-patterns
 
 - A send/call that bypasses the engine, or checks consent once instead of before every send.
 - Gating calling hours at the dialer instead of the queue.
 - Commingling brands' DLT registrations; sending an unapproved WhatsApp template.
-- Marketing to `opted_out`/`withdrawn`; ignoring the 24h service-window distinction.
+- Marketing to `opted_out`/`withdrawn`; ignoring the free-service-window distinction (24h customer-service reply; 72h ad-click entry-point).
 - Storing a full address/card/UPI/Aadhaar; PII reaching logs.
 - Writing Indian customer data outside ap-south-1.
 - Erasure that misses ClickHouse, S3, or audiences (must remove everywhere it propagated; keep the audit entry).

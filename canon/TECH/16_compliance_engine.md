@@ -15,7 +15,7 @@
 | **India — TCCCPR 2018 (amended 12 Feb 2025)** | A2P SMS + voice | **DLT** registration of sender headers + templates, **NCPR/DND** scrubbing, **9am–9pm** promotional window, tightened complaint thresholds (5/10 days) |
 | **UAE — PDPL** (Federal Decree-Law 45/2021, in force Jan 2022) | UAE customer PII | Explicit, revocable opt-in for direct marketing; erasure; cross-border transfer controls |
 | **KSA — PDPL** (in force; enforcement 14 Sep 2024) | KSA customer PII | Opt-in marketing consent; sensitive-data prohibition for marketing; transfer restrictions; penalties up to SAR 5M |
-| **Meta WhatsApp Business policy** | WhatsApp sends | User opt-in, approved templates, 24h customer-service window, quality-rating compliance |
+| **Meta WhatsApp Business policy** | WhatsApp sends | User opt-in, approved templates, free service window (24h customer-service reply; 72h ad-click entry-point), quality-rating compliance |
 
 Brain is a **processor/service provider**; the brand is the controller/data-fiduciary. Brain provides the tools + defaults that make the brand compliant by default.
 
@@ -64,7 +64,7 @@ class ComplianceEngine:
 
 | Channel | Rules enforced |
 |---|---|
-| **WhatsApp** | Meta opt-in; approved template per purpose; free 24h service window for replies; frequency cap. (NOT DLT — that's SMS/voice.) |
+| **WhatsApp** | Meta opt-in; approved template per purpose; free service window for replies (24h customer-service reply; 72h ad-click entry-point); frequency cap. (NOT DLT — that's SMS/voice.) |
 | **SMS** | DLT-registered header + template (on the **brand's** DLT entity, never commingled); NCPR/DND; 9am–9pm; frequency cap. |
 | **Voice / AI calls** | NCPR/DND (two-layer: brand list + NCPR); 9am–9pm window gated at **queue level** (pre-09:00 held in `pending_window`, flushed at 09:00; post-21:00 rescheduled); **automated-agent disclosure** at call open; **recording consent** (proceed without retention if declined); frequency cap. |
 | **Email** | Opt-in/unsubscribe honored; suppression on withdrawal; CAN-SPAM-equivalent footer. |

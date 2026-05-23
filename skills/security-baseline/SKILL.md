@@ -12,20 +12,22 @@ This skill is the **security index + Shreya's review gate**. It owns the OWASP m
 
 Don't duplicate those here — gate against them.
 
-## OWASP Top 10 (applied to Brain)
+## OWASP Top 10:2025 (applied to Brain)
 
-| # | OWASP | Brain enforcement |
+Mapped to **OWASP Top 10:2025** (finalized Jan 2026). Key shifts vs the older 2021 list: **A03 Software Supply-Chain Failures** is NEW (broadened from "Vulnerable & Outdated Components"), **A02** is now **Security Misconfiguration**, **Insecure Design** moves to **A06**, **SSRF is folded into Broken Access Control** (no longer a standalone A10), and **A10 Mishandling of Exceptional Conditions** is NEW. Brain ALREADY does most of A03 (Snyk/Trivy/SBOM/pinned image SHAs/EAS Build provenance) — so this is largely a **re-label that strengthens our supply-chain story**, not new work.
+
+| # | OWASP 2025 | Brain enforcement |
 |---|---|---|
-| A01 | Broken Access Control | `workspaceProcedure` on every tRPC procedure; `requireTenant` on every MCP tool; gRPC server handler asserts `request.workspace_id === metadata.workspace_id`; Postgres RLS as safety net; ClickHouse query gateway rejects unscoped queries |
-| A02 | Cryptographic Failures | TLS everywhere; Supabase Auth JWT verified via JWKS; KMS envelope encryption for OAuth tokens — ciphertext in **AWS Secrets Manager**, only a `credential_secret_arn` ref in `core.integrations` |
-| A03 | Injection | Prisma parameterized queries; Zod validation on every input; asyncpg parameterized; ClickHouse query gateway |
-| A04 | Insecure Design | Postgres RLS + ClickHouse query gateway = defense in depth; never rely on one layer |
-| A05 | Security Misconfiguration | No debug in prod; Fastify-helmet security headers; MCP `scope` declared on every tool; `requireTenant` on every write |
-| A06 | Vulnerable Components | `pnpm audit` + `pip-audit` in CI; Snyk on Docker images |
+| A01 | Broken Access Control (incl. **SSRF**) | `workspaceProcedure` on every tRPC procedure; `requireTenant` on every MCP tool; gRPC server handler asserts `request.workspace_id === metadata.workspace_id`; Postgres RLS as safety net; ClickHouse query gateway rejects unscoped queries. **SSRF (folded in):** whitelist allowed URLs in ingestion-service (only Shopify/Meta/Google/Shiprocket endpoints); no arbitrary URL fetches |
+| A02 | Security Misconfiguration | No debug in prod; Fastify-helmet security headers; MCP `scope` declared on every tool; `requireTenant` on every write |
+| A03 | Software Supply-Chain Failures (**NEW**) | `pnpm audit` + `pip-audit` + Snyk (TS/Py) in CI; Trivy on ECR images + filesystem; **SBOM in CI**; **pinned Docker image SHAs**; **EAS Build provenance** for mobile. (Brain already does most of this — see `vulnerability-scanning`.) |
+| A04 | Cryptographic Failures | TLS everywhere; Supabase Auth JWT verified via JWKS; KMS envelope encryption for OAuth tokens — ciphertext in **AWS Secrets Manager**, only a `credential_secret_arn` ref in `core.integrations` |
+| A05 | Injection | Prisma parameterized queries; Zod validation on every input; asyncpg parameterized; ClickHouse query gateway |
+| A06 | Insecure Design (was A04) | Postgres RLS + ClickHouse query gateway = defense in depth; never rely on one layer |
 | A07 | Auth Failures | Supabase Auth defaults; refresh rotation on every use; magic link expiry 10 min |
-| A08 | Software Integrity | Pinned Docker image SHA; SBOM in CI; EAS Build provenance for mobile |
-| A09 | Logging Failures | Auth events logged to OpenSearch with correlation IDs; PII/secret redaction at logger + Fluent Bit Lua script; never log tokens |
-| A10 | SSRF | Whitelist allowed URLs in ingestion-service (only Shopify/Meta/Google/Shiprocket endpoints); no arbitrary URL fetches |
+| A08 | Software / Data Integrity Failures | Pinned Docker image SHA; SBOM in CI; EAS Build provenance for mobile |
+| A09 | Logging & Alerting Failures | Auth events logged to OpenSearch with correlation IDs; PII/secret redaction at logger + Fluent Bit Lua script; never log tokens |
+| A10 | Mishandling of Exceptional Conditions (**NEW**) | Fail-closed on compliance/auth errors (a thrown check blocks the action, never falls through to "allow"); structured error paths that strip tokens; no stack traces to clients |
 
 ## Multi-Tenant Isolation (the Brain invariant) — gate, don't re-explain
 
@@ -119,9 +121,9 @@ Hard-coded into every calling / messaging path. Never feature-flagged.
 
 Test matrix mandatory for any lifecycle-service touch (see `testing-tdd` skill).
 
-## Mobile MASVS (canon/technical-requirements.md) — Shreya pairs with Karan
+## Mobile MASVS v2.1.0 (canon/technical-requirements.md) — Shreya pairs with Karan
 
-Brain targets MASVS Level 1 + key Level 2:
+Pinned to **OWASP MASVS v2.1.0**. Brain targets MASVS Level 1 + key Level 2, and tracks the **MASVS-PRIVACY** control group (data minimization, transparency, user control over PII on-device) alongside `data-privacy-dpdp`:
 
 | Control | Implementation |
 |---|---|
@@ -202,6 +204,26 @@ Accepted by: <Founder / Shreya> on <YYYY-MM-DD>
 - **httpOnly cookie missed** on web — XSS exfiltrates. Always `httpOnly + sameSite=lax + secure`.
 - **Cert pinning rotation skipped one-week pre-rotation** — bricks app. Use kill-switch + coordinate with Jatin.
 - **India compliance toggle** — never feature-flag calling hours / DLT / 48h cap.
+
+## Secrets rotation lifecycle
+
+KMS envelope encryption (above) protects secrets at rest; rotation bounds the blast radius if one leaks. Every secret class has a **cadence** and an **owner**:
+
+| Secret | Rotation cadence | Mechanism |
+|---|---|---|
+| Per-workspace **DEK** | 90d | re-wrap under same KEK; lazy re-encrypt on next write |
+| **KEK** (KMS CMK) | 365d | AWS KMS automatic key rotation (transparent; old key versions retained for decrypt) |
+| Vendor **OAuth tokens** | per-vendor TTL (refresh on expiry) + forced re-auth 180d | core-service refresh wrapper; ARN-referenced in `core.integrations` |
+| **JWT signing key** (Supabase) | 90d | dual-key overlap (below) |
+| **DB creds** (Supabase/CH/Redis) | 90d | Secrets Manager rotation Lambda |
+
+**Automated rotation:** DB + service creds rotate via **AWS Secrets Manager rotation Lambdas** (4-step `createSecret → setSecret → testSecret → finishSecret`); pods read the secret by ARN each pull (never bake into the image), so a rotation propagates without redeploy.
+
+**Zero-downtime rotation (dual-key overlap):** never hard-swap a key in-flight. For JWT signing-key rollover, publish **both** old + new keys in the JWKS for one overlap window (≥ max token TTL ~1h) so in-flight tokens still verify; retire the old key only after the window. Mirrors the **cert-pin rotation** sequence (current + rotation pin live together one week before server cert rotation).
+
+**Break-glass:** emergency human access to a raw secret is a separate, **time-boxed IAM role** (auto-expires), every use **logged to OpenSearch + audit** with `request_id`, and **alerts** Shreya + Jatin in real time. No standing human read on production secrets.
+
+**Secret-sprawl scanning:** **gitleaks** in pre-commit + CI + **GitHub secret scanning** (push protection) catch a secret committed to the repo; a hit blocks the merge and triggers immediate rotation of the exposed credential.
 
 ## See also (the security trio + canon)
 

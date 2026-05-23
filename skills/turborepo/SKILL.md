@@ -215,7 +215,7 @@ jobs:
         with: { fetch-depth: 0 }            # required for --affected
       - uses: pnpm/action-setup@v3
       - uses: actions/setup-node@v4
-        with: { node-version: '20', cache: 'pnpm' }
+        with: { node-version: '24', cache: 'pnpm' }
       - run: pnpm install --frozen-lockfile
       - run: turbo run lint typecheck test build --affected
         env:

@@ -1,9 +1,9 @@
 ---
 name: frontend-web
-description: Brain's Next.js 14 web stack — App Router + tRPC client + Redux Toolkit + TanStack Query + nuqs + shadcn/ui + Tailwind + Recharts + Visx. Use whenever Ananya is building the web workbench: dashboard pages, KPI cards with RAG, CM Waterfall (Visx), Cohort heatmap (Visx), First Product Cascade table, Calendar Report with marketing-action overlays, drill-down drawers. Covers state ownership split (Redux / URL state / TanStack / Auth / Forms), Server Components, Indian numbering format, accessibility, Core Web Vitals.
+description: Brain's Next.js 16 web stack — App Router + tRPC client + Redux Toolkit + TanStack Query + nuqs + shadcn/ui + Tailwind + Recharts + Visx. Use whenever Ananya is building the web workbench: dashboard pages, KPI cards with RAG, CM Waterfall (Visx), Cohort heatmap (Visx), First Product Cascade table, Calendar Report with marketing-action overlays, drill-down drawers. Covers state ownership split (Redux / URL state / TanStack / Auth / Forms), Server Components, Server Actions, Indian numbering format, accessibility, Core Web Vitals.
 ---
 
-# Frontend Web — Next.js 14 + tRPC + Redux + TanStack + nuqs + shadcn + Visx
+# Frontend Web — Next.js 16 + tRPC + Redux + TanStack + nuqs + shadcn + Visx
 
 The web stack for Brain's **workbench surface** — Ananya's domain. Web is the desktop surface operators use for Monday review + on-demand depth. Mobile is the daily heartbeat (Karan owns it).
 
@@ -11,7 +11,7 @@ The web stack for Brain's **workbench surface** — Ananya's domain. Web is the 
 
 | Layer | Choice | Reason |
 |---|---|---|
-| Framework | **Next.js 14+ App Router**, TypeScript strict | Server Components for heavy dashboards |
+| Framework | **Next.js 16 App Router**, TypeScript strict (React 19) | Server Components for heavy dashboards; **Turbopack is the default bundler + React Compiler is stable** (auto-memoization — most manual `useMemo`/`useCallback` becomes optional) |
 | Edge API | **tRPC client** via `@trpc/react-query` | Typed end-to-end with api-gateway |
 | Server state | **TanStack Query** (via tRPC) | Cache + staleness + invalidation |
 | Client state | **Redux Toolkit** + redux-persist (whitelist `workspace` + `ui`) | UI prefs + active workspace persistence |
@@ -71,6 +71,36 @@ export function StoreKpis({ initialData }: Props) {
   // ...
 }
 ```
+
+## Server Actions pattern (default for writes — React 19)
+
+Server Components are the read path (above). For **mutations**, React 19 **Server Actions** + `useActionState` / `useOptimistic` are the idiomatic write path — progressive enhancement, no client-side fetch wiring, and the action runs server-side where it can call the tRPC server caller (the api-gateway BFF stays the contract; the Server Action is a thin server-side invoker).
+
+```tsx
+// app/(dashboard)/[workspace]/costs/actions.ts
+'use server';
+import { trpcServer } from '@/lib/trpc/server';
+
+export async function updateCogs(prev: State, formData: FormData) {
+  const res = await trpcServer.costs.updateCogs({ /* parsed + Zod-validated */ });
+  return { ok: true, value: res };  // surfaced via useActionState
+}
+```
+
+```tsx
+// components/CogsForm.tsx  (client component)
+'use client';
+import { useActionState, useOptimistic } from 'react';
+import { updateCogs } from '@/app/(dashboard)/[workspace]/costs/actions';
+
+export function CogsForm({ initial }: Props) {
+  const [state, formAction, pending] = useActionState(updateCogs, { ok: false });
+  const [optimistic, setOptimistic] = useOptimistic(initial); // instant UI before the action resolves
+  // <form action={formAction}> … pending → disable; optimistic → render the in-flight value
+}
+```
+
+Mutations still write the Decision Log + `requireRole` on the server side — a Server Action is the transport, not a bypass of the canon write rules.
 
 ## Empty / loading / error pattern (mandatory)
 

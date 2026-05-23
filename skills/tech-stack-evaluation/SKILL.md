@@ -11,8 +11,8 @@ Brain's tech stack is the locked decision in `canon/technical-requirements.md`. 
 
 | Layer | Choice |
 |---|---|
-| Frontend (web) | Next.js 14+ App Router, shadcn/ui, Tailwind, Recharts + Visx, Redux Toolkit + TanStack Query + nuqs |
-| Frontend (mobile, PRIMARY for Morning Brief) | React Native + Expo SDK 51+, Tamagui, Expo Router, redux-persist on AsyncStorage, victory-native, EAS Build |
+| Frontend (web) | Next.js 16 App Router, shadcn/ui, Tailwind, Recharts + Visx, Redux Toolkit + TanStack Query + nuqs |
+| Frontend (mobile, PRIMARY for Morning Brief) | React Native + Expo SDK 56, Tamagui, Expo Router, redux-persist on AsyncStorage, victory-native, EAS Build |
 | Edge API | Fastify + tRPC (typed end-to-end) |
 | Internal API | gRPC over HTTP/2 via Protocol Buffers; `buf` for codegen (TS + Python) |
 | Agent surface | MCP server inside api-gateway |

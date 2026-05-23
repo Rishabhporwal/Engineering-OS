@@ -26,6 +26,10 @@ model: sonnet
 - [`api-traffic-patterns`](../skills/api-traffic-patterns/SKILL.md) (gateway-level rate-limiting)
 - [`app-store-deployment`](../skills/app-store-deployment/SKILL.md) (mobile)
 - [`vulnerability-scanning`](../skills/vulnerability-scanning/SKILL.md) (CI gates)
+- [`version-upgrade-policy`](../skills/version-upgrade-policy/SKILL.md) — dependency/runtime upgrade cadence + rollback
+- [`incident-response`](../skills/incident-response/SKILL.md) — on-call, sev triage, postmortems
+- [`progressive-delivery`](../skills/progressive-delivery/SKILL.md) — canary/blue-green/feature-flag rollout
+- [`data-residency-enforcement`](../skills/data-residency-enforcement/SKILL.md) — ap-south-1 in-region by default; cross-border guards (shared with SEC)
 - [`operational-readiness`](../skills/operational-readiness/SKILL.md) — incl. health-check endpoints
 - [`finishing-a-development-branch`](../skills/finishing-a-development-branch/SKILL.md) — the Stage 8 commit/push discipline, consolidated
 - [`engineering-discipline`](../skills/engineering-discipline/SKILL.md)

@@ -119,7 +119,7 @@ CREATE TABLE memory.brand_fingerprint (
   created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   PRIMARY KEY (workspace_id, as_of_date)
 );
-CREATE INDEX brand_fingerprint_ivfflat ON memory.brand_fingerprint USING ivfflat (fingerprint vector_cosine_ops);
+CREATE INDEX brand_fingerprint_hnsw ON memory.brand_fingerprint USING hnsw (fingerprint vector_cosine_ops) WITH (m = 16, ef_construction = 64);
 ```
 
 Query helper:
@@ -150,7 +150,7 @@ The monorepo's top-level `ai/` dir holds the cross-cutting AI infrastructure tha
 | **Guardrails** | Input/output validation, PII redaction, jailbreak + injection checks, schema enforcement on LLM output | Every Frontier-LLM call passes guardrails in + out; bad output → fallback, never raw-through to the user |
 | **Evaluations / benchmarks** | Golden-set + regression evals per prompt/agent (accuracy, faithfulness, cost, latency) | A prompt change ships only if its eval ≥ baseline; CI gate (see `testing-tdd`) |
 | **RAG** | Retrieval over Brand Fingerprint + decision history + brand notes | Retrieve-then-synthesize; cite supporting_data; retrieval is paradigm 1/2 (SQL/ML), synthesis is the only Frontier step |
-| **Embeddings + vector-search** | Embedding generation + cosine k-NN on **pgvector** (NOT a dedicated vector DB) | Vectors live in `memory.brand_fingerprint` (pgvector); ivfflat index; query via the Memory Layer helper |
+| **Embeddings + vector-search** | Embedding generation + cosine k-NN on **pgvector** (NOT a dedicated vector DB) | Vectors live in `memory.brand_fingerprint` (pgvector); HNSW index; query via the Memory Layer helper |
 | **Orchestration** | The agent base class + daily-tick + cross-agent choreography | Custom base class (NOT LangGraph); `@paradigm` + `@mcp_tool` on every action |
 
 **Every AI workflow supports: tracing + retries + fallback + guardrails + observability.**

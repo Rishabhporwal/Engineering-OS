@@ -1,11 +1,13 @@
 ---
 name: web-performance
-description: Brain's web dashboard performance — Next.js 14 App Router (Server Components, route splitting, dynamic imports, image optimization, Visx chart perf), Core Web Vitals (LCP/INP/CLS) targets, the pre-deploy Lighthouse + budget audit gate, and RUM via web-vitals + PostHog. Use before merging Ananya's web changes, when the dashboard slows on cohort heatmaps or waterfalls, when LCP/INP/CLS alerts fire, or when a customer reports "the dashboard is slow".
+description: Brain's web dashboard performance — Next.js 16 App Router (Server Components, route splitting, dynamic imports, image optimization, Visx chart perf), Core Web Vitals (LCP/INP/CLS) targets, the pre-deploy Lighthouse + budget audit gate, and RUM via web-vitals + PostHog. Use before merging Ananya's web changes, when the dashboard slows on cohort heatmaps or waterfalls, when LCP/INP/CLS alerts fire, or when a customer reports "the dashboard is slow".
 ---
 
 # Web Performance — Brain's Dashboard
 
-Brain's web dashboard (Next.js 14 App Router, shadcn, Visx) is the workbench operators use for Monday review + on-demand depth. Mobile is the daily heartbeat (Morning Brief); web is where they spend 5–30 minutes diving in. That experience MUST stay snappy — and it cannot regress silently. This skill covers both the **optimization techniques** and the **pre-deploy audit gate**.
+Brain's web dashboard (Next.js 16 App Router, shadcn, Visx) is the workbench operators use for Monday review + on-demand depth. Mobile is the daily heartbeat (Morning Brief); web is where they spend 5–30 minutes diving in. That experience MUST stay snappy — and it cannot regress silently. This skill covers both the **optimization techniques** and the **pre-deploy audit gate**.
+
+> **React Compiler (stable in Next.js 16) auto-memoizes** — most hand-written `useMemo`/`useCallback` is now optional, so reach for them only where the compiler provably can't (proven hot path, profiler-confirmed). Don't add manual memoization reflexively; it's no longer the default perf lever it was on React 18.
 
 ## Core Web Vitals targets (Brain) — the one canonical table
 
