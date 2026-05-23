@@ -47,7 +47,7 @@ Stage 8a — Stage product code for Founder review (no commit by you)
 3. `git add <specific product code paths from dev report>` — explicit paths only, NO `git add -A` or `git add .`.
 4. Verify staged set with `git diff --cached --stat`.
 5. Write Track A integrity gates (build, typecheck, app-code-diff sentinel) and capture output.
-6. Write 13-deployment-report.md from templates/deployment-report.md (mode: STAGE-ONLY).
+6. Write 13-deployment-report.md from templates/deployment-report.md (mode: STAGE-ONLY). **Declare `deploy_class` FIRST** (template §0): a `packages/*` or `pylibs/*` **library** change has no ArgoCD sync of its own — it ships with its consuming services' next deploy (name them in `consuming_services`); verify CI green (incl. metric-parity if the registry changed), point the 48h monitor at those services, and mark staging/prod ArgoCD + canary `skipped`. (Classes: service / library / mobile=EAS / infra=CDK / docs-config=no deploy.)
    - List staged files explicitly.
    - Propose commit message(s) for Founder to use (Option A: split commits per dev report; Option B: single squash).
    - Document the reversibility recipe.

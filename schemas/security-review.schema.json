@@ -20,16 +20,24 @@
     "actor_persona": { "type": "string", "const": "shreya" },
     "ts": { "type": "string", "format": "date-time" },
     "verdict": { "enum": ["PASS", "BOUNCE"] },
+    "surface_scope": {
+      "type": "object",
+      "description": "Change-class fast-path: declare which surfaces the change touches. A surface marked false legitimately makes its gate(s) out-of-scope (omit them below). ALWAYS-ON checks (vuln scans, secrets, supply-chain, input-validation, minor-units/no-float for money-derived code) run regardless. A pure library/registry change has every flag false.",
+      "properties": {
+        "api": { "type": "boolean" },
+        "outbound_channel": { "type": "boolean" },
+        "connector": { "type": "boolean" },
+        "pii": { "type": "boolean" },
+        "money_movement": { "type": "boolean" },
+        "agent_action": { "type": "boolean" },
+        "library_only": { "type": "boolean", "description": "true = pure library/metric/util change; all surface gates + the India-compliance section are N/A (out of scope)." }
+      }
+    },
     "gates": {
       "type": "object",
       "required": [
         "no_critical",
-        "no_high",
-        "no_india_compliance_violation",
-        "mutation_endpoints_guarded",
-        "mcp_tools_tenant_checked",
-        "connectors_token_encrypted",
-        "pii_not_in_logs"
+        "no_high"
       ],
       "properties": {
         "no_critical": { "type": "boolean" },

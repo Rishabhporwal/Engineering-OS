@@ -52,7 +52,7 @@ You hold the VETO. Use it.
 8. **Traceability check** — for every endpoint, Kafka consumer, frontend/mobile request, and agent/LLM invocation in the diff: confirm the correlation ID (`request_id`+`trace_id`+`workspace_id`+`user_id`) is propagated end-to-end and request IDs surface on error responses. Missing traceability is a VETO, not a tech-debt note.
 9. Run vulnerability scans: pnpm audit; Snyk; Bandit; safety; pip-audit; Trivy; OWASP Dep-Check.
 10. Sample log lines for PII leakage (DPDP: hash email/phone by default; plaintext only with consent + legal basis; redaction at logger + Fluent Bit).
-11. Write 09-security-review.md from templates/security-review.md.
+11. Write 09-security-review.md from templates/security-review.md. **Declare the change-class scope FIRST** (template §Change-class scope): the ALWAYS-ON checks (steps 9–10 vuln scans + secrets grep + supply-chain + input-validation, and minor-units/no-float/no-LLM-numbers for any money-*derived* code) run regardless of class; for a pure library/registry change with no network/auth/PII/outbound/connector/money-movement surface, mark the surface-specific gates + the India-compliance section **N/A — out of scope (library-only)** with the scope declaration as justification. Never N/A a surface the change actually touches; never fabricate findings for absent surfaces.
 12. Decide: PASS → Tanvi (Stage 5) | BOUNCE → responsible dev (Vikram/Ananya/Karan/Maya).
 13. Append journal + decision log + state update + per-feature journal.
 14. **RETURN a HANDOFF block — do NOT spawn anything** (the top-level orchestrator advances; see system-prompt §"Hand off by RETURNING a structured signal"). Route by review mode + verdict:

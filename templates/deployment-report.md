@@ -9,6 +9,23 @@
 | **req_id** | `{{REQ_ID}}` |
 | **Actor** | platform-devops (Jatin) |
 | **Timestamp (latest update)** | {{TS}} |
+| **Deploy class** | **{{DEPLOY_CLASS}}**  *(service / library / mobile / infra / docs-config)* |
+
+---
+
+## 0. Deploy class (fast-path)
+
+Declare the **deploy class first** — it determines which sections apply. Sections that don't apply to the class are legitimately **N/A — out of scope** with a one-line reason (don't fabricate ArgoCD/canary detail for a change that has none).
+
+| Class | What ships | Sections that apply | Sections N/A |
+|---|---|---|---|
+| **service** | a backend/edge service (api-gateway, core, ingestion, analytics, intelligence, lifecycle, notifications) | §1 CI · §2 staging · §3 prod (ArgoCD + canary) · §4 monitor · §5 dashboards | — |
+| **library** | a shared package (`packages/*`, `pylibs/*`, metric registry) consumed by services | §1 CI (lint/typecheck/test/build + **metric-parity if the registry changed**) · §4 monitor of the **consuming services** · §5 only if a new metric/panel is emitted | §2/§3 ArgoCD sync + canary — **no independent deploy; ships with the next build of its consuming service(s) — name them in §3** |
+| **mobile** | `apps/mobile` | §1 CI · EAS Build/Submit + OTA-vs-native decision (note in §3) · §4 monitor (Sentry/crash-free) | ArgoCD/canary (mobile uses EAS, not ArgoCD) |
+| **infra** | `infra/cdk` | §1 CI · `cdk diff`/`cdk deploy` (note in §3) · §4 monitor | app canary; dashboards unless infra adds them |
+| **docs-config** | docs / config only | §1 CI (lint) | §2–§5 — no runtime deploy |
+
+> **Library fast-path:** a `packages/*` / `pylibs/*` change has **no ArgoCD sync of its own**. Verify CI green (incl. metric-parity if the registry changed), record which **consuming services** will pick it up on their next deploy (§3), point the 48h monitor at those services, and mark §2 + §3-canary **N/A — ships with consuming service**.
 
 ---
 

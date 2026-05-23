@@ -19,6 +19,8 @@
     "actor": { "type": "string", "const": "platform-devops" },
     "actor_persona": { "type": "string", "const": "jatin" },
     "ts": { "type": "string", "format": "date-time" },
+    "deploy_class": { "enum": ["service", "library", "mobile", "infra", "docs-config"], "description": "service = backend/edge service (full ArgoCD path); library = shared package (packages/* or pylibs/*), ships with consuming services, no own ArgoCD sync; mobile = EAS; infra = CDK; docs-config = no runtime deploy. Sections not applicable to the class use the 'skipped' enum value with a reason." },
+    "consuming_services": { "type": "array", "items": { "type": "string" }, "description": "For deploy_class=library: the services that pick up this package on their next deploy + that the 48h monitor watches." },
     "ci_run": {
       "type": "object",
       "required": ["pipeline", "url", "outcome"],
@@ -37,19 +39,19 @@
       "type": "object",
       "required": ["argocd_sync", "smoke", "metric_parity"],
       "properties": {
-        "argocd_sync": { "enum": ["synced", "failed"] },
-        "smoke": { "enum": ["passed", "failed"] },
-        "metric_parity": { "enum": ["passed", "failed"] },
-        "dashboard_sanity": { "enum": ["passed", "failed"] },
-        "alarm_sanity": { "enum": ["passed", "failed"] }
+        "argocd_sync": { "enum": ["synced", "failed", "skipped"] },
+        "smoke": { "enum": ["passed", "failed", "skipped"] },
+        "metric_parity": { "enum": ["passed", "failed", "skipped"] },
+        "dashboard_sanity": { "enum": ["passed", "failed", "skipped"] },
+        "alarm_sanity": { "enum": ["passed", "failed", "skipped"] }
       }
     },
     "production_deploy": {
       "type": "object",
       "required": ["argocd_sync", "strategy"],
       "properties": {
-        "argocd_sync": { "enum": ["synced", "failed"] },
-        "strategy": { "enum": ["all-at-once", "canary-10", "canary-25", "canary-50"] },
+        "argocd_sync": { "enum": ["synced", "failed", "skipped"] },
+        "strategy": { "enum": ["all-at-once", "canary-10", "canary-25", "canary-50", "none"] },
         "canary_promoted_at": { "type": "string", "format": "date-time" }
       }
     },

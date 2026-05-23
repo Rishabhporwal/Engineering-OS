@@ -8,7 +8,26 @@
 | **req_id** | `{{REQ_ID}}` |
 | **Actor** | security-reviewer (Shreya) |
 | **Timestamp** | {{TS}} |
-| **Verdict** | **{{VERDICT}}**  *(PASS / BOUNCE)* |
+| **Verdict** | **{{VERDICT}}**  *(PASS / BOUNCE — a Shreya BOUNCE is a VETO; nothing advances past it)* |
+
+---
+
+## Change-class scope (fast-path)
+
+Declare the change's **surface class first** — it determines which gate sections apply. You must still scan the code, but a section for a surface the change genuinely does not touch is legitimately **N/A — out of scope** with this declaration as the justification. **Do NOT fabricate findings for absent surfaces, and do NOT N/A a surface the change actually touches.**
+
+| Surface | Touched? | If "No" → these sections are N/A |
+|---|:---:|---|
+| Network / API (tRPC / gRPC / MCP endpoint, any mutation) | {{TOUCH_API}} | "mutation endpoint guarded", "MCP tool" gates |
+| Outbound channel (call / WhatsApp / SMS / email / ad-audience) | {{TOUCH_OUTBOUND}} | the entire **India compliance checks (P0)** section |
+| Connector / external credential | {{TOUCH_CONNECTOR}} | "connector OAuth / KMS" gate |
+| Customer PII (phone / email / address / order data) | {{TOUCH_PII}} | PII-in-logs gate + DPDP data-flow review |
+| Money movement (billing / pricing / refund / payout) | {{TOUCH_MONEY}} | money-handling review |
+| Agent-emitted action / auto-execute | {{TOUCH_AGENT_ACTION}} | agentic-actions-auditor gate |
+
+**ALWAYS-ON (run regardless of class — the VETO still holds on anything these find):** dependency / vuln scans · secrets grep on the staged diff · supply-chain (every new dep justified) · input validation on any new boundary · and for ANY money-*derived* code, the **minor-units / no-float / no-LLM-produced-numbers** check.
+
+> **Library / registry-only fast-path:** if every surface above is "No" (a pure library / metric / util change — no network/auth/PII/outbound/connector/money-movement surface), say so here, run the ALWAYS-ON checks, and mark the surface-specific gates + the India-compliance section **N/A — out of scope (library-only)**. This is a *scoping* statement, not a gate skip.
 
 ---
 
