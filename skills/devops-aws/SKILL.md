@@ -66,11 +66,31 @@ Route 53 + CloudFront (DNS + CDN + WAF) → ALB (L7; HTTP/2 + gRPC passthrough)
 
 ## CI/CD per service
 
-GitHub Actions, path-filtered to `apps/<service>/**` on push to `main`, with gated jobs: lint+typecheck → unit-tests → contract-tests (`buf breaking` + proto compile) → build-and-push (**OIDC `id-token: write` — never long-lived AWS keys**) → ArgoCD auto-sync to staging → real-network smoke-tests → ArgoCD production (**manual approval gate via `environment: production`**).
+GitHub Actions on push to `main`, with gated jobs: lint+typecheck → unit-tests → contract-tests (`buf breaking` + proto compile + metric-registry parity) → build-and-push (**OIDC `id-token: write` — never long-lived AWS keys**) → ArgoCD auto-sync to staging → real-network smoke-tests → ArgoCD production (**manual approval gate via `environment: production`** → canary).
 
 ArgoCD app structure is Kustomize: `infra/k8s/<service>/base/` (deployment, service, hpa, pdb, serviceaccount/IRSA) + `overlays/{staging,production}/` + `argocd-app.yaml`.
 
 **Dockerfiles:** multi-stage — Node uses `node:24-alpine` (deps → builder `pnpm build` → non-root runner copying `dist/` + `node_modules`, with a `HEALTHCHECK` curling `/health`); Python uses `python:3.13-slim` + `uv sync --frozen`.
+
+## Selective deployment — monorepo, but deploy ONLY what changed
+
+**The monorepo is how code is organized; it is NOT the deployment unit.** Each service has its **own ECR image + its own ArgoCD Application** → a change to one service deploys only that service (and only its *transitive dependents*). The 4-step mechanism:
+
+1. **Affected detection = Turborepo's dependency graph (NOT a bare path-filter).** A path-filter (`apps/core/**`) sees only the directory that changed; it **misses** the services that *import* a shared package or proto. Use the graph instead:
+   ```bash
+   turbo run build test lint --affected            # changed packages + everything that depends on them
+   # CI reads the affected set as JSON: turbo run build --affected --dry-run=json | jq '[.tasks[].package]|unique'
+   ```
+   This is the whole reason we're on Turborepo: a change to `packages/lib-metrics`, `pylibs/brain_metrics`, or a `protos/` file **correctly fans out** to every service that consumes it — a path-filter would silently ship a half-updated set.
+2. **CI builds + pushes ONLY the affected images** via a matrix over the affected set; each image is tagged independently (git SHA / content hash). Unchanged services are never rebuilt; Turborepo **remote cache (S3)** makes even affected-but-unchanged tasks cache hits.
+3. **Per-service ArgoCD App syncs only the changed one.** CI bumps the image tag in the GitOps manifest for **only** the affected services → ArgoCD's diff is non-empty for **only** those apps → only they sync/canary. `core` changing never touches the `analytics` app's manifest, so `analytics` does not redeploy.
+4. **Shared-package / proto change → fan-out is correct, not waste.** Those affected dependents genuinely changed (their compiled contract moved) → this is the **`deploy_class=library`** path in the deployment-report (build + redeploy *exactly* the consumers, named in `consuming_services` — never all 7). `buf breaking` + metric-parity gates prevent shipping a half-updated dependent set.
+
+**Phasing nuance:** selective deploy is **per-deployable**, and the count grows — Phase 0–1 = 3 deployables (`edge`=api-gateway+core, `data`=ingestion+analytics+intelligence) so a `core` change redeploys `edge` (2 co-located contexts), while `turbo --affected` still skips `data`/`web`/`mobile`; Phase 2+ = 7 independently-deployable services with their own ArgoCD apps → true per-service deploys (mechanical split because the gRPC contracts already exist).
+
+## Deploy pipeline FROM DAY ONE (non-negotiable)
+
+**Every service ships with its CI/CD pipeline as part of its first vertical slice — never a later add-on.** When the architect plans a new service/bounded-context and the builders scaffold it, the slice MUST include: the GitHub Actions workflow (affected-aware), the Dockerfile, the per-service **ArgoCD Application** (`infra/k8s/<service>/` base + staging/production overlays), health probes, the canary + auto-rollback config, and a `deployment-report` entry. A service is not "done" until it can deploy itself to staging→prod on its own image + own ArgoCD app. (Retrofitting CI/CD onto services built without it is the exact "deploy-all monorepo pipeline" trap this section prevents.)
 
 ## Auto-rollback
 

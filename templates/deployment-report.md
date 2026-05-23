@@ -27,6 +27,8 @@ Declare the **deploy class first** — it determines which sections apply. Secti
 
 > **Library fast-path:** a `packages/*` / `pylibs/*` change has **no ArgoCD sync of its own**. Verify CI green (incl. metric-parity if the registry changed), record which **consuming services** will pick it up on their next deploy (§3), point the 48h monitor at those services, and mark §2 + §3-canary **N/A — ships with consuming service**.
 
+> **New-service + affected-scope gate (service class):** if this is a **NEW service**, confirm its CI/CD pipeline + its **own ArgoCD Application** were created with it (the day-one rule — never retrofitted). Confirm the deploy was **affected-scoped**: only the changed service + its transitive dependents were built/pushed/synced (via `turbo --affected`), **not a deploy-all** of the monorepo.
+
 ---
 
 ## 1. CI run

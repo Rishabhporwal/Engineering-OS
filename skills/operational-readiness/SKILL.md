@@ -174,6 +174,7 @@ Before Vikram says "done":
 - [ ] Test config and production tsconfig don't share ESM/CommonJS settings unless the app is one end-to-end
 - [ ] Time-bucketed queries ("today", "this week") are tenant-timezone aware, not server-UTC (see `database-design` → Time + Timezones)
 - [ ] Smoke test file exists and runs the server on a real port; README has run + test + verify instructions
+- [ ] **The service's own CI/CD pipeline exists** — a `turbo --affected`-aware GitHub Actions workflow + Dockerfile + its **own ECR image** + its **own ArgoCD Application** (base + staging/production overlays) + canary + auto-rollback — built WITH the service from day one (part of its first vertical slice). A service isn't production-ready if it can't deploy itself; retrofitting CI/CD later is forbidden.
 
 Before Tanvi says PASS:
 - [ ] All unit + integration tests pass

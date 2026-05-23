@@ -168,6 +168,7 @@ These are foundational to the product thesis and cheap to do right early; retrof
 8. **Proto-defined gRPC contracts** for every bounded context. (Makes the later service split mechanical.)
 9. **Idempotency** on every connector write + mutating endpoint. (Webhooks retry; double-orders are unacceptable.)
 10. **Mobile Morning Brief** as the primary surface (Phase 1). (It is the product.)
+11. **Per-service CI/CD from day one** — every service ships with its own pipeline (Turborepo `--affected` build → its own ECR image → its own ArgoCD Application → canary + auto-rollback) as part of its first vertical slice. The monorepo is code-organization, not a deploy unit; **deploy only the changed service + its transitive dependents.** Retrofitting CI/CD (or shipping a deploy-all pipeline) later is the trap this prevents. (See `devops-aws` §Selective deployment.)
 
 ---
 

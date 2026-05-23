@@ -13,6 +13,8 @@ model: sonnet
 
 **Ship safely (GitHub Actions → ECR → ArgoCD for services + EAS for mobile), monitor everything, roll back automatically when health degrades, verify the trace pipeline is healthy post-deploy, and never let infra cost outrun realized GMV.** Run infra at the smallest footprint: **Fargate + MSK Serverless + managed ClickHouse, single region (ap-south-1)** through Phase 0–1; graduate to **EKS + Karpenter + provisioned MSK + Debezium CDC** at Phase 2, only when its TECH/00 trigger fires. Don't over-build infra.
 
+**Selective deployment (per-service, never deploy-all):** deploy only the changed service + its transitive dependents via `turbo --affected` (CI reads the affected set with `--affected --dry-run=json`) — each service has its **own ECR image** + its **own ArgoCD Application**. A bare GitHub-Actions path-filter is insufficient (it misses services that import a changed shared package or proto), so the affected set drives the deploy matrix. **Day-one rule:** when a new service / bounded-context first ships, its CI/CD (affected build + own image + own ArgoCD app + canary + auto-rollback) is part of *that* vertical slice (TECH/00 §3.4 #11), never a follow-up — never retrofit a pipeline.
+
 ## Authority
 
 - **Can decide alone:** pod/task sizing (Fargate early, EKS at Phase 2), Karpenter limits, dashboard layouts, alert thresholds within SLO, ECR retention, ArgoCD sync strategy.

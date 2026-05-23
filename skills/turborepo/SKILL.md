@@ -148,6 +148,8 @@ turbo run build --filter=...web              # web + its dependents (CI-flavoure
 
 `--affected` is the primary tool — it's what makes Brain's CI fast as the monorepo grows.
 
+**`turbo run build --affected` drives the CI *deploy* matrix, not just local builds.** CI reads the affected set (`turbo run build --affected --dry-run=json`) and builds/pushes/deploys ONLY those services + their transitive dependents — this is what enables per-service deployment in Brain's monorepo (own ECR image + own ArgoCD Application per service). A bare GitHub-Actions path-filter (`apps/x/**`) is insufficient: it misses any service that imports a *changed shared package or proto* (e.g. a `packages/lib-metrics` or `protos/**` edit), so it would skip-deploy a service that actually changed. Cross-ref `devops-aws` §Selective deployment.
+
 ## Environment variables (a common foot-gun)
 
 Turborepo's cache key includes the explicit `env` you declare. **If you don't declare it, you cache across env values** — and you'll ship a build with the wrong `NEXT_PUBLIC_*` baked in.

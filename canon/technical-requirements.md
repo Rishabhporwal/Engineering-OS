@@ -681,7 +681,7 @@ One correlation ID (`request_id` + `trace_id` + `workspace_id` + `user_id`) prop
 
 ## 25. Definition of Done
 
-A task is done only when it: uses Brain-only language; carries `workspace_id` isolation (4 layers); reuses shared primitives (no per-channel forks); writes to Decision Log if it's a recommendation/action/lifecycle send/support resolution/outcome; has RBAC checks; declares its `@paradigm`; uses minor-units money; handles regional behavior via adapter; has tests for success + permission-failure + stale-data + provider-failure + idempotency; emits structured logs + metrics with the correlation ID; degrades gracefully on missing/stale data; has reversal/rollback where possible; and is documented for the next builder.
+A task is done only when it: uses Brain-only language; carries `workspace_id` isolation (4 layers); reuses shared primitives (no per-channel forks); writes to Decision Log if it's a recommendation/action/lifecycle send/support resolution/outcome; has RBAC checks; declares its `@paradigm`; uses minor-units money; handles regional behavior via adapter; has tests for success + permission-failure + stale-data + provider-failure + idempotency; emits structured logs + metrics with the correlation ID; degrades gracefully on missing/stale data; has reversal/rollback where possible; ships with its **per-service CI/CD pipeline from day one** (Turborepo `--affected` build → own ECR image → own ArgoCD app → canary + auto-rollback; deploy only the changed service + its transitive dependents — never a deploy-all monorepo pipeline); and is documented for the next builder.
 
 ---
 
