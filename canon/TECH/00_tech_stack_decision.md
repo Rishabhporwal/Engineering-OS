@@ -96,8 +96,8 @@ Each row is the **final** choice with its business justification. §3 then seque
 
 | Layer | Choice | Why |
 |---|---|---|
-| LLM | **Anthropic Claude** — Sonnet 4.6 (synthesis), Haiku 4.5 (bounded NL) | Quality at the language boundary; prompt caching is the biggest LLM cost lever. |
-| ML / stats | **Prophet, scikit-learn, lifetimes (BG/NBD+Gamma-Gamma), lifelines (Kaplan-Meier), XGBoost, statsmodels** | Forecasts, LTV, cohort survival, RTO risk, anomaly — paradigm-2 economics. |
+| LLM | **LiteLLM gateway** (OSS, self-hosted on EKS, ap-south-1) → model backends; **Claude is the default** (Sonnet 4.6 synthesis, Haiku 4.5 bounded NL) | Model-agnostic: each task routes to the **cheapest model that passes its eval bar** — not always Claude. Gateway = unified API + routing/fallback/semantic-cache/per-workspace budgets/cost-tracking; `@paradigm` tiers name a routed *policy*, the gateway resolves the model. Backend choice (AWS Bedrock vs native provider direct clients) is **deferred + reversible behind the gateway** — pick per cost. Prompt caching stays the biggest cost lever (on the frontier backend). |
+| ML / stats | **Prophet, scikit-learn, PyMC-Marketing (BG/NBD+Gamma-Gamma LTV), lifelines (Kaplan-Meier), XGBoost, statsmodels** | Forecasts, LTV, cohort survival, RTO risk, anomaly — paradigm-2 economics. (`lifetimes` is archived → PyMC-Marketing.) |
 | Agent pattern | 15 AICMO/AICOO/AICFO agents in `intelligence-service`; daily tick → Sonnet synthesis | Specialists at ML cost; one frontier-LLM synthesis step for the Morning Brief. |
 
 ### 2.7 Infrastructure
@@ -135,7 +135,7 @@ Brain has **7 backend bounded contexts**: `api-gateway`, `core`, `ingestion`, `a
 | **OLAP** | **ClickHouse Cloud** (managed, small) — from day one | ClickHouse Cloud scaled; 3 shards × 2 replicas | 6–12 shards; projections; query-result cache |
 | **Cache** | Redis (ElastiCache, single node) | ElastiCache cluster mode | Cluster + read replicas |
 | **Internal calls** | In-process (co-deployed) **behind the gRPC contract**; gRPC activates as services split | gRPC over HTTP/2 across services | gRPC + service mesh (mTLS) |
-| **LLM** | Claude Sonnet + Haiku with prompt caching + per-workspace caps from day one | Same + cost-discipline dashboard | + Bedrock Provisioned Throughput for enterprise |
+| **LLM** | **LiteLLM gateway on EKS** + Claude (default) with prompt caching + per-workspace caps (gateway virtual-key budgets) from day one | + model-agnostic routing to cheaper backends as the cheap tier scales; cost-discipline dashboard | + add/optimize backends per cost (Bedrock / native direct clients; Provisioned Throughput where it pays) |
 | **Region** | ap-south-1 only | ap-south-1 only | + secondary regions for UAE/GCC/EU residency |
 | **Mobile** | Morning Brief + read-only dashboards (Phase 1) | Interaction layer (chat, approvals) | Widgets, watch, parity |
 
@@ -233,8 +233,8 @@ If the paradigm mix ever flips toward frontier-LLM, the pricing model breaks —
 | 1 | AI calling vendor (Path A India partner / B global / C native) | Partner (A/B) months 1–6 to validate; parallel-build native if volume >~5K calls/day. See `TECH/11`. |
 | 2 | MSK Serverless vs provisioned at Phase 2 cutover | Driven by sustained throughput cost-crossover; benchmark at end of Phase 1. |
 | 3 | Web hosting: managed (Amplify) vs EKS | Managed until build-minutes/customization warrant EKS (Phase 3). |
-| 4 | ClickHouse Cloud vs self-hosted (Altinity on EKS) | Cloud until cost crosses ~$5K/mo, then evaluate self-host. |
-| 5 | Anthropic direct API vs Bedrock | Direct for Phase 0–3 (latency/simplicity); Bedrock Provisioned Throughput for enterprise at scale. |
+| 4 | ClickHouse Cloud vs BYOC vs self-hosted | **ClickHouse Cloud (managed, ap-south-1) for Phase 0–3** — Mumbai is a standard auto-scaling region (DPDP-clean) and idle-to-zero fits the batch-spiky daily tick, so ops≈0 for a small team. **First graduation = BYOC** (data plane in Brain's own AWS account) when sustained **compute** spend ≥ ~$6K/mo for 3 months, OR an in-account-residency contract, OR AWS committed-spend discounts beat CH's markup. **Self-host on EKS (Altinity-supported) only at Phase 4** (large/predictable/always-on ≥~$15–20K/mo + a named infra owner). Loaded self-host TCO (infra + 4–8 hrs/wk eng + on-call) is a wash below ~$6–8K/mo — never graduate on bare infra cost alone. Keep the prod service warm before the 06:55–07:20 IST tick (idle-to-zero is for dev/off-peak). |
+| 5 | LLM gateway + backend choice | **Decided: LiteLLM gateway (OSS, self-host on EKS, ap-south-1)** as the model-agnostic routing layer (gives routing/fallback/caching/per-workspace budgets/cost-tracking). **Backend choice deferred + reversible behind the gateway** — AWS Bedrock vs native-provider direct clients, picked per cost/need later. Hard constraint on any backend: India-resident inference for PII-bearing calls (DPDP — do NOT use Bedrock global cross-region inference for those) + prompt-caching for the frontier tier. |
 
 ---
 

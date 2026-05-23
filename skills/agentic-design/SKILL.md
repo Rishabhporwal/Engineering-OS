@@ -7,6 +7,8 @@ description: Brain's product-internal AI-agent build pattern — the 15 AICMO/AI
 
 This skill covers **the product's internal AI agents** — the 15 AICMO/AICOO/AICFO + AI CX recommenders that Brain ships, living in `intelligence-service`. These are product features, NOT engineering-team members. Maya implements them; Aryan reviews the contracts. **Do not conflate these product agents with the 11-agent Engineering OS build team** (TECH/17) — they are different things.
 
+> **Agents call the LiteLLM gateway, not the Anthropic SDK directly.** Every LLM step below resolves through Brain's model-agnostic gateway: `@paradigm("small_llm"|"frontier_llm")` names a **routed policy tier** and the gateway routes to the cheapest eval-passing model (frontier default = Claude Sonnet 4.6, eval-gated + swappable). The `@paradigm` + `@mcp_tool` decorators are unchanged; the model behind a tier is now gateway policy. See [`llm-gateway`](../llm-gateway/SKILL.md).
+
 **Canonical doc:** `canon/TECH/14_agent_roster.md` (+ `canon/TECH/05_intelligence_layer.md`, `canon/technical-requirements.md` §9). This skill is operational.
 
 ## The agent roster — 15 product agents (canon/TECH/14)
@@ -165,7 +167,7 @@ input → guardrails(in) → RAG retrieve (pgvector k-NN, paradigm 1/2)
 ```
 
 - **Tracing:** wrap each step in an X-Ray span (`observability`); the whole chain stitches under one `trace_id`.
-- **Retries:** transient Anthropic errors → exponential backoff (see `claude-api`); deterministic failures → fallback, not retry.
+- **Retries + provider fallback:** transient LLM errors → the gateway retries with backoff and advances down the tier's fallback chain (`llm-gateway`); deterministic failures → fallback, not retry.
 - **Fallback:** budget breach or guardrail rejection → drop to a lower paradigm (Haiku, then template) rather than failing the Morning Brief.
 - **Guardrails + observability:** mandatory on every call; the cost-routing audit (Frontier-LLM rate > 1%) is a tier-1 trigger (`cost-routing-paradigms`, `observability`).
 
@@ -254,8 +256,9 @@ Includes:
 - `canon/TECH/13_mcp_protocol.md` — MCP tool registration + Decision Log middleware
 - `canon/TECH/12_cost_routing_compute.md` — paradigm decorator
 - `skills/cost-routing-paradigms/SKILL.md` — the four-paradigm gate
+- `skills/llm-gateway/SKILL.md` — the LiteLLM gateway agents call for every LLM step (routed tiers, fallback, budgets)
 - `skills/forecasting-prophet/SKILL.md` — Prophet for AICMO-Festival, AICOO-Inventory, AICFO-Cashflow
 - `skills/mcp-protocol/SKILL.md` — agent.invoke + tool schemas
-- `skills/claude-api/SKILL.md` — Anthropic Messages API, prompt caching, retries (the Frontier-LLM step)
+- `skills/claude-api/SKILL.md` — Claude as the frontier-default backend behind the gateway (prompt caching, retries — the Frontier-LLM step)
 - `skills/observability/SKILL.md` — tracing + cost metrics + guardrail/fallback observability
 - `skills/architecture-patterns/SKILL.md` — the `ai/` dir + pgvector per-service DB ownership

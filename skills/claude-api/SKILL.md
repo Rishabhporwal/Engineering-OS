@@ -7,7 +7,9 @@ description: Anthropic Messages API for the intelligence-service — streaming, 
 
 > **Note:** This is Brain's **local** `claude-api` skill (not the Claude Code bundled one). Brain-pinned model IDs (Sonnet 4.6 / Haiku 4.5), Brain's cost-router integration, Brain's per-brand monthly LLM cap enforcement. Always read this one over any generic bundled equivalent.
 
-Brain's intelligence layer (Maya, see canon/technical-requirements.md) is built on Claude — **Sonnet 4.6** for multi-step synthesis and brand-voice, **Haiku 4.5** for bounded NL (classification, extraction, short rewrites). This skill is the operational depth for every call site that touches the Anthropic SDK.
+> **Read first — Claude is the frontier-default BACKEND behind the LiteLLM gateway.** Brain's intelligence layer is **model-agnostic behind a gateway**: app code calls the **LiteLLM gateway** (OpenAI-format), **NOT the Anthropic SDK directly**. The gateway routes `@paradigm("frontier_llm")` to **Claude Sonnet 4.6 as the eval-gated default** (and `small_llm` to the cheapest eval-passing model — Nova Micro / Gemini Flash-Lite / Haiku). Routing, fallback, retries, semantic cache, and per-workspace budgets all live in the gateway — see [`llm-gateway`](../llm-gateway/SKILL.md). **This skill remains the authority on the Claude-backend specifics** below: pinned model IDs, prompt caching (still the biggest cost lever), tool use, Batch API, extended thinking. The SDK snippets here describe **how the Claude backend behaves**; in service code those calls go *through the gateway*, not a direct `AsyncAnthropic()`.
+
+Brain's intelligence layer (Maya, see canon/technical-requirements.md) defaults to Claude on the frontier tier — **Sonnet 4.6** for multi-step synthesis and brand-voice — and keeps **Haiku 4.5** as the small-tier fallback for bounded NL (classification, extraction, short rewrites). This skill is the operational depth for the Claude backend the gateway routes to.
 
 ## Why this matters for Brain
 
@@ -26,7 +28,9 @@ Brain's intelligence layer (Maya, see canon/technical-requirements.md) is built 
 
 **Stale model IDs are bugs.** Don't write `claude-3-5-sonnet`, `claude-3-7-sonnet`, `claude-sonnet-4-5`. prompts/system-prompt.md is explicit on this.
 
-## Quick start (Node — intelligence-service)
+## Quick start (Claude-backend shape — routed through the gateway)
+
+> The snippets below show **how the Claude backend behaves** (message shape, caching, tool use). In Brain service code these run **through the LiteLLM gateway via the OpenAI-format client** ([`llm-gateway`](../llm-gateway/SKILL.md)), not a direct `AsyncAnthropic()`. Use the Anthropic SDK shape here as the reference for the Claude path; the gateway is the call site.
 
 ```typescript
 import Anthropic from '@anthropic-ai/sdk';
@@ -311,9 +315,9 @@ The throttle is Layer 3 of the four-layer cost control (per canon/technical-requ
 - Layer 4 — global cost-discipline dashboard alarm (Jatin pages on per-brand burn > 100% of monthly budget)
 
 **Acceptance criteria for "the cap is live":**
-- The `callClaudeWithBudget` wrapper (or equivalent) is the only entry point any Brain service uses to call the Anthropic SDK. Direct `client.messages.create()` calls fail PR review.
-- Costs ingested into `cost_registry` per call (Sonnet input/cached/output + Haiku input/output) with per-workspace partition.
-- Throttling kicks in at 80% of cap (warn log + route Sonnet-eligible to Haiku where bounded NL is acceptable); hard-stop at 100% (Layer 3 raises `BudgetExhaustedError`).
+- The **LiteLLM gateway is the only entry point** any Brain service uses to reach an LLM, and the per-workspace **virtual-key budget** carries the cap (this is the runtime mechanism that supersedes the `callClaudeWithBudget` wrapper shown above; the thresholds are unchanged). **Direct `client.messages.create()` / `AsyncAnthropic()` calls in app code fail PR review** — they bypass the gateway's routing, fallback, semantic cache, and budget. See [`llm-gateway`](../llm-gateway/SKILL.md).
+- Costs ingested into the cost ledger per call (input/cached/output + the **resolved model** the gateway routed to) with per-workspace partition.
+- Throttling kicks in at 70% of cap (warn + pause non-critical; route frontier-eligible to a cheaper eval-passing tier where bounded NL is acceptable); hard-stop at 100% (gateway serves critical-path only — Morning Brief, NL query, ticket resolution).
 - CloudWatch alarm at 90% of cap pages Maya (next-day budget review with brand).
 - Brand-facing dashboard shows month-to-date LLM spend vs cap (transparency builds trust, prevents end-of-month bill shock).
 
@@ -357,4 +361,4 @@ Catch in the paradigm audit at PR time. Aryan blocks the PR.
 | Prompt caching hit-rate dashboards | **Maya** + **Jatin** | `observability` |
 | Per-brand budget enforcement | **Maya** | canon/technical-requirements.md (budget) |
 
-Related Brain skills: `cost-routing-paradigms` (the @paradigm decorator), `mcp-protocol` (tool catalogue), `grpc-buf` (proto-driven schemas), `defense-in-depth-validation` (prompt injection guards), `observability` (token usage logging).
+Related Brain skills: `llm-gateway` (the LiteLLM gateway every call site uses — routing, fallback, virtual-key budgets), `cost-routing-paradigms` (the @paradigm decorator), `mcp-protocol` (tool catalogue), `grpc-buf` (proto-driven schemas), `defense-in-depth-validation` (prompt injection guards), `observability` (token usage logging).

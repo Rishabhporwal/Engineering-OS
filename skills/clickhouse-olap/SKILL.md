@@ -146,6 +146,20 @@ All monetary fields are `Int64` in paisa. Never use `Decimal` or `Float`. Displa
 - Shard key: `cityHash64(workspace_id)` — single-workspace queries hit one shard
 - Cross-workspace queries (admin-only) explicitly route to all shards
 
+The sharding above is **config under managed ClickHouse Cloud** — it does not require self-hosting.
+
+## Hosting ladder: managed → BYOC-first → self-host (canon TECH/00 §5 decision 4)
+
+The hosting decision is **cost-best, not ops-maximalist** — graduate only when a trigger fires, never on bare infra cost alone.
+
+- **Phase 0–3 = ClickHouse Cloud (managed, ap-south-1).** Mumbai is a standard auto-scaling region (**DPDP-clean**); **idle-to-zero** fits the batch-spiky daily tick; ops ≈ 0 for a small team. The Phase-3 sharding-to-6-nodes plan above stays — it's config under managed.
+- **First graduation = BYOC** (data plane in Brain's own AWS account, control plane stays in CH's) when **sustained compute spend ≥ ~$6K/mo for 3 months**, OR an in-account-residency contract requires it, OR AWS committed-spend discounts beat CH's markup. See `devops-aws` for the BYOC VPC/PrivateLink wiring (CDK manages the VPC, not the cluster).
+- **Self-host on EKS (Altinity-supported) only at Phase 4** — large/predictable/always-on (≥ ~$15–20K/mo) **plus a named infra owner**. Loaded self-host TCO (infra + 4–8 hrs/wk eng @ $100–150/hr + on-call) is a **wash below ~$6–8K/mo**, so **never graduate on bare infra cost alone**.
+
+**Cost lever:** idle-to-zero is the lever for **dev/off-peak** workloads — but **keep the prod CH service warm before the 06:55–07:20 IST daily tick** (the Morning Brief SLO depends on it; a cold start inside the tick window risks the 07:20 delivery SLO).
+
+**Lock-in is mitigated** by the Kafka/MSK replay spine: every CH table is a downstream materialization of `integrations.*.v1` (infinite retention via tiered storage to S3), so a migration is a **replay, not an egress bill**.
+
 ## Late-data handling (canon/technical-requirements.md)
 
 Refunds and RTO state changes arrive late (sometimes weeks). Pattern:

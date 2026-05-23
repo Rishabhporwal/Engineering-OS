@@ -521,6 +521,8 @@ packages/ui/
 └── layout/            # PageShell, Sidebar, KpiGrid
 ```
 
+**Magic UI (scoped, copy-paste — no runtime dep):** Magic UI (150+ animated React components, TypeScript + Tailwind + Motion) is adopted **copy-paste like shadcn** — pasted into `packages/ui/`, owned in-repo, **zero runtime dependency**, same shadcn ecosystem (same Tailwind tokens). It **composes with shadcn; it does not replace it.** Scoped-use rule: use it **only** on **marketing / onboarding / login / empty-state / "delight" surfaces — NOT the dense operator workbench** (P&L, CM Waterfall, Cohort heatmap, Calendar Report, KPI grids stay shadcn + Visx/Recharts). Every Magic UI surface respects `prefers-reduced-motion`, stays within the performance budget (§14), and holds WCAG AA (§15).
+
 ### Typography
 
 - **Sans-serif:** Inter

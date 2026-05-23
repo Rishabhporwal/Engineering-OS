@@ -149,7 +149,7 @@ The Memory Layer is built and queried in the Daily Intelligence Loop. **The prod
 | 07:00 | **Vector generation** | 16-dim Brand Fingerprint built per brand (paradigm 1 — SQL aggregation + numpy) |
 | 07:05 | **Memory query** | pgvector cosine similarity finds 5 closest historical conditions per brand + cross-brand baseline |
 | 07:10 | **Agent processing** | All agents (TECH/14) run in parallel; each returns priority score + recommended action |
-| 07:15 | **Morning Brief assembly** | Top 3 priority actions selected; Brief synthesised by Claude Sonnet (paradigm 4); pushed to phone |
+| 07:15 | **Morning Brief assembly** | Top 3 priority actions selected; Brief synthesised on the `frontier_llm` tier via the gateway — **Claude Sonnet 4.6 default** (eval-gated + swappable), with the gateway's fallback chain so a single-provider stall never misses the 07:20 SLO; pushed to phone |
 | Throughout day | **Approve / reject feedback** | Owner decisions flow into Decision Log |
 | 18:00 | **Evening pulse** | Day's actuals vs forecast; exceptions flagged |
 | 23:55 | **Outcome attribution (7d / 30d)** | Past decisions whose outcomes have matured update `condition_outcome` |
@@ -235,9 +235,12 @@ This document specifies:
 │   • Read: ClickHouse (historical metrics) via gRPC to analytics       │
 │   • Read: Postgres (config) via gRPC to core                          │
 │   • Write: Postgres `ai.*` schema (insights, forecasts, anomalies)    │
-│   • External: Anthropic Claude API                                    │
+│   • LLM: LiteLLM gateway (OpenAI-format) — NOT the Anthropic SDK       │
+│          directly; gateway routes the @paradigm tier to a model       │
 └──────────────────────────────────────────────────────────────────────┘
 ```
+
+> **All LLM calls go through the model-agnostic LiteLLM gateway** (self-hosted on EKS, ap-south-1), not `AsyncAnthropic()` directly. `@paradigm("small_llm"|"frontier_llm")` names a routed policy tier; the gateway routes to the cheapest model that passes that tier's eval bar (frontier default = **Claude Sonnet 4.6**, eval-gated + swappable). Routing, fallback, semantic cache, per-workspace virtual-key budgets, and cost tracking live in the gateway; prompt caching stays on the frontier (Claude) backend; the backend (Bedrock vs native direct) is deferred + reversible; PII-bearing calls run on India-resident inference (DPDP). The `AsyncAnthropic()` / SDK snippets later in this doc describe the **Claude-backend shape** the gateway routes to — in service code those calls are made *through the gateway*. See `../technical-requirements.md` §17.1, [TECH/12](12_cost_routing_compute.md), and the `llm-gateway` skill.
 
 ### Scaling
 
@@ -892,7 +895,7 @@ async def llm_call(workspace_id: str, purpose: str, **kwargs):
 | Anomaly explanation | Claude Sonnet 4.6 | Reasoning required |
 | Title generation | Claude Haiku 4.5 | Trivial |
 
-Hard-coded routing in `pylibs/brain_intelligence/model_router.py`. Phase 5: dynamic routing based on workspace plan tier.
+This per-task→model mapping is now **expressed as gateway routing policy** (the `frontier_llm` / `small_llm` tiers), not hard-coded in `pylibs/brain_intelligence/model_router.py`: the table above is the *default* the gateway resolves each tier to — Claude on the frontier tier — but each model is eval-gated + swappable, and the gateway picks the cheapest eval-passing model per tier (small tier moving off Haiku to Nova Micro / Gemini Flash-Lite). See `../technical-requirements.md` §17.1 + the `llm-gateway` skill.
 
 ---
 
@@ -949,7 +952,7 @@ Most intelligence-service work is **asynchronous** (scheduled jobs). User-facing
 |---|-------|-----------|
 | Prophet vs custom model? | E4 | Prophet for Phase 3. Custom only if accuracy plateaus. |
 | LLM output validation? | E4 | Pydantic schema; retry once; fallback to generic insight. |
-| Anthropic via API directly or via AWS Bedrock? | E1 + E4 | Direct API for Phase 1-3 (better latency, simpler). Switch to Bedrock when Provisioned Throughput economics improve at scale. |
+| Anthropic via API directly or via AWS Bedrock? | E1 + E4 | **Resolved:** all LLM calls go **via the LiteLLM gateway**; the backend (Bedrock vs native direct clients) is **deferred + reversible behind the gateway** — picked later per cost, never hard-pinned. Hard constraints on any backend: India-resident inference for PII (DPDP — no Bedrock global CRIS for PII) + prompt caching on the frontier backend. See `../technical-requirements.md` §17.1 + the `llm-gateway` skill. |
 | Open-source LLM for cost-sensitive tasks? | E4 | Phase 5+. Llama 3.x for cheap summarization. Not yet. |
 | Embeddings provider? | E4 | Phase 3. Start with Sentence-Transformers (free, runs on workers). |
 | Can AI take actions, not just suggest? | E1 | Opt-in "autopilot" Phase 5+. Whitelisted safe actions only. |

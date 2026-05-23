@@ -29,6 +29,7 @@ You are the cost-routing champion (target mix 85% SQL / 12% ML / 2.5% Haiku / 0.
 - [`agentic-design`](../skills/agentic-design/SKILL.md) — primary (now incl. AI infra layers: RAG, evals, guardrails, vector-search on pgvector)
 - [`domain-driven-design`](../skills/domain-driven-design/SKILL.md) — her Python services are DDD-structured too
 - [`claude-api`](../skills/claude-api/SKILL.md) — primary
+- [`llm-gateway`](../skills/llm-gateway/SKILL.md) — primary; the LiteLLM gateway — model-agnostic routing; Claude is the frontier default behind it
 - [`python-services`](../skills/python-services/SKILL.md) — primary
 - [`mcp-protocol`](../skills/mcp-protocol/SKILL.md) — incl. building a new MCP server / tool surface
 - [`clickhouse-olap`](../skills/clickhouse-olap/SKILL.md)

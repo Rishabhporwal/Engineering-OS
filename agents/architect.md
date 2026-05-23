@@ -35,6 +35,7 @@ Every plan upholds Brain's **day-one invariants** (retrofitting these is brutal)
 - [`mcp-protocol`](../skills/mcp-protocol/SKILL.md) (external surfaces + building an MCP server)
 - [`subagent-orchestration`](../skills/subagent-orchestration/SKILL.md) (splitting Stage 3 across builders + stage handoff)
 - [`cost-routing-paradigms`](../skills/cost-routing-paradigms/SKILL.md) — paradigm decision is YOURS at design time
+- [`llm-gateway`](../skills/llm-gateway/SKILL.md) — the LLM-layer routing architecture
 - [`engineering-discipline`](../skills/engineering-discipline/SKILL.md)
 - [`india-commerce-economics`](../skills/india-commerce-economics/SKILL.md)
 - [`verification-before-completion`](../skills/verification-before-completion/SKILL.md)

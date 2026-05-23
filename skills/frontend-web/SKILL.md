@@ -42,6 +42,18 @@ The web stack for Brain's **workbench surface** — Ananya's domain. Web is the 
 
 If you reach for Zustand or Jotai — stop. Brain doesn't use them.
 
+## Magic UI (scoped)
+
+**Magic UI** = 150+ animated React components (TypeScript + Tailwind + Motion). It's **copy-paste like shadcn** — you own the code in `packages/ui`, there's **zero runtime dependency** (nothing new in the bundle but the components you actually paste), it's $0 OSS, and it lives in the **same shadcn ecosystem Brain already uses** (same Tailwind tokens, same primitives). It composes with shadcn; it does not replace it.
+
+**Scoped-use rule (NON-NEGOTIABLE):** adopt Magic UI **only** on **marketing / onboarding / login / empty-state / "delight" surfaces**. **NOT the dense operator workbench** — P&L, CM Waterfall, Cohort heatmap, Calendar Report, KPI grids, drill-down drawers stay **shadcn + Visx/Recharts** under the perf budget. Animation on a 2,250-cell Calendar Report or a 24×36 cohort heatmap is a perf regression, not delight.
+
+Guardrails for every Magic UI surface:
+- **Copy-paste into `packages/ui`** (own the code — same as shadcn; no `npm install` of a Magic UI runtime package).
+- **Respect `prefers-reduced-motion`** — every animation degrades to a static render (see Accessibility below).
+- **Stay within the perf budget** — LCP < 2s, INP < 200ms, CLS < 0.1, route JS < 100KB gzipped. Motion must not blow the budget; lazy-load (`next/dynamic`) any heavy animated component not above the fold.
+- **WCAG AA** — animation never gates content; contrast + keyboard reachability hold.
+
 ## Server Component pattern (default for heavy reads)
 
 ```tsx

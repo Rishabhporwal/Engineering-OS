@@ -1,6 +1,6 @@
 # Brain Engineering OS — Onboarding
 
-> The complete picture of the AI engineering team. If you're new, read this top to bottom once. Current version: **v0.19.0**. The team builds **Brain** — the AI-native commerce operating system for DTC brands, **India-first** at launch with **UAE/GCC** sequenced for Phase 4. The full canon is `canon/business-requirements.md` (BRD) + `canon/technical-requirements.md` + `canon/TECH/00–17` (TRD/knowledge-base), condensed for agents in `docs/business-context.md` + `docs/technical-context.md`. New since 0.7.1: risk-based lanes, semantic memory, parallel review, background workers, paradigm gate, browser/visual QA, the `/careful` guard, the pipeline doctor, 6 new domain skills, cross-engineer `/team-digest`, the **top-level orchestrator** (one `/requirement` runs the team end-to-end), **live activity logs** (`/watch`), **live monitoring mode** (`/monitor`), an **interactive PM-grade dashboard** (`/dashboard` — agent performance, bugs, features, tokens & cost), and **token-usage logging**. **Product engineers: jump to §12 — "Get the most from the team."**
+> The complete picture of the AI engineering team. If you're new, read this top to bottom once. Current version: **v0.20.0**. The team builds **Brain** — the AI-native commerce operating system for DTC brands, **India-first** at launch with **UAE/GCC** sequenced for Phase 4. The full canon is `canon/business-requirements.md` (BRD) + `canon/technical-requirements.md` + `canon/TECH/00–17` (TRD/knowledge-base), condensed for agents in `docs/business-context.md` + `docs/technical-context.md`. New since 0.7.1: risk-based lanes, semantic memory, parallel review, background workers, paradigm gate, browser/visual QA, the `/careful` guard, the pipeline doctor, 6 new domain skills, cross-engineer `/team-digest`, the **top-level orchestrator** (one `/requirement` runs the team end-to-end), **live activity logs** (`/watch`), **live monitoring mode** (`/monitor`), an **interactive PM-grade dashboard** (`/dashboard` — agent performance, bugs, features, tokens & cost), and **token-usage logging**. **Product engineers: jump to §12 — "Get the most from the team."**
 
 ---
 
@@ -43,13 +43,13 @@ Founder /requirement
 ```
 Each stage **plans → executes → self-reviews → verifies → returns a `HANDOFF` block**; the **top-level `/requirement` orchestrator** reads it + `state/active.json` and spawns the next stage (subagents can't spawn subagents on this platform — orchestration lives at the top level; see [docs/orchestration.md](docs/orchestration.md)). The Founder intervenes only at Stage 7 and at the final push.
 
-## 5. The skill library — 98 folders (70 domain + 28 command)
+## 5. The skill library — 99 folders (71 domain + 28 command)
 **Domain skills** are model-auto-loaded per each agent's owned-skill list (see [docs/skill-mapping-matrix.md](docs/skill-mapping-matrix.md)). **Command-skills** carry `disable-model-invocation: true` and run only when a human types `/brain-engineering-os:<name>`.
 
 - **Architecture/discipline:** architecture-patterns, domain-driven-design, region-adapter, api-versioning-strategy, tech-stack-evaluation, engineering-discipline, code-review, writing-plans, verification-before-completion, systematic-debugging, subagent-orchestration, finishing-a-development-branch, cost-routing-paradigms
 - **Backend/data:** backend-fastify-trpc-grpc, grpc-buf, python-services, database-design, clickhouse-olap, sql-query-optimization, event-driven-kafka, api-traffic-patterns, idempotency-handling, caching-strategy, integration-connectors, mcp-protocol, turborepo, multi-tenancy-isolation, metric-engine
 - **Frontend/mobile:** frontend-web, frontend-mobile, web-performance, kpi-dashboard-design, morning-brief-mobile, mobile-offline-support, push-notification-setup
-- **AI:** agentic-design, claude-api, forecasting-prophet, agentic-actions-auditor, memory-layer-pgvector
+- **AI:** agentic-design, claude-api, llm-gateway, forecasting-prophet, agentic-actions-auditor, memory-layer-pgvector
 - **Security:** security-baseline, auth-and-access, defense-in-depth-validation, vulnerability-scanning, oauth-implementation, data-privacy-dpdp
 - **Ops/testing/product:** devops-aws, observability, operational-readiness, testing-tdd, api-contract-testing, task-tracker-integration, lifecycle-revenue-layer, india-commerce-economics
 - **Operational / compliance / AI-quality (added v0.19.0):** version-upgrade-policy, incident-response, progressive-delivery, data-quality, llm-evals, experimentation-holdouts, prompt-injection-defense, accessibility, i18n-rtl, pci-compliance-scope, audit-log-immutability, data-residency-enforcement, soc2-readiness
@@ -103,7 +103,7 @@ A **7-service, DDD, event-driven** architecture:
 ## 11. Repo layout (the plugin)
 ```
 agents/      11 subagent definitions
-skills/      98 skill folders (70 domain + 28 command)  +  tools/  (uv scripts: memory, browse, pipeline_doctor, team_digest, paradigm_check, dashboard)
+skills/      99 skill folders (71 domain + 28 command)  +  tools/  (uv scripts: memory, browse, pipeline_doctor, team_digest, paradigm_check, dashboard)
 prompts/     system-prompt, anti-blind-agreement, challenge-framework
 canon/       business-requirements.md, technical-requirements.md (source of truth)
 docs/        operating manual, primers, matrix, quality-gates, role-empowerment, …

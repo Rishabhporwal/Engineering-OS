@@ -70,9 +70,18 @@ Same eval suite, three points — a prompt/model/retriever/tool-set change must 
 
 Online sampling is the safety net for distribution shift the golden set didn't cover; a sustained dip pages Maya and can trigger a rollback. **Never** put the eval scorer on the latency path of the 07:15 synthesis itself — that risks the **07:20 IST / 99.5%** SLO. Score asynchronously.
 
+## Per-tier model-swap gate (the model-agnostic gateway world)
+
+Brain routes LLM calls through a **model-agnostic LiteLLM gateway** ([`llm-gateway`](../llm-gateway/SKILL.md)): `@paradigm("small_llm"|"frontier_llm")` names a **routed policy tier**, and the gateway routes each call to the cheapest model that **passes that tier's eval bar**. The eval suite is therefore the **production gate for which models may serve a tier**:
+
+- **No model serves a paradigm tier in production until it passes that tier's eval suite.** Adding **Amazon Nova Micro / Gemini 2.5 Flash-Lite** to `small_llm`, or swapping the `frontier_llm` default off **Claude Sonnet 4.6**, requires a full golden-set + faithfulness + agent-step pass at that tier ≥ baseline. A model wired into a routing policy with no eval pass is a blocker.
+- **Re-baseline on any routed-model version bump.** A version bump of *any* model the gateway can route to (Nova, Gemini, Haiku, Sonnet, Opus) invalidates that tier's baseline — replay the suite before the new version serves traffic. Re-confirm cost + latency (the tier's per-brand cap + the **07:20 IST synthesis budget**) and prompt-cache hit rate on the Claude path.
+- **Claude stays the frontier fallback.** Keep Claude Sonnet 4.6 pinned in the `frontier_llm` fallback chain so a **failed swap degrades to a known-good model**, never to "no answer" — the gateway advances down the chain on a regression or stall (protecting the Morning Brief SLO).
+- The frontier default being Claude is itself **eval-justified, not assumed** — it keeps the default only while it clears the bar at its cost; the gate is what makes "model-agnostic = right model on cost, not avoid Claude" enforceable.
+
 ## Model-migration policy (Anthropic EOL / upgrade)
 
-Models are pinned to canon (Sonnet 4.6 synthesis, Haiku 4.5 bounded NL). When Anthropic ships a successor or announces an EOL for a pinned model, migration is an **evidence-gated ADR**, coordinated with [`version-upgrade-policy`](../version-upgrade-policy/SKILL.md) (this is a deliberate, cadenced change — never a reactive same-day swap) and the model pins in [`claude-api`](../claude-api/SKILL.md):
+Models are pinned to canon (Sonnet 4.6 the frontier default, Haiku 4.5 a small-tier fallback). When a provider ships a successor or announces an EOL for a routed model, migration is an **evidence-gated ADR**, coordinated with [`version-upgrade-policy`](../version-upgrade-policy/SKILL.md) (this is a deliberate, cadenced change — never a reactive same-day swap), the routing policy in [`llm-gateway`](../llm-gateway/SKILL.md), and the model pins in [`claude-api`](../claude-api/SKILL.md):
 
 1. **Re-baseline** the golden set on the new model (a model bump invalidates the old baseline).
 2. **A/B old-vs-new** on online prod sampling — faithfulness, groundedness, agent-step, human spot-check.
@@ -88,9 +97,10 @@ Models are pinned to canon (Sonnet 4.6 synthesis, Haiku 4.5 bounded NL). When An
 - **LLM judge with no human-label calibration** → the judge silently drifts.
 - Eval scorer **on the 07:15 latency path** → SLO risk; score async.
 - Model swapped **without re-baselining + A/B + cost/latency re-check** → silent regression.
+- A model **wired into a gateway routing tier with no eval pass at that tier** → an unproven model serves production traffic; blocker (see the per-tier model-swap gate above).
 
 ## References
 
 - `canon/TECH/05_intelligence_layer.md` — daily tick, Sonnet synthesis, the 06:55→07:15 window
 - `canon/technical-requirements.md` §14 — Morning Brief 07:20 IST >99.5% SLO
-- [`cost-routing-paradigms`](../cost-routing-paradigms/SKILL.md) · [`claude-api`](../claude-api/SKILL.md) · [`agentic-design`](../agentic-design/SKILL.md) · [`decision-log`](../decision-log/SKILL.md) · [`version-upgrade-policy`](../version-upgrade-policy/SKILL.md) · [`metric-engine`](../metric-engine/SKILL.md) · [`memory-layer-pgvector`](../memory-layer-pgvector/SKILL.md) · [`agentic-actions-auditor`](../agentic-actions-auditor/SKILL.md)
+- [`llm-gateway`](../llm-gateway/SKILL.md) · [`cost-routing-paradigms`](../cost-routing-paradigms/SKILL.md) · [`claude-api`](../claude-api/SKILL.md) · [`agentic-design`](../agentic-design/SKILL.md) · [`decision-log`](../decision-log/SKILL.md) · [`version-upgrade-policy`](../version-upgrade-policy/SKILL.md) · [`metric-engine`](../metric-engine/SKILL.md) · [`memory-layer-pgvector`](../memory-layer-pgvector/SKILL.md) · [`agentic-actions-auditor`](../agentic-actions-auditor/SKILL.md)

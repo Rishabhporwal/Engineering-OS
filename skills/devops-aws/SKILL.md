@@ -22,6 +22,16 @@ The mature architecture below is the **destination**, not the day-one build. Run
 
 Because gRPC contracts + the 7 logical contexts exist from day one, the split is "flip in-process call → network call," not a rewrite. Everything below this section is the **mature target** — apply the phase table when deciding what to actually provision today.
 
+### ClickHouse hosting ladder (managed → BYOC → self-host)
+
+ClickHouse stays **managed ClickHouse Cloud (ap-south-1) for Phase 0–3** — DPDP-clean Mumbai region, idle-to-zero fits the batch-spiky daily tick, ops ≈ 0. **First graduation = BYOC** (Bring-Your-Own-Cloud) when **sustained compute spend ≥ ~$6K/mo for 3 months**, OR an in-account-residency contract requires it, OR AWS committed-spend discounts beat CH's markup. **Self-host on EKS (Altinity-supported) only at Phase 4** (large/predictable/always-on ≥ ~$15–20K/mo + a named infra owner); loaded self-host TCO is a wash below ~$6–8K/mo, so **never graduate on bare infra cost alone**.
+
+**BYOC = data plane in Brain's AWS account, control plane in CH's.** The CH clusters/compute run in Brain's VPC; CH operates them remotely. **CDK's job is the VPC + PrivateLink, not the CH cluster** — provision the dedicated subnets, security groups, and the **PrivateLink/VPC endpoint** that connects CH's control plane to Brain's data-plane VPC, plus IAM for the BYOC role CH assumes. CDK does **not** manage the ClickHouse cluster lifecycle (that stays CH's control plane). Keep the prod service **warm before the 06:55–07:20 IST tick**; idle-to-zero is for dev/off-peak only. Lock-in is mitigated by the Kafka/MSK replay spine — migration is a replay from S3 tiered storage, not an egress bill (see `clickhouse-olap`).
+
+### LiteLLM gateway (self-hosted on EKS)
+
+The **LiteLLM gateway** (OSS, model-agnostic routing layer for paradigms 3/4) is a **self-hosted deployable on EKS, ap-south-1** — **2+ stateless replicas behind the ALB** (HA; it's on the Morning Brief critical path), via the `BrainService` construct (HPA + PDB + IRSA). It fronts the model backends (Bedrock vs native direct clients — deferred + reversible behind the gateway); per-workspace virtual-key budgets + routing/fallback/semantic-cache live here. Hard constraint: **India-resident inference for PII-bearing calls** (DPDP) — do not route those to Bedrock global cross-region inference. ElastiCache backs its semantic cache + budget counters.
+
 ## Reference architecture (mature target — Phase 2+)
 
 ```

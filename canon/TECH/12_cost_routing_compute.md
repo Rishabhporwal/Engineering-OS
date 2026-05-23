@@ -19,10 +19,12 @@ This principle is the structural reason Brain can bundle every channel (call + W
 |---|----------|-------------|---------------|------------------|
 | **1** | **SQL** | Deterministic, threshold-based, aggregation. The answer exists in the data, you just need to query it. | ~0 (CPU + I/O) | Daily CM2 rollup; RFM scoring; threshold alerts; pincode-level aggregates; "did revenue cross goal today?" |
 | **2** | **ML / Statistical** | Pattern recognition, prediction, similarity, anomaly detection over historical data. The math is well-known. | Training: one-time. Inference: <$0.001/call. | EWMA on CTR (creative fatigue); BG/NBD + Gamma-Gamma (LTV); Kaplan-Meier (cohort survival); XGBoost (RTO risk per pincode); pgvector cosine (Brand Fingerprint similarity); Prophet / isotonic regression (forecasting) |
-| **3** | **Small LLM** | Bounded-domain natural-language understanding: classification, extraction, short summarisation, structured-output generation. | $0.001–$0.01/call (Claude Haiku, GPT-4o-mini equivalent) | Ticket classification (top-10 types); WhatsApp template personalisation; Morning Brief headline rewriting; call-script template selection |
-| **4** | **Frontier LLM** | Multi-step synthesis, brand-voice generation, ambiguous reasoning, deep tool use. | $0.05–$0.50/call (Claude Sonnet) | Morning Brief synthesis (the actual writing); AI Chat tool-use orchestration; agent reasoning (AICMO recommendations) |
+| **3** | **Small LLM** (`small_llm` tier) | Bounded-domain natural-language understanding: classification, extraction, short summarisation, structured-output generation. | $0.001–$0.01/call | Ticket classification (top-10 types); WhatsApp template personalisation; Morning Brief headline rewriting; call-script template selection |
+| **4** | **Frontier LLM** (`frontier_llm` tier) | Multi-step synthesis, brand-voice generation, ambiguous reasoning, deep tool use. | $0.05–$0.50/call | Morning Brief synthesis (the actual writing); AI Chat tool-use orchestration; agent reasoning (AICMO recommendations) |
 
 **The cost ratio is roughly 1 : 100 : 1,000 : 10,000.** A feature built on the wrong paradigm is not 10% more expensive — it is 1-2 orders of magnitude more expensive.
+
+> **Paradigms 3 & 4 are model-agnostic, gateway-implemented** (per `../technical-requirements.md` §17.1). The decorator no longer names a fixed model; `@paradigm("small_llm")` / `@paradigm("frontier_llm")` names a **routed policy tier** resolved at runtime by the **LiteLLM gateway** (self-hosted on EKS, ap-south-1 — the unified OpenAI-format front door every service calls instead of a provider SDK). The gateway routes each call to the **cheapest model that passes that tier's eval bar**: small → Amazon Nova Micro / Gemini 2.5 Flash-Lite / Claude Haiku; frontier → **Claude Sonnet 4.6 default**, eval-gated + swappable, with Claude kept as the fallback floor. **Model-agnostic = "right model, justified on cost", not "avoid Claude".** Every model swap is `llm-evals`-gated; the **backend** behind the gateway (AWS Bedrock vs native direct clients) is deferred + reversible, with India-resident inference for PII (DPDP) and prompt caching kept on the frontier backend. See [TECH/05 §1](05_intelligence_layer.md) and the `llm-gateway` skill.
 
 ---
 
@@ -167,7 +169,9 @@ When a feature exceeds budget repeatedly:
 2. **Prompt audit** by E4: is the system prompt too verbose? Can context be cached? Can the task be split?
 3. Either prompt is optimised, budget is raised with explicit approval, or paradigm is downgraded
 
-### Layer 3 — Per-Brand Monthly Caps
+### Layer 3 — Per-Brand Monthly Caps (LiteLLM virtual-key budgets)
+
+The per-brand monthly cap is **implemented as a LiteLLM virtual-key budget** — one virtual key per workspace carrying its monthly INR cap, enforced **in the gateway** (the runtime mechanism; thresholds unchanged). The bespoke `pylibs/brain_cost_router` cap wrapper shown below is the conceptual contract the gateway now realises.
 
 - Every brand has a monthly LLM cap in INR (set per pricing tier)
 - Soft throttle at 70% of cap (lower-priority LLM features pause)
@@ -222,7 +226,7 @@ A first-class internal surface for the Brain team. Lives in admin UI.
 |------|---------|
 | **Per-brand spend timeline** | Daily LLM + telephony + messaging cost per brand, with cap warning threshold overlay |
 | **Per-feature spend ranking** | Which features cost the most? Where is the next optimisation? |
-| **Paradigm distribution** | % of total calls in paradigm 1 / 2 / 3 / 4. Target: SQL > 80% by call count |
+| **Paradigm distribution** | % of total calls in paradigm 1 / 2 / 3 / 4. Target: SQL > 80% by call count. For paradigm 3/4, also breaks down **which model the gateway routed to** + whether it passed the tier's eval bar at that cost. |
 | **Budget breach log** | Every Layer-2 (per-feature) and Layer-3 (per-brand) breach |
 | **Prompt audit queue** | Features flagged for prompt review |
 | **Cost per recovered rupee (Lifecycle)** | LLM + telephony cost ÷ recovered revenue attributed. North-star unit economic. |
