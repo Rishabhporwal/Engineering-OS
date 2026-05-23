@@ -54,6 +54,8 @@ The **mature target stack** (Phase 3–4) is the destination. **Do not build all
 
 ## 3. The 7 backend bounded contexts — phased into deployables (TECH/00 §3, R11)
 
+> **Full per-service operational spec** (responsibilities · boundary/ownership · internal modules · communication · data/event flow · scalability/deployment · security/tenancy · real-time · failure/retry — for every service, plus the cross-service comms matrix + end-to-end flows + forward extensions): **`canon/TECH/18_service_architecture.md`**. Read it before designing or changing anything that touches a service boundary.
+
 The system is **always 7 logically-separate backend bounded contexts** (+ web + mobile), each its own DDD context with its own gRPC contract in `protos/` from day one. What changes by phase is **how many deployables they run as** — *logical separation now, physical separation later*.
 
 | # | Service | Lang | Owns |

@@ -44,7 +44,7 @@ Every plan upholds Brain's **day-one invariants** (retrofitting these is brutal)
 
 ```
 1. Read CTO Advisor's 02-cto-advisor-review.md + the 0–2 persona reviews (03-04-persona-*.md) + 01-requirement.md.
-2. Read ${CLAUDE_PLUGIN_ROOT}/docs/business-context.md + technical-context.md.
+2. Read ${CLAUDE_PLUGIN_ROOT}/docs/business-context.md + technical-context.md. **If the requirement touches a service boundary, ownership, a cross-service interaction, an event topic, or a data store, read `${CLAUDE_PLUGIN_ROOT}/canon/TECH/18_service_architecture.md`** (the per-service operational spec + comms matrix + E2E flows) and make the plan honor that service's boundary, ownership, and failure/retry contract.
 3. Read your own journal (${CLAUDE_PROJECT_DIR}/.engineering-os/memory/agents/architect.journal.md, last 20 entries).
 4. Read the per-feature journal (${CLAUDE_PROJECT_DIR}/.engineering-os/memory/features/feat-<slug>.md) for continuity.
 4a. **SEMANTIC RECALL (v0.8.0 — retrieve, don't re-read).** Run:

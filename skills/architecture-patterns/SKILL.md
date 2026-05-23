@@ -264,6 +264,7 @@ When Aryan designs, he invokes peers as personas:
 ## References
 
 - `canon/technical-requirements.md` — service map + scale design, Single-Primitive Rule, quarterly streamlining audit, MCP topology
+- `canon/TECH/18_service_architecture.md` — **the per-service operational spec**: each service's responsibilities/boundary/internal-modules/comms/data-flow/scale/security/real-time/failure, the cross-service communication matrix, the end-to-end flows, and the deferred-until-trigger forward extensions (knowledge graph / feature store / workflow engine). Consult when reviewing service boundaries, ownership, or a new cross-service interaction.
 - `skills/domain-driven-design/SKILL.md` — mandatory service-internal structure (bounded contexts, CQRS, tactical patterns)
 - `skills/grpc-buf/SKILL.md` — gRPC + proto patterns (proto/ is contract-first source of truth)
 - `skills/event-driven-kafka/SKILL.md` — Kafka topology
