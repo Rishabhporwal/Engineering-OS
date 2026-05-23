@@ -84,7 +84,7 @@ FOR EACH action the agent can emit:
 | WhatsApp/SMS/email send | COMPLIANCE-GATED + IRREVERSIBLE | opt-in check + DLT template (SMS) + Decision Log + idempotency |
 | agent-generated SQL on OLAP | REVERSIBLE-ish | workspace_id scoping enforced by query gateway; read-only role; no DDL |
 | agent-generated migration | IRREVERSIBLE | human review + reversible-down + run in staging first |
-| token-spend (LLM batch) | FINANCIAL (soft) | paradigm audit (SQL>ML>Haiku>Sonnet) + budget alarm |
+| token-spend (LLM batch) | FINANCIAL (soft) | paradigm audit (SQL>ML>small_llm>frontier_llm) + budget alarm |
 
 ## Red flags — STOP and BOUNCE
 

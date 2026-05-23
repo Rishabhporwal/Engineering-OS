@@ -29,7 +29,7 @@ Brain's tech stack is the locked decision in `canon/technical-requirements.md`. 
 | IaC | AWS CDK (TypeScript) |
 | Secrets | AWS Secrets Manager + per-pod IRSA |
 | CI/CD | GitHub Actions with OIDC → ECR → ArgoCD; EAS Build + EAS Update for mobile |
-| LLM | Anthropic Claude Sonnet 4.6 + Haiku 4.5 with prompt caching |
+| LLM | LiteLLM gateway (model-agnostic; self-hosted on EKS, ap-south-1) → Claude default (Sonnet 4.6 synthesis + Haiku 4.5 bounded NL) with prompt caching |
 | Email / SMS / WhatsApp | AWS SES; Gupshup or Kaleyra (DLT); WhatsApp Cloud API (Gupshup BSP) |
 | AI Calling | Pilot Path A (Bolna / Smallest.ai) or Path B (Vapi / Retell); parallel-build Path C (native) at ~5K calls/day |
 | Observability | Fluent Bit → OpenSearch + CloudWatch + X-Ray + Sentry + PostHog |

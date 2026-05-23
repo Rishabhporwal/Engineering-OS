@@ -20,21 +20,28 @@ Each plan task has: **what** (1-line action) + **why** (which DoD item it satisf
 
 The owning agent re-reads its own output and walks the in-lane Definition of Done line-by-line before handing off. Captured under a "Self-review" section in the stage's primary artifact. Anything failing must be FIXED before handoff, not deferred to the next agent.
 
-### 3. Explicit handoff via Agent tool
+### 3. Hand off by RETURNING a structured HANDOFF block — NOT by spawning
 
-When the stage is genuinely complete and self-reviewed, the agent invokes the next agent via the `Agent` tool — that call IS the handoff:
+**Platform reality:** every stage owner runs as a *spawned subagent* and does **NOT** have the `Agent` tool — on this platform a subagent cannot spawn another subagent. So an agent **cannot** invoke the next stage itself. The pipeline is driven by a **top-level orchestrator** (the `/requirement` flow, which does have the `Agent` tool). See [orchestration.md](orchestration.md) for the full model and [system-prompt.md §3](../prompts/system-prompt.md) for the canonical contract — that section SUPERSEDES any older "invoke the next agent via the Agent tool" wording.
+
+When the stage is genuinely complete and self-reviewed, the agent:
+
+- **Persists everything first:** writes its stage artifact(s); appends per-agent + per-feature journals + a decision-log line; and **updates `state/active.json`** (status / stage / owner → next, using the EXACT status values from [`state-machine.yaml`](../workflows/state-machine.yaml)).
+- **Ends its response with a machine-readable HANDOFF block:**
 
 ```
-Agent(
-  description="Stage N+1 <stage-name> for <req_id>",
-  subagent_type="<next-agent-id>",
-  prompt="<context: what the prior stage did, what artifacts exist, what next agent should do>"
-)
+HANDOFF:
+  decision: ADVANCE | BOUNCE | CHALLENGE-BACK | KILL | PASS | FAIL
+  next_stage: <stage number/name, or "founder">
+  next_agent: <agent-id | founder | none>
+  bounce_target: <agent-id | none>      # only when decision is BOUNCE/FAIL
+  needs_personas: [<persona-type>, ...]  # Stage 1 only; else []
+  reason: <one line>
 ```
 
-Only if the `Agent` invocation fails: fall back to writing a `HANDOFF-TO-<NEXT>.md` file in the run folder + emit `type: handoff-file-fallback` decision-log event. The pipeline becomes "manual-routed" at that point — Founder must invoke the next agent — but state never silently stalls.
+Do **NOT** call the `Agent` tool (you don't have it). Do **NOT** write `HANDOFF-TO-*.md` files (that legacy fallback is retired — it required a human to run the next command, defeating autonomy). The top-level orchestrator reads the `state/active.json` update + the HANDOFF block and spawns the next stage; it also does the special spawns agents can't (personas in parallel at Stage 1, Security ∥ QA at Stage 4∥5, multiple builders in parallel at Stage 3).
 
-These three responsibilities together = **smooth autonomous flow**. The pipeline moves agent-to-agent without Founder prompting between stages. Founder gates remain only at Stage 0 (the original requirement) and Stage 7 (approval, unless delegated).
+These three responsibilities together = **smooth autonomous flow**. The orchestrator moves the pipeline stage-to-stage without Founder prompting between stages. Founder gates remain only at requirement submission and Stage 7 (approval, unless delegated).
 
 ---
 
@@ -53,8 +60,8 @@ These three responsibilities together = **smooth autonomous flow**. The pipeline
 3. Load `docs/business-context.md` + `docs/technical-context.md` + the CTO Advisor's owned skills.
 4. Read the raw requirement.
 5. **Run "Make requirements less dumb first"** (from `engineering-discipline`): Can we delete? Simplify? Defer?
-6. Decide the persona count (0/1/2 by complexity) and spawn that many in parallel via the `Agent` tool. Each spawned persona writes a [`templates/dynamic-persona-review.md`](../templates/dynamic-persona-review.md) artifact.
-7. Synthesize persona inputs + own analysis into a [`templates/cto-advisor-review.md`](../templates/cto-advisor-review.md) artifact.
+6. Decide the persona count (0/1/2 by complexity) — but do NOT spawn them (Rohan is a subagent with no `Agent` tool). Record the chosen persona type(s) and RETURN them in the HANDOFF `needs_personas` list; the **top-level orchestrator** spawns that many in parallel (each writing a [`templates/dynamic-persona-review.md`](../templates/dynamic-persona-review.md) artifact) and then re-invokes Rohan to synthesize. For count=0, skip the persona round-trip.
+7. Synthesize persona inputs + own analysis into a [`templates/cto-advisor-review.md`](../templates/cto-advisor-review.md) artifact (on the synthesis pass, after the orchestrator has produced the persona artifacts).
 8. Decide: **ADVANCE** (Stage 2), **CHALLENGE-BACK** (to Founder with structured challenge), or **KILL** (archive with reason).
 9. Append entry to:
    - `.engineering-os/decision-log/<YYYY>/<MM>/<YYYY-MM-DD>.jsonl`

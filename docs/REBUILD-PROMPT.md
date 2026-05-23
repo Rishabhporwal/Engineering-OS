@@ -1,6 +1,6 @@
 # Rebuild Prompt — Brain Engineering OS
 
-> Copy everything in the fenced block below into a fresh Claude Code session (in an empty git repo) to regenerate the Brain Engineering OS plugin from scratch. It encodes every load-bearing decision of the current v0.7.1 build. Adjust the bracketed `[…]` bits if the company/stack changes.
+> Copy everything in the fenced block below into a fresh Claude Code session (in an empty git repo) to regenerate the Brain Engineering OS plugin from scratch. It encodes every load-bearing decision of the current v0.22.x build. Adjust the bracketed `[…]` bits if the company/stack changes.
 
 ---
 
@@ -57,7 +57,7 @@ Run-folder artifacts are numbered: 01-requirement, 02-cto-advisor-review, 03/04-
 - No over-engineering: build the minimum; 10 STOP signals; Rohan audits for it at Stage 6.
 - Persona calibration: 0/1/2 by complexity, capped at 2.
 - Plan-first + self-review + explicit Agent() handoff for every agent, every stage.
-- Cost-routed paradigms: SQL > ML > Haiku > Sonnet; every code path declares @paradigm (GMV-% pricing).
+- Cost-routed paradigms: SQL > ML > small_llm > frontier_llm; every code path declares @paradigm (GMV-% pricing). Paradigms 3 & 4 are model-agnostic, gateway-routed policy tiers (the LiteLLM gateway resolves the cheapest model passing each tier's eval bar — Claude default, NOT Claude-only).
 - Single-Primitive Rule: each cross-cutting concern built once, consumed N times.
 - Multi-tenant workspace_id at 4 layers (JWT→service→DB RLS→Kafka envelope).
 - India compliance P0: DLT/NCPR/DND/calling-hours 09:00–21:00 IST/recording consent/GST.
@@ -71,7 +71,7 @@ Each skill: frontmatter (name==folder, description that says what it is + when t
 a one-line tagline + "## The Iron Law" code block + a gate/process + classification tables +
 "Red flags — STOP" + an Excuse→Reality rationalization table + "## Brain wiring" owner table +
 "Related" links. Keep skills focused and right-sized (≤~300 lines). Ground everything in Brain's
-locked stack. Author ~49 DOMAIN skills across: architecture/discipline (architecture-patterns,
+locked stack. Author the DOMAIN skills (71 in the current build) across: architecture/discipline (architecture-patterns,
 domain-driven-design, engineering-discipline, code-review, writing-plans, verification-before-
 completion, systematic-debugging, subagent-orchestration, finishing-a-development-branch,
 cost-routing-paradigms, api-versioning-strategy, tech-stack-evaluation); backend/data
@@ -83,10 +83,16 @@ push-notification-setup); AI (agentic-design, claude-api, forecasting-prophet,
 agentic-actions-auditor); security (security-baseline, auth-and-access, defense-in-depth-validation,
 vulnerability-scanning, oauth-implementation); ops/testing/product (devops-aws, observability,
 operational-readiness, testing-tdd, api-contract-testing, task-tracker-integration,
-lifecycle-revenue-layer, india-commerce-economics). Plus 14 COMMAND-skills (disable-model-invocation):
+lifecycle-revenue-layer, india-commerce-economics — plus the data/security/compliance skills the
+canon now requires: llm-gateway, llm-evals, prompt-injection-defense, region-adapter, data-privacy-dpdp,
+caching-strategy, multi-tenancy-isolation, billing-metering, data-residency-enforcement, audit-log-immutability,
+incident-response, experimentation-holdouts, data-quality, accessibility, i18n-rtl, decision-log, etc.).
+Plus the COMMAND-skills (28 in the current build, disable-model-invocation):
 requirement, status, recall, handoff, approve, reject, deploy, rollback, persona, invoke-skill,
-eos-init, propose-rule, adopt-rule, reject-rule. Maintain docs/skill-mapping-matrix.md as the
-authoritative skill→role binding (table + per-role owned-skill lists).
+eos-init, propose-rule, adopt-rule, reject-rule, recall-similar, reindex, qa-browser, design-review,
+worker-test-gap, worker-canon-drift, worker-compliance-drift, test-pipeline, resume, new-skill,
+team-digest, watch, monitor, dashboard. Total: 71 domain + 28 command = 99 skill folders.
+Maintain docs/skill-mapping-matrix.md as the authoritative skill→role binding (table + per-role owned-skill lists).
 
 == WHAT THE TEAM BUILDS (canon) ==
 Author canon/business-requirements.md + canon/technical-requirements.md (full source of truth) and condensed
@@ -102,8 +108,12 @@ Brain = a 7-service, DDD, event-driven D2C commerce OS:
 LOCKED STACK (do not swap): Fastify + FastAPI; AWS CDK + ArgoCD + EKS+Karpenter (NOT Terraform/Helm);
 MSK/Kafka + Glue Schema Registry; ClickHouse; Supabase Postgres + pgvector; CloudWatch + OpenSearch +
 X-Ray + Sentry + PostHog with OpenTelemetry as the instrumentation API (NOT Prometheus/Grafana/Loki/
-Tempo); Turborepo (NOT Nx); Next.js + Redux; React Native + Expo; Anthropic Claude (Sonnet for
-synthesis, Haiku for bounded NL); custom agent base class + pgvector Memory Layer (NOT LangGraph/
+Tempo); Turborepo (NOT Nx); Next.js + Redux; React Native + Expo; **LiteLLM gateway** (OSS, self-hosted
+on EKS, ap-south-1) as the model-agnostic front door — Claude is the DEFAULT (Sonnet for synthesis,
+Haiku for bounded NL) but NOT Claude-only; the gateway routes each `@paradigm` tier to the cheapest
+model passing its eval bar, with per-workspace virtual-key budgets + semantic cache + fallback;
+backend (Bedrock vs native direct clients) deferred + reversible behind the gateway, India-resident
+inference for PII (DPDP). Custom agent base class + pgvector (HNSW) Memory Layer (NOT LangGraph/
 dedicated vector DB). THE MOAT: India-commerce economics, cost-routing paradigms, the Morning Brief,
 the Single-Primitive Rule — never drop these.
 
@@ -114,7 +124,8 @@ the Single-Primitive Rule — never drop these.
 - workflows/ (requirement-to-release.yaml, state-machine.yaml, approval-flow.yaml).
 - hooks/ (hooks.json + on-session-start.sh rehydrate state; on-post-tool-use.sh journal append that
   SKIPS read-only Bash; on-pre-handoff.sh handoff-event LOGGER only — gate enforcement lives in the
-  agents, not the hook).
+  agents, not the hook; on-careful.sh PreToolUse guard that blocks catastrophic Bash commands —
+  rm -rf /, force-push, DROP/TRUNCATE, raw disk writes, chmod -R 777 — fails open if jq is absent).
 - docs/: operating-system.md (the manual), workflow.md, quality-gates.md (G0–G9), role-empowerment-
   model.md (incl. the canonical handoff-depth bands), escalation-rules.md, plugin-architecture.md,
   memory-and-git-sync.md, skill-authoring-guide.md, technical-implementation.md.
@@ -127,8 +138,8 @@ the Single-Primitive Rule — never drop these.
 
 == DELIVERABLES ==
 Produce the full plugin: .claude-plugin/{plugin.json,marketplace.json}; agents/ (11);
-prompts/ (3); skills/ (49 domain + 14 command); canon/ (2) + docs/ primers; templates/ + schemas/;
-workflows/ (3); hooks/ (3 + hooks.json); docs/ (operating manual set); README.md + ONBOARDING.md.
+prompts/ (3); skills/ (71 domain + 28 command = 99); canon/ (BRD + TRD + TECH/00–18) + docs/ primers; templates/ (12) + schemas/ (12);
+workflows/ (3); hooks/ (4 + hooks.json); docs/ (operating manual set); README.md + ONBOARDING.md.
 Keep it consistent: no dead references, counts accurate everywhere, every frontmatter name==folder,
 every agent's owned-skill list matches the matrix. Version it (semantic) in plugin.json + marketplace.json.
 ```

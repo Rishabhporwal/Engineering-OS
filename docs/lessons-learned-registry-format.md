@@ -51,7 +51,7 @@ Tags (`applies_to`) — pick all that apply:
 - `security` — auth / secrets / multi-tenancy
 - `india-compliance` — DLT / NCPR / DND / GST / RTO
 - `numeric-parity` — paisa-level parity vs an external/reference dashboard
-- `cost-routing` — paradigm choice (SQL/ML/Haiku/Sonnet)
+- `cost-routing` — paradigm choice (SQL/ML/small_llm/frontier_llm)
 - `single-primitive` — Single-Primitive Rule violations or near-misses
 - `migration` — legacy → Brain shape changes
 - `agent-discipline` — agents over-engineering / under-engineering / silently skipping gates

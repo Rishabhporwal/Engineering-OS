@@ -43,7 +43,7 @@ End-to-end typed inference is the protection. Drift surfaces as a CI build error
 For breaking changes, Brain's pattern is to add the new procedure alongside the old, deprecate the old, and remove it one release later:
 
 ```typescript
-// services/api-gateway/src/router/orders.ts
+// apps/api-gateway/src/router/orders.ts
 export const ordersRouter = router({
   list:   listV1Procedure,      // deprecated, returns Deprecation header
   listV2: listV2Procedure,      // new shape

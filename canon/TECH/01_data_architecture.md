@@ -178,7 +178,7 @@ CREATE TABLE workspaces (
   founder_salary_monthly_minor BIGINT,
 
   -- Tier / plan
-  tier TEXT NOT NULL DEFAULT 'starter',         -- 'starter', 'pro', 'enterprise'
+  tier TEXT NOT NULL DEFAULT 'launch',          -- 'launch', 'growth', 'scale', 'enterprise' (canonical tiers — TECH/15)
 
   -- Multi-region
   aws_primary_region TEXT NOT NULL DEFAULT 'ap-south-1',
@@ -313,7 +313,7 @@ Same as v1.0 (TECH/01 v1.0 §7). `insights`, `chat_conversations`, `chat_message
 
 ## 3. ClickHouse Layout
 
-ClickHouse Cloud (AWS region) or self-hosted via Altinity Operator on EKS. Either way, the schemas are identical.
+ClickHouse runs as **managed ClickHouse Cloud (ap-south-1) for Phase 0–3 → BYOC at the ~$6K/mo-sustained trigger → self-hosted via Altinity Operator on EKS only at Phase 4** (the ladder in TECH/00 §7 #4). The schemas are identical at every rung.
 
 ### Cluster Topology
 
@@ -868,7 +868,7 @@ PgBouncer in transaction mode:
 | Q | Owner | Resolution |
 |---|-------|-----------|
 | Supabase ceiling at 100k RPM? | E1 + E3 | Likely fine with Pro/Team tier + read replicas. Migrate to Aurora if Supabase becomes a bottleneck. |
-| ClickHouse Cloud vs self-hosted? | E1 | Start with ClickHouse Cloud (operational simplicity); self-host if cost exceeds $5K/mo. |
+| ClickHouse Cloud vs self-hosted? | E1 | **Resolved (TECH/00 §7 #4):** managed ClickHouse Cloud (ap-south-1) Phase 0–3 → **BYOC** when sustained compute ≥ ~$6K/mo for 3 months (or in-account-residency contract) → self-host on EKS (Altinity) only at Phase 4 (≥~$15–20K/mo + named infra owner). Never graduate on bare infra cost alone. |
 | pgvector vs OpenSearch for embeddings? | E4 | pgvector for now (low volume, simple). OpenSearch when we need full-text + vector search combined. |
 | `currency_code` storage — CHAR(3) or LowCardinality? | E3 | CHAR(3) in PG; LowCardinality(FixedString(3)) in CH. |
 | When to introduce per-workspace ClickHouse DBs? | E4 | Phase 4, only for enterprise-tier customers needing hard isolation. |

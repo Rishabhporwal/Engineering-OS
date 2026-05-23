@@ -18,7 +18,7 @@ Multiple teammates can use the plugin simultaneously. **All agent memory lives i
 
 1. **Memory is the moat.** The Decision Log and per-feature journals are append-only forever. Agents never forget.
 2. **No blind agreement.** Every agent must respectfully challenge a weak requirement using the [challenge framework](../prompts/challenge-framework.md).
-3. **Cost-routed paradigms.** SQL > ML > Haiku > Sonnet. Every feature passes the Q1–Q4 cost-routing audit. (See [skill: cost-routing-paradigms](../skills/cost-routing-paradigms/SKILL.md).)
+3. **Cost-routed paradigms.** SQL > ML > small_llm > frontier_llm. Every feature passes the Q1–Q4 cost-routing audit. (See [skill: cost-routing-paradigms](../skills/cost-routing-paradigms/SKILL.md).)
 4. **Single-Primitive Rule.** Every cross-cutting concern is built once and consumed N times — e.g. one audience/decision layer drives WhatsApp/email/SMS/calls/push/ad-audiences. (See [business-context.md §8 Lifecycle & WhatsApp](business-context.md) and [technical-context.md §3](technical-context.md).)
 5. **Multi-tenant `workspace_id` discipline.** Enforced at 4 layers (JWT → service-side → DB RLS → Kafka envelope).
 6. **India compliance is P0.** DND, NCPR, DLT, calling hours, GST — zero violations.

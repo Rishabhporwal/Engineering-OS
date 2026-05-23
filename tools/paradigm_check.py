@@ -6,19 +6,25 @@
 """
 Engineering OS — paradigm-drift gate (Point D).
 
-Promotes the @paradigm convention (cost-routing-paradigms: SQL > ML > Haiku >
-Sonnet) from "audited by Rohan" to "enforced in CI". HEURISTIC, line-based —
+Promotes the @paradigm convention (cost-routing-paradigms: SQL > ML > small_llm >
+frontier_llm) from "audited by Rohan" to "enforced in CI". HEURISTIC, line-based —
 a fast signal, not a proof. It flags three drift classes:
 
   1. MISSING   — an LLM call (Anthropic SDK / claude-* model) with no @paradigm
                  marker within the window above it.
   2. NON_LLM   — an LLM call inside a path declared `sql` or `ml` (those
                  paradigms must not call an LLM at all).
-  3. ESCALATED — a sonnet/opus model used under a path declared `haiku`.
+  3. ESCALATED — a frontier/opus-tier model used under a `small_llm` path.
+
+Paradigm tiers are `sql` / `ml` / `small_llm` / `frontier_llm` (canon TECH/12).
+Paradigms 3 & 4 are model-agnostic, gateway-routed: the decorator names a policy
+tier, the LiteLLM gateway resolves the model. The legacy `haiku` / `sonnet`
+spellings are still recognised (mapped to small_llm / frontier_llm) for
+backward-compat with pre-rename code.
 
 Markers recognised (Python decorator or TS/JS comment):
-  @paradigm("sonnet")        @paradigm(Paradigm.HAIKU)
-  // @paradigm: sql          # @paradigm sonnet
+  @paradigm("frontier_llm")  @paradigm(Paradigm.SMALL_LLM)
+  // @paradigm: sql          # @paradigm small_llm
 
 Usage:
   uv run tools/paradigm_check.py                 # scan whole repo
@@ -38,14 +44,21 @@ from pathlib import Path
 WINDOW = 40  # lines: how far above an LLM call we look for a @paradigm marker
 EXTS = {".py", ".ts", ".tsx", ".js", ".mjs"}
 
-PARADIGM_RE = re.compile(r"@paradigm[\"'(:\s]*\s*(?:Paradigm\.)?[\"']?(sql|ml|haiku|sonnet)\b", re.I)
+PARADIGM_RE = re.compile(
+    r"@paradigm[\"'(:\s]*\s*(?:Paradigm\.)?[\"']?"
+    r"(sql|ml|small_llm|frontier_llm|haiku|sonnet)\b",
+    re.I,
+)
+# Map legacy spellings to the canonical tier names (TECH/12 rename).
+LEGACY_TIER = {"haiku": "small_llm", "sonnet": "frontier_llm"}
 # An LLM call: an Anthropic SDK call OR an explicit claude-* / model=...Sonnet/Opus/Haiku
 LLM_CALL_RE = re.compile(
     r"(messages\.create|client\.messages|anthropic\.|\.messages\.stream"
     r"|claude-(?:sonnet|opus|haiku)|model\s*[=:]\s*[\"'].*?(?:sonnet|opus|haiku))",
     re.I,
 )
-MODEL_TIER_RE = re.compile(r"(sonnet|opus|haiku)", re.I)
+# A "frontier-class" concrete model used on the call line (escalation signal).
+FRONTIER_MODEL_RE = re.compile(r"(sonnet|opus)", re.I)
 
 
 def changed_files() -> list[Path]:
@@ -82,7 +95,8 @@ def nearest_paradigm(lines: list[str], idx: int) -> str | None:
     for j in range(idx, max(-1, idx - WINDOW), -1):
         m = PARADIGM_RE.search(lines[j])
         if m:
-            return m.group(1).lower()
+            tier = m.group(1).lower()
+            return LEGACY_TIER.get(tier, tier)  # normalize legacy haiku/sonnet
     return None
 
 
@@ -97,14 +111,14 @@ def scan_file(f: Path) -> list[tuple[int, str, str]]:
         if not LLM_CALL_RE.search(line):
             continue
         declared = nearest_paradigm(lines, i)
-        tier_m = MODEL_TIER_RE.search(line)
-        tier = tier_m.group(1).lower() if tier_m else ""
+        frontier_m = FRONTIER_MODEL_RE.search(line)
+        model = frontier_m.group(1).lower() if frontier_m else ""
         if declared is None:
             violations.append((i + 1, "MISSING", "LLM call with no @paradigm marker above it"))
         elif declared in ("sql", "ml"):
             violations.append((i + 1, "NON_LLM", f"LLM call inside a `{declared}` path (must not call an LLM)"))
-        elif declared == "haiku" and tier in ("sonnet", "opus"):
-            violations.append((i + 1, "ESCALATED", f"`{tier}` model used under a `haiku` path"))
+        elif declared == "small_llm" and model in ("sonnet", "opus"):
+            violations.append((i + 1, "ESCALATED", f"`{model}` (frontier-class) model used under a `small_llm` path"))
     return violations
 
 

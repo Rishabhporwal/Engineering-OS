@@ -29,7 +29,7 @@ Steps:
    
    The `<hex6>` suffix was added in v0.3.1 after the monitor caught children #3 and #4 in the Brain repo colliding on the same `2026-05-19T14-30-00Z` prefix. Collisions are now mechanically prevented.
 
-4. **Write `01-requirement.md`** using [templates/requirement-template.md](../templates/requirement-template.md). Fill in `raw_text`, `submitted_by` (current operator), `submitted_at` (now). Other fields can be filled by CTO Advisor in Stage 1.
+4. **Write `01-requirement.md`** using [templates/requirement-template.md](../../templates/requirement-template.md). Fill in `raw_text`, `submitted_by` (current operator), `submitted_at` (now). Other fields can be filled by CTO Advisor in Stage 1.
 
 5. **Update `.engineering-os/state/active.json`:** append the new requirement entry with `status: cto-review`, `stage: 1`, `current_owner: cto-advisor`. Write a `.bak.<ts>` first.
 
@@ -40,7 +40,7 @@ Steps:
    {"ts":"...","actor":"system","type":"intake","req_id":"...","title":"...","submitted_by":"..."}
    ```
 
-8. **ORCHESTRATE the pipeline end-to-end.** YOU (this top-level session) are the orchestrator — you have the `Agent` tool; the agents you spawn do NOT (a subagent cannot spawn a subagent). So you drive every stage: spawn the right agent, read its returned `HANDOFF` block + re-read `state/active.json` (source of truth), and advance — until the Founder gate (Stage 7) or a terminal state. See [docs/orchestration.md](../docs/orchestration.md) for the full model.
+8. **ORCHESTRATE the pipeline end-to-end.** YOU (this top-level session) are the orchestrator — you have the `Agent` tool; the agents you spawn do NOT (a subagent cannot spawn a subagent). So you drive every stage: spawn the right agent, read its returned `HANDOFF` block + re-read `state/active.json` (source of truth), and advance — until the Founder gate (Stage 7) or a terminal state. See [docs/orchestration.md](../../docs/orchestration.md) for the full model.
 
    **Every spawn prompt MUST include:** the `req_id`, the run folder path, the explicit note *"you are a subagent with no Agent tool — do your stage, persist artifacts + update state/active.json + journals, and END with a HANDOFF block; do NOT attempt to spawn anything,"* the instruction *"append a live progress line to `.engineering-os/live.log` at each meaningful step,"* and (critical) the absolute plugin root for `${CLAUDE_PLUGIN_ROOT}` and project dir for `${CLAUDE_PROJECT_DIR}`.
 

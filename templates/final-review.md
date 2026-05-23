@@ -17,7 +17,7 @@
 | Sub-review | Verdict | Notes |
 |------------|:------:|-------|
 | **Requirement alignment** | {{REQ_ALIGN}} | Does the shipped change still solve the original requirement? |
-| **Paradigm audit** | {{PARADIGM_AUDIT}} | Every `@paradigm` decorator matches the declared plan? No Sonnet snuck in where Haiku was promised? |
+| **Paradigm audit** | {{PARADIGM_AUDIT}} | Every `@paradigm` decorator matches the declared plan? No `frontier_llm` call snuck in where `small_llm` (or SQL/ML) was promised? Gateway routed each LLM tier to a model that passed its eval bar? |
 | **Architecture quality** | {{ARCH_QUALITY}} | Single-Primitive Rule held? No anti-pattern drift? |
 | **Code quality** | {{CODE_QUALITY}} | Sampled 3–5 files. No obvious smells. Comments only where *why* is non-obvious. |
 | **Security review pass-through** | {{SEC_PASS}} | Shreya passed. |

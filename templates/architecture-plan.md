@@ -36,13 +36,13 @@
 
 ## 3. Paradigm
 
-**Declared paradigm:** `{{PARADIGM}}`  *(sql / ml / haiku / sonnet)*
+**Declared paradigm:** `{{PARADIGM}}`  *(sql / ml / small_llm / frontier_llm)*
 
 **Justification (≥20 words):**
 
 {{PARADIGM_JUSTIFICATION}}
 
-> Reminder: SQL > ML > Haiku >> Sonnet. See [skill: cost-routing-paradigms](../skills/cost-routing-paradigms/SKILL.md).
+> Reminder: SQL > ML > small_llm >> frontier_llm. Paradigms 3 & 4 are model-agnostic, gateway-routed policy tiers (the model is resolved by the LiteLLM gateway, not named here). See [skill: cost-routing-paradigms](../skills/cost-routing-paradigms/SKILL.md).
 
 ---
 

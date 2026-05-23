@@ -1,6 +1,6 @@
 # Paradigm-Drift Gate (Point D)
 
-> Your cost discipline (`cost-routing-paradigms`: SQL > ML > Haiku > Sonnet, ratio 1:100:1,000:10,000) is the engineering invariant behind GMV-% pricing. Today it's enforced by **convention** (`@paradigm` decorator) + **audit** (Rohan at Stage 1/6). This makes it **mechanical**: a CI gate that fails the build on drift.
+> Your cost discipline (`cost-routing-paradigms`: SQL > ML > small_llm > frontier_llm, ratio 1:100:1,000:10,000) is the engineering invariant behind GMV-% pricing. (Paradigms 3 & 4 are model-agnostic, gateway-routed policy tiers; the legacy `haiku`/`sonnet` decorator spellings still resolve to small_llm/frontier_llm.) Today it's enforced by **convention** (`@paradigm` decorator) + **audit** (Rohan at Stage 1/6). This makes it **mechanical**: a CI gate that fails the build on drift.
 
 It's a fast **heuristic** signal, not a proof — line-based, not full AST. It catches the common, expensive mistakes cheaply.
 
@@ -12,10 +12,10 @@ It's a fast **heuristic** signal, not a proof — line-based, not full AST. It c
 |---|---|
 | **MISSING** | An LLM call (Anthropic SDK / `claude-*` model) with no `@paradigm` marker within 40 lines above it. Every LLM path must declare its paradigm. |
 | **NON_LLM** | An LLM call inside a path declared `sql` or `ml` — those paradigms must not call an LLM at all. |
-| **ESCALATED** | A `sonnet`/`opus` model used under a path declared `haiku` — silent cost escalation beyond the declared tier. |
+| **ESCALATED** | A `sonnet`/`opus` (frontier-class) model used under a path declared `small_llm` — silent cost escalation beyond the declared tier. |
 
 Markers recognised (Python decorator or TS/JS comment):
-`@paradigm("sonnet")` · `@paradigm(Paradigm.HAIKU)` · `// @paradigm: sql` · `# @paradigm sonnet`
+`@paradigm("frontier_llm")` · `@paradigm(Paradigm.SMALL_LLM)` · `// @paradigm: sql` · `# @paradigm small_llm` (legacy `haiku`/`sonnet` still accepted)
 
 ---
 
@@ -28,7 +28,7 @@ uv run tools/paradigm_check.py --changed  # only files changed vs origin/HEAD (C
 
 Exit code `1` on any violation → fails CI.
 
-Verified against a fixture: catches NON_LLM, ESCALATED, and MISSING; passes a clean `sonnet`-on-`sonnet` path and a pure-`sql` path.
+Verified against a fixture: catches NON_LLM, ESCALATED, and MISSING; passes a clean `frontier_llm`-tier path (sonnet model) and a pure-`sql` path.
 
 ---
 

@@ -74,12 +74,12 @@ BACKLOG → IN_BUILD → IN_SECURITY (if auth/PII) → IN_QA → READY → DEPLO
 ```
 
 Examples (Brain canon):
-- `[VIKRAM][api-gateway] Add 'ads.spend.adjust' tRPC mutation in services/api-gateway/src/trpc/routers/ads.ts`
+- `[VIKRAM][api-gateway] Add 'ads.spend.adjust' tRPC mutation in apps/api-gateway/src/trpc/routers/ads.ts`
 - `[ANANYA][web] Wire <CohortHeatmap/> in apps/web/components/charts/cohort-heatmap.tsx`
-- `[MAYA][analytics-service] Add mer_daily_mv materialized view in services/analytics-service/src/materializations/mer_daily_mv.sql`
-- `[MAYA][ingestion-service] Add Shopify orders webhook in services/ingestion-service/src/routers/webhooks.py — Verify: uv run pytest tests/test_shopify_webhook.py`
-- `[MAYA][intelligence-service] Add Morning Brief synthesis with cached system prompt in services/intelligence-service/src/synthesis/morning_brief.py`
-- `[MAYA][lifecycle-service] Add 09:00–21:00 IST calling-hours guard in services/lifecycle-service/src/compliance/calling_hours.py`
+- `[MAYA][analytics-service] Add mer_daily_mv materialized view in apps/analytics-service/src/materializations/mer_daily_mv.sql`
+- `[MAYA][ingestion-service] Add Shopify orders webhook in apps/ingestion-service/src/routers/webhooks.py — Verify: uv run pytest tests/test_shopify_webhook.py`
+- `[MAYA][intelligence-service] Add Morning Brief synthesis with cached system prompt in apps/intelligence-service/src/synthesis/morning_brief.py`
+- `[MAYA][lifecycle-service] Add 09:00–21:00 IST calling-hours guard in apps/lifecycle-service/src/compliance/calling_hours.py`
 
 ## Idempotency
 

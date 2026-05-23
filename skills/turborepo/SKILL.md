@@ -15,7 +15,7 @@ Brain's monorepo runner. Tasks are cached, parallelized by dependency graph, and
 // apps/web/package.json — each app/package owns its script
 { "scripts": { "build": "next build", "lint": "eslint .", "test": "vitest run", "typecheck": "tsc --noEmit" } }
 
-// services/api-gateway/package.json
+// apps/api-gateway/package.json
 { "scripts": { "build": "tsc -p tsconfig.build.json", "lint": "eslint .", "test": "vitest run" } }
 
 // packages/lib-metrics/package.json

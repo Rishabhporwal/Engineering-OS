@@ -9,7 +9,7 @@ Brain's data layer:
 
 | Store | Purpose | Owner |
 |---|---|---|
-| **Supabase Postgres** | OLTP: workspaces, members, integrations config, goals, classifications, marketing actions, consent_event, audience, audience_member, outreach, call, ticket, message, rfm_score, ai.decision_log, ai.forecast_accuracy, memory.brand_fingerprint (+pgvector), mobile_push_tokens | core-service (Vikram); notifications/lifecycle Node (Vikram); intelligence-service Memory writes (Maya) |
+| **Supabase Postgres** | OLTP: workspaces, members, integrations config, goals, classifications, marketing actions, consent_event, audience, audience_member, outreach, call, ticket, message, rfm_score, ai.decision_log, ai.forecast_accuracy, ai.brand_fingerprint (+pgvector), mobile_push_tokens | core-service (Vikram); notifications/lifecycle Node (Vikram); intelligence-service Memory writes (Maya) |
 | **ClickHouse Cloud** | OLAP: raw_<source>_<entity>_local, orders_local, ads_local, shipments_local, daily_metrics_local, cohort_aggregates_local, first_product_attribution_local, pincode_reliability_local, customer_states_local | analytics-service (Maya); ingestion-service raw writes (Maya) |
 | **CDC** | Postgres → Kafka via Debezium on MSK Connect — for recent OLTP mirror in CH if needed | Jatin |
 

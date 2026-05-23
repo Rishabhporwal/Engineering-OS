@@ -5,7 +5,7 @@ description: Brain's four-paradigm cost-routing gate. The engineering invariant 
 
 # Cost-Routing Paradigms — Brain's Engineering Invariant
 
-Brain bills **% of realized/delivered GMV** (Founding ~0.5% / Standard ~1.0% / Growth ~0.5% > ₹1Cr GMV / Enterprise custom) — never per-seat. That pricing only survives if **most decisions run at SQL or ML cost**, not frontier-LLM cost: a Sonnet call is ~10,000× an SQL query, so one mis-routed feature can eat a brand's entire monthly fee. Most of what the industry calls "agentic AI" is statistics in an LLM costume — don't pay frontier-LLM prices for problems statistics solved 40 years ago.
+Brain bills **% of realized/delivered GMV** (Launch ~1.0% / Growth ~0.75% / Scale ~0.5% / Enterprise custom) — never per-seat. That pricing only survives if **most decisions run at SQL or ML cost**, not frontier-LLM cost: a Sonnet call is ~10,000× an SQL query, so one mis-routed feature can eat a brand's entire monthly fee. Most of what the industry calls "agentic AI" is statistics in an LLM costume — don't pay frontier-LLM prices for problems statistics solved 40 years ago.
 
 **Canonical doc:** `canon/TECH/12_cost_routing_compute.md` (+ `canon/technical-requirements.md` §9). This skill is the operational checklist.
 
@@ -148,10 +148,10 @@ Both still record tokens to the cost registry and stay under the per-brand cap; 
 
 | Tier | Monthly LLM cap (INR) | Throttle behavior |
 |---|---|---|
-| Founding (0.5%) | ₹3,000 | Soft 70%; hard 100% on non-critical |
-| Standard (1.0%) | ₹5,000 | Same |
-| Growth (0.5% > ₹1Cr GMV) | ₹15,000 | Same |
-| Enterprise | ₹50,000+ negotiated | Same |
+| Launch (~1.0%) | ₹3,000 | Soft 70%; hard 100% on non-critical |
+| Growth (~0.75%) | ₹5,000 | Same |
+| Scale (~0.5%) | ₹15,000 | Same |
+| Enterprise (custom) | ₹50,000+ negotiated | Same |
 
 The per-brand cap is now **implemented as a LiteLLM virtual-key budget** — one virtual key per workspace carrying its monthly INR cap, enforced **in the gateway** (the runtime mechanism that replaces the bespoke `pylibs/brain_cost_router` cap wrapper; the thresholds are unchanged). Above cap: only critical-path (Morning Brief, NL query, ticket auto-resolution) continues. System never breaks; it gets quieter. See [`llm-gateway`](../llm-gateway/SKILL.md) §per-workspace virtual-key budgets.
 

@@ -106,6 +106,7 @@ class RegionAdapter(ABC):
 from .india import IndiaAdapter
 from .us import USAdapter           # Phase 4
 from .uk import UKAdapter           # Phase 4
+from .uae import UAEAdapter         # Phase 4
 
 ADAPTERS = {
     'IN': IndiaAdapter(),

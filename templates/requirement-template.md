@@ -9,8 +9,20 @@
 | **Title** | {{TITLE}} |
 | **Submitted by** | {{SUBMITTED_BY}} |
 | **Submitted at** | {{SUBMITTED_AT}} |
-| **Tier impact** | {{TIER_IMPACT}}  *(small / mid-market / enterprise / founding-cohort)* |
+| **Tier impact** | {{TIER_IMPACT}}  *(launch / growth / scale / enterprise — BRD §15.2 packaging tiers)* |
 | **Region impact** | {{REGION_IMPACT}}  *(in / ae / sa / us / eu / lat / sea / afr)* |
+
+---
+
+## Lane *(set by Rohan at Stage 1 — leave blank at intake)*
+
+> Rohan assigns the pipeline lane before persona count, per [docs/feature-tiering.md](../docs/feature-tiering.md). Trigger surfaces force `high-stakes` mechanically; `express` requires an empty `trigger_surfaces_touched`.
+
+| Field | Value |
+|-------|-------|
+| **feature_class** | {{FEATURE_CLASS}}  *(express / standard / high-stakes)* |
+| **feature_class_rationale** | {{FEATURE_CLASS_RATIONALE}}  *(one line: which classifier rule fired + any surfaces)* |
+| **trigger_surfaces_touched** | {{TRIGGER_SURFACES_TOUCHED}}  *(auth / multi-tenancy / mcp-tools / connectors / outbound-channels / pii / schema-proto / money / india-compliance — empty for express)* |
 
 ---
 
@@ -30,7 +42,7 @@
 
 ## Target user
 
-*Which persona + tier? (e.g., "Founder of a mid-market beauty brand", "CFO of an enterprise multi-brand holding co".)*
+*Which persona + tier? (e.g., "Founder of a growth-tier beauty brand", "CFO of an enterprise multi-brand holding co".)*
 
 {{TARGET_USER}}
 

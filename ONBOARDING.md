@@ -1,6 +1,6 @@
 # Brain Engineering OS — Onboarding
 
-> The complete picture of the AI engineering team. If you're new, read this top to bottom once. Current version: **v0.22.2**. The team builds **Brain** — the AI-native commerce operating system for DTC brands, **India-first** at launch with **UAE/GCC** sequenced for Phase 4. The full canon is `canon/business-requirements.md` (BRD) + `canon/technical-requirements.md` + `canon/TECH/00–17` (TRD/knowledge-base), condensed for agents in `docs/business-context.md` + `docs/technical-context.md`. New since 0.7.1: risk-based lanes, semantic memory, parallel review, background workers, paradigm gate, browser/visual QA, the `/careful` guard, the pipeline doctor, 6 new domain skills, cross-engineer `/team-digest`, the **top-level orchestrator** (one `/requirement` runs the team end-to-end), **live activity logs** (`/watch`), **live monitoring mode** (`/monitor`), an **interactive PM-grade dashboard** (`/dashboard` — agent performance, bugs, features, tokens & cost), and **token-usage logging**. **Product engineers: jump to §12 — "Get the most from the team."**
+> The complete picture of the AI engineering team. If you're new, read this top to bottom once. Current version: **v0.23.0**. The team builds **Brain** — the AI-native commerce operating system for DTC brands, **India-first** at launch with **UAE/GCC** sequenced for Phase 4. The full canon is `canon/business-requirements.md` (BRD) + `canon/technical-requirements.md` + `canon/TECH/00–18` (TRD/knowledge-base), condensed for agents in `docs/business-context.md` + `docs/technical-context.md`. New since 0.7.1: risk-based lanes, semantic memory, parallel review, background workers, paradigm gate, browser/visual QA, the `/careful` guard, the pipeline doctor, 6 new domain skills, cross-engineer `/team-digest`, the **top-level orchestrator** (one `/requirement` runs the team end-to-end), **live activity logs** (`/watch`), **live monitoring mode** (`/monitor`), an **interactive PM-grade dashboard** (`/dashboard` — agent performance, bugs, features, tokens & cost), and **token-usage logging**. **Product engineers: jump to §12 — "Get the most from the team."**
 
 ---
 
@@ -60,7 +60,7 @@ Each stage **plans → executes → self-reviews → verifies → returns a `HAN
 2. **No over-engineering** — build the minimum that solves the requirement; 10 STOP signals; Rohan runs an over-engineering audit at Stage 6.
 3. **Persona calibration** — 0/1/2 personas by complexity, capped at 2 (never 3+).
 4. **Plan-first + self-review + explicit handoff** — every agent plans before acting, self-reviews against its DoD, and **RETURNS a `HANDOFF` block**; the top-level `/requirement` orchestrator reads it + `state/active.json` and spawns the next stage (subagents can't spawn subagents on this platform).
-5. **Cost-routed paradigms** — SQL > ML > Haiku > Sonnet; every code path declares `@paradigm` (keeps LLM cost down — the engineering invariant behind Brain's realized-GMV %-pricing).
+5. **Cost-routed paradigms** — SQL > ML > small_llm > frontier_llm; every code path declares `@paradigm` (keeps LLM cost down — the engineering invariant behind Brain's realized-GMV %-pricing).
 6. **Single-Primitive Rule** — every cross-cutting concern built once, consumed N times.
 7. **Multi-tenant `workspace_id`** enforced at 4 layers; **compliance is P0** — DPDP Act 2023 + Rules 2025, TCCCPR/DLT + NCPR/DND + 9am–9pm calling window, WhatsApp opt-in, UAE/KSA PDPL.
 8. **Verification before completion** — no "done" claim without fresh captured command output.
@@ -82,7 +82,7 @@ Each stage **plans → executes → self-reviews → verifies → returns a `HAN
 
 A **7-service, DDD, event-driven** architecture:
 - **Services:** api-gateway, core-service, ingestion-service, analytics-service, intelligence-service, notifications-service, lifecycle-service (+ frontend-web, mobile). Each is DDD-structured by bounded context, owns its own DB, communicates via gRPC (sync) / Kafka (async). Realtime, background jobs, cron, and workflows live *inside* these services — not as separate services.
-- **Locked stack:** Fastify + FastAPI, AWS CDK + ArgoCD + EKS, MSK/Kafka, ClickHouse, Supabase Postgres + pgvector, CloudWatch/OpenSearch/X-Ray/Sentry/PostHog (+ OpenTelemetry instrumentation), Turborepo, Next.js + React Native/Expo, Redux, Anthropic Claude (Sonnet 4.6 synthesis + Haiku 4.5 bounded NL); region `ap-south-1`.
+- **Locked stack:** Fastify + FastAPI, AWS CDK + ArgoCD + EKS, MSK/Kafka, ClickHouse, Supabase Postgres + pgvector, CloudWatch/OpenSearch/X-Ray/Sentry/PostHog (+ OpenTelemetry instrumentation), Turborepo, Next.js + React Native/Expo, Redux, LiteLLM gateway → Claude default (Sonnet 4.6 synthesis + Haiku 4.5 bounded NL), model-agnostic + eval-gated swappable per routed `@paradigm` tier; region `ap-south-1`.
 - **Day-one invariants:** cost-routing paradigms, the Single-Primitive Rule, multi-tenant `workspace_id` (4 layers), integer minor-units money, the Decision Log, the region-adapter, the metric registry (TS↔Python parity), proto-defined gRPC contracts, OLTP/OLAP split, idempotency, and the Morning Brief as the primary surface.
 
 ## 10. Using it

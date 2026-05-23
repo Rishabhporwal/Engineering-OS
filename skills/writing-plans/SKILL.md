@@ -34,32 +34,32 @@ If you wrote a task and you can't immediately answer these in one sentence each,
 
 ### Backend (Node — Vikram in api-gateway / core-service / notifications-service / lifecycle-service Node side)
 - ❌ "Implement first-product cascade endpoint"
-- ✅ "[VIKRAM][api-gateway] Add FirstProductCascadeInput Zod schema in services/api-gateway/src/trpc/routers/analytics.ts — verify: `pnpm --filter api-gateway typecheck`"
-- ✅ "[VIKRAM][api-gateway] Add `analytics.firstProductCascade.get` tRPC procedure in services/api-gateway/src/trpc/routers/analytics.ts — verify: `pnpm --filter api-gateway test -- analytics.test.ts`"
-- ✅ "[VIKRAM][api-gateway] Register `analytics.first_product_cascade.compute.v1` MCP tool in services/api-gateway/src/mcp/tools/analytics/first-product-cascade.ts — verify: `pnpm --filter api-gateway test -- mcp.test.ts`"
+- ✅ "[VIKRAM][api-gateway] Add FirstProductCascadeInput Zod schema in apps/api-gateway/src/trpc/routers/analytics.ts — verify: `pnpm --filter api-gateway typecheck`"
+- ✅ "[VIKRAM][api-gateway] Add `analytics.firstProductCascade.get` tRPC procedure in apps/api-gateway/src/trpc/routers/analytics.ts — verify: `pnpm --filter api-gateway test -- analytics.test.ts`"
+- ✅ "[VIKRAM][api-gateway] Register `analytics.first_product_cascade.compute.v1` MCP tool in apps/api-gateway/src/mcp/tools/analytics/first-product-cascade.ts — verify: `pnpm --filter api-gateway test -- mcp.test.ts`"
 
 ### Ingestion (Python — Maya in ingestion-service)
 - ❌ "Add Shopify connector"
-- ✅ "[MAYA][ingestion] Add ShopifyOrderEvent Pydantic model in services/ingestion-service/src/connectors/shopify/models.py — verify: `uv run mypy src/connectors/shopify`"
-- ✅ "[MAYA][ingestion] Add idempotent UPSERT to raw_shopify_orders + Kafka producer in services/ingestion-service/src/connectors/shopify/consumer.py — verify: `uv run pytest tests/connectors/shopify/test_consumer.py`"
+- ✅ "[MAYA][ingestion] Add ShopifyOrderEvent Pydantic model in apps/ingestion-service/src/connectors/shopify/models.py — verify: `uv run mypy src/connectors/shopify`"
+- ✅ "[MAYA][ingestion] Add idempotent UPSERT to raw_shopify_orders + Kafka producer in apps/ingestion-service/src/connectors/shopify/consumer.py — verify: `uv run pytest tests/connectors/shopify/test_consumer.py`"
 - ✅ "[MAYA][ingestion] Register `integrations.shopify.order.v1` Avro schema with Glue Schema Registry — verify: `uv run python scripts/register_schema.py --topic integrations.shopify.order.v1`"
 
 ### Analytics (Python — Maya in analytics-service)
 - ❌ "Compute First Product Cascade"
-- ✅ "[MAYA][analytics] Add `first_product_attribution_local` ClickHouse table + ReplacingMergeTree in services/analytics-service/src/materializations/first_product_attribution.sql — verify: `clickhouse-client --query 'DESCRIBE first_product_attribution_local'`"
-- ✅ "[MAYA][analytics] Add `first_product_cascade_daily_mv` MV in services/analytics-service/src/materializations/first_product_cascade_daily_mv.sql — verify: `uv run pytest tests/materializations/test_first_product_cascade.py`"
+- ✅ "[MAYA][analytics] Add `first_product_attribution_local` ClickHouse table + ReplacingMergeTree in apps/analytics-service/src/materializations/first_product_attribution.sql — verify: `clickhouse-client --query 'DESCRIBE first_product_attribution_local'`"
+- ✅ "[MAYA][analytics] Add `first_product_cascade_daily_mv` MV in apps/analytics-service/src/materializations/first_product_cascade_daily_mv.sql — verify: `uv run pytest tests/materializations/test_first_product_cascade.py`"
 - ✅ "[MAYA][analytics] Add `computeFirstProductCascade()` to packages/lib-metrics (TS) + pylibs/brain_metrics (Python) with parity test — verify: `pnpm --filter lib-metrics test && uv run pytest pylibs/brain_metrics/tests/test_parity.py`"
 
 ### Intelligence (Python — Maya in intelligence-service)
 - ❌ "Add AICMO First-Product agent"
-- ✅ "[MAYA][intelligence] Implement AICMO-FirstProduct agent on the base pattern in services/intelligence-service/src/agents/aicmo_first_product.py — verify: `uv run pytest tests/agents/test_aicmo_first_product.py`"
-- ✅ "[MAYA][intelligence] Add Brand Fingerprint refresh job in services/intelligence-service/src/memory/brand_fingerprint.py — verify: `uv run pytest tests/memory/test_brand_fingerprint.py` (covers pgvector insert + cosine similarity)"
+- ✅ "[MAYA][intelligence] Implement AICMO-FirstProduct agent on the base pattern in apps/intelligence-service/src/agents/aicmo_first_product.py — verify: `uv run pytest tests/agents/test_aicmo_first_product.py`"
+- ✅ "[MAYA][intelligence] Add Brand Fingerprint refresh job in apps/intelligence-service/src/memory/brand_fingerprint.py — verify: `uv run pytest tests/memory/test_brand_fingerprint.py` (covers pgvector insert + cosine similarity)"
 
 ### Lifecycle (Node + Python — Maya in lifecycle-service; Vikram on the Node tRPC side)
 - ❌ "Build RFM audience"
-- ✅ "[MAYA][lifecycle] Add RFM scoring SQL job (paradigm 1 — SQL only) in services/lifecycle-service/python/src/rfm/score.py — verify: `uv run pytest tests/rfm/test_score.py`"
-- ✅ "[VIKRAM][lifecycle] Add `audience.build` tRPC mutation in services/lifecycle-service/node/src/trpc/routers/audience.ts — verify: `pnpm --filter lifecycle-service test -- audience.test.ts`"
-- ✅ "[MAYA][lifecycle] Add 09:00–21:00 IST calling-hours guard to channel router in services/lifecycle-service/node/src/compliance/calling-hours.ts — verify: `pnpm --filter lifecycle-service test -- calling-hours.test.ts` (boundary cases at 08:59:59 and 21:00:00 IST)"
+- ✅ "[MAYA][lifecycle] Add RFM scoring SQL job (paradigm 1 — SQL only) in apps/lifecycle-service/python/src/rfm/score.py — verify: `uv run pytest tests/rfm/test_score.py`"
+- ✅ "[VIKRAM][lifecycle] Add `audience.build` tRPC mutation in apps/lifecycle-service/node/src/trpc/routers/audience.ts — verify: `pnpm --filter lifecycle-service test -- audience.test.ts`"
+- ✅ "[MAYA][lifecycle] Add 09:00–21:00 IST calling-hours guard to channel router in apps/lifecycle-service/node/src/compliance/calling-hours.ts — verify: `pnpm --filter lifecycle-service test -- calling-hours.test.ts` (boundary cases at 08:59:59 and 21:00:00 IST)"
 
 ### Web (Ananya in apps/web)
 - ❌ "Build First Product Cascade page"
@@ -99,11 +99,11 @@ If you wrote a task and you can't immediately answer these in one sentence each,
       Verify: <command>
 
 ### Phase 5: Ingestion (only if new data source / connector touch)
-- [ ] [SAHIL][ingestion] <connector / Kafka producer / Avro schema task>
+- [ ] [MAYA][ingestion] <connector / Kafka producer / Avro schema task>
       Verify: <command>
 
 ### Phase 6: Analytics (only if new metric / MV / drill-down)
-- [ ] [KABIR][analytics] <ClickHouse MV / metric registry entry / RegionAdapter task>
+- [ ] [MAYA][analytics] <ClickHouse MV / metric registry entry / RegionAdapter task>
       Verify: <command>
 
 ### Phase 7: Intelligence (only if new agent capability / LLM call / Memory Layer change)
@@ -111,7 +111,7 @@ If you wrote a task and you can't immediately answer these in one sentence each,
       Verify: <command>
 
 ### Phase 8: Lifecycle (only if outbound channel / compliance touch)
-- [ ] [NEEL][lifecycle] <audience / channel router / compliance / AI calling task>
+- [ ] [MAYA][lifecycle] <audience / channel router / compliance / AI calling task>
       Verify: <command>
 
 ### Phase 9: Quality gates

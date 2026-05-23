@@ -1,6 +1,6 @@
 # Brain — Technical Context (condensed primer)
 
-> **Read this before writing code, designing a service, or reviewing a PR.** Every agent loads it at the start of every task. It is the agent-loadable condensation of `canon/technical-requirements.md` (Consolidated v2.1) + `canon/TECH/00–17`. **The canon folder is the only source of truth** — when this primer and the canon disagree, the canon wins (re-read `canon/technical-requirements.md` and the relevant `canon/TECH/NN_*.md`).
+> **Read this before writing code, designing a service, or reviewing a PR.** Every agent loads it at the start of every task. It is the agent-loadable condensation of `canon/technical-requirements.md` (Consolidated v2.1) + `canon/TECH/00–18`. **The canon folder is the only source of truth** — when this primer and the canon disagree, the canon wins (re-read `canon/technical-requirements.md` and the relevant `canon/TECH/NN_*.md`).
 > Updated 2026-05-23.
 
 ---

@@ -26,9 +26,9 @@ A future companion (Slack notifier, GitHub Action) can be added later — the pl
 | Plugin primitive | Brain use | Lives in |
 |------------------|-----------|----------|
 | **Subagents** | The 10 named agents (Rohan, Aryan, Vikram, Ananya, Karan, Maya, Shreya, Tanvi, Jatin, Priya) + the runtime dynamic-persona-generator | [`agents/`](../agents/) |
-| **Skills** | The Brain skill library (49 domain skills + 14 command-skills) | [`skills/`](../skills/) |
+| **Skills** | The Brain skill library (71 domain skills + 28 command-skills = 99) | [`skills/`](../skills/) |
 | **Slash commands** | `/requirement`, `/status`, `/recall`, `/handoff`, `/approve`, `/reject`, `/deploy`, `/rollback`, `/persona`, `/invoke-skill`, `/eos-init`, `/propose-rule`, `/adopt-rule`, `/reject-rule` | command-skills in [`skills/`](../skills/) (`disable-model-invocation: true`) |
-| **Hooks** | Session-start memory rehydration; post-tool-use journal append; pre-handoff handoff-event logging | [`hooks/`](../hooks/) |
+| **Hooks** | Session-start memory rehydration; post-tool-use journal append; pre-handoff handoff-event logging; on-careful PreToolUse catastrophic-command guard | [`hooks/`](../hooks/) |
 | **Plugin manifest** | Declares everything above | [`.claude-plugin/plugin.json`](../.claude-plugin/plugin.json) |
 | **Persistent state** | Shared memory, decision log, run artifacts — git-committed | [`.engineering-os/`](../.engineering-os/) |
 | **Reference docs** | Operating manual, business/technical primer, skill matrix, role empowerment, this file | [`docs/`](../docs/) |
@@ -46,7 +46,7 @@ A future companion (Slack notifier, GitHub Action) can be added later — the pl
 brain-engineering-os/                        # THE PLUGIN
 ├── .claude-plugin/
 │   └── plugin.json                          # plugin manifest (with components block)
-├── agents/                                  # 10 subagent files (md + frontmatter)
+├── agents/                                  # 11 subagent files (10 named + dynamic-persona-generator; md + frontmatter)
 │   ├── cto-advisor.md
 │   ├── dynamic-persona-generator.md
 │   ├── architect.md                         (Aryan)
@@ -70,7 +70,8 @@ brain-engineering-os/                        # THE PLUGIN
 │   ├── hooks.json                           # hook registry
 │   ├── on-session-start.sh                  # rehydrate state on session start
 │   ├── on-pre-handoff.sh                    # handoff event logger (observability only)
-│   └── on-post-tool-use.sh                  # auto-append to journal
+│   ├── on-post-tool-use.sh                  # auto-append to journal
+│   └── on-careful.sh                        # PreToolUse guard — blocks catastrophic Bash
 │
 ├── docs/                                    # operating manual
 │   ├── operating-system.md
@@ -105,8 +106,9 @@ brain-engineering-os/                        # THE PLUGIN
 │   ├── qa-review.schema.json
 │   ├── final-review.schema.json
 │   ├── deployment.schema.json
+│   ├── retro.schema.json
 │   ├── skill-registry.schema.json
-│   └── agent-registry.schema.json
+│   └── agent-registry.schema.json          # 12 schemas total
 │
 ├── templates/                               # markdown templates
 │   ├── requirement-template.md
@@ -117,7 +119,10 @@ brain-engineering-os/                        # THE PLUGIN
 │   ├── security-review.md
 │   ├── qa-review.md
 │   ├── final-review.md
-│   └── deployment-report.md
+│   ├── deployment-report.md
+│   ├── retro.md
+│   ├── rule-proposal.md
+│   └── durable-rule.md                      # 12 templates total
 │
 ├── canon/                                   # SOURCE OF TRUTH — Brain canon (ships with plugin)
 │   ├── business-requirements.md
@@ -172,7 +177,7 @@ Already created. Key fields:
 ```json
 {
   "name": "brain-engineering-os",
-  "version": "0.6.0",
+  "version": "0.23.0",
   "components": {
     "agents": "./agents",
     "skills": "./skills",
@@ -258,7 +263,7 @@ When the user types `/brain-engineering-os:requirement <text>`, Claude Code:
 
 ## Hook design
 
-Hooks are shell scripts (or any executable) registered in `hooks/hooks.json`. Three primary hooks in MVP:
+Hooks are shell scripts (or any executable) registered in `hooks/hooks.json`. Four hooks:
 
 ### 1. `on-session-start.sh` (event: `SessionStart`)
 
@@ -285,6 +290,10 @@ Runs after any tool use by any agent. Steps:
 2. If it's a meaningful action (Edit / Write / Bash with side effect), **auto-append a journal entry** to the active agent's journal with: timestamp, agent, action summary, files touched, command output snippet.
 
 This makes journaling automatic — agents can't forget to journal because the hook does it.
+
+### 4. `on-careful.sh` (event: `PreToolUse` matching `Bash`)
+
+An always-on guard that **blocks a tight set of catastrophic Bash commands** before they run — `rm -rf /` (or `~`/`$HOME`/bare-wildcard/`--no-preserve-root`), `git push --force`/`-f` (force-with-lease allowed), destructive SQL (`DROP TABLE`/`DROP DATABASE`/`TRUNCATE`), raw disk writes (`mkfs`/`dd of=/dev/…`), and recursive `chmod 777`. High-signal, low-friction: routine destructive-but-safe ops (`rm -rf ./build`, feature-branch `git push`, `git reset --hard`) pass untouched. Override per-command with `EOS_ALLOW_DESTRUCTIVE=1` or a trailing `#careful-ok`. **Fails open** (allows) if `jq` is unavailable, so it can never wedge the pipeline. See [careful-guard.md](careful-guard.md).
 
 ---
 

@@ -104,7 +104,7 @@ All paradigm-2 (ML). Listed here so the metrics engine is honest about what's a 
 | Concern | Method | Library |
 |---------|--------|---------|
 | Creative fatigue detection | **EWMA on CTR / CPM** | numpy |
-| LTV prediction (purchase + monetary) | **BG/NBD + Gamma-Gamma** | `lifetimes` |
+| LTV prediction (purchase + monetary) | **BG/NBD + Gamma-Gamma** | `PyMC-Marketing` (`lifetimes` is archived — TECH/00 §2.6) |
 | Cohort retention curves | **Kaplan-Meier survival** | `lifelines` |
 | RTO risk per order | **XGBoost** on pincode × courier × AOV × COD × time-of-day | xgboost |
 | RTO pincode clustering | **DBSCAN** on (pincode, RTO rate, volume) | scikit-learn |

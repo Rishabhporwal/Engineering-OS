@@ -18,7 +18,7 @@
     "submitted_at": { "type": "string", "format": "date-time" },
     "tier_impact": {
       "type": "array",
-      "items": { "enum": ["small", "mid-market", "enterprise", "founding-cohort"] }
+      "items": { "enum": ["launch", "growth", "scale", "enterprise"] }
     },
     "region_impact": {
       "type": "array",

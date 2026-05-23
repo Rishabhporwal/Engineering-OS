@@ -80,13 +80,13 @@ Append-only canonical list of every `req_id` ever seen.
 ### Example: founder decision
 
 ```json
-{"ts":"2026-05-18T10:02:00Z","actor":"rishabh","type":"decision","req_id":"feat-abandoned-cart-recovery-gcc","topic":"founder-approval","decision":"approved","rationale":"Cost is in budget; addresses founding-cohort UAE pilot ask."}
+{"ts":"2026-05-18T10:02:00Z","actor":"rishabh","type":"decision","req_id":"feat-abandoned-cart-recovery-gcc","topic":"founder-approval","decision":"approved","rationale":"Cost is in budget; addresses launch-tier UAE pilot ask."}
 ```
 
 ### Example: escalation (pending)
 
 ```json
-{"ts":"2026-05-17T14:32:00Z","actor":"cto-advisor","type":"escalation","to":"founder","req_id":"feat-abandoned-cart-recovery-gcc","topic":"paradigm-change","summary":"Confirm Haiku over Sonnet for recovery messaging; ~10x cost saving.","decision":"pending","decided_at":null}
+{"ts":"2026-05-17T14:32:00Z","actor":"cto-advisor","type":"escalation","to":"founder","req_id":"feat-abandoned-cart-recovery-gcc","topic":"paradigm-change","summary":"Confirm small_llm tier over frontier_llm for recovery messaging; ~10x cost saving (gateway routes to the cheapest model passing the small_llm eval bar).","decision":"pending","decided_at":null}
 ```
 
 ### Querying the log
@@ -244,7 +244,7 @@ When invoked by `/requirement`, the CTO Advisor subagent runs in its own sub-con
 
 Then it executes Stage 1 as defined in [workflow.md §Stage 1](workflow.md#stage-1--cto-advisor-intake--brainstorm).
 
-For persona spawning, the CTO Advisor uses Claude Code's `Agent` tool to spawn the `dynamic-persona-generator` subagent **three times in parallel**, each with a different persona-type argument.
+For persona spawning, the CTO Advisor uses Claude Code's `Agent` tool to spawn the `dynamic-persona-generator` subagent **0, 1, or 2 times (cap 2, by complexity)**, each with a different persona-type argument.
 
 ---
 

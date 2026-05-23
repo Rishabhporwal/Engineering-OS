@@ -23,7 +23,7 @@
     "track_id": { "type": "string" },
     "ts": { "type": "string", "format": "date-time" },
     "skills_loaded": { "type": "array", "minItems": 1, "items": { "type": "string" } },
-    "paradigm": { "enum": ["sql", "ml", "haiku", "sonnet"] },
+    "paradigm": { "enum": ["sql", "ml", "small_llm", "frontier_llm"] },
     "decisions": { "type": "array", "items": { "type": "string" } },
     "files_touched": {
       "type": "array",

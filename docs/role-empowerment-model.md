@@ -28,7 +28,7 @@ Stage 1: intake
    Load business-context.md + technical-context.md + relevant curated skills
    Read the raw requirement
    Run "Make requirements less dumb first" (engineering-discipline)
-   Decide persona count (0/1/2 by complexity) and spawn that many
+   Decide persona count (0/1/2 by complexity) — do NOT spawn (no Agent tool); RETURN needs_personas, the orchestrator spawns them (see orchestration.md)
    Synthesize the persona inputs (if any) into a structured CTOA Review (templates/cto-advisor-review.md)
    Decide: ADVANCE to Stage 2 (Architect) | CHALLENGE back to Founder | KILL
    Append entry to .engineering-os/decision-log/

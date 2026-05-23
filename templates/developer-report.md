@@ -9,7 +9,7 @@
 | **Track** | `{{TRACK_ID}}` |
 | **Actor** | {{ACTOR_PERSONA}}  *(vikram / ananya / karan / maya)* |
 | **Timestamp** | {{TS}} |
-| **Paradigm** | `{{PARADIGM}}`  *(sql / ml / haiku / sonnet — must match plan or justify deviation)* |
+| **Paradigm** | `{{PARADIGM}}`  *(sql / ml / small_llm / frontier_llm — must match plan or justify deviation)* |
 | **Handoff signal** | **{{HANDOFF_SIGNAL}}**  *(READY-FOR-SECURITY / READY-FOR-QA / BLOCKED / BOUNCE-TO-ARCHITECT)* |
 
 ---
@@ -73,7 +73,7 @@
 
 **Ananya (FE-W):**
 - [ ] Server Component by default
-- [ ] Lighthouse run + Core Web Vitals targets met (LCP < 2.5s, INP < 200ms, CLS < 0.1)
+- [ ] Lighthouse run + Core Web Vitals targets met (LCP < 2.0s, INP < 200ms, CLS < 0.1 — per the canon perf budget)
 - [ ] Indian numbering format applied where relevant
 - [ ] `dangerouslySetInnerHTML` only via DOMPurify
 

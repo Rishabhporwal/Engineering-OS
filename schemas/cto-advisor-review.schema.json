@@ -30,7 +30,7 @@
       "description": "Stage 1 only. Short synthesis of persona inputs."
     },
     "paradigm_recommendation": {
-      "enum": ["sql", "ml", "haiku", "sonnet"],
+      "enum": ["sql", "ml", "small_llm", "frontier_llm"],
       "description": "Stage 1 first-pass paradigm read; Architect may refine."
     },
     "india_check": {

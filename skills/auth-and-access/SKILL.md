@@ -20,7 +20,7 @@ Brain uses **Supabase Auth** (JWT + refresh token) as the identity primitive. Au
 
 ## Don't reinvent — use Supabase Auth as the primitive
 
-Supabase ships HS256 JWT + a Postgres-backed refresh-token table. Brain wires around it; we don't roll our own JWT library (slice-3 anti-pattern: don't install `jsonwebtoken`).
+Supabase ships JWT + a Postgres-backed refresh-token table, with asymmetric signing keys (RS256/ES256) published at a JWKS endpoint — verify via JWKS (below), not a shared secret. Brain wires around it; we don't roll our own JWT library (slice-3 anti-pattern: don't install `jsonwebtoken`).
 
 ```typescript
 // JWT verification (api-gateway preHandler hook) — jose, not a hand-rolled lib

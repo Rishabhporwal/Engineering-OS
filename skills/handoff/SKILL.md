@@ -12,7 +12,7 @@ Steps:
 
 1. Parse `$ARGUMENTS` into `req_id` and `target_stage` (or status name).
 2. Read `.engineering-os/state/active.json` and find the entry.
-3. Read [`docs/quality-gates.md`](../docs/quality-gates.md) — what gates would the normal path have checked? Surface any that would have been skipped.
+3. Read [`docs/quality-gates.md`](../../docs/quality-gates.md) — what gates would the normal path have checked? Surface any that would have been skipped.
 4. **Require explicit confirmation from the operator** that they intend to skip those gates.
 5. Update `state/active.json` (with `.bak.<ts>`).
 6. Append a decision-log entry of type `manual-handoff` with rationale.

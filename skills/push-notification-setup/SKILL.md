@@ -133,7 +133,7 @@ Notifications.addNotificationResponseReceivedListener(({ notification }) => {
 ## Producer side (Vikram — notifications-service)
 
 ```typescript
-// services/notifications/src/expo-push.ts
+// apps/notifications-service/src/expo-push.ts
 import { Expo, ExpoPushMessage, ExpoPushTicket } from 'expo-server-sdk';
 
 const expo = new Expo({ accessToken: process.env.EXPO_PUSH_TOKEN });
@@ -177,7 +177,7 @@ export async function sendBatch(messages: ExpoPushMessage[]) {
 ### Morning Brief delivery — the canonical Brain push
 
 ```typescript
-// services/notifications/src/morning-brief.ts
+// apps/notifications-service/src/morning-brief.ts
 // Triggered by EventBridge at 07:00 IST after Maya's synthesis completes
 export async function dispatchMorningBrief(workspaceId: string, briefId: string) {
   const tokens = await tokensRepo.listForWorkspace(workspaceId);
@@ -205,7 +205,7 @@ export async function dispatchMorningBrief(workspaceId: string, briefId: string)
 Expo returns "tickets" synchronously and "receipts" asynchronously (~15 min later). The receipts are where you find out if APNS/FCM actually accepted the push.
 
 ```typescript
-// services/notifications/src/receipts.ts
+// apps/notifications-service/src/receipts.ts
 export async function checkReceipts(receiptIds: string[]) {
   const chunks = expo.chunkPushNotificationReceiptIds(receiptIds);
   for (const chunk of chunks) {

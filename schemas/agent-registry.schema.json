@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://brain.pipadacapital.com/engineering-os/schemas/agent-registry.schema.json",
   "title": "Agent Registry",
-  "description": "The 10 named agents in the Brain Engineering OS, with persona, skills, stage(s), and authority.",
+  "description": "The 11 agents in the Brain Engineering OS (10 named roles + the runtime dynamic-persona-generator), with persona, skills, stage(s), and authority.",
   "type": "object",
   "required": ["schema_version", "generated_at", "agents"],
   "properties": {

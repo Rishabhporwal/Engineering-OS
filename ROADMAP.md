@@ -1,6 +1,6 @@
 # Brain Engineering OS — Implementation Roadmap
 
-> This roadmap is the *plugin's own* build history/plan (how the Engineering OS itself ships). The product it builds is **Brain** — the AI-native commerce OS for DTC brands, India-first with UAE/GCC sequenced (canon in `canon/business-requirements.md` + `canon/technical-requirements.md` + `canon/TECH/00–17`). Brain's own product roadmap (Phases 0–4) lives in `docs/business-context.md §11`; the walkthrough below uses a real Brain feature to illustrate the pipeline.
+> This roadmap is the *plugin's own* build history/plan (how the Engineering OS itself ships). The product it builds is **Brain** — the AI-native commerce OS for DTC brands, India-first with UAE/GCC sequenced (canon in `canon/business-requirements.md` + `canon/technical-requirements.md` + `canon/TECH/00–18`). Brain's own product roadmap (Phases 0–4) lives in `docs/business-context.md §11`; the walkthrough below uses a real Brain feature to illustrate the pipeline.
 
 > Section 8 of the build prompt. Scope by version + developer task breakdown + suggested tech stack + build sequence + risks/mitigations + rollout plan + one full end-to-end feature walkthrough.
 
@@ -13,14 +13,14 @@
 **Goal:** the team works. A teammate can clone, open Claude Code, run `/requirement`, and get a feature through to Founder approval with full audit trail.
 
 **In scope:**
-- 10 agents (CTO Advisor, Architect, Backend, Web, Mobile, Intelligence, Security, QA, DevOps, PM) + Dynamic Persona Generator (runtime).
+- 11 agents: 10 named roles (CTO Advisor, Architect, Backend, Web, Mobile, Intelligence, Security, QA, DevOps, PM) + the runtime-spawned Dynamic Persona Generator.
 - Slash commands (`/requirement`, `/status`, `/recall`, `/handoff`, `/approve`, `/reject`, `/deploy`, `/rollback`, `/persona`, `/invoke-skill`, `/eos-init`, `/propose-rule`, `/adopt-rule`, `/reject-rule`) — implemented as command-skills.
 - The curated skill library, auto-loaded per agent's owned-skill list (domain skills) + human-triggered command-skills.
 - 8-stage pipeline (Stage 1 intake → Stage 8 deploy + 48h monitor).
 - Shared, git-committed memory in `.engineering-os/` with append-only journals + decision log.
 - 3 hooks (session-start, post-tool-use, pre-handoff) — pre-handoff is handoff-event logging; gate enforcement lives in the agents.
-- 11 JSON schemas + 9 markdown templates.
-- All 12 docs (operating manual, workflow, gates, escalation, plugin architecture, etc.).
+- 12 JSON schemas + 12 markdown templates.
+- The full docs set (operating manual, workflow, gates, escalation, plugin architecture, etc.).
 - Conflict-resistant multi-operator sync via git + `merge=union`.
 
 **Explicitly out of MVP** (deferred to V2):
@@ -102,7 +102,7 @@ Follow this order to derisk the dependency graph.
 6. Plugin architecture + technical implementation + memory & git sync (Section 4).
 
 ### Phase 2 — Hours 8–16 (templates + schemas + prompts)
-7. 11 JSON schemas + 9 Markdown templates (Section 5).
+7. 12 JSON schemas + 12 Markdown templates (Section 5).
 8. Shared prompts (system-prompt, anti-blind-agreement, challenge-framework).
 9. 11 agent files (Section 6).
 
@@ -165,7 +165,7 @@ Follow this order to derisk the dependency graph.
 | 3 build | **Vikram** ∥ **Maya** | BE route + calling-window assertion (Vikram challenges a missing agency-JWT guard, Aryan agrees); Python RFM lookup w/ short-history fallback. Both capture real-network smoke | `08-developer-report-vikram.md`, `08-developer-report-maya.md` | READY-FOR-SECURITY |
 | 4 security | **Shreya** | Finds HIGH: UAE DLT registration not wired → **BOUNCE** to Vikram; he fixes (UAE TRA vs India TRAI); re-review PASS | `09-security-review.md` | BOUNCE → PASS |
 | 5 QA | **Tanvi** | Unit + integration + Playwright E2E + real-network smoke + metric-registry parity + ops-readiness, all green | `10-qa-review.md` | PASS |
-| 6 final | **Rohan** | Paradigm audit (no Sonnet snuck in); over-engineering audit; spot-re-run 3 of Tanvi's gates; write retro | `11-final-review.md`, `14-retro.md` | APPROVE |
+| 6 final | **Rohan** | Paradigm audit (no `frontier_llm` call snuck in under an SQL/ML/`small_llm` path); over-engineering audit; spot-re-run 3 of Tanvi's gates; write retro | `11-final-review.md`, `14-retro.md` | APPROVE |
 | 7 gate | **Founder** | Reads `/status` + final review; `/approve` | `12-founder-decision.json` | APPROVED |
 | 8 ship | **Jatin** | Stage product code for Founder; commit `.engineering-os/` (chore-eos); CI → ArgoCD staging → canary → prod; 48h monitor + auto-rollback armed | `13-deployment-report.md` | shipped (after push verified) |
 

@@ -12,7 +12,7 @@ description: Brain's architecture patterns — Microservices + Monorepo + Event-
 - **Event-driven (Kafka primary)** — MSK + Glue Schema Registry; `integrations.*.v1` with infinite retention
 - **BFF at the edge** — api-gateway aggregates downstream via gRPC; serves tRPC to web + mobile
 - **MCP server inside api-gateway** — same auth + multi-tenancy as tRPC (see canon/technical-requirements.md)
-- **Contract-first** — `proto/` is the single source of truth for all internal contracts + MCP tool schemas
+- **Contract-first** — `protos/` is the single source of truth for all internal contracts + MCP tool schemas
 - **OLTP / OLAP split** — Supabase Postgres + ClickHouse Cloud; analytics isolated in data-platform/
 - **CDC** — Debezium on MSK Connect for Postgres → Kafka where downstream wants recent OLTP mirror
 - **IaC** — AWS CDK + ArgoCD (NOT Terraform, NOT Helm); observability on CloudWatch/X-Ray/OpenSearch (NOT Prometheus/Grafana)
@@ -33,7 +33,7 @@ description: Brain's architecture patterns — Microservices + Monorepo + Event-
 7. Keep services independently deployable
 8. Design for horizontal scale (stateless services; state in datastores)
 9. Use circuit breakers on every cross-service call (`observability`)
-10. Be contract-first — `proto/` is the source of truth; `buf breaking` gates changes
+10. Be contract-first — `protos/` is the source of truth; `buf breaking` gates changes
 11. Be event-driven — state changes flow via Kafka; sync via gRPC
 12. Separate infrastructure from domain — domain code imports no framework (`domain-driven-design`)
 13. Be K8s-ready — health/liveness/readiness probes, graceful drain, PDB (`operational-readiness`)
@@ -143,7 +143,7 @@ Beyond `apps/<service>/`, the monorepo has these top-level dirs:
 
 | Dir | Purpose | Maps to |
 |---|---|---|
-| `proto/` | **Contract-first source of truth** — gRPC + MCP tool schemas | `grpc-buf` (buf codegen → TS + Python) |
+| `protos/` | **Contract-first source of truth** — gRPC + MCP tool schemas | `grpc-buf` (buf codegen → TS + Python) |
 | `schemas/` | Avro event schemas | Glue Schema Registry (`event-driven-kafka`) |
 | `kafka/` | Topic + consumer-group conventions | `event-driven-kafka` |
 | `ai/` | Versioned/testable/evaluated prompts, guardrails, evaluations, RAG, embeddings, orchestration | `agentic-design` |
@@ -266,7 +266,7 @@ When Aryan designs, he invokes peers as personas:
 - `canon/technical-requirements.md` — service map + scale design, Single-Primitive Rule, quarterly streamlining audit, MCP topology
 - `canon/TECH/18_service_architecture.md` — **the per-service operational spec**: each service's responsibilities/boundary/internal-modules/comms/data-flow/scale/security/real-time/failure, the cross-service communication matrix, the end-to-end flows, and the deferred-until-trigger forward extensions (knowledge graph / feature store / workflow engine). Consult when reviewing service boundaries, ownership, or a new cross-service interaction.
 - `skills/domain-driven-design/SKILL.md` — mandatory service-internal structure (bounded contexts, CQRS, tactical patterns)
-- `skills/grpc-buf/SKILL.md` — gRPC + proto patterns (proto/ is contract-first source of truth)
+- `skills/grpc-buf/SKILL.md` — gRPC + proto patterns (protos/ is contract-first source of truth)
 - `skills/event-driven-kafka/SKILL.md` — Kafka topology
 - `skills/mcp-protocol/SKILL.md` — MCP server design
 - `skills/devops-aws/SKILL.md` — AWS CDK + ArgoCD (infra/ + deployments/)

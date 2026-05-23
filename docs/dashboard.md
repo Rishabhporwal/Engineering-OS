@@ -25,7 +25,7 @@ Tables sort on header-click and filter via the search box. Charts are hand-rolle
 The `/requirement` orchestrator and `/approve` append one line per agent spawn to `.engineering-os/usage.jsonl` (`{ts, req_id, agent, stage, total_tokens, model}`) — read from each Agent result's reported usage. The dashboard aggregates it into the Tokens tab. Cost is a **rough estimate** (blended $/1M tokens: opus 30 · sonnet 6 · haiku 1.5). Until runs accrue, the Tokens tab shows an empty state.
 
 ## How it's built
-- `tools/dashboard.py` reuses `team_digest.collect()` (so numbers match `/team-digest`), enriches with per-stage grouping + lane + throughput + a recent-events feed, and renders one self-contained HTML file (data rendered server-side; no client JS, no CDN).
+- `tools/dashboard.py` reuses `team_digest.collect()` (so numbers match `/team-digest`), enriches with per-stage grouping + lane + throughput + a recent-events feed, and renders one self-contained HTML file: the data is embedded as JSON and rendered by inline vanilla JS (no external deps, no CDN — fully offline on `file://`).
 - **Verified**: generated from real Brain data and screenshot-rendered via `browse.py` — it draws correctly.
 
 ## The three views, when to use which

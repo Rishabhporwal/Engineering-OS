@@ -27,11 +27,10 @@
 
 ---
 
-## Personas spawned *(Stage 1 only)*
+## Personas spawned *(Stage 1 only — 0, 1, or 2 by complexity; cap 2)*
 
 1. **{{PERSONA_1}}** — see [`03-persona-{{PERSONA_1}}.md`](.)
 2. **{{PERSONA_2}}** — see [`04-persona-{{PERSONA_2}}.md`](.)
-3. **{{PERSONA_3}}** — see [`05-persona-{{PERSONA_3}}.md`](.)
 
 **Synthesis:**
 
@@ -41,7 +40,7 @@
 
 ## Paradigm recommendation
 
-**Recommended paradigm:** `{{PARADIGM}}`  *(sql / ml / haiku / sonnet)*
+**Recommended paradigm:** `{{PARADIGM}}`  *(sql / ml / small_llm / frontier_llm)*
 
 **Why:** {{PARADIGM_WHY}}
 

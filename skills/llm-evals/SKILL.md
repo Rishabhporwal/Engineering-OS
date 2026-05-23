@@ -31,7 +31,7 @@ A **golden set** is a frozen, versioned table of `(input_snapshot, expected_outp
 The synthesis Sonnet receives ML/SQL outputs (the deterministic signals) and writes prose. Faithfulness eval verifies the prose is **entailed by** those inputs and the `ai.decision_log` rows it summarises:
 
 ```python
-@paradigm("haiku", model="claude-haiku-4-5")  # claim extraction; numeric check is pure SQL
+@paradigm("small_llm", model="claude-haiku-4-5")  # claim extraction; numeric check is pure SQL
 async def faithfulness_score(brief_text, signals, decision_rows) -> FaithfulnessReport:
     claims = extract_claims(brief_text)              # numeric + directional claims
     numeric = check_numbers_match(claims, signals)   # SQL: every ₹/% must equal a registry value

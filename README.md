@@ -2,7 +2,7 @@
 
 An **AI engineering team** delivered as a Claude Code plugin. Orchestrates an 11-agent pipeline that takes a requirement from intake to production for **Brain** — the AI-native commerce operating system for DTC brands (India-first; UAE/GCC sequenced).
 
-Every agent is grounded in the **Brain canon** — the BRD (`canon/business-requirements.md`), the TRD (`canon/technical-requirements.md` + `canon/TECH/00–17`), and a curated skill library, all shipped inside the plugin. These Brain-docs *are* Brain's approved Phase-0 foundation. When you install the plugin in your Brain product repo, the agents come with you.
+Every agent is grounded in the **Brain canon** — the BRD (`canon/business-requirements.md`), the TRD (`canon/technical-requirements.md` + `canon/TECH/00–18`), and a curated skill library, all shipped inside the plugin. These Brain-docs *are* Brain's approved Phase-0 foundation. When you install the plugin in your Brain product repo, the agents come with you.
 
 ---
 
@@ -83,7 +83,7 @@ You never see the agent prompts, the Brain canon skills' internals, the workflow
 
 ---
 
-## The 10-role team
+## The team (11 agents: 10 named roles + the dynamic-persona-generator)
 
 | Role | Persona | Pipeline stage(s) |
 |------|---------|-------------------|
@@ -169,7 +169,7 @@ For implementation details, see [docs/plugin-architecture.md](docs/plugin-archit
 
 1. **No blind agreement.** Every agent challenges weak requirements.
 2. **Memory is the moat.** Decision Log and per-feature journals are append-only forever.
-3. **Cost-routed paradigms.** SQL > ML > Haiku > Sonnet.
+3. **Cost-routed paradigms.** SQL > ML > small_llm > frontier_llm (paradigms 3 & 4 are model-agnostic, gateway-routed policy tiers; the LiteLLM gateway resolves the cheapest model that passes each tier's eval bar — Claude default, not Claude-only).
 4. **Single-Primitive Rule.** Every cross-cutting concern (Audience, Consent, Decision Log, Identity, Attribution, Integration Health, Notifications, Audit) is built once, consumed N times.
 5. **Multi-tenant `workspace_id` discipline.** Enforced at 4 layers (JWT → service assertion → Postgres RLS + ClickHouse gateway → Kafka envelope).
 6. **Compliance is P0.** DPDP / PDPL / TCCCPR-DLT / NCPR-DND / 9am–9pm calling hours / WhatsApp opt-in; India data in-region by default. Zero violations (Shreya VETO).

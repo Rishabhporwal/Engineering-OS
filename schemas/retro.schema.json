@@ -55,8 +55,8 @@
         "monthly_cost_usd": { "type": "object", "properties": { "planned": { "type": "number" }, "actual": { "type": "number" } } },
         "llm_tokens_per_day": { "type": "object", "properties": { "planned": { "type": "integer" }, "actual": { "type": "integer" } } },
         "wall_clock_hours": { "type": "object", "properties": { "planned": { "type": "number" }, "actual": { "type": "number" } } },
-        "paradigm_declared_planned": { "enum": ["sql", "ml", "haiku", "sonnet"] },
-        "paradigm_declared_actual": { "enum": ["sql", "ml", "haiku", "sonnet"] },
+        "paradigm_declared_planned": { "enum": ["sql", "ml", "small_llm", "frontier_llm"] },
+        "paradigm_declared_actual": { "enum": ["sql", "ml", "small_llm", "frontier_llm"] },
         "persona_count_planned": { "type": "integer", "minimum": 0, "maximum": 2 },
         "persona_count_actual": { "type": "integer", "minimum": 0, "maximum": 2 },
         "note": { "type": "string" }

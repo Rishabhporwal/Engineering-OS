@@ -46,7 +46,7 @@ Each row is the **final** choice with its business justification. §3 then seque
 |---|---|---|
 | Monorepo | **Turborepo + pnpm** (TS) · **uv** workspace (Python) | One repo; shared types/contracts across web, mobile, Node, Python; cached incremental builds. |
 | Edge/product language | **TypeScript (strict)** | End-to-end types web ↔ mobile ↔ api-gateway via tRPC; one language for all client + BFF code. |
-| Data/ML/agent language | **Python 3.13+** | Ecosystem for analytics, Prophet/sklearn/lifetimes/statsmodels, ClickHouse + Kafka drivers, Anthropic SDK. |
+| Data/ML/agent language | **Python 3.13+** | Ecosystem for analytics, Prophet/sklearn/PyMC-Marketing/statsmodels, ClickHouse + Kafka drivers, LLM-gateway client. |
 | Contract codegen | **Buf** (protobuf → TS + Python) | Internal contracts are generated, never hand-written; cannot drift across the TS↔Python boundary. |
 
 **Polyglot, not monolingual:** the product is half web/app (TS) and half data/ML (Python). Forcing one language would cripple one half. The monorepo + codegen makes the boundary safe.

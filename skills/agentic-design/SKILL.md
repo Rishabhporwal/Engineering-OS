@@ -110,7 +110,7 @@ notifications-service receives ai.morning_brief.generated.v1 → push 07:00–09
 
 ```sql
 -- Brand Fingerprint: one vector per brand per day
-CREATE TABLE memory.brand_fingerprint (
+CREATE TABLE ai.brand_fingerprint (
   workspace_id        UUID NOT NULL,
   as_of_date          DATE NOT NULL,
   fingerprint         vector(16) NOT NULL,     -- pgvector; 16-dim daily brand-state vector (canon TECH/05)
@@ -121,7 +121,7 @@ CREATE TABLE memory.brand_fingerprint (
   created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   PRIMARY KEY (workspace_id, as_of_date)
 );
-CREATE INDEX brand_fingerprint_hnsw ON memory.brand_fingerprint USING hnsw (fingerprint vector_cosine_ops) WITH (m = 16, ef_construction = 64);
+CREATE INDEX brand_fingerprint_hnsw ON ai.brand_fingerprint USING hnsw (fingerprint vector_cosine_ops) WITH (m = 16, ef_construction = 64);
 ```
 
 Query helper:
@@ -133,8 +133,8 @@ async def query_brand_fingerprint(workspace_id, as_of, k=5, cross_brand=False):
     return await db.fetch(f"""
         SELECT workspace_id, as_of_date, similarity_score, outcomes_7d, outcomes_30d
         FROM (
-          SELECT *, 1 - (fingerprint <=> (SELECT fingerprint FROM memory.brand_fingerprint WHERE workspace_id = $1 AND as_of_date = $2)) AS similarity_score
-          FROM memory.brand_fingerprint
+          SELECT *, 1 - (fingerprint <=> (SELECT fingerprint FROM ai.brand_fingerprint WHERE workspace_id = $1 AND as_of_date = $2)) AS similarity_score
+          FROM ai.brand_fingerprint
           WHERE as_of_date != $2 {consent_filter}
         ) sub
         ORDER BY similarity_score DESC
@@ -152,14 +152,14 @@ The monorepo's top-level `ai/` dir holds the cross-cutting AI infrastructure tha
 | **Guardrails** | Input/output validation, PII redaction, jailbreak + injection checks, schema enforcement on LLM output | Every Frontier-LLM call passes guardrails in + out; bad output → fallback, never raw-through to the user |
 | **Evaluations / benchmarks** | Golden-set + regression evals per prompt/agent (accuracy, faithfulness, cost, latency) | A prompt change ships only if its eval ≥ baseline; CI gate (see `testing-tdd`) |
 | **RAG** | Retrieval over Brand Fingerprint + decision history + brand notes | Retrieve-then-synthesize; cite supporting_data; retrieval is paradigm 1/2 (SQL/ML), synthesis is the only Frontier step |
-| **Embeddings + vector-search** | Embedding generation + cosine k-NN on **pgvector** (NOT a dedicated vector DB) | Vectors live in `memory.brand_fingerprint` (pgvector); HNSW index; query via the Memory Layer helper |
+| **Embeddings + vector-search** | Embedding generation + cosine k-NN on **pgvector** (NOT a dedicated vector DB) | Vectors live in `ai.brand_fingerprint` (pgvector); HNSW index; query via the Memory Layer helper |
 | **Orchestration** | The agent base class + daily-tick + cross-agent choreography | Custom base class (NOT LangGraph); `@paradigm` + `@mcp_tool` on every action |
 
 **Every AI workflow supports: tracing + retries + fallback + guardrails + observability.**
 
 ```
 input → guardrails(in) → RAG retrieve (pgvector k-NN, paradigm 1/2)
-      → paradigm-routed model (SQL>ML>Haiku>>Sonnet — cost-routing gate)
+      → paradigm-routed model (SQL>ML>small_llm>>frontier_llm — cost-routing gate)
       → guardrails(out) → schema-validated result
    with: X-Ray span per step · retry+backoff on transient LLM errors
         · fallback (template / lower-tier model) on budget breach or guardrail fail
@@ -168,7 +168,7 @@ input → guardrails(in) → RAG retrieve (pgvector k-NN, paradigm 1/2)
 
 - **Tracing:** wrap each step in an X-Ray span (`observability`); the whole chain stitches under one `trace_id`.
 - **Retries + provider fallback:** transient LLM errors → the gateway retries with backoff and advances down the tier's fallback chain (`llm-gateway`); deterministic failures → fallback, not retry.
-- **Fallback:** budget breach or guardrail rejection → drop to a lower paradigm (Haiku, then template) rather than failing the Morning Brief.
+- **Fallback:** budget breach or guardrail rejection → drop to a lower paradigm (small_llm, then template) rather than failing the Morning Brief.
 - **Guardrails + observability:** mandatory on every call; the cost-routing audit (Frontier-LLM rate > 1%) is a tier-1 trigger (`cost-routing-paradigms`, `observability`).
 
 Vectors stay on **pgvector** in `intelligence-service`'s Postgres (per-service DB ownership — `architecture-patterns`). Do NOT add a dedicated vector DB; do NOT replace the base class with LangGraph.
@@ -244,7 +244,7 @@ Includes:
 
 - **Defaulting to LLM in `_run_paradigm_models`** — Brain invariant violation; Aryan blocks. Detection: agent method uses Sonnet for what EWMA / XGBoost would solve.
 - **Missing `@paradigm` on agent method** — cost-discipline dashboard can't track. CI rejects.
-- **Stale Memory Layer** — fingerprint not updated daily → k-NN returns outdated patterns. Detection: `max(memory.brand_fingerprint.as_of_date) < now() - 2 days`.
+- **Stale Memory Layer** — fingerprint not updated daily → k-NN returns outdated patterns. Detection: `max(ai.brand_fingerprint.as_of_date) < now() - 2 days`.
 - **Graduated agent regression** — outcome accuracy drops below T_acc but tool stays auto-execute. Nightly job auto-degraduates; ops follow-up.
 - **Cross-brand pattern leak** — fingerprint query without `cross_brand_opt_in = TRUE` filter on consenting brand. Detection: pgvector query has no consent filter.
 - **Recommendation spam** — agent produces >5 recommendations per workspace per day; Morning Brief Synthesizer drowns. Cap at agent.rank_and_score level.

@@ -70,10 +70,10 @@ The per-workspace monthly LLM cap is **implemented as a LiteLLM virtual-key budg
 
 | Tier | Virtual-key monthly budget (INR) | Behaviour |
 |---|---|---|
-| Founding (0.5%) | ₹3,000 | Soft 70% throttle non-critical · hard 100% critical-path only |
-| Standard (1.0%) | ₹5,000 | Same |
-| Growth (0.5% > ₹1Cr GMV) | ₹15,000 | Same |
-| Enterprise | ₹50,000+ negotiated | Same |
+| Launch (~1.0%) | ₹3,000 | Soft 70% throttle non-critical · hard 100% critical-path only |
+| Growth (~0.75%) | ₹5,000 | Same |
+| Scale (~0.5%) | ₹15,000 | Same |
+| Enterprise (custom) | ₹50,000+ negotiated | Same |
 
 - **Soft 70%:** non-critical LLM features (per-message personalisation, weekly creative briefs) pause; SQL/ML paths run normally.
 - **Hard 100%:** only critical-path continues — **Morning Brief, NL query, ticket auto-resolution**. The system never breaks; it gets quieter.

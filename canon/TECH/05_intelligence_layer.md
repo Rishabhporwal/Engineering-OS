@@ -795,20 +795,23 @@ async def predict_ltv(workspace_id: str, customer_id: str, horizon_days: int = 1
     return int(predicted_horizon - current_revenue)
 ```
 
-### Phase 4: BG/NBD + Gamma-Gamma
+### BG/NBD + Gamma-Gamma (PyMC-Marketing)
+
+The canonical LTV method (TECH/00 §2.6, TECH/03 §0.4). Use **PyMC-Marketing** — `lifetimes` is archived/unmaintained.
 
 ```python
-from lifetimes import BetaGeoFitter, GammaGammaFitter
+from pymc_marketing.clv import BetaGeoModel, GammaGammaModel
 
-# Standard DTC LTV pipeline
-bgf = BetaGeoFitter(penalizer_coef=0.0001)
-bgf.fit(rfm['frequency'], rfm['recency'], rfm['T'])
+# Standard DTC LTV pipeline (monetary value = CM2 contribution per order, not Gross Sales)
+bg = BetaGeoModel(data=rfm)               # rfm has frequency, recency, T, customer_id
+bg.fit()
 
-ggf = GammaGammaFitter(penalizer_coef=0.01)
-ggf.fit(rfm[rfm['frequency'] > 0]['frequency'], rfm[rfm['frequency'] > 0]['monetary_value'])
+gg = GammaGammaModel(data=rfm[rfm['frequency'] > 0])   # frequency, monetary_value
+gg.fit()
 
-ltv_180 = ggf.customer_lifetime_value(bgf, rfm['frequency'], rfm['recency'], rfm['T'],
-                                       rfm['monetary_value'], time=6, freq='D')
+ltv_180 = gg.expected_customer_lifetime_value(
+    transaction_model=bg, data=rfm, time=6, freq='D',   # 6 months ≈ 180d
+)
 ```
 
 ### Storage

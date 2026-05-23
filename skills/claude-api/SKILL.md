@@ -15,7 +15,7 @@ Brain's intelligence layer (Maya, see canon/technical-requirements.md) defaults 
 
 - **GMV % pricing only works because most calls are SQL or ML, not LLM** (prompts/system-prompt.md, Iron Law #4). Every Claude call must be either (a) part of the human-language interface boundary (Morning Brief synthesis, AI Chat, agent narrative wrap) or (b) bounded NL routed to Haiku.
 - **Prompt caching is the single biggest cost lever.** 90% cost savings on the cached portion of repeated prompts. Brand Fingerprint context (~3–10K tokens) reused across every brief synthesis = enormous savings.
-- **Per-brand monthly LLM cap** (`memory/business-context.md`): ₹3K founding / ₹5K standard / ₹15K growth / ₹50K+ enterprise. Cap enforcement is in the SDK wrapper, NOT a downstream alert.
+- **Per-brand monthly LLM cap** (`memory/business-context.md`): ₹3K Launch / ₹5K Growth / ₹15K Scale / ₹50K+ Enterprise. Cap enforcement is the LiteLLM virtual-key budget in the gateway, NOT a downstream alert.
 - **Frontier-LLM creep above 1% of total calls is a tier-1 incident** (see canon/technical-requirements.md). Every Sonnet call shows up in the cost-discipline dashboard.
 
 ## Brain model canon (NEVER use stale IDs)
@@ -288,7 +288,7 @@ async function anthropicCall<T>(fn: () => Promise<T>, opts: { maxRetries?: numbe
 ```typescript
 async function callClaudeWithBudget(workspaceId: string, fn: () => Promise<...>) {
   const spentInr = await costRegistry.monthToDateForWorkspace(workspaceId);
-  const cap = workspaces.budget(workspaceId);  // ₹3K founding / ₹5K standard / ...
+  const cap = workspaces.budget(workspaceId);  // ₹3K Launch / ₹5K Growth / ₹15K Scale / ...
   if (spentInr >= cap) {
     throw new BudgetExhaustedError({ workspaceId, spentInr, cap });
   }
@@ -306,7 +306,7 @@ async function callClaudeWithBudget(workspaceId: string, fn: () => Promise<...>)
 
 ### Phase-gate requirement (non-negotiable — from architecture review 2026-05-16)
 
-**The per-brand monthly LLM cap MUST be live before AI Chat ships in W18.** AI Chat is the single feature most likely to push a brand past their tier cap — a moderately engaged user moves from 5 msg/day → 50 msg/day, which alone climbs to ~₹1,500/brand/month (half the founding-cohort ₹3K cap, on chat alone).
+**The per-brand monthly LLM cap MUST be live before AI Chat ships in W18.** AI Chat is the single feature most likely to push a brand past their tier cap — a moderately engaged user moves from 5 msg/day → 50 msg/day, which alone climbs to ~₹1,500/brand/month (half the Launch-tier ₹3K cap, on chat alone).
 
 The throttle is Layer 3 of the four-layer cost control (per canon/technical-requirements.md):
 - Layer 1 — paradigm decorator (`@paradigm`)

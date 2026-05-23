@@ -119,7 +119,7 @@ Every agent uses **the cheapest paradigm that solves its task** ([TECH/12](12_co
 
 ### 2.3 AICMO-TikTok
 
-**Scope:** TikTok Ads creative + audience expansion. Spark Ads vs in-feed routing logic. **India and GCC active.**
+**Scope:** TikTok Ads creative + audience expansion. Spark Ads vs in-feed routing logic. **GCC only — TikTok is banned in India, so this agent is region-gated to UAE/GCC** (consistent with the region-gated TikTok connector in TECH/02 §7a / BR §9.2).
 
 **Paradigm:** Same as AICMO-Meta (ML for creative fatigue + performance prediction).
 

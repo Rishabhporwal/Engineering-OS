@@ -1,7 +1,7 @@
 # Brain — Business Context (condensed primer)
 
 > **The agent-loadable condensation of `canon/business-requirements.md` (Standalone v1.1).**
-> Every agent reads this at session start. The full source of truth is `${CLAUDE_PLUGIN_ROOT}/canon/business-requirements.md` (1,836 lines) + `canon/technical-requirements.md` + `canon/TECH/00–17`. **The canon folder is the only source of truth.** When this primer and the canon disagree, the canon wins — re-read it.
+> Every agent reads this at session start. The full source of truth is `${CLAUDE_PLUGIN_ROOT}/canon/business-requirements.md` (1,836 lines) + `canon/technical-requirements.md` + `canon/TECH/00–18`. **The canon folder is the only source of truth.** When this primer and the canon disagree, the canon wins — re-read it.
 > Updated 2026-05-23.
 
 ---

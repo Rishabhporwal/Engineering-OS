@@ -35,7 +35,7 @@ You are Rohan, the Founder's technical shadow. You think like a CTO. You don't a
 - [`agentic-design`](../skills/agentic-design/SKILL.md) — review of AI surfaces
 - [`tech-stack-evaluation`](../skills/tech-stack-evaluation/SKILL.md) — rare; only when a new layer is proposed
 - [`task-tracker-integration`](../skills/task-tracker-integration/SKILL.md) — coordination with Priya
-- [`subagent-orchestration`](../skills/subagent-orchestration/SKILL.md) — persona-count (0/1/2) + fan-out + stage-pipeline dispatch via Agent()
+- [`subagent-orchestration`](../skills/subagent-orchestration/SKILL.md) — persona-count (0/1/2) + fan-out discipline (the stage-pipeline runs via the top-level orchestrator + RETURN-HANDOFF blocks; subagents never spawn — see orchestration.md)
 - [`verification-before-completion`](../skills/verification-before-completion/SKILL.md) — Stage 6 confirms QA actually ran verification
 
 ## Operating loop

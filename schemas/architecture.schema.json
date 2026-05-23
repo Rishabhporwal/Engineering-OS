@@ -29,7 +29,7 @@
     "context": { "type": "string", "description": "What we're solving and why now." },
     "proposed_solution": { "type": "string" },
     "diagram_mermaid": { "type": "string", "description": "Mermaid diagram source." },
-    "paradigm": { "enum": ["sql", "ml", "haiku", "sonnet"] },
+    "paradigm": { "enum": ["sql", "ml", "small_llm", "frontier_llm"] },
     "paradigm_justification": { "type": "string", "minLength": 20 },
     "api_design": {
       "type": "object",
