@@ -2,6 +2,7 @@
 
 > **The agent-loadable condensation of `canon/business-requirements.md` (Standalone v1.1).**
 > Every agent reads this at session start. The full source of truth is `${CLAUDE_PLUGIN_ROOT}/canon/business-requirements.md` (1,836 lines) + `canon/technical-requirements.md` + `canon/TECH/00–18`. **The canon folder is the only source of truth.** When this primer and the canon disagree, the canon wins — re-read it.
+> **Build reference:** `canon/IMPLEMENTATION-BLUEPRINT.md` consolidates the business + technical canon into one implementation-oriented build bible. Use it as a **targeted index** — read its `§0` section map and open only the relevant `§`; do not load it whole.
 > Updated 2026-05-23.
 
 ---

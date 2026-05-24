@@ -5,7 +5,8 @@
 > **Audience:** AI builder agents, engineers, data engineers, design-system agents, QA agents, implementation reviewers
 > **Product:** Brain — AI-native commerce operating system for DTC brands (India-first; UAE/GCC sequenced)
 > **Status:** Source-of-truth technical requirements. Derived from `business-requirements.md` v1.1.
-> **Companion docs:** `TECH/00_tech_stack_decision.md` (stack + phasing) and `TECH/01–17` (deep-dives). This document is the authoritative top-level spec; the TECH/ files expand each area. Where they ever disagree, **this document and TECH/00 win.**
+> **Companion docs:** `TECH/00_tech_stack_decision.md` (stack + phasing) and `TECH/01–18` (deep-dives). This document is the authoritative top-level spec; the TECH/ files expand each area. Where they ever disagree, **this document and TECH/00 win.**
+> **Build index:** `IMPLEMENTATION-BLUEPRINT.md` is the derived, implementation-oriented consolidation of this spec + the BRD + TECH/00–18. Use it as a **targeted index** — read its `§0` section map and open only the relevant `§`, never the whole file; the canon still wins on any conflict.
 
 ---
 

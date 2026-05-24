@@ -177,7 +177,7 @@ Already created. Key fields:
 ```json
 {
   "name": "brain-engineering-os",
-  "version": "0.23.0",
+  "version": "0.24.0",
   "components": {
     "agents": "./agents",
     "skills": "./skills",

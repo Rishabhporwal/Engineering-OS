@@ -101,6 +101,7 @@ Capture a "Over-engineering self-check" subsection at the end of §17 Tracks wit
 - [ ] Region adapter impact documented
 - [ ] Migration plan reversible
 - [ ] Each track has 2–5 min tasks with file paths
+- [ ] **Every pinned version is real** — any dependency / codegen-plugin / toolchain version named in the plan (npm/pip/uv, buf remote plugins, runtime pins) is a *verified-existing* version, OR the task explicitly instructs the builder to "resolve + pin latest-stable." **Never invent a version number** (the `betterproto v0.0.3` bounce class).
 
 ## Definition of Done (Stage 2)
 

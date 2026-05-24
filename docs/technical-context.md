@@ -1,6 +1,7 @@
 # Brain — Technical Context (condensed primer)
 
 > **Read this before writing code, designing a service, or reviewing a PR.** Every agent loads it at the start of every task. It is the agent-loadable condensation of `canon/technical-requirements.md` (Consolidated v2.1) + `canon/TECH/00–18`. **The canon folder is the only source of truth** — when this primer and the canon disagree, the canon wins (re-read `canon/technical-requirements.md` and the relevant `canon/TECH/NN_*.md`).
+> **Building a feature? Use `canon/IMPLEMENTATION-BLUEPRINT.md` as a targeted index** — the implementation-oriented build bible (vision → architecture → ingestion → data → analytics → memory → agents → security → workflow → deliverables). It is ~23K tokens: read its `§0` section map and open **only** the one `§` your task needs — **do not load it whole** (that's the single largest avoidable cost in the pipeline). It sits *between* this primer and the deep-dives; the canon still wins on any conflict.
 > Updated 2026-05-23.
 
 ---

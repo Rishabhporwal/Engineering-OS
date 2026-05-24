@@ -40,11 +40,13 @@ Two ordered tests at Stage 1:
 | `connectors` | Shopify, Meta, Google, Shiprocket, Klaviyo, TikTok, Snap |
 | `outbound-channels` | call, WhatsApp, email, SMS, ad-audience push |
 | `pii` | customer phone/email/address, order data |
-| `schema-proto` | Postgres/ClickHouse migration, `.proto` change, Kafka topic |
+| `schema-proto` | Postgres/ClickHouse migration, `.proto` change, Kafka topic. *(Creating the EMPTY contract HOME — scaffolding `protos/`/`buf` config / migration-dir structure / placeholder with **no live consumers, no business logic, no migration on existing data, no runtime** — is foundational structure, NOT a contract change → that is `standard`. A real message/field definition consumed by a service, or a migration touching existing data, stays `high-stakes`.)* |
 | `money` | **moving/charging money** — pricing, billing/metering, GMV-% fee, invoices, refunds, payouts, settlement. *(Computing a money-DERIVED number — e.g. a CM/RTO/break-even metric over minor-units inputs — is NOT a money trigger; nearly every metric consumes money, so a money-side-effect, not money-math, is what escalates. A new metric helper is `standard`.)* |
 | `india-compliance` | DPDP / UAE-KSA PDPL data-protection; DLT, NCPR, DND, calling hours (9am–9pm), recording consent; WhatsApp opt-in/template approval; GST per-SKU; India in-region data residency |
 
 → **Any hit ⇒ `high-stakes`.** Record the hits in `trigger_surfaces_touched`. Stop.
+
+> **Foundational-scaffolding carve-out (narrow — Founder-ratified 2026-05-24).** When the surfaces touched are **only** structural (`schema-proto` / `multi-tenancy` / `mcp-tools`) **and** they are touched *only* by creating empty homes / toolchain config / directory structure — **no live contract or consumers, no business logic, no migration on existing data, no runtime, and no `money`/`pii`/`outbound-channels`/`connectors`/`india-compliance` surface** — classify `standard`, not high-stakes. The architect, **Security, QA, and final-review gates all still run** (they catch the real defects — e.g. the QA gate that caught a bad codegen version pin); only the **persona escalation + mutation-test mandate** drop. **On any doubt, stay high-stakes** (the conservative tie-break below is unchanged). This narrows the trigger to *real* contract/behaviour changes; it never lets a live-surface change escape high-stakes.
 
 **2. Triviality test** (only if zero trigger surfaces). Is the change purely: copy/content · docs · config tweak · dependency bump · styling · refactor with zero behavior change · a clear repeat of a lessons-registry pattern?
 
