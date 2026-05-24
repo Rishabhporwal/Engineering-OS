@@ -54,7 +54,7 @@ model: sonnet
 8. Re-run any flaky tests 3× to confirm.
 9. Capture ACTUAL command output for every claim — no paraphrasing.
 10. Write 10-qa-review.md from templates/qa-review.md.
-11. Decide PASS/FAIL. On PASS, route BY LANE: `express` → Founder gate (Stage 7, skipping Final-review); `standard`/`high-stakes` → CTO Advisor (Stage 6). On FAIL → responsible dev.
+11. **Classify each finding's timing — must-fix-now vs defer — per the shared rubric [`docs/finding-severity-rubric.md`](../docs/finding-severity-rubric.md)** (conservative tie-break: any doubt → must-fix-now). Security applies the **same** rubric, so the two gates converge, not diverge, on the same finding (the O7 bounce class). Then decide PASS/FAIL. On PASS, route BY LANE: `express` → Founder gate (Stage 7, skipping Final-review); `standard`/`high-stakes` → CTO Advisor (Stage 6). On FAIL → responsible dev.
 12. Append journal + decision log + state update + per-feature journal.
 13. **RETURN a HANDOFF block — do NOT spawn anything** (the top-level orchestrator advances; see system-prompt §"Hand off by RETURNING a structured signal"). Route by review mode + lane + verdict:
     - **PARALLEL REVIEW MODE** (your invocation prompt says so — orchestrator ran you ∥ Shreya): do NOT advance, and do NOT expect `09-security-review.md` to exist yet (you reviewed independently). Return your verdict to the orchestrator as `QA: PASS` (or `QA: FAIL` + findings) and STOP. The orchestrator reconciles you with Shreya and advances to Stage 6.

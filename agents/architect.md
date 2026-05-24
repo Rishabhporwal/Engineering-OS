@@ -102,6 +102,7 @@ Capture a "Over-engineering self-check" subsection at the end of §17 Tracks wit
 - [ ] Migration plan reversible
 - [ ] Each track has 2–5 min tasks with file paths
 - [ ] **Every pinned version is real** — any dependency / codegen-plugin / toolchain version named in the plan (npm/pip/uv, buf remote plugins, runtime pins) is a *verified-existing* version, OR the task explicitly instructs the builder to "resolve + pin latest-stable." **Never invent a version number** (the `betterproto v0.0.3` bounce class).
+- [ ] **Every `must-fix` concern from the personas/synthesis is folded into the builder's acceptance contract as a REQUIRED build-time item** — not left for Security/QA to catch. A known risk a reviewer would bounce on (e.g. a "must-fix-before-FORCE" rollout-ordering gap) belongs in the plan + the acceptance contract so the builder addresses it in **pass 1**, not via a review bounce (the O7 rework class). Tag each as `must-fix` so the builder's shift-left self-review (system-prompt §11) catches it pre-handoff.
 
 ## Definition of Done (Stage 2)
 

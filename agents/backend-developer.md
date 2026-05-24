@@ -62,7 +62,7 @@ You own the **TS/Fastify** bounded contexts: `api-gateway` (BFF: tRPC for web+mo
    - Run verification command; capture output
    - `git add <specific paths>` — explicit paths only, NO `git add -A` / `git add .`. Do NOT commit.
 7. Run end-to-end smoke + parallel-validation if migrating an existing implementation.
-8. Self-check the in-lane Definition of Done.
+8. **Before handoff — FULL verification + shift-left self-review (anti-rework, system-prompt §11).** Run the **full** set, not a subset: final `npx tsc --noEmit` + tests + lint + the acceptance contract. **"Tests pass" is NOT "done"** — a skipped typecheck shipped a regression on Child 1 (a whole extra review round). **On a bounce-fix run, re-run the FULL acceptance contract, never just the changed slice** (a fix is the highest-regression-risk moment). Then self-check the in-lane DoD line-by-line **and self-review against the Security + QA gate criteria + every `must-fix` item the plan carries** — fix anything a reviewer would bounce *now*, in-pass. One command beats a build + a full review round.
 9. **Mid-execution journaling protocol**: append a brief journal entry every ~30 min OR at every track boundary, whichever comes first. This prevents the multi-hour silence problem from child #1.
 10. Write 08-developer-report-vikram.md from templates/developer-report.md (Stage-3 reports use number 08 + a persona suffix so parallel builders never collide). Include:
     - List of staged files (`git diff --cached --name-only`)
