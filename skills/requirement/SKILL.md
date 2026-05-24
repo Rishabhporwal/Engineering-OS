@@ -49,17 +49,17 @@ Steps:
    - after it returns: `✓ <persona>: <2–3 line summary of what it decided/did> → handing to <next>` (or `✗ <persona>: BOUNCE — <reason> → re-spawning <target>`).
    This main-terminal narration + the agents' `live.log` lines together give full real-time visibility into what every agent is thinking, planning, and implementing.
 
-   **LOG TOKEN USAGE after each spawn (powers the dashboard's cost view).** Each Agent result reports the subagent's token usage. Immediately after a spawn returns, append one line to `${CLAUDE_PROJECT_DIR}/.engineering-os/usage.jsonl`:
+   **LOG TOKEN USAGE after each spawn (powers the dashboard's cost view + the optimization measurement).** Each Agent result reports the subagent's token usage. Immediately after a spawn returns, append one line to `${CLAUDE_PROJECT_DIR}/.engineering-os/usage.jsonl` — **log the full breakdown, not just the total**, so context-loading (input + cache) is separable from reasoning (output) and the cache-hit rate is visible:
    ```sh
-   echo '{"ts":"<UTC ISO>","req_id":"<req>","agent":"<agent-id>","stage":<N>,"total_tokens":<from the Agent result usage>,"model":"<opus|sonnet|haiku>"}' >> ${CLAUDE_PROJECT_DIR}/.engineering-os/usage.jsonl
+   echo '{"ts":"<UTC ISO>","req_id":"<req>","agent":"<agent-id>","stage":<N>,"total_tokens":<total>,"input_tokens":<in>,"output_tokens":<out>,"cache_read_tokens":<cr>,"cache_creation_tokens":<cc>,"model":"<opus|sonnet|haiku>"}' >> ${CLAUDE_PROJECT_DIR}/.engineering-os/usage.jsonl
    ```
-   Use the agent's configured model (Opus: cto-advisor/architect/security-reviewer; Sonnet: builders/qa/devops/pm; Haiku: workers). This append-only stream is what `/dashboard` aggregates into per-agent / per-feature token + cost totals.
+   Pull `input_tokens` / `output_tokens` / `cache_read_tokens` (= `cache_read_input_tokens`) / `cache_creation_tokens` (= `cache_creation_input_tokens`) from the **Agent result's `usage` object**; `total_tokens` stays for back-compat. **If the harness doesn't surface a field, omit it — never fabricate a number.** Why it matters: the targeted-index/`rtk`/concise-artifact optimizations cut *input+cache* (context-load), so without this split a per-stage saving is invisible (see `docs/token-optimization.md` §C). Use the agent's **actual** model — for **personas**, log the model the orchestrator overrode to (Haiku for bounded, Sonnet for deep — step a below), not the generator's default. This append-only stream is what `/dashboard` aggregates.
 
    **Loop:**
 
    a. **Stage 1 — spawn `cto-advisor`.** Read its HANDOFF + state:
       - `CHALLENGE-BACK` / `KILL` → STOP. Surface to Founder. Done.
-      - `needs_personas` non-empty → spawn each persona via `dynamic-persona-generator` **IN PARALLEL** (multiple Agent calls in ONE message), each writing its `0N-persona-*.md`; then **re-spawn `cto-advisor`** to synthesize the persona concerns + finalize ADVANCE/CHALLENGE; re-read.
+      - `needs_personas` non-empty → spawn each persona via `dynamic-persona-generator` **IN PARALLEL** (multiple Agent calls in ONE message), each writing its `0N-persona-*.md`. **Tier the persona model (cost lever):** each `needs_personas` entry carries a depth tag — `:haiku` for a **bounded** stress-test (checklist/toolchain/naming/single-rule) or `:sonnet` for a **reasoning-heavy** one (migration method, compliance trade-offs, numeric parity). Pass it as the Agent `model` override on that persona's spawn (bounded personas on Haiku are ~6× cheaper than Sonnet). If a persona is untagged, default to `sonnet` (don't silently under-power). Then **re-spawn `cto-advisor`** to synthesize the persona concerns + finalize ADVANCE/CHALLENGE; re-read.
       - `ADVANCE` + `feature_class=express` → next = the single relevant **builder** (Stage 3).
       - `ADVANCE` + `standard`/`high-stakes` → next = **architect** (Stage 2).
 
