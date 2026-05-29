@@ -1,234 +1,137 @@
 ---
 name: security-baseline
-description: Brain's security baseline — OWASP Top 10; Supabase Auth + JWT; multi-tenant `workspace_id` enforcement on Postgres (RLS) + ClickHouse (query gateway) + Kafka envelopes + MCP tool tenant check; MCP auth scopes (canon/technical-requirements.md); AWS IAM/VPC/WAF/Secrets Manager; threat modeling (STRIDE); mobile MASVS Level 1 + Level 2; cert pinning rotation discipline; India compliance gates (DLT, NCPR, DND, 48h frequency cap, calling hours, recording consent, GST). Shreya VETO on CRITICAL/HIGH and any India compliance violation.
+description: App-sec playbook — OWASP map, four-layer input validation, output encoding/XSS, RLS, KMS secrets, STRIDE, MASVS, the CI scanner suite. Shreya VETO gate.
 ---
 
-# Security Baseline — Brain
+# Security Baseline
 
-This skill is the **security index + Shreya's review gate**. It owns the OWASP map, the Brain-specific security controls (Supabase Auth, OAuth token storage, India compliance VETO, MASVS, AWS baseline, STRIDE) and the verdict format. The two deep dives it links to:
+Shreya's review gate + the app-sec playbook. Multi-tenant `workspace_id` isolation and the role model are gated here but OWNED elsewhere — RBAC + session lifecycle in `auth-and-access`; compliance/India regime in `compliance-engine`. Don't restate those; gate against them.
 
-- **`auth-and-access`** — OWASP A01 (Broken Access Control) in depth: the 5 level-ordered roles (viewer 1 < analyst 2 < agency 3 < operator 4 < owner 5), JWT-claim + RLS enforcement, `requireRole` on every mutation, MCP tool roles, agency multi-workspace — plus the Supabase session lifecycle (cookies, refresh, revocation).
-- **`defense-in-depth-validation`** — multi-tenant `workspace_id` isolation as the four-layer (entry → business → environment/RLS → audit) pattern, and the structural "make the bug impossible" approach.
+## OWASP Top 10:2025 → Brain enforcement
 
-Don't duplicate those here — gate against them.
-
-## OWASP Top 10:2025 (applied to Brain)
-
-Mapped to **OWASP Top 10:2025** (finalized Jan 2026). Key shifts vs the older 2021 list: **A03 Software Supply-Chain Failures** is NEW (broadened from "Vulnerable & Outdated Components"), **A02** is now **Security Misconfiguration**, **Insecure Design** moves to **A06**, **SSRF is folded into Broken Access Control** (no longer a standalone A10), and **A10 Mishandling of Exceptional Conditions** is NEW. Brain ALREADY does most of A03 (Snyk/Trivy/SBOM/pinned image SHAs/EAS Build provenance) — so this is largely a **re-label that strengthens our supply-chain story**, not new work.
-
-| # | OWASP 2025 | Brain enforcement |
+| # | Category | Enforcement |
 |---|---|---|
-| A01 | Broken Access Control (incl. **SSRF**) | `workspaceProcedure` on every tRPC procedure; `requireTenant` on every MCP tool; gRPC server handler asserts `request.workspace_id === metadata.workspace_id`; Postgres RLS as safety net; ClickHouse query gateway rejects unscoped queries. **SSRF (folded in):** whitelist allowed URLs in ingestion-service (only Shopify/Meta/Google/Shiprocket endpoints); no arbitrary URL fetches |
-| A02 | Security Misconfiguration | No debug in prod; Fastify-helmet security headers; MCP `scope` declared on every tool; `requireTenant` on every write |
-| A03 | Software Supply-Chain Failures (**NEW**) | `pnpm audit` + `pip-audit` + Snyk (TS/Py) in CI; Trivy on ECR images + filesystem; **SBOM in CI**; **pinned Docker image SHAs**; **EAS Build provenance** for mobile. (Brain already does most of this — see `vulnerability-scanning`.) |
-| A04 | Cryptographic Failures | TLS everywhere; Supabase Auth JWT verified via JWKS; KMS envelope encryption for OAuth tokens — ciphertext in **AWS Secrets Manager**, only a `credential_secret_arn` ref in `core.integrations` |
-| A05 | Injection | Prisma parameterized queries; Zod validation on every input; asyncpg parameterized; ClickHouse query gateway |
-| A06 | Insecure Design (was A04) | Postgres RLS + ClickHouse query gateway = defense in depth; never rely on one layer |
-| A07 | Auth Failures | Supabase Auth defaults; refresh rotation on every use; magic link expiry 10 min |
-| A08 | Software / Data Integrity Failures | Pinned Docker image SHA; SBOM in CI; EAS Build provenance for mobile |
-| A09 | Logging & Alerting Failures | Auth events logged to OpenSearch with correlation IDs; PII/secret redaction at logger + Fluent Bit Lua script; never log tokens |
-| A10 | Mishandling of Exceptional Conditions (**NEW**) | Fail-closed on compliance/auth errors (a thrown check blocks the action, never falls through to "allow"); structured error paths that strip tokens; no stack traces to clients |
+| A01 | Broken Access Control (incl. SSRF) | `workspaceProcedure` on every tRPC proc; `requireTenant` on every MCP tool; gRPC handler asserts `request.workspace_id === metadata.workspace_id`; Postgres RLS safety net; ClickHouse query gateway rejects unscoped queries. SSRF: ingestion-service URL allowlist (only vendor endpoints) — no arbitrary fetches |
+| A02 | Security Misconfiguration | No debug in prod; fastify-helmet headers; MCP `scope` on every tool; `requireTenant` on every write |
+| A03 | Software Supply-Chain Failures | scanner suite below + SBOM + pinned Docker SHAs + EAS Build provenance |
+| A04 | Cryptographic Failures | TLS everywhere; Supabase JWT via JWKS; KMS envelope encryption for OAuth tokens (ARN ref in `core.integrations`, never ciphertext-in-DB) |
+| A05 | Injection | Prisma + asyncpg parameterized; Zod on every input; ClickHouse query gateway |
+| A06 | Insecure Design | RLS + query gateway = defense in depth; never one layer |
+| A07 | Auth Failures | Supabase defaults; refresh rotation on every use; magic-link expiry 10min |
+| A08 | Data Integrity Failures | pinned SHA; SBOM; EAS provenance |
+| A09 | Logging/Alerting Failures | auth events → OpenSearch w/ correlation IDs; PII/secret redaction at logger + Fluent Bit Lua; never log tokens |
+| A10 | Mishandling Exceptional Conditions | fail-closed on compliance/auth errors (thrown check blocks, never falls through to allow); strip tokens from error paths; no stack traces to clients |
 
-## Multi-Tenant Isolation (the Brain invariant) — gate, don't re-explain
+## Four-layer input validation (make the bug structurally impossible)
 
-`workspace_id` isolation is enforced as a four-layer defense-in-depth pattern (JWT claim → service-side gRPC check → Postgres RLS + ClickHouse query gateway → Kafka envelope + Decision Log audit). The full layer-by-layer walkthrough, the `brain_clickhouse` predicate guard, and the cross-workspace-403 verification snippets live in **`defense-in-depth-validation`** — Shreya's review confirms all four layers are present, citing that skill. Role-level access (who within a workspace can do what) is in **`auth-and-access`**.
+The slice-3 lesson: a single check is bypassed by new code paths, refactors, mocks, or an MCP tool wired up six months later. Validate at EVERY layer. The cross-tenant `brand_id`-from-body CVE was killed by four layers, not one.
 
-Shreya's tenant-isolation gate (every review): cross-workspace read returns `403`; the ClickHouse gateway rejects any unscoped query; every new workspace-scoped table has an RLS policy; every MCP write tool declares a scope.
+**L1 — Entry (Zod `.strict()` / Pydantic).** Reject invalid input at the boundary; `.strict()` REJECTS extra fields (incl. `brand_id`/`brandId`). `workspace_id` is NEVER in the input — it comes from JWT.
+```typescript
+const adsSpendInput = z.object({
+  campaign_id: z.string().uuid(),
+  spend_minor: z.number().int().nonnegative(),  // integer minor units — no float
+  currency: z.enum(['INR','USD']),
+}).strict();   // .strict() on EVERY public-facing schema — drift fails loud
+// ctx.workspaceId set from JWT by the auth hook, never from input
+```
+**L2 — Business logic.** Assert invariants; don't trust your own callers. `assert(isUUID(workspaceId))`; verify the campaign belongs to this workspace even though RLS will block.
+**L3 — Environment guard (RLS / query gateway).** The structural bottom even if L1/L2 are bypassed by a migration script.
+```sql
+ALTER TABLE ad_spend ENABLE ROW LEVEL SECURITY;
+CREATE POLICY rls_ad_spend ON ad_spend
+  USING (workspace_id = current_setting('app.workspace_id')::uuid);
+```
+ClickHouse has no native RLS — every query goes through `pylibs/brain_clickhouse`, which rejects any query lacking a `workspace_id =` predicate. gRPC: server cross-checks metadata `workspace_id` against the issuing JWT; mismatch blocked + audit-logged.
+**L4 — Audit.** Every write → `ai.decision_log` `(workspace_id, actor, action, target, payload_hash, paradigm, model, request_id)`. The forensic floor when L1–3 fail in future.
 
-## Supabase Auth (canon/technical-requirements.md)
+The Stripe-grade test: **can you craft a curl that bypasses L1–L2 and writes a row in another workspace?** If the answer isn't immediately "no," you don't have defense in depth.
 
-- Access token: short-lived JWT (~1h)
-- Refresh token (web): httpOnly + secure + sameSite=lax cookie — **never** in JS
-- Refresh token (mobile): `expo-secure-store` (Keychain `WHEN_UNLOCKED_THIS_DEVICE_ONLY` / Android Keystore-encrypted prefs) — **never** in AsyncStorage
-- Refresh rotation: on every use
-- Magic link expiry: 10 min
-- Google OAuth scopes: `email + profile` only
+Per-surface matrix (L1/L2/L3/L4): tRPC mutation · MCP write tool · ClickHouse insert · every outbound message (channel validator → compliance engine → vendor rate limit → `lifecycle.outbound_log`) · auth refresh · web cookie auth. Each needs all four.
 
-### Fastify JWT verification
+## Output safety (XSS prevention)
+
+Brain renders untrusted content everywhere: campaign names (Meta/Google), brand notes, inbox/ticket text, AI-generated headlines (treat as untrusted — prompt-injection risk; see `agentic-safety`), Decision Log payloads, deep-link params, external logo URLs. React escapes text by default; the net is gone the moment you reach for `dangerouslySetInnerHTML` or build URLs from input.
+
+| XSS type | Defense |
+|---|---|
+| Reflected | Server Components escape; `URL()` validation |
+| Stored | React text escape; DOMPurify when rendered as HTML |
+| DOM-based | avoid `innerHTML`/`document.write`/`eval`; use `textContent` |
+| Mutation (mXSS) | DOMPurify; never roll your own sanitizer |
 
 ```typescript
-// apps/api-gateway/src/auth.ts
-import { createRemoteJWKSet, jwtVerify } from 'jose';
+// packages/ui/src/sanitize.ts — isomorphic-dompurify (the only sanitizer Brain uses)
+const RICH = { ALLOWED_TAGS:['b','i','em','strong','a','p','br','ul','ol','li','h3','h4'],
+               ALLOWED_ATTR:['href','title','target','rel'], ALLOW_DATA_ATTR:false };
+export const sanitizeRichText = (d:string) =>
+  DOMPurify.sanitize(d, RICH).replace(/<a /g,'<a rel="noopener noreferrer" target="_blank" ');
+export const sanitizeHeadline = (d:string) =>            // AI-generated: inline emphasis only
+  DOMPurify.sanitize(d, { ALLOWED_TAGS:['b','em','strong'], ALLOWED_ATTR:[] });
 
-const JWKS = createRemoteJWKSet(new URL(`${SUPABASE_URL}/auth/v1/.well-known/jwks.json`));
-
-export async function verifyToken(token: string) {
-  const { payload } = await jwtVerify(token, JWKS, {
-    issuer: SUPABASE_URL,
-    audience: 'authenticated',
-  });
-  return {
-    userId: payload.sub as string,
-    workspaceId: payload.app_metadata?.active_workspace_id as string,
-  };
-}
+const SAFE = new Set(['http:','https:','mailto:','tel:']);   // blocks javascript:/data:/vbscript:
+export function safeURL(input?:string|null, fb='#'){ if(!input) return fb;
+  try{ const u=new URL(input); return SAFE.has(u.protocol)?u.toString():fb; }catch{ return fb; } }
 ```
+Sanitize at the **render boundary**, not storage (store raw → rules can change without backfill). Always allowlist. CSP: strict, per-request nonce, **no `unsafe-inline` on `script-src`** (`'self' 'nonce-…' 'strict-dynamic'`), `frame-ancestors 'none'`, plus `X-Content-Type-Options: nosniff` + `Referrer-Policy`. Mobile: `WebView` JS off unless needed + strict `originWhitelist`; `safeURL()` before `Linking.openURL`; Zod-validate push payloads before deep-link routing.
 
-## MCP Auth Scopes (canon/technical-requirements.md)
+PR output-safety check: any new `dangerouslySetInnerHTML` is sanitized; any data-driven `<a href>`/`<img src>` uses `safeURL()`/host allowlist; CSP changes Shreya-approved; Playwright renders `<script>alert(1)</script>` + `<img src=x onerror=alert(1)>` and asserts they appear literally escaped.
 
-Every MCP tool declares a required scope:
+## Secrets handling (KMS envelope)
 
-```
-brain:analytics:read         — read-only metric queries
-brain:memory:read            — Memory Layer read
-brain:lifecycle:read         — outreach + ticket read
-brain:lifecycle:write        — trigger audiences + outreach
-brain:integrations:read      — connected platforms read
-brain:integrations:write     — write back to platforms
-brain:agent:invoke           — call Brain agents
-brain:admin                  — superuser; rare; audited
-```
+Vendor OAuth tokens are KMS-envelope-encrypted into **AWS Secrets Manager**; `core.integrations` holds only `credential_secret_arn`. Per-workspace DEK; KEK in KMS, never exported. ingestion-service asks core-service for a fresh-decrypted token per poll, refreshes if expired, discards from memory immediately. Plaintext never in DB row, logs, or long-lived in Python. Full flow: `oauth-implementation`.
 
-Default new external API key: `brain:analytics:read + brain:memory:read`. Higher scopes need Owner approval (audit-logged).
+Rotation: per-workspace DEK 90d (re-wrap, lazy re-encrypt); KEK 365d (KMS auto); OAuth per-vendor TTL + forced re-auth 180d; JWT signing key 90d (dual-key JWKS overlap ≥ max token TTL); DB creds 90d (Secrets Manager rotation Lambda, 4-step). Pods read by ARN each pull — rotation propagates without redeploy. **Break-glass:** time-boxed IAM role (auto-expires), every use logged + alerts Shreya/Jatin; no standing human read on prod secrets. **Secret-sprawl:** gitleaks (pre-commit + CI) + GitHub secret scanning push-protection; a hit blocks merge + triggers rotation.
 
-Verification: a `*:read` scoped key returns 403 on `*:write` tool calls.
+## Scanner suite (CI gate + incident response)
 
-This is the canonical scope **catalog**. How each MCP tool *declares* its `requiredScope` + `requiredRole`, and how the server middleware enforces both, is in **`auth-and-access`** (MCP tool scopes section).
+| Tool | Where | Catches |
+|---|---|---|
+| `pnpm audit` (`--audit-level=high`) | Node + web + mobile | npm advisory CVEs |
+| Snyk (CLI + GitHub App) | Node + Python | CVEs, licenses, fix PRs |
+| Trivy | ECR images + `fs` (vuln,secret,misconfig) | OS/app CVEs, secrets, bad Dockerfiles |
+| Bandit | Python | hardcoded secrets, weak crypto, `assert` in prod |
+| `pip-audit` + `safety` | Python deps | PyPA advisory CVEs |
+| OWASP Dependency-Check | n/a (no JVM) — skip unless that changes | |
+| cdk-nag | `infra/` | AWS Well-Architected violations |
+| Dependabot + GitHub Secret Scanning | all repos | always-on |
 
-## OAuth Token Storage (canon: ARN ref, not ciphertext-in-DB)
+CI workflow runs on every PR + nightly (`cron 0 18 * * *` = 23:30 IST). Image scan runs after build-and-push to `main`; CRITICAL/HIGH fails the ArgoCD trigger. Use `ignore-unfixed: true` (block what you can act on). SBOM (CycloneDX via Trivy) per image — SOC 2 evidence (see `compliance-attestation`).
 
-Vendor tokens are **KMS-envelope-encrypted into AWS Secrets Manager**; the `core.integrations` row holds only an opaque `credential_secret_arn` reference — never the ciphertext. Per-workspace DEK; KEK in KMS, never exported. core-service owns a decryption wrapper:
+**Severity policy:** CRITICAL → block merge, patch ≤24h, else compensating control (WAF rule / flag off path). HIGH → block, patch ≤7d or Shreya-approved deferred exception + Decision Log entry. MEDIUM → backlog. LOW → note. Copyleft license in link context → block.
 
-```typescript
-// apps/core-service/src/integrations/oauth.ts
-import { SecretsManagerClient, PutSecretValueCommand } from '@aws-sdk/client-secrets-manager';
+**Suppressions** live in one versioned file (`.snyk` / `safety-policy.yml`), each with a reason + `expires` date; CI re-flags on expiry for quarterly re-review. No permanent ignores.
 
-// Encrypt → store in Secrets Manager (KMS CMK on the secret); return the ARN for the DB row
-async function putCredential(workspaceId: string, source: string, tokens: object): Promise<string> {
-  const res = await sm.send(new PutSecretValueCommand({
-    SecretId: `brain/integrations/${workspaceId}/${source}`,   // KMS-encrypted at rest
-    SecretString: JSON.stringify(tokens),
-  }));
-  return res.ARN!;   // store ONLY this in core.integrations.credential_secret_arn
-}
-```
+**Incident response (CI fires HIGH/CRITICAL):** Jatin acks (P2/P3, → P0/P1 if actively exploited) → Shreya assesses path usage + fix availability → patch PR or compensating control → postmortem in `memory/incidents/<date>-cve-<slug>.md`.
 
-Maya (ingestion) asks core-service for a fresh-decrypted token per poll (fetched from Secrets Manager by ARN), refreshes if expired, **discards from memory immediately**. Plaintext tokens never live in the DB row, in logs, or long-lived in Python services. See `oauth-implementation` for the full flow.
+## Mobile MASVS v2.1.0 (Level 1 + key Level 2)
 
-## India Compliance (canon/technical-requirements.md) — VETO authority
+Tokens in Keychain/Keystore via `expo-secure-store`; same redaction as backend; TLS cert pinning prod-only (pin api-gateway + Supabase, BOTH current + rotation cert); anti-tamper banner (don't block); Hermes minification; biometric/`FLAG_SECURE` Phase 2; app attestation Phase 3; reject unknown deep-link hosts. Tracks MASVS-PRIVACY alongside `compliance-engine`.
 
-Hard-coded into every calling / messaging path. Never feature-flagged.
+**Cert-pin rotation (bricks app if mishandled):** (1) add new pin to `PINS`; (2) OTA the new set ONE WEEK BEFORE server cert rotation; (3) rotate server cert; (4) remove old pin next OTA. Kill-switch endpoint (HTTP, no pinning) for emergency pin fetch.
 
-| Rule | Verification snippet |
-|---|---|
-| Calling hours 09:00–21:00 IST | `place_call(...)` outside window → `deferred("outside_calling_hours")`; `call.dialed_at` never outside window in DB |
-| DND (brand + NCPR) | Customer with `do_not_call=true` OR NCPR-listed → `blocked("brand_dnd"|"ncpr_listed")` |
-| Consent | `consent_status IN ('opted_out','withdrawn')` → `blocked("consent_revoked")` |
-| 48h frequency cap | Second call within 48h → `blocked("frequency_cap")` (unless segment=champions + vip_override) |
-| DLT registration | Unregistered brand → `blocked("dlt_not_registered")` |
-| Recording consent | Decline → call proceeds with no audio retained; `call.recording_url IS NULL` |
-| GST inclusive pricing | Every revenue / margin calc nets out GST via RegionAdapter `extract_net_revenue` |
+## STRIDE (mandatory for any auth/payment/PII change)
 
-Test matrix mandatory for any lifecycle-service touch (see `testing-tdd` skill).
+Save to `memory/security/<slug>-threat-model.md` via `blueprints/threat-model.md`. Per component: Spoofing, Tampering, Repudiation, Information disclosure, Denial of service, Elevation of privilege.
 
-## Mobile MASVS v2.1.0 (canon/technical-requirements.md) — Shreya pairs with Karan
+## AWS baseline
 
-Pinned to **OWASP MASVS v2.1.0**. Brain targets MASVS Level 1 + key Level 2, and tracks the **MASVS-PRIVACY** control group (data minimization, transparency, user control over PII on-device) alongside `data-privacy-dpdp`:
-
-| Control | Implementation |
-|---|---|
-| Sensitive data in secure storage | Refresh tokens in Keychain/Keystore via `expo-secure-store` |
-| No PII / secrets in logs | Same redaction rules as backend |
-| TLS cert pinning | Production builds only; pin api-gateway + Supabase; pin BOTH current + rotation cert |
-| Anti-tampering | `expo-device.isRootedExperimentalAsync()` + warning banner (don't block — too aggressive) |
-| Code obfuscation | Hermes minification (default) |
-| Biometric for sensitive views | Phase 2 — `expo-local-authentication` |
-| App attestation | Phase 3 — Apple DeviceCheck + Google Play Integrity |
-| Screen recording prevention | Phase 2 — `FLAG_SECURE` on financial summary screens |
-| Deep link validation | Reject unknown hosts |
-
-### Cert pinning rotation sequence (CRITICAL — bricks app if mishandled)
-
-1. Add new cert pin to `PINS` array in mobile code
-2. **OTA-update the new pin set ONE WEEK BEFORE server cert rotation** via EAS Update
-3. Rotate cert on server
-4. Remove old pin in next OTA
-
-Kill-switch endpoint (HTTP, NO pinning) for emergency pin fetch on cert errors.
-
-## AWS Security Baseline (canon/technical-requirements.md)
-
-```
-VPC:    All services in private subnets; ALB only in public
-IAM:    No wildcard `*` in production; per-pod IRSA roles on EKS; per-task ECR pull only
-Encryption: Supabase RDS at-rest (AES-256), S3 SSE-S3, ElastiCache TLS + at-rest, KMS for OAuth tokens
-Secrets: AWS Secrets Manager (KMS-encrypted), injected via EKS env-from-secret
-WAF:    AWS WAF on CloudFront + ALB, 2000 req/5min/IP rate limit, geo rules
-GuardDuty: enabled all regions
-Security Hub: CIS + AWS Foundational Best Practices
-```
-
-## Threat modeling (STRIDE) — mandatory for any auth/payment/PII change
-
-Save threat models to `memory/security/<slug>-threat-model.md` using `blueprints/threat-model.md`.
-
-For each component touched:
-- **S**poofing — can someone impersonate?
-- **T**ampering — can data be modified in transit / at rest?
-- **R**epudiation — can an action be denied?
-- **I**nformation disclosure — what PII / secrets could leak?
-- **D**enial of service — what can rate-limit be exhausted on?
-- **E**levation of privilege — what scope escalation is possible?
+Private subnets (ALB only public); no wildcard IAM in prod, per-pod IRSA; encryption at rest (RDS AES-256, S3 SSE, ElastiCache TLS+rest, KMS for tokens); Secrets Manager (KMS) via env-from-secret; WAF on CloudFront+ALB (2000 req/5min/IP, geo rules); GuardDuty all regions; Security Hub (CIS + AWS FBP).
 
 ## Verdict format (Shreya)
 
 ```
-[SECURITY — SHREYA]
-Review: <feature>
-
-Vulnerabilities Found:
-  CRITICAL: <issue>      → Fix: <verification snippet>
-  HIGH:     <issue>      → Fix: <verification snippet>
-  MEDIUM:   <issue>      → Recommendation: <suggestion>
-  LOW:      <issue>      → Note
-
-Security Controls Verified:
-  - workspaceProcedure on tRPC: <list>
-  - requireTenant on MCP tools: <list>
-  - RLS policies on new tables: <list>
-  - PII redaction at logger + Fluent Bit: verified
-  - India compliance gates: <list of can_call / can_message paths tested>
-  - MASVS controls (if mobile): <list>
-
-Verdict: APPROVED | NEEDS FIXES
-
-Accepted by: <Founder / Shreya> on <YYYY-MM-DD>
+[SECURITY — SHREYA] Review: <feature>
+Vulnerabilities: CRITICAL/HIGH/MEDIUM/LOW: <issue> → Fix: <verification snippet>
+Controls Verified: workspaceProcedure / requireTenant / RLS on new tables / PII redaction / MASVS (mobile)
+Verdict: APPROVED | NEEDS FIXES   Accepted by: <Shreya> on <YYYY-MM-DD>
 ```
+Compliance/India gates → see `compliance-engine` (separate VETO surface).
 
-## Common failure modes
+## Anti-patterns
+- Findings without verification snippets (HIGH/CRITICAL needs curl + expected response or test assertion).
+- Forgetting one of the four tenant layers; MCP tool without scope; token logged in an error message.
+- httpOnly cookie missed on web; cert-pin rotation skipped the one-week pre-rotation; soft-warning scanners that get ignored.
 
-- **Findings without verification snippets** (encoded 2026-05-12 slice-3) — paragraphs feed design phase; builders need curl + expected response or test assertion. Detection: HIGH/CRITICAL with no snippet.
-- **Forgetting one of the four tenant layers** — JWT alone, or RLS alone. All four mandatory.
-- **MCP tool without scope** — Shreya blocks. Detection: `mcpTool({...})` missing `scope` field.
-- **Token logged in error message** — when an OAuth refresh fails, the full request often contains the token. Mitigation: structured error path that strips tokens before logging.
-- **httpOnly cookie missed** on web — XSS exfiltrates. Always `httpOnly + sameSite=lax + secure`.
-- **Cert pinning rotation skipped one-week pre-rotation** — bricks app. Use kill-switch + coordinate with Jatin.
-- **India compliance toggle** — never feature-flag calling hours / DLT / 48h cap.
-
-## Secrets rotation lifecycle
-
-KMS envelope encryption (above) protects secrets at rest; rotation bounds the blast radius if one leaks. Every secret class has a **cadence** and an **owner**:
-
-| Secret | Rotation cadence | Mechanism |
-|---|---|---|
-| Per-workspace **DEK** | 90d | re-wrap under same KEK; lazy re-encrypt on next write |
-| **KEK** (KMS CMK) | 365d | AWS KMS automatic key rotation (transparent; old key versions retained for decrypt) |
-| Vendor **OAuth tokens** | per-vendor TTL (refresh on expiry) + forced re-auth 180d | core-service refresh wrapper; ARN-referenced in `core.integrations` |
-| **JWT signing key** (Supabase) | 90d | dual-key overlap (below) |
-| **DB creds** (Supabase/CH/Redis) | 90d | Secrets Manager rotation Lambda |
-
-**Automated rotation:** DB + service creds rotate via **AWS Secrets Manager rotation Lambdas** (4-step `createSecret → setSecret → testSecret → finishSecret`); pods read the secret by ARN each pull (never bake into the image), so a rotation propagates without redeploy.
-
-**Zero-downtime rotation (dual-key overlap):** never hard-swap a key in-flight. For JWT signing-key rollover, publish **both** old + new keys in the JWKS for one overlap window (≥ max token TTL ~1h) so in-flight tokens still verify; retire the old key only after the window. Mirrors the **cert-pin rotation** sequence (current + rotation pin live together one week before server cert rotation).
-
-**Break-glass:** emergency human access to a raw secret is a separate, **time-boxed IAM role** (auto-expires), every use **logged to OpenSearch + audit** with `request_id`, and **alerts** Shreya + Jatin in real time. No standing human read on production secrets.
-
-**Secret-sprawl scanning:** **gitleaks** in pre-commit + CI + **GitHub secret scanning** (push protection) catch a secret committed to the repo; a hit blocks the merge and triggers immediate rotation of the exposed credential.
-
-## See also (the security trio + canon)
-
-- `skills/auth-and-access/SKILL.md` — OWASP A01: role model + JWT/RLS + MCP tool roles + agency multi-workspace + session lifecycle
-- `skills/defense-in-depth-validation/SKILL.md` — multi-tenant `workspace_id` four-layer isolation pattern
-- `skills/india-commerce-economics/SKILL.md` — DLT + NCPR + DND compliance patterns
-- `canon/technical-requirements.md` — canonical IAM + audit + log spine, MCP auth scopes, India compliance hard-codes, MASVS + cert pinning
-- `blueprints/threat-model.md` — STRIDE template
+## See also
+`auth-and-access` (A01: RBAC + JWT/RLS + session) · `compliance-engine` (DPDP/DLT/NCPR regime — separate VETO) · `agentic-safety` (untrusted-text + agent actions) · `compliance-attestation` (SBOM/SOC2 evidence) · `oauth-implementation` (token storage flow) · `canon/TECH/16_compliance_engine.md` · `canon/technical-requirements.md` · `blueprints/threat-model.md`

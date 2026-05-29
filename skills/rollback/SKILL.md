@@ -9,7 +9,7 @@ Manually trigger rollback. Use when the auto-rollback didn't fire (slow regressi
 Steps:
 
 1. Parse `$ARGUMENTS` into `req_id` and `reason`.
-2. **Confirm intent** — rollback is destructive in the sense that it reverts the deployed change. Surface what's being reverted (commit SHA, image tag, services affected).
+2. **Confirm intent** — rollback reverts the deployed change. Surface what's being reverted (commit SHA, image tag, services affected).
 3. **Invoke the `platform-devops` subagent** with directive `manual-rollback`. Jatin uses ArgoCD to revert to the previous synced revision.
 4. Append a decision-log entry: type `rollback`, actor `<operator>`, reason, blast radius.
 5. Update `state/active.json`: status → `rolled-back`, stage → 4 (re-triage).

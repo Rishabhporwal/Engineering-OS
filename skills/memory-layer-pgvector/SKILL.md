@@ -1,6 +1,6 @@
 ---
 name: memory-layer-pgvector
-description: Brain's Memory Layer (canon/TECH/05 §0) — THE MOAT alongside the Decision Log. The 5 memory subsystems — Brand Fingerprint (16-dim daily vector, ai.brand_fingerprint), Condition-Outcome pairs (pgvector "find similar past conditions" on every tick, ai.condition_outcome), Cross-Brand Benchmarks (k≥5 anonymity, ai.cross_brand_pattern), Seasonal Codebook (per-brand festival uplift), Customer Segment Memory (daily RFM). HNSW cosine indexes; almost all ops are SQL+ML (paradigm 1/2) — compounding learning at SQL economics. Use when wiring agent memory, embedding brand context, or doing semantic retrieval in intelligence-service.
+description: The Memory Layer — THE MOAT with the Decision Log. 5 subsystems (Brand Fingerprint, Condition-Outcome, Cross-Brand k≥5, Seasonal, Segment RFM); HNSW pgvector; SQL/ML economics.
 ---
 
 # Memory Layer — the moat at SQL economics
@@ -43,7 +43,7 @@ The 16 dims (tunable): CM2 % · revenue trajectory (7d) · MER · aMER · CAC (d
 
 ## 2. Condition-Outcome pairs — compounding learning
 
-Every recommendation becomes a Condition-Outcome pair when its outcome attributes back (it `REFERENCES ai.decision_log` — the two moats are linked):
+Every recommendation becomes a Condition-Outcome pair when its outcome attributes back (it `REFERENCES ai.decision_log` — the two moats are linked; see [`decision-log`](../decision-log/SKILL.md)):
 
 ```sql
 CREATE TABLE ai.condition_outcome (
@@ -81,7 +81,7 @@ Aggregated, anonymized network patterns; **k-anonymity enforced in schema** (`br
 
 ## 4 + 5. Seasonal Codebook + Customer Segment Memory
 
-- **Seasonal Codebook** — per-brand per-event uplift multipliers (learn own coefficients year over year; new brands fall back to the cross-brand benchmark). Feeds forecasting + festival narrative ([`india-commerce-economics`](../india-commerce-economics/SKILL.md)).
+- **Seasonal Codebook** — per-brand per-event uplift multipliers (learn own coefficients year over year; new brands fall back to the cross-brand benchmark). Feeds forecasting + festival narrative ([`india-commerce-economics`](../india-commerce-economics/SKILL.md), [`forecasting-prophet`](../forecasting-prophet/SKILL.md)).
 - **Customer Segment Memory** — per-customer daily RFM scores + segment, the single primitive the audience builder consumes.
 
 ## Cost-paradigm map — almost zero LLM
@@ -102,8 +102,8 @@ Compounding learning at SQL economics ([`cost-routing-paradigms`](../cost-routin
 1. **`workspace_id`-scoped vectors, always.** Every retrieval filters by `workspace_id`. An unscoped vector search is a cross-brand leak — fail closed.
 2. **Source of truth stays relational.** The fingerprint/CO log are a retrieval *lens* over facts that also live as structured rows + the Decision Log — not the sole record.
 3. **Pinned vector definition.** The 16-dim layout is versioned; changing dimensions requires recomputing fingerprints (otherwise vectors are incomparable).
-4. **`HNSW` cosine indexes** (`vector_cosine_ops` with `m = 16, ef_construction = 64`); set `hnsw.ef_search` at query time to trade recall for latency (e.g. `SET LOCAL hnsw.ef_search = 64;`). HNSW is the 2026 default for Brain's write-heavy, daily-growing vectors (Brand Fingerprint + condition_outcome are queried every tick and stay <1M rows/workspace): **95%+ recall out-of-box, absorbs inserts without an index rebuild** (ivfflat needs periodic `REINDEX` as data grows and degrades on writes). `workspace_id` predicate leads the query ([`database-design`](../database-design/SKILL.md)).
-   - **Escape hatch:** keep `ivfflat (vector_cosine_ops) WITH (lists = N)` **only** at the >50M-vector / memory-constrained extreme — HNSW costs roughly 2–5× the memory of ivfflat, so at very large scale ivfflat's smaller footprint can win. Brain's per-workspace vectors are nowhere near that; default to HNSW.
+4. **`HNSW` cosine indexes** (`vector_cosine_ops` with `m = 16, ef_construction = 64`); set `hnsw.ef_search` at query time to trade recall for latency. HNSW is the 2026 default for Brain's write-heavy, daily-growing vectors (queried every tick, <1M rows/workspace): 95%+ recall out-of-box, absorbs inserts without an index rebuild (ivfflat needs periodic `REINDEX` and degrades on writes). `workspace_id` predicate leads the query ([`database-design`](../database-design/SKILL.md)).
+   - **Escape hatch:** keep `ivfflat (vector_cosine_ops) WITH (lists = N)` **only** at the >50M-vector / memory-constrained extreme (HNSW costs ~2–5× the memory). Brain's per-workspace vectors are nowhere near that; default to HNSW.
 5. **Memory references the Decision Log**, never silently overwrites — the Decision Log is append-only.
 
 ## Anti-patterns
@@ -125,4 +125,5 @@ Compounding learning at SQL economics ([`cost-routing-paradigms`](../cost-routin
 
 - `canon/TECH/05_intelligence_layer.md` §0 — the 5 subsystems, schemas, daily-tick timing, paradigm map
 - `canon/technical-requirements.md` §16.1 — Memory Layer requirements
-- [`agentic-design`](../agentic-design/SKILL.md) · [`forecasting-prophet`](../forecasting-prophet/SKILL.md) · [`multi-tenancy-isolation`](../multi-tenancy-isolation/SKILL.md) · [`morning-brief-mobile`](../morning-brief-mobile/SKILL.md)
+- [`agentic-design`](../agentic-design/SKILL.md) · [`decision-log`](../decision-log/SKILL.md) · [`forecasting-prophet`](../forecasting-prophet/SKILL.md) · [`multi-tenancy-isolation`](../multi-tenancy-isolation/SKILL.md) · [`morning-brief-mobile`](../morning-brief-mobile/SKILL.md)
+</content>

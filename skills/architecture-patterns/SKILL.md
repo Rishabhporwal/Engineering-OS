@@ -1,6 +1,6 @@
 ---
 name: architecture-patterns
-description: Brain's architecture patterns — Microservices + Monorepo + Event-Driven (Kafka primary) + BFF (api-gateway) + MCP server + DDD service internals. The Single-Primitive Rule (every cross-cutting concern built once, consumed N times). 7 services (api-gateway, core, ingestion, analytics, intelligence, notifications, lifecycle) + Next.js web + React Native + Expo mobile. Per-service DB ownership; the 15 strict rules; communication rules (frontend→api-gateway only). Auto-load when Aryan is reviewing service boundaries, DB ownership, or when a PR triggers a Single-Primitive / DDD concern (anti-pattern detection).
+description: Brain's locked architecture — microservices on a monorepo, event-driven (Kafka), BFF, MCP server, DDD internals, Single-Primitive Rule, 7 services, the 15 invariants.
 ---
 
 # Architecture Patterns — Brain
@@ -8,50 +8,28 @@ description: Brain's architecture patterns — Microservices + Monorepo + Event-
 ## Brain's locked pattern (TECH §1)
 
 - **Microservices on monorepo** — 7 backend services + web + mobile (Turborepo only; never Nx)
-- **DDD service internals** — every service organized by bounded context, never by technical layer (see `domain-driven-design`)
+- **DDD service internals** — every service organized by bounded context, never technical layer (see `domain-driven-design`)
 - **Event-driven (Kafka primary)** — MSK + Glue Schema Registry; `integrations.*.v1` with infinite retention
 - **BFF at the edge** — api-gateway aggregates downstream via gRPC; serves tRPC to web + mobile
-- **MCP server inside api-gateway** — same auth + multi-tenancy as tRPC (see canon/technical-requirements.md)
+- **MCP server inside api-gateway** — same auth + multi-tenancy as tRPC
 - **Contract-first** — `protos/` is the single source of truth for all internal contracts + MCP tool schemas
 - **OLTP / OLAP split** — Supabase Postgres + ClickHouse Cloud; analytics isolated in data-platform/
 - **CDC** — Debezium on MSK Connect for Postgres → Kafka where downstream wants recent OLTP mirror
 - **IaC** — AWS CDK + ArgoCD (NOT Terraform, NOT Helm); observability on CloudWatch/X-Ray/OpenSearch (NOT Prometheus/Grafana)
 
-**Pattern is locked.** Don't re-evaluate; see canon/technical-requirements.md and raise an explicit architecture decision if you're proposing a change.
+**Pattern is locked.** Don't re-evaluate; raise an explicit architecture decision if proposing a change.
 
-## The 15 strict rules (architecture invariants)
+## The 15 strict rules (invariants)
 
-**Never:**
-1. Build a monolith — every capability is an independently deployable service
-2. Share a database across services — no service touches another's DB (see ownership table below)
-3. Put business logic in the frontend — the frontend renders; logic lives in services
-4. Do AI orchestration in api-gateway — agents live in intelligence-service; the gateway is a BFF
-5. Run analytics in frontend-facing services — OLAP is isolated (ClickHouse + data-platform/)
+**Never:** (1) build a monolith; (2) share a database across services; (3) put business logic in the frontend; (4) do AI orchestration in api-gateway (agents live in intelligence-service); (5) run analytics in frontend-facing services.
 
-**Always:**
-6. Apply DDD — organize each service by bounded context, never controllers/services/models (`domain-driven-design`)
-7. Keep services independently deployable
-8. Design for horizontal scale (stateless services; state in datastores)
-9. Use circuit breakers on every cross-service call (`observability`)
-10. Be contract-first — `protos/` is the source of truth; `buf breaking` gates changes
-11. Be event-driven — state changes flow via Kafka; sync via gRPC
-12. Separate infrastructure from domain — domain code imports no framework (`domain-driven-design`)
-13. Be K8s-ready — health/liveness/readiness probes, graceful drain, PDB (`operational-readiness`)
-14. Enforce multi-tenancy — `workspace_id` at 4 layers (Postgres RLS, CH query gateway, Kafka envelope, MCP tenant check)
-15. Pass the cost-routing paradigm gate on every new path (`cost-routing-paradigms`)
+**Always:** (6) apply DDD (`domain-driven-design`); (7) keep services independently deployable; (8) design for horizontal scale (stateless; state in datastores); (9) circuit breakers on every cross-service call (`observability`); (10) be contract-first — `protos/` source of truth, `buf breaking` gates; (11) be event-driven — state changes via Kafka, sync via gRPC; (12) separate infrastructure from domain (domain imports no framework); (13) be K8s-ready — probes, graceful drain, PDB (`operational-readiness`); (14) enforce multi-tenancy — `workspace_id` at 4 layers (Postgres RLS, CH query gateway, Kafka envelope, MCP tenant check); (15) pass the cost-routing paradigm gate (`cost-routing-paradigms`).
 
-## The Single-Primitive Rule (NON-NEGOTIABLE — see canon/technical-requirements.md)
+## The Single-Primitive Rule (NON-NEGOTIABLE)
 
 > Every cross-cutting concern is built **once** and consumed by every channel, every agent, every workflow.
 
-Block at code review if you see:
-- "The email version of the audience builder" — there's ONE audience builder
-- "The call-specific consent flow" — there's ONE consent model
-- "The WhatsApp Decision Log" — there's ONE Decision Log
-- "A new notification service for SMS alerts" — there's ONE notification framework
-- "Per-channel customer profiles" — there's ONE customer record
-
-Single primitives + owners:
+Block at code review: "the email version of the audience builder" (there's ONE), "the call-specific consent flow" (ONE consent model), "the WhatsApp Decision Log" (ONE Decision Log), "a new notification service for SMS alerts" (ONE notification framework), "per-channel customer profiles" (ONE customer record).
 
 | Primitive | Owner service |
 |---|---|
@@ -62,69 +40,43 @@ Single primitives + owners:
 | Attribution | analytics-service |
 | Identity resolution | core-service |
 
-Adding a new channel costs **1x** engineering (a router adapter), not Nx. That's the structural reason Brain's GMV % pricing math works.
+Adding a new channel costs **1x** engineering (a router adapter), not Nx — the structural reason Brain's GMV % pricing math works.
 
 ## 7-service topology
 
 ```
-                            CloudFront + Route 53
-                                    │
-                                   ALB
-                                    │
+                            CloudFront + Route 53 → ALB
                             ┌───────┴─────────┐
                             │   api-gateway   │  (Node/Fastify; tRPC + MCP + WS/SSE; BFF)
-                            └───────┬─────────┘
-                                    │ gRPC
-        ┌───────────────────────────┼──────────────────────────────────────┐
-        │                           │                                       │
-┌───────▼────────┐  ┌───────────────▼──────┐  ┌────────────────┐  ┌────────▼────────┐
-│ core-service   │  │ analytics-service    │  │ intelligence-  │  │ notifications-  │
-│ (Node)         │  │ (Python)             │  │ service        │  │ service         │
-│                │  │                      │  │ (Python)       │  │ (Node)          │
-│ OLTP system    │  │ Metric engine,       │  │ 15 agents,     │  │ Email, Slack,   │
-│ of record:     │  │ ClickHouse MVs,      │  │ Memory Layer,  │  │ WhatsApp tx,    │
-│ workspace,     │  │ Decision Log,        │  │ Prophet,       │  │ push, in-app,   │
-│ goals,         │  │ India RegionAdapter  │  │ Claude,        │  │ exports         │
-│ integrations,  │  │                      │  │ MCP tools,     │  │                 │
-│ consent        │  │                      │  │ Morning Brief  │  │                 │
-└────────────────┘  └──────────────────────┘  │ Synthesizer    │  └─────────────────┘
-                                              └────────────────┘
-                                                       │
-                       ┌───────────────────────────────┴─────────────────────┐
-                       │                                                      │
-              ┌────────▼─────────┐                              ┌────────────▼─────────┐
-              │ ingestion-       │                              │ lifecycle-service    │
-              │ service          │                              │ (Node + Python)       │
-              │ (Python)         │                              │                       │
-              │ Shopify, Meta,   │                              │ RFM + audience builder│
-              │ Google, Shiprocket│                              │ + channel routers     │
-              │ Klaviyo          │                              │ + AI calling          │
-              │ → Kafka          │                              │ + compliance engine   │
-              └──────────────────┘                              │ + inbound inbox       │
-                                                                │ (Phase 3)             │
-                                                                └───────────────────────┘
-
-Plus 2 frontends:
-  Next.js web (workbench — Ananya)
-  React Native + Expo mobile (Morning Brief — Karan; PRIMARY surface)
+                            └───────┬─────────┘ gRPC
+   ┌────────────────┬──────────────┼──────────────────┬─────────────────┐
+┌──▼─────────┐ ┌────▼───────────┐ ┌▼──────────────┐ ┌─▼───────────────┐
+│ core (Node)│ │ analytics (Py) │ │ intelligence  │ │ notifications   │
+│ OLTP SoR:  │ │ Metric engine, │ │ (Py)          │ │ (Node)          │
+│ workspace, │ │ ClickHouse MVs,│ │ 15 agents,    │ │ Email, Slack,   │
+│ goals,     │ │ Decision Log,  │ │ Memory Layer, │ │ WhatsApp tx,    │
+│ integrations│ │ India Region- │ │ Prophet,Claude│ │ push, in-app,   │
+│ consent    │ │ Adapter        │ │ MCP tools,    │ │ exports         │
+└────────────┘ └────────────────┘ │ Morning Brief │ └─────────────────┘
+                                   └───────────────┘
+        ┌──────────────────┐              ┌──────────────────────┐
+        │ ingestion (Py)   │              │ lifecycle (Node + Py) │
+        │ Shopify, Meta,   │              │ RFM + audience builder│
+        │ Google, Shiprocket│              │ + channel routers     │
+        │ Klaviyo → Kafka  │              │ + AI calling          │
+        └──────────────────┘              │ + compliance engine   │
+                                          │ + inbound inbox (P3)  │
+Plus 2 frontends: Next.js web (Ananya)    └──────────────────────┘
+                  React Native + Expo mobile (Karan; PRIMARY surface)
 ```
 
-**Realtime, background jobs, cron, and long-running workflows are handled INSIDE these 7 services — never as separate dedicated services:**
-- **Realtime push (WS/SSE)** — served at the edge by api-gateway (or by notifications-service for delivery fan-out).
-- **Background jobs / async execution** — Kafka consumers inside the owning service handle retries, DLQ, and idempotency keys (`event-driven-kafka`).
-- **Scheduled / recurring / delayed** — EventBridge Scheduler triggers an in-service handler; the intelligence-service daily tick (06:55–07:15 IST) is the canonical example.
-- **Long-running multi-step workflows** — modeled as in-service application/use-cases (saga over Kafka with compensation) within the owning bounded context.
+**Realtime, background jobs, cron, and long-running workflows live INSIDE these 7 services — never as separate services:** realtime push (WS/SSE) at the edge (api-gateway / notifications fan-out); background jobs as Kafka consumers in the owning service (`event-driven-kafka`); scheduled via EventBridge Scheduler → in-service handler (the intelligence daily tick 06:55–07:15 IST is canonical); long-running multi-step as in-service use-cases (saga over Kafka with compensation).
 
-Each service:
-- Is organized internally by **bounded context, never technical layer** (`domain-driven-design`)
-- Has its own deploy pipeline (GitHub Actions → ECR → ArgoCD via AWS CDK)
-- Has its own ECR image + EKS deployment + Kafka consumer group(s)
-- **Owns its own datastore — no shared DBs** (table below)
-- Has its own designated engineer-owner (see canon/technical-requirements.md ownership matrix)
+Each service: organized by **bounded context** (`domain-driven-design`); own deploy pipeline (GitHub Actions → ECR → ArgoCD via CDK); own ECR image + EKS deployment + Kafka consumer groups; **owns its own datastore**; has a designated engineer-owner.
 
 ## Per-service DB ownership (NON-NEGOTIABLE — no shared DBs)
 
-No service reads or writes another service's datastore. Cross-service data flows via gRPC (sync) or Kafka events (async) — NEVER a direct DB read.
+No service reads or writes another's datastore. Cross-service data flows via gRPC (sync) or Kafka (async) — NEVER a direct DB read.
 
 | Service | Datastore |
 |---|---|
@@ -139,136 +91,75 @@ api-gateway is stateless (BFF). A cross-service read through another service's D
 
 ## Monorepo top-level layout (Turborepo only — never Nx)
 
-Beyond `apps/<service>/`, the monorepo has these top-level dirs:
-
 | Dir | Purpose | Maps to |
 |---|---|---|
-| `protos/` | **Contract-first source of truth** — gRPC + MCP tool schemas | `grpc-buf` (buf codegen → TS + Python) |
-| `schemas/` | Avro event schemas | Glue Schema Registry (`event-driven-kafka`) |
+| `protos/` | Contract-first source of truth (gRPC + MCP schemas) | `grpc-buf` |
+| `schemas/` | Avro event schemas | `event-driven-kafka` |
 | `kafka/` | Topic + consumer-group conventions | `event-driven-kafka` |
-| `ai/` | Versioned/testable/evaluated prompts, guardrails, evaluations, RAG, embeddings, orchestration | `agentic-design` |
-| `data-platform/` | dbt + Airflow/Dagster + Spark — analytics DAGs, isolated from OLTP | `clickhouse-olap` |
+| `ai/` | Versioned prompts, guardrails, evals, RAG, embeddings, orchestration | `agentic-design` |
+| `data-platform/` | dbt + Airflow/Dagster + Spark, isolated from OLTP | `clickhouse-olap` |
 | `monitoring/` | CloudWatch + X-Ray dashboards + OpenSearch monitors (NOT Grafana/Loki/Tempo) | `observability` |
-| `security/` | Threat models, IAM policy templates, India compliance gates | `security-baseline` |
+| `security/` | Threat models, IAM templates, India compliance gates | `security-baseline` |
 | `deployments/` | ArgoCD apps + Kustomize overlays (GitOps) | `devops-aws` |
-| `tests/` | Cross-service / E2E / load (k6) suites | `testing-tdd` |
+| `tests/` | Cross-service / E2E / load (k6) | `testing-tdd` |
 
-Plus `infra/` — **AWS CDK** stacks (NOT Terraform; NOT Helm). `monitoring/` maps to CloudWatch/X-Ray dashboards, NOT Prometheus/Grafana.
+Plus `infra/` — **AWS CDK** stacks (NOT Terraform; NOT Helm).
 
 ## Communication rules (NON-NEGOTIABLE)
 
 | From → To | Mechanism |
 |---|---|
-| frontend (web/mobile) → backend | **ONLY** api-gateway (tRPC/MCP request-response; WS/SSE push served at the gateway). Nothing else. |
+| frontend (web/mobile) → backend | **ONLY** api-gateway (tRPC/MCP; WS/SSE push at the gateway). Nothing else. |
 | api-gateway → services | gRPC (BFF fan-out) |
 | service → service | Kafka events (async state changes) — never a direct DB read |
-| long-running multi-step | in-service application/use-cases (saga over Kafka with compensation) in the owning bounded context |
-| scheduled / recurring | EventBridge Scheduler → in-service handler (e.g. intelligence-service daily tick) |
+| long-running multi-step | in-service use-cases (saga over Kafka with compensation) |
+| scheduled / recurring | EventBridge Scheduler → in-service handler |
 
-The frontend never touches core/analytics/intelligence/notifications/lifecycle directly — that's what the single edge (api-gateway) is for.
+The frontend never touches core/analytics/intelligence/notifications/lifecycle directly.
 
-## Why microservices + monorepo (TECH §2)
+## Why microservices + monorepo, and two languages (TECH §2)
 
-**Microservices** because:
-- Independent scaling: ingestion runs 20 pods, intelligence runs 2
-- Failure isolation: hung Claude call doesn't block the dashboard
-- Per-service language fit: Node for I/O-heavy edge work; Python for ETL + math + ML
-- Independent deploys: ship a metrics fix without redeploying intelligence
+**Microservices:** independent scaling (ingestion 20 pods, intelligence 2); failure isolation (a hung Claude call doesn't block the dashboard); per-service language fit; independent deploys. **Monorepo:** shared types (protobuf + TS packages); atomic refactors; single CI; IaC + docs + migrations alongside code.
 
-**Monorepo** because:
-- Shared types (protobuf for cross-language contracts; TS packages for cross-TS contracts)
-- Atomic refactors across services
-- Single CI pipeline orchestrates
-- IaC + docs + migrations live alongside service code
-
-## Why two languages (TECH §2)
-
-- **TypeScript:** api-gateway, core-service, notifications-service, lifecycle-service Node side, web, mobile. Strong I/O ecosystem; type safety with frontend.
-- **Python:** ingestion-service, analytics-service, intelligence-service, lifecycle-service Python side. Best ecosystem for ETL (httpx, aiokafka), data math (numpy, pandas), forecasting (Prophet, statsmodels), and Claude SDK.
-
-Boundary enforced: **TS services don't do heavy math; Python services don't serve user-facing latency-critical paths.**
+**TypeScript:** api-gateway, core, notifications, lifecycle Node side, web, mobile. **Python:** ingestion, analytics, intelligence, lifecycle Python side (ETL, data math, forecasting, Claude SDK). Boundary enforced: **TS services don't do heavy math; Python services don't serve latency-critical user paths.**
 
 ## Communication patterns
 
-### Synchronous — gRPC internal + tRPC edge
+- **Synchronous:** `Web/Mobile → tRPC → api-gateway → gRPC → backend`. `buf generate` produces TS + Python clients (`grpc-buf`).
+- **Asynchronous:** `ingestion → Kafka producer → integrations.*.v1 → analytics consumer → ClickHouse MV → analytics emits analytics.metrics.daily_materialized.v1 → intelligence + notifications consume`. Every envelope carries `workspace_id`; partition key IS `workspace_id` (`event-driven-kafka`).
+- **Agent surface (MCP):** external MCP clients + Brain agents → api-gateway MCP server → gRPC to backend; Decision Log auto-write on every write tool (`mcp-protocol`).
 
-```
-Web/Mobile → tRPC → api-gateway → gRPC → backend service
-```
+## Quarterly streamlining audit
 
-`buf generate` produces TS + Python clients from `protos/*.proto`. See `skills/grpc-buf/SKILL.md`.
+Each quarter: review for anti-pattern drift; flag duplication of cross-cutting concerns; document any paradigm-bypass (LLM where ML would have worked — `cost-routing-paradigms`); **refactoring time allocated explicitly** next quarter — not optional.
 
-### Asynchronous — Kafka (MSK + Glue + Avro)
+## When tempted to break the pattern
 
-```
-ingestion-service → Kafka producer → integrations.*.v1
-                                          ↓
-                              analytics-service consumer
-                                          ↓
-                              ClickHouse materialized view
-                                          ↓
-                              analytics emits → analytics.metrics.daily_materialized.v1
-                                          ↓
-                              intelligence-service + notifications-service consume
-```
+- "Just one more service" — only with an ADR + a clear bounded context + per-service owner.
+- "Add a queue/pub-sub alongside Kafka" — no; background jobs are Kafka consumers inside the owning service.
+- "Refactor api-gateway out so frontend talks to services directly" — no; the frontend has exactly one edge (rate limiting, fan-out, MCP, WS/SSE all live there).
+- "Organize this service by controllers/services/models" — no; bounded context (`domain-driven-design`).
 
-Every Kafka envelope carries `workspace_id`; partition key IS `workspace_id`. See `skills/event-driven-kafka/SKILL.md`.
+## Brainstorm personas (Aryan in design)
 
-### Agent surface — MCP
-
-```
-External MCP clients (Claude, partners) ──┐
-                                          ▼
-Brain agents (intelligence-service)  →  api-gateway MCP server  →  gRPC to backend services
-   (acting as MCP clients to call                                       ↓
-    memory.*, analytics.*, etc.)                                Decision Log auto-write on every write tool
-```
-
-See `skills/mcp-protocol/SKILL.md`.
-
-## Quarterly streamlining audit (see canon/technical-requirements.md)
-
-Every quarter:
-- Review codebase for anti-pattern drift
-- Flag duplication of cross-cutting concerns
-- Document any paradigm-bypass (LLM where ML would have worked — see `cost-routing-paradigms` skill)
-- **Refactoring time allocated explicitly** in next quarter — not optional
-
-## When you're tempted to break the pattern
-
-- "Just one more service" — but only with an ADR + a clear bounded context + per-service owner assigned
-- "Let's add a queue / pub-sub library alongside Kafka" — Kafka is primary for async; background jobs are Kafka consumers inside the owning service. Don't introduce a new broker.
-- "Let's refactor api-gateway out so frontend talks to services directly" — no. The frontend has exactly one edge: api-gateway. BFF is intentional: rate limiting, fan-out aggregation, MCP surface, and live WS/SSE push all live there.
-- "Let's organize this service by controllers/services/models" — no. Every service is organized by bounded context (`domain-driven-design`).
-
-## Brainstorm personas (Aryan invokes these in design)
-
-When Aryan designs, he invokes peers as personas:
-
-- **Vikram (Node backend):** "Does this stay under 100ms p95? Can tRPC fan-out hit all downstreams without serial waits?"
-- **Maya (ingestion / analytics / intelligence / lifecycle):** "Where does this enter Kafka? What's the idempotency key? Replay-safe? Metric registry entry, `workspace_id`-first MV, freshness SLA? Which paradigm, token budget, fallback when budget breaks? Audience, channel router, compliance gate, 48h frequency cap?"
-- **Ananya (web):** "Drill-down path? Empty / loading / error states? Mobile responsive — or desktop-only territory?"
-- **Karan (mobile):** "Morning Brief impact? Push notification? Deep link? Tamagui token coverage?"
+- **Vikram (Node):** "Under 100ms p95? Can tRPC fan-out hit all downstreams without serial waits?"
+- **Maya (data plane):** "Where does this enter Kafka? Idempotency key? Replay-safe? Metric registry entry, workspace_id-first MV, freshness SLA? Which paradigm, token budget, fallback? Audience, channel router, compliance gate, 48h cap?"
+- **Ananya (web):** "Drill-down path? Empty/loading/error states? Mobile responsive or desktop-only?"
+- **Karan (mobile):** "Morning Brief impact? Push? Deep link? Tamagui token coverage?"
 - **Jatin (platform):** "Pod sizing? MSK partition count? Cost delta? Auto-rollback alarm? New ArgoCD app?"
-- **Shreya (security):** "Multi-tenant — `workspace_id` at every layer? MCP scope? Secrets Manager? India compliance gate?"
+- **Shreya (security):** "workspace_id at every layer? MCP scope? Secrets Manager? India compliance gate?"
 
 ## Common failure modes
 
-- **Re-evaluating a locked pattern** — Aryan opens a "should we use microservices?" debate. The stack is locked (see canon/technical-requirements.md); don't re-litigate without an explicit architecture decision.
-- **Per-channel forks (Single-Primitive violation)** — block at code review.
-- **Sync-via-Kafka antipattern** — using Kafka for request/response. Use gRPC for synchronous, Kafka for state changes.
-- **Cross-service DB reads** — service A queries service B's database directly. Always go through gRPC or published events.
-- **Forgetting workspace_id in event envelope** — downstream can't partition or scope.
-- **New service without bounded context** — splitting a service "because it's getting big" without a clear domain boundary creates ops overhead without engineering benefit. ADR required.
+- **Re-evaluating a locked pattern** — the stack is locked; don't re-litigate without an explicit decision.
+- **Per-channel forks (Single-Primitive violation)** — block at review.
+- **Sync-via-Kafka antipattern** — Kafka for state changes, gRPC for request/response.
+- **Cross-service DB reads** — always go through gRPC or published events.
+- **Forgetting workspace_id in the event envelope** — downstream can't partition or scope.
+- **New service without bounded context** — ADR required.
 
 ## References
 
-- `canon/technical-requirements.md` — service map + scale design, Single-Primitive Rule, quarterly streamlining audit, MCP topology
-- `canon/TECH/18_service_architecture.md` — **the per-service operational spec**: each service's responsibilities/boundary/internal-modules/comms/data-flow/scale/security/real-time/failure, the cross-service communication matrix, the end-to-end flows, and the deferred-until-trigger forward extensions (knowledge graph / feature store / workflow engine). Consult when reviewing service boundaries, ownership, or a new cross-service interaction.
-- `skills/domain-driven-design/SKILL.md` — mandatory service-internal structure (bounded contexts, CQRS, tactical patterns)
-- `skills/grpc-buf/SKILL.md` — gRPC + proto patterns (protos/ is contract-first source of truth)
-- `skills/event-driven-kafka/SKILL.md` — Kafka topology
-- `skills/mcp-protocol/SKILL.md` — MCP server design
-- `skills/devops-aws/SKILL.md` — AWS CDK + ArgoCD (infra/ + deployments/)
-- `skills/observability/SKILL.md` — CloudWatch/X-Ray dashboards (monitoring/) + circuit breakers
-- `skills/cost-routing-paradigms/SKILL.md` — paradigm gate
+- `canon/technical-requirements.md` — service map + scale design, Single-Primitive Rule, quarterly audit, MCP topology
+- `canon/TECH/18_service_architecture.md` — per-service operational spec (boundaries, modules, comms, data flow, scale, failure)
+- Related: `domain-driven-design`, `grpc-buf`, `event-driven-kafka`, `mcp-protocol`, `devops-aws`, `observability`, `cost-routing-paradigms`

@@ -126,7 +126,7 @@ Return to CTOA for synthesis
 
 **Authority & decision rights:**
 - **Can decide alone:** API design, DB schema, event topics, materialized views, paradigm choice (SQL/ML/Haiku/Sonnet), service boundaries, observability plan, test strategy outline.
-- **Cannot decide alone:** New tech-stack layer (must go to Founder via `tech-stack-evaluation`); breaking change to a public surface (must go through `api-versioning-strategy` and CTOA); waiving a quality gate.
+- **Cannot decide alone:** New tech-stack layer (must go to Founder via `tech-stack-evaluation`); breaking change to a public surface (must go through `api-discipline` and CTOA); waiving a quality gate.
 
 **Operating loop:**
 ```
@@ -168,8 +168,8 @@ This table is the single source of truth for plan-length bands. Do not restate t
 | Skill | When invoked |
 |-------|--------------|
 | `architecture-patterns` | Every plan — Single-Primitive check, BFF + MCP boundaries. |
-| `database-design` | Every plan that adds/changes a table. |
-| `api-versioning-strategy` | Any change to a public surface (tRPC, gRPC, MCP). |
+| `data-layer` | Every plan that adds/changes a table. |
+| `api-discipline` | Any change to a public surface (tRPC, gRPC, MCP). |
 | `cost-routing-paradigms` | Paradigm decision is **his** at design time. |
 | `agentic-design` | When the plan creates/modifies an AI agent. |
 | `mcp-protocol` | When the plan touches MCP tools (proto = source of truth). |
@@ -210,7 +210,7 @@ Append journal: .engineering-os/memory/agents/backend.journal.md
 Emit handoff signal to QA (Tanvi) once Definition of Done items in his lane are green
 ```
 
-**Skill-driven behavior:** See [skill-mapping-matrix.md §Backend Developer](skill-mapping-matrix.md). At minimum every PR triggers `idempotency-handling`, `api-traffic-patterns`, `defense-in-depth-validation`, `engineering-discipline`, and `verification-before-completion`.
+**Skill-driven behavior:** See [skill-mapping-matrix.md §Backend Developer](skill-mapping-matrix.md). At minimum every PR triggers `idempotency-handling`, `api-discipline`, `security-baseline`, `engineering-discipline`, and `verification-before-completion`.
 
 **Anti-blind-agreement triggers:**
 - Architect's plan implies offset pagination, plaintext tokens, missing `requireRole`, sequential DB queries in a layout, or hard-coded India economics — push back to Aryan with [`backend-fastify-trpc-grpc`](../skills/backend-fastify-trpc-grpc/SKILL.md) citation.
@@ -260,7 +260,7 @@ Emit handoff signal to QA (Tanvi) once Definition of Done items in his lane are 
 **Anti-blind-agreement triggers:**
 - Plan adds a 4th signal to the Morning Brief — push back.
 - Plan asks for native code change but proposes OTA delivery — push back ("native bump goes through store").
-- Plan ignores offline path for the Morning Brief screen — push back (`mobile-offline-support`).
+- Plan ignores offline path for the Morning Brief screen — push back (`mobile-surface`).
 - Plan stores tokens in AsyncStorage instead of `expo-secure-store` — push back.
 
 ---

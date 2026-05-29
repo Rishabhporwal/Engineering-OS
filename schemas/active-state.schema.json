@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://brain.pipadacapital.com/schemas/active-state.schema.json",
+  "title": "active.json — in-flight requirements (v2 hot-path file)",
+  "description": "Validates the hottest, most-mutated state file (unvalidated in v1). Holds ONLY in-flight requirements; terminal reqs are pruned to registry.json by prune_state.py.",
+  "type": "object",
+  "required": ["active_requirements"],
+  "additionalProperties": true,
+  "properties": {
+    "active_requirements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["req_id", "stage", "status", "current_owner"],
+        "additionalProperties": true,
+        "properties": {
+          "req_id": {"type": "string", "pattern": "^(feat|fix|chore|spike|exp)-[a-z0-9-]+$"},
+          "title": {"type": "string"},
+          "stage": {"type": "integer", "minimum": 0, "maximum": 8},
+          "status": {"type": "string"},
+          "current_owner": {"type": "string"},
+          "current_owner_persona": {"type": "string"},
+          "feature_class": {"enum": ["express", "standard", "high_stakes", "high-stakes"]},
+          "feature_class_rationale": {"type": "string"},
+          "trigger_surfaces_touched": {"type": "array", "items": {"type": "string"}},
+          "submitted_at": {"type": "string"},
+          "last_journal_entry_at": {"type": "string"},
+          "review_scope": {"enum": ["full", "delta", "none"]}
+        }
+      }
+    }
+  },
+  "$comment": "Terminal statuses (shipped/rejected/killed) must NOT persist here — prune_state.py moves them to registry.json. A terminal entry lingering in active.json is the O9 hot-path-growth defect."
+}

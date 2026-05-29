@@ -1,6 +1,6 @@
 ---
 name: engineering-discipline
-description: Universal meta-rules for HOW to engineer with AI — applies to every agent on every task. The 7 principles (Karpathy 4 + gstack ETHOS 2 + Right-Sized Stack), plus vertical-slice delivery, context discipline, and persona brainstorming. One skill, not five, because they're one mental model. Sourced from Karpathy, gstack/Garry Tan, shanraisshan/claude-code-best-practice.
+description: Universal meta-rules for HOW to engineer with AI — 7 Iron Laws, vertical-slice delivery, context discipline, persona brainstorming. Applies to every agent, every task.
 ---
 
 # Engineering Discipline — meta-rules for AI engineering
@@ -39,7 +39,7 @@ State assumptions. Surface tradeoffs. If unclear, name what's confusing — don'
 ✅ "Before writing: scope = current tenant? format = CSV? fields = public only? Defaulting to those — say otherwise."
 
 ### 7. Right-Sized Stack
-**For Brain specifically: the stack is LOCKED.** Fastify + tRPC + gRPC (buf) + Supabase Postgres + ClickHouse Cloud + Amazon MSK + EKS + Karpenter + ArgoCD + AWS CDK + React Native + Expo + Anthropic Claude. See prompts/system-prompt.md ("The Stack — NOT negotiable") and canon/technical-requirements.md. Aryan only runs `tech-stack-evaluation` when **adding a new layer** that isn't already chosen (e.g., picking the AI calling vendor — see canon/technical-requirements.md). Do NOT re-evaluate the stack per feature; that was the pre-v6 universal-plugin posture.
+**For Brain specifically: the stack is LOCKED.** See prompts/system-prompt.md ("The Stack — NOT negotiable") and canon/technical-requirements.md. Aryan only runs `tech-stack-evaluation` when **adding a new layer** that isn't already chosen. Do NOT re-evaluate the stack per feature.
 
 ## Vertical Slices (the delivery pattern)
 
@@ -88,7 +88,7 @@ Each persona: 3-5 NEEDS · what would FAIL them · one wildcard "what if".
 
 Aryan synthesizes: confirmed (all agree) · tensions (need decision) · hidden requirements · out-of-scope v1.
 
-**Skip this protocol for trivial tasks.** Most build phases don't need it. Over-applying it is a process tax.
+**Skip this protocol for trivial tasks.** Over-applying it is a process tax.
 
 ## Anti-patterns
 

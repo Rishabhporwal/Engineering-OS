@@ -1,6 +1,6 @@
 ---
 name: india-commerce-economics
-description: Brain's India-native economic intelligence — COD vs prepaid economics, RTO cost model + break-even COD RTO rate r* = M/(M+C), NDR as leading indicator, pincode/city-tier reliability scoring, GST 2.0 (0/5/18/40) per-SKU extraction, COD realization + settlement/cash-delay, festival calendar + learned lift, True CM2. THE MOAT. Auto-load whenever touching the India RegionAdapter, Shiprocket ingestion, RTO/COD math, GST extraction, pincode scoring, the festival calendar, or anything date/time-sensitive (IST). Implemented in `IndiaAdapter` (canon/TECH/04) and consumed by the metric engine + intelligence agents.
+description: India economic moat in IndiaAdapter — COD/RTO economics, break-even r*=M/(M+C), NDR, pincode scoring, GST 2.0 per-SKU slabs, festival lift, True CM2.
 ---
 
 # India Commerce Economics — the economic moat
@@ -103,12 +103,12 @@ A **single blended GST rate is an anti-pattern** (canon §16) — luxury SKUs at
 COD cash is collected by the courier and **settled to the brand days-to-weeks later** — and only on delivered orders. Brain tracks:
 
 - **COD Conversion (realization) Rate** = COD Orders Delivered ÷ COD Orders Placed.
-- **Realized/Delivered Revenue** = the honest number that survives cancellation/RTO/refund/payment-failure/settlement leakage — and the **billing base** (never bill on placed GMV).
+- **Realized/Delivered Revenue** = the honest number that survives cancellation/RTO/refund/payment-failure/settlement leakage — and the **billing base** (never bill on placed GMV — see [`billing-metering`](../billing-metering/SKILL.md)).
 - **COD cash delay** — a cashflow input (AICFO-Cashflow), distinct from margin.
 
 ## 7. Festival calendar + learned lift
 
-Festivals (Diwali, Navratri, Holi, …) are pre-seeded 5 years in `seasonal_events_in` with `shopping_lift_start/end`. Per-workspace **learned lift multipliers** in `festival_lift_factors_local` (computed after each festival: mean of during/baseline ratios + a variance-based confidence). Surfaced in the Calendar Report (shaded), goal-setting ("Diwali typically lifts revenue 3.2×"), forecasting regressors (Prophet), and anomaly baselines. Adding a region = new seasonal seed, not new code.
+Festivals (Diwali, Navratri, Holi, …) are pre-seeded 5 years in `seasonal_events_in` with `shopping_lift_start/end`. Per-workspace **learned lift multipliers** in `festival_lift_factors_local` (computed after each festival: mean of during/baseline ratios + a variance-based confidence). Surfaced in the Calendar Report (shaded), goal-setting, forecasting regressors (Prophet — [`forecasting-prophet`](../forecasting-prophet/SKILL.md)), and anomaly baselines. Adding a region = new seasonal seed, not new code.
 
 ## 8. True CM2 — the India-honest margin
 
@@ -143,3 +143,4 @@ Calling hours **09:00–21:00 IST** (telecom), Morning Brief window **06:55–09
 - `canon/TECH/03_metrics_engine.md` §0.5 — RTO/COD formula book
 - `canon/business-requirements.md` §5.2/§6.4/§17.2 — economic requirements + break-even
 - [`region-adapter`](../region-adapter/SKILL.md) · [`metric-engine`](../metric-engine/SKILL.md) · [`clickhouse-olap`](../clickhouse-olap/SKILL.md)
+</content>

@@ -1,118 +1,83 @@
 ---
 name: frontend-web
-description: Brain's Next.js 16 web stack — App Router + tRPC client + Redux Toolkit + TanStack Query + nuqs + shadcn/ui + Tailwind + Recharts + Visx. Use whenever Ananya is building the web workbench: dashboard pages, KPI cards with RAG, CM Waterfall (Visx), Cohort heatmap (Visx), First Product Cascade table, Calendar Report with marketing-action overlays, drill-down drawers. Covers state ownership split (Redux / URL state / TanStack / Auth / Forms), Server Components, Server Actions, Indian numbering format, accessibility, Core Web Vitals.
+description: Brain's Next.js 16 web workbench — App Router, tRPC, Redux/TanStack/nuqs split, shadcn/Tailwind, Recharts+Visx, Server Components/Actions, Indian numbering.
 ---
 
 # Frontend Web — Next.js 16 + tRPC + Redux + TanStack + nuqs + shadcn + Visx
 
-The web stack for Brain's **workbench surface** — Ananya's domain. Web is the desktop surface operators use for Monday review + on-demand depth. Mobile is the daily heartbeat (Karan owns it).
+The web stack for Brain's workbench surface — Ananya's domain. Web is the desktop surface operators use for Monday review + on-demand depth; mobile is the daily heartbeat ([`mobile-surface`] / [`morning-brief-mobile`]).
 
-## Stack invariants (LOCKED — canon/technical-requirements.md)
+## Stack invariants (LOCKED — canon/TECH/07)
 
 | Layer | Choice | Reason |
 |---|---|---|
-| Framework | **Next.js 16 App Router**, TypeScript strict (React 19) | Server Components for heavy dashboards; **Turbopack is the default bundler + React Compiler is stable** (auto-memoization — most manual `useMemo`/`useCallback` becomes optional) |
+| Framework | **Next.js 16 App Router**, TS strict (React 19) | Server Components for heavy dashboards; **Turbopack default + React Compiler stable** (auto-memoization — most manual `useMemo`/`useCallback` optional) |
 | Edge API | **tRPC client** via `@trpc/react-query` | Typed end-to-end with api-gateway |
 | Server state | **TanStack Query** (via tRPC) | Cache + staleness + invalidation |
-| Client state | **Redux Toolkit** + redux-persist (whitelist `workspace` + `ui`) | UI prefs + active workspace persistence |
-| URL state | **nuqs** | Filters, date ranges (shareable links + back-button) |
+| Client state | **Redux Toolkit** + redux-persist (whitelist `workspace`+`ui`) | UI prefs + active workspace |
+| URL state | **nuqs** | Filters, date ranges (shareable + back-button) |
 | Auth | Supabase Auth (httpOnly cookie) | Never in JS |
 | Forms | **React Hook Form + Zod** | Same validation as backend |
-| UI | **shadcn/ui + Tailwind** | Owned primitives; design tokens shared with mobile Tamagui |
-| Charts (90%) | **Recharts** | Easy axes, time-series, bar/line/area |
-| Charts (specialty) | **Visx** | CM Waterfall, Cohort heatmap, custom drill layouts |
-| Icons | Lucide | |
-| Font | Inter; dark-mode-first | |
-| Date | date-fns + date-fns-tz (`Asia/Kolkata`) | IST handling for India workspaces |
+| UI | **shadcn/ui + Tailwind** | Owned primitives; tokens shared with mobile Tamagui |
+| Charts (90%) | **Recharts** | Time-series, bar/line/area |
+| Charts (specialty) | **Visx** | CM Waterfall, cohort heatmap, custom drill |
+| Date | date-fns + date-fns-tz (`Asia/Kolkata`) | IST for India workspaces |
 | Currency | `packages/lib-formatters` — Indian numbering (`₹4,82,000`) | NEVER `₹482,000` |
-| Unit tests | Vitest + RTL | |
-| E2E | **Playwright** (`@playwright/test`, critical journeys) | Cross-browser (Chromium/Firefox/WebKit), auto-wait + web-first assertions, trace viewer for flake |
-| Deploy | AWS Amplify or EKS (SSR) — Jatin owns | |
+| E2E | **Playwright** (critical journeys) | Cross-browser, auto-wait, trace viewer |
+| Unit | Vitest + RTL | |
 
 ## State ownership rules (NON-NEGOTIABLE)
 
 | What | Where | Why |
 |---|---|---|
 | Active `workspace_id` | Redux `workspace.activeId` (persisted) | Cross-page; survives reload |
-| Date range, filters | URL via nuqs | Shareable + back-button-friendly |
-| Sidebar / theme / drawer open | Redux `ui.*` (persisted) | UI prefs |
+| Date range, filters | URL via nuqs | Shareable + back-button |
+| Sidebar / theme / drawer | Redux `ui.*` (persisted) | UI prefs |
 | Server data | TanStack Query | Caching + invalidation |
 | Auth session | httpOnly cookie | XSS-safe |
 | Form state | React Hook Form (local) | Don't pollute Redux |
 
-If you reach for Zustand or Jotai — stop. Brain doesn't use them.
+Reaching for Zustand or Jotai — stop. Brain doesn't use them.
 
 ## Magic UI (scoped)
 
-**Magic UI** = 150+ animated React components (TypeScript + Tailwind + Motion). It's **copy-paste like shadcn** — you own the code in `packages/ui`, there's **zero runtime dependency** (nothing new in the bundle but the components you actually paste), it's $0 OSS, and it lives in the **same shadcn ecosystem Brain already uses** (same Tailwind tokens, same primitives). It composes with shadcn; it does not replace it.
-
-**Scoped-use rule (NON-NEGOTIABLE):** adopt Magic UI **only** on **marketing / onboarding / login / empty-state / "delight" surfaces**. **NOT the dense operator workbench** — P&L, CM Waterfall, Cohort heatmap, Calendar Report, KPI grids, drill-down drawers stay **shadcn + Visx/Recharts** under the perf budget. Animation on a 2,250-cell Calendar Report or a 24×36 cohort heatmap is a perf regression, not delight.
-
-Guardrails for every Magic UI surface:
-- **Copy-paste into `packages/ui`** (own the code — same as shadcn; no `npm install` of a Magic UI runtime package).
-- **Respect `prefers-reduced-motion`** — every animation degrades to a static render (see Accessibility below).
-- **Stay within the perf budget** — LCP < 2s, INP < 200ms, CLS < 0.1, route JS < 100KB gzipped. Motion must not blow the budget; lazy-load (`next/dynamic`) any heavy animated component not above the fold.
-- **WCAG AA** — animation never gates content; contrast + keyboard reachability hold.
+Magic UI = animated React components, **copy-paste like shadcn** (own the code in `packages/ui`; zero runtime dep; same Tailwind tokens). **Scoped-use rule (NON-NEGOTIABLE):** adopt only on **marketing / onboarding / login / empty-state / "delight"** surfaces — **NOT the dense operator workbench** (P&L, CM Waterfall, cohort heatmap, Calendar Report, KPI grids, drill drawers stay shadcn + Visx/Recharts under the perf budget). Animation on a 2,250-cell Calendar Report or a cohort heatmap is a perf regression, not delight. Guardrails: copy into `packages/ui`; respect `prefers-reduced-motion`; stay within the perf budget (lazy-load heavy animated components via `next/dynamic`); WCAG AA.
 
 ## Server Component pattern (default for heavy reads)
 
 ```tsx
 // app/(dashboard)/[workspace]/store/page.tsx
-import { trpcServer } from '@/lib/trpc/server';
-
-export default async function StorePage({ params }: { params: { workspace: string } }) {
-  // Server-side fetch — no client JS for initial paint
-  const kpis = await trpcServer.store.kpis({
-    from: subDays(new Date(), 30),
-    to: new Date(),
-  });
-  return <StoreKpis initialData={kpis} />;  // hydrate into client component
+export default async function StorePage({ params }) {
+  const kpis = await trpcServer.store.kpis({ from: subDays(new Date(), 30), to: new Date() });
+  return <StoreKpis initialData={kpis} />;   // hydrate into client component
 }
 ```
-
 ```tsx
-// components/StoreKpis.tsx  (client component)
 'use client';
-import { trpc } from '@/lib/trpc/client';
-
-export function StoreKpis({ initialData }: Props) {
-  const { data } = trpc.store.kpis.useQuery(
-    { from, to },
-    { initialData, staleTime: 60_000 }
-  );
-  // ...
+export function StoreKpis({ initialData }) {
+  const { data } = trpc.store.kpis.useQuery({ from, to }, { initialData, staleTime: 60_000 });
 }
 ```
 
 ## Server Actions pattern (default for writes — React 19)
 
-Server Components are the read path (above). For **mutations**, React 19 **Server Actions** + `useActionState` / `useOptimistic` are the idiomatic write path — progressive enhancement, no client-side fetch wiring, and the action runs server-side where it can call the tRPC server caller (the api-gateway BFF stays the contract; the Server Action is a thin server-side invoker).
+For mutations, React 19 Server Actions + `useActionState`/`useOptimistic` are the idiomatic write path — the action runs server-side and calls the tRPC server caller (api-gateway BFF stays the contract).
 
 ```tsx
-// app/(dashboard)/[workspace]/costs/actions.ts
 'use server';
-import { trpcServer } from '@/lib/trpc/server';
-
-export async function updateCogs(prev: State, formData: FormData) {
-  const res = await trpcServer.costs.updateCogs({ /* parsed + Zod-validated */ });
-  return { ok: true, value: res };  // surfaced via useActionState
+export async function updateCogs(prev, formData) {
+  const res = await trpcServer.costs.updateCogs({ /* Zod-validated */ });
+  return { ok: true, value: res };
 }
 ```
-
 ```tsx
-// components/CogsForm.tsx  (client component)
 'use client';
-import { useActionState, useOptimistic } from 'react';
-import { updateCogs } from '@/app/(dashboard)/[workspace]/costs/actions';
-
-export function CogsForm({ initial }: Props) {
+export function CogsForm({ initial }) {
   const [state, formAction, pending] = useActionState(updateCogs, { ok: false });
-  const [optimistic, setOptimistic] = useOptimistic(initial); // instant UI before the action resolves
-  // <form action={formAction}> … pending → disable; optimistic → render the in-flight value
+  const [optimistic, setOptimistic] = useOptimistic(initial);
 }
 ```
-
-Mutations still write the Decision Log + `requireRole` on the server side — a Server Action is the transport, not a bypass of the canon write rules.
+Mutations still write the Decision Log + `requireRole` server-side — a Server Action is transport, not a bypass.
 
 ## Empty / loading / error pattern (mandatory)
 
@@ -122,96 +87,62 @@ if (error)    return <ErrorCard message={error.message} retry={refetch} />;
 if (!data?.metrics?.length) return <EmptyState title="No data yet" />;
 return <KpiCard {...data.metrics[0]} />;
 ```
+Every interactive element gets `data-testid` for Playwright.
 
-Every interactive element gets `data-testid` for Playwright (`getByTestId`).
-
-## RAG (Red/Amber/Green) on every metric card
-
-Per `canon/technical-requirements.md` (goals):
+## RAG on every metric card
 
 ```tsx
-<RagCell
-  metric="mer"
-  actual={3.2}
-  goal={3.5}
-  goalType="minimum"  // higher = better
-  // thresholds: green ≥ goal*0.95, amber ≥ goal*0.80, red < goal*0.80
+<RagCell metric="mer" actual={3.2} goal={3.5} goalType="minimum"
+  // green ≥ goal*0.95, amber ≥ goal*0.80, red < goal*0.80
 />
 ```
-
-Calendar Report (canon/technical-requirements.md) renders every cell with RAG. CSV exports preserve raw values + RAG metadata.
+Calendar Report renders every cell with RAG; CSV exports preserve raw values + RAG metadata. (Detail in [`kpi-dashboard-design`].)
 
 ## CM Waterfall — Visx
 
 ```tsx
-// components/charts/Waterfall.tsx
-import { BarStack } from '@visx/shape';
-import { Group } from '@visx/group';
-// ... layered horizontal step-down per the spec in canon/business-requirements.md
+import { BarStack } from '@visx/shape'; import { Group } from '@visx/group';
+// layered horizontal step-down per canon/business-requirements.md
 ```
-
-Filter: `[All | New Customers | Returning Customers]`. The "wow" demo moment is showing the loss-making-new vs profitable-returning pattern.
+Filter `[All | New | Returning]`. The "wow" demo: loss-making-new vs profitable-returning.
 
 ## Indian numbering format (Brain invariant)
 
 ```tsx
-import { formatINR } from '@brain/formatters';
-
-formatINR(482000n)   // → "₹4,82,000"   ✓
-formatINR(48200000n) // → "₹4,82,00,000" ✓
-// Never use Intl.NumberFormat('en-IN') directly — it returns "₹4,82,000" but not consistent across Node versions for big-int.
+formatINR(482000n)   // "₹4,82,000"  ✓
+formatINR(48200000n) // "₹4,82,00,000" ✓
+// Never Intl.NumberFormat('en-IN') directly — inconsistent for bigint across Node versions.
 ```
 
 ## Desktop-only territory (mobile shows "Open in browser →")
 
-These views don't translate to mobile:
-- Cohort heatmap (24×36 matrix)
-- CM Waterfall (filter dimensions + drill cells)
-- First Product Cascade table
-- Settings → Costs / COGS bulk editor
-- Settings → Campaign Classifications bulk view
-- Plan Module spend plan editor
-- CSV / XLSX exports
-
+Cohort heatmap (24×36), CM Waterfall, First Product Cascade, Costs/COGS bulk editor, Campaign Classifications bulk view, Plan spend editor, CSV/XLSX exports.
 ```tsx
-// components/MobileFallback.tsx
-<EmptyState
-  title="This view works best on desktop"
-  cta={<Link href="https://brain.pipadacapital.com/...">Open in browser →</Link>}
-/>
+<EmptyState title="This view works best on desktop" cta={<Link href="https://brain.pipadacapital.com/...">Open in browser →</Link>} />
 ```
 
-## Performance targets (canon/technical-requirements.md — perf budget)
+## Performance targets (perf budget — CI-gated, see [`web-performance`])
 
-- **LCP < 2s · INP < 200ms · CLS < 0.1 · route JS < 100KB gzipped** (the canonical budget; CI gates on it — see `web-performance`)
-- Cached dashboard p95 < 500ms server-rendered initial paint
-- First Contentful Paint < 1s on Wi-Fi
-- WCAG AA on every route
-- Skeleton placeholders for any query > 200ms
+- **LCP < 2s · INP < 200ms · CLS < 0.1 · route JS < 100KB gz**
+- Cached dashboard p95 < 500ms SSR initial paint; FCP < 1s on Wi-Fi; WCAG AA every route; skeletons for any query > 200ms.
 
 ## Path layout
 
 ```
-apps/frontend/
-  app/(dashboard)/[workspace]/<route>/page.tsx
+apps/frontend/app/(dashboard)/[workspace]/<route>/page.tsx
   components/charts/{Waterfall,CohortHeatmap,KpiCard,TimeSeriesChart}.tsx
-  components/drilldown/{OrdersDrawer,CampaignsDrawer}.tsx
-  components/rag/{RagCell,RagBadge}.tsx
-  lib/trpc/{client,server}.ts
-  lib/store/slices/{workspace,ui}.ts
+  components/drilldown/{OrdersDrawer,CampaignsDrawer}.tsx · components/rag/{RagCell,RagBadge}.tsx
+  lib/trpc/{client,server}.ts · lib/store/slices/{workspace,ui}.ts
 ```
 
 ## Common pitfalls
 
-- **Arbitrary exports from `route.ts`**: App Router HTTP-verb handlers only. Constants and helpers MUST live in `lib/`. Detection: `next build` fails with `"<NAME>" is not a valid Route export field`.
-- **Token in DOM / non-httpOnly cookie**: XSS exfiltration. Always `httpOnly + sameSite=lax + secure`.
-- **Indian numbering format mismatch**: `₹482,000` (wrong) vs `₹4,82,000` (right). Use the formatter.
-- **Recharts on waterfall / heatmap**: doesn't bend that way. Use Visx.
-- **State scope violation**: filters in Redux → broken back button; filters in URL → broken cross-page persistence. Follow the table.
+- Arbitrary exports from `route.ts` (HTTP-verb handlers only; helpers in `lib/`) → `next build` fails.
+- Token in DOM / non-httpOnly cookie → XSS. Always `httpOnly + sameSite=lax + secure`.
+- `₹482,000` vs `₹4,82,000` — use the formatter; Recharts on waterfall/heatmap (use Visx); state-scope violation (filters in Redux breaks back-button; in URL breaks cross-page persistence).
 
 ## References
 
-- `canon/technical-requirements.md` — design system + BFF + multi-currency, KPI definitions + RAG + Calendar Report
-- `canon/business-requirements.md` — every wedge feature's UI spec
-- `skills/india-commerce-economics/SKILL.md` §currency-format — numbering + GST display
-- `skills/testing-tdd/SKILL.md` — Vitest + RTL + Playwright patterns
+- canon/TECH/07 — design system + BFF + multi-currency + KPI/RAG/Calendar Report
+- canon/business-requirements.md — each wedge feature's UI spec
+- [`india-commerce-economics`] §currency-format · [`testing-tdd`] · [`kpi-dashboard-design`] · [`web-performance`] · [`accessibility`]

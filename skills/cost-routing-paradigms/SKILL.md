@@ -1,6 +1,6 @@
 ---
 name: cost-routing-paradigms
-description: Brain's four-paradigm cost-routing gate. The engineering invariant behind %-of-GMV pricing — Brain bills a fraction of realized GMV, so per-decision LLM cost must stay near zero or the unit economics invert. Auto-load on every design + every PR that adds a new endpoint, agent action, or decision path. SQL ≫ ML ≫ Haiku ≫ Sonnet. Every feature passes Q1-Q4 audit before shipping. Build pipeline rejects PRs missing the @paradigm decorator or with a wrong-paradigm declaration. Cost ratio is 1:100:1,000:10,000.
+description: Four-paradigm cost gate (SQL ≫ ML ≫ Haiku ≫ Sonnet, 1:100:1k:10k). %-of-GMV pricing needs near-zero LLM cost. @paradigm decorator + Q1-Q4 audit per PR.
 ---
 
 # Cost-Routing Paradigms — Brain's Engineering Invariant
@@ -20,7 +20,7 @@ The cost-routing audit only works if it's **measured from day one, not retrofitt
 
 - **Before any feature ships in Phase 1 that calls an LLM, the decorator + dashboard are live.** No "we'll add the telemetry in Phase 3" exceptions.
 
-- **A per-workspace monthly LLM cost cap (Layer 3 throttle) must be live before the highest-LLM-cost feature ships** (e.g. AI Chat). Without it, a workspace ramping usage can blow past its %-of-GMV fee. Thresholds are per-tier (see the Layer 3 table below). See `skills/claude-api/SKILL.md` §"Per-brand monthly LLM cap".
+- **A per-workspace monthly LLM cost cap (Layer 3 throttle) must be live before the highest-LLM-cost feature ships** (e.g. AI Chat). Without it, a workspace ramping usage can blow past its %-of-GMV fee. Thresholds are per-tier (see the Layer 3 table below).
 
 Frontier-LLM creep above **1% of total calls** is a tier-1 incident (Jatin pages on it).
 
@@ -35,7 +35,7 @@ Frontier-LLM creep above **1% of total calls** is a tier-1 incident (Jatin pages
 
 **Cost ratio: 1 : 100 : 1,000 : 10,000.** Wrong paradigm = 1–2 orders of magnitude wrong.
 
-> **Paradigms 3 & 4 are model-agnostic routed policies — the LiteLLM gateway IS their runtime.** `@paradigm("small_llm")` / `@paradigm("frontier_llm")` no longer names a fixed model; it names a **routed policy tier** that the gateway resolves to the **cheapest model that passes that tier's eval bar** (small → Amazon Nova Micro / Gemini 2.5 Flash-Lite / Claude Haiku; frontier → **Claude Sonnet 4.6 default**, eval-gated + swappable). The audit therefore asks not just *which paradigm* but **which model the gateway routed to, and did it pass the eval bar at that cost.** Model-agnostic = "right model, justified on cost", **not** "avoid Claude". See [`llm-gateway`](../llm-gateway/SKILL.md).
+> **Paradigms 3 & 4 are model-agnostic routed policy tiers — the LiteLLM gateway IS their runtime.** `@paradigm("small_llm")` / `@paradigm("frontier_llm")` names a **routed policy tier** that the gateway resolves to the **cheapest model that passes that tier's eval bar** (small → Nova Micro / Gemini Flash-Lite / Haiku; frontier → **Claude Sonnet 4.6 default**, eval-gated + swappable). The audit asks not just *which paradigm* but **which model the gateway routed to, and did it pass the eval bar at that cost.** Model-agnostic = "right model, justified on cost", **not** "avoid Claude". For routing/fallback/budget mechanics see [`llm-gateway`](../llm-gateway/SKILL.md).
 
 ## The four questions — ask in order, escalate only when the prior fails
 
@@ -71,7 +71,6 @@ Aryan blocks PRs missing this or with mis-routed paradigm. CI parses `@paradigm`
 ## The `@paradigm` decorator (mandatory on every endpoint + agent action)
 
 ```python
-# Python
 @paradigm("sql")
 async def compute_daily_revenue(workspace_id, date):
     """Paradigm: SQL. Reason: aggregation. Cost: ~$0."""
@@ -94,15 +93,13 @@ async def synthesize_morning_brief(workspace_id, signals):
 ```
 
 ```typescript
-// TypeScript
 import { paradigm } from '@brain/cost-router';
-
 export const computeDailyRevenue = paradigm('sql')(
   async (workspaceId: string, date: string) => { /* ... */ }
 );
 ```
 
-## What "agentic" actually means in Brain (canon/TECH/12_cost_routing_compute.md §3)
+## What "agentic" actually means in Brain (canon/TECH/12 §3)
 
 | Industry framing | Brain | Paradigm |
 |---|---|---|
@@ -113,10 +110,10 @@ export const computeDailyRevenue = paradigm('sql')(
 | "AI recommends budget reallocation" | Linear optimization over response curves | ML — **not LLM** |
 | "AI writes the Morning Brief" | Sonnet on ML outputs | **Frontier LLM — yes** |
 
-## Three layers of enforcement (canon/TECH/12_cost_routing_compute.md §4)
+## Three layers of enforcement (canon/TECH/12 §4)
 
 ### Layer 1 — Default routing
-Every endpoint declares paradigm in code. Defaulting to cheapest paradigm that solves the problem. Upgrading the paradigm requires PR comment justification.
+Every endpoint declares paradigm in code. Default to the cheapest paradigm that solves the problem. Upgrading the paradigm requires PR-comment justification.
 
 ### Layer 2 — Per-feature token budget
 ```python
@@ -130,19 +127,18 @@ async def synthesize_morning_brief(workspace_id, signals):
     )
     return response
 ```
-
 Soft warning at 80%; hard fail at 100% with graceful fallback (template or paradigm downgrade).
 
 #### Two cost levers inside paradigm 3/4 (apply once the LLM call is already justified)
 
-Picking the right paradigm is the first-order lever. Once a call is *correctly* an LLM call, two Anthropic features cut its cost further — they are **not** a substitute for choosing SQL/ML, but they materially lower the Sonnet/Haiku bill:
+Picking the right paradigm is the first-order lever. Once a call is *correctly* an LLM call, two Anthropic features cut its cost further — **not** a substitute for choosing SQL/ML:
 
-| Lever | Saving | Where it applies in Brain |
+| Lever | Saving | Where it applies |
 |---|---|---|
-| **Prompt caching** | ~90% on the cached portion of repeated prompts | The biggest LLM lever — cache the synthesis system prompt + tool catalogue + Brand Fingerprint context (~3–10K tokens) reused across every workspace's 06:55–07:15 brief. A cache miss on a stable prompt is a cost bug ([`claude-api`](../claude-api/SKILL.md) §prompt-caching). |
-| **Batch API** | **50% off** standard token cost | Any non-interactive bulk LLM work: the 23:55 outcome-attribution backfill + nightly insight generation. **Never** batch latency-sensitive paths (07:15 Morning Brief synthesis, AI Chat). |
+| **Prompt caching** | ~90% on the cached portion | The biggest LLM lever — cache the synthesis system prompt + tool catalogue + Brand Fingerprint (~3–10K tokens) reused across every workspace's 06:55–07:15 brief. A cache miss on a stable prompt is a cost bug ([`claude-api`](../claude-api/SKILL.md)). |
+| **Batch API** | **50% off** | Non-interactive bulk LLM work: the 23:55 outcome-attribution backfill + nightly insight generation. **Never** batch latency-sensitive paths (07:15 brief, AI Chat). |
 
-Both still record tokens to the cost registry and stay under the per-brand cap; they reduce the *cost per justified call*, leaving the target mix (85% SQL / 12% ML / 2.5% Haiku / 0.5% Sonnet) and the `@paradigm` gate unchanged.
+Both still record tokens to the cost registry and stay under the per-brand cap; they reduce the *cost per justified call*, leaving the target mix and the `@paradigm` gate unchanged.
 
 ### Layer 3 — Per-brand monthly cap (= LiteLLM virtual-key budgets)
 
@@ -153,34 +149,31 @@ Both still record tokens to the cost registry and stay under the per-brand cap; 
 | Scale (~0.5%) | ₹15,000 | Same |
 | Enterprise (custom) | ₹50,000+ negotiated | Same |
 
-The per-brand cap is now **implemented as a LiteLLM virtual-key budget** — one virtual key per workspace carrying its monthly INR cap, enforced **in the gateway** (the runtime mechanism that replaces the bespoke `pylibs/brain_cost_router` cap wrapper; the thresholds are unchanged). Above cap: only critical-path (Morning Brief, NL query, ticket auto-resolution) continues. System never breaks; it gets quieter. See [`llm-gateway`](../llm-gateway/SKILL.md) §per-workspace virtual-key budgets.
+The per-brand cap is **implemented as a LiteLLM virtual-key budget** — one virtual key per workspace carrying its monthly INR cap, enforced **in the gateway** (the runtime mechanism; thresholds unchanged). Above cap: only critical-path (Morning Brief, NL query, ticket auto-resolution) continues. System never breaks; it gets quieter. See [`llm-gateway`](../llm-gateway/SKILL.md).
 
-## Target paradigm distribution (canon/TECH/12_cost_routing_compute.md §5)
+## Target paradigm distribution (canon/TECH/12 §5)
 
-**85% SQL, 12% ML, 2.5% Haiku, 0.5% Sonnet.**
+**85% SQL, 12% ML, 2.5% Haiku, 0.5% Sonnet.** Frontier-LLM creep above 1% of total calls = tier-1 incident. Jatin investigates; Maya audits prompts.
 
-Frontier-LLM creep above 1% of total calls = tier-1 incident. Jatin investigates; Maya audits prompts.
+## Quarterly streamlining audit (canon/TECH/12 §6)
 
-## Quarterly streamlining audit (canon/TECH/12_cost_routing_compute.md §6)
-
-Every quarter:
-- Review codebase for anti-pattern drift
-- Flag duplication of cross-cutting concerns (Single-Primitive Rule violations)
-- Document any paradigm-bypass (LLM where ML would have worked)
-- **Refactoring time allocated explicitly** in next quarter's plan — not optional
+- Review codebase for anti-pattern drift; flag duplication of cross-cutting concerns (Single-Primitive Rule violations).
+- Document any paradigm-bypass (LLM where ML would have worked).
+- **Refactoring time allocated explicitly** in next quarter's plan — not optional.
 
 ## Common failure modes
 
-- **Defaulting to LLM** — the costliest engineering mistake at Brain. Detection: `@paradigm("frontier_llm")` on a feature where ML would work. Mitigation: Aryan blocks at design.
-- **No prompt caching** — inflates the frontier (Sonnet) bill 10–30x. Prompt caching stays on the frontier backend (`claude-api`, `llm-gateway`). Detection: a frontier-tier call whose stable system-prompt/Brand-Fingerprint prefix has no `cache_control`.
+- **Defaulting to LLM** — the costliest engineering mistake at Brain. Detection: `@paradigm("frontier_llm")` where ML would work. Aryan blocks at design.
+- **No prompt caching** — inflates the frontier bill 10–30x. Detection: a frontier-tier call whose stable prefix has no `cache_control`.
 - **Missing token budget** — uncapped Sonnet blows per-brand cap. Detection: `@paradigm("frontier_llm")` without `token_budget=N`.
 - **No fallback on budget breach** — feature errors instead of degrading. Detection: error spike at brand cap.
-- **Bypassing the `@paradigm` decorator** — call goes uncounted in cost-discipline dashboard. Detection: a gateway LLM call (or, worse, a direct provider-SDK call — itself a blocker per `llm-gateway`) outside a `@paradigm`-decorated function.
+- **Bypassing the `@paradigm` decorator** — call goes uncounted. Detection: a gateway LLM call (or, worse, a direct provider-SDK call — itself a blocker per `llm-gateway`) outside a `@paradigm`-decorated function.
 
 ## References
 
 - `canon/TECH/12_cost_routing_compute.md` — canonical (four paradigms, three enforcement layers, target mix, quarterly audit)
 - `canon/technical-requirements.md` §9 — AI/LLM layer & cost-routing summary
-- `skills/llm-gateway/SKILL.md` — the LiteLLM gateway that runs paradigm 3/4 (routed tiers + virtual-key budgets)
-- `skills/agentic-design/SKILL.md` — how to wire @paradigm into agents
-- `skills/mcp-protocol/SKILL.md` — paradigm tagging on MCP tools
+- [`llm-gateway`](../llm-gateway/SKILL.md) — the gateway that runs paradigm 3/4 (routed tiers + virtual-key budgets)
+- [`agentic-design`](../agentic-design/SKILL.md) — wiring @paradigm into agents
+- [`mcp-protocol`](../mcp-protocol/SKILL.md) — paradigm tagging on MCP tools
+</content>

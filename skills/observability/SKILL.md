@@ -1,21 +1,21 @@
 ---
 name: observability
-description: Brain's centralized observability spine — Fluent Bit → OpenSearch (logs) + CloudWatch Metrics + AWS X-Ray (traces) + Sentry (errors) + PostHog (product). Structured JSON logging (pino/structlog) with level discipline, retention, and the what-to-log catalog; single correlation ID (request_id + trace_id + workspace_id + user_id) propagates end-to-end through HTTP headers, gRPC metadata, Kafka envelope; OTel instrumentation; circuit breakers. PII redaction at logger + Fluent Bit Lua script. Auto-load whenever wiring instrumentation or a new service's logging, debugging cross-service flows, building Kibana dashboards, investigating an incident, or when log volume blows the OpenSearch budget.
+description: Brain's observability spine — Fluent Bit→OpenSearch, CloudWatch, X-Ray/OTel traces, Sentry, PostHog. Correlation IDs, structured logging, PII redaction, SLO budgets.
 ---
 
 # Observability — Brain's Spine
 
 ## Five surfaces
 
-| Surface | Tech | What it answers |
+| Surface | Tech | Answers |
 |---|---|---|
-| **Logs** (centralized) | Fluent Bit DaemonSet on EKS → **OpenSearch** (multi-AZ; 14d hot, S3 archive) + CloudWatch Logs (dual) | "What did service X do for workspace Y in the last minute?" |
+| **Logs** | Fluent Bit DaemonSet → **OpenSearch** (14d hot, S3 archive) + CloudWatch Logs (dual) | "What did service X do for workspace Y in the last minute?" |
 | **Metrics** | CloudWatch Metrics + per-service dashboards | "Is p99 latency on api-gateway breaking SLO?" |
-| **Traces** | AWS X-Ray via OpenTelemetry SDK | "Where in the cross-service fan-out is the slow span?" |
+| **Traces** | AWS X-Ray via OpenTelemetry SDK | "Where in the fan-out is the slow span?" |
 | **Errors** | Sentry (TS + Python + mobile native) | "What stack trace does this 500 correspond to?" |
-| **Product** | PostHog (web + mobile) | "Are operators acknowledging insights? Approving Morning Brief signals?" |
+| **Product** | PostHog (web + mobile) | "Are operators approving Morning Brief signals?" |
 
-Correlation: every log, span, and error event carries `request_id + trace_id + workspace_id + user_id`. Kibana saved views stitch these; the X-Ray trace_id renders as a deep link from a Kibana custom field formatter.
+Every log, span, and error carries `request_id + trace_id + workspace_id + user_id`.
 
 ## Correlation ID propagation (the non-negotiable)
 
@@ -27,11 +27,11 @@ CloudFront (X-Request-Id; generate X-Trace-Id if absent)
   → log line (structlog/pino adds all four) → Fluent Bit → OpenSearch + CloudWatch
 ```
 
-**Verification on every PR:** a synthetic request through the full pipeline shows up with the **same `request_id`** in every log line across every service it touches.
+**Verification on every PR:** a synthetic request through the full pipeline shows the **same `request_id`** in every log line across every service it touches.
 
 ## Logging (pino / structlog)
 
-Logs are the most expensive observability surface — log too much or the wrong things and you simultaneously blow the budget and hide the signal. Structured JSON is the **only** format Brain ships: pino for Node (matches Fastify), structlog for Python. Both attach the four correlation fields + `service` + `version` (git sha) to every line and **redact PII at the field level**. Representative Node config:
+Logs are the most expensive observability surface — log too much and you blow the budget AND hide the signal. Structured JSON is the **only** format: pino for Node, structlog for Python. Both attach the four correlation fields + `service` + `version` (git sha) and **redact PII at the field level**.
 
 ```typescript
 export const logger = pino({
@@ -44,23 +44,23 @@ export const logger = pino({
 });
 ```
 
-Python structlog mirrors this with `merge_contextvars` + `add_log_level` + `dict_tracebacks` + a `redact_pii` processor before `JSONRenderer`, bound with `service`/`env`/`version`. Full scaffolds in canon/technical-requirements.md.
+Python structlog mirrors this with `merge_contextvars` + `add_log_level` + `dict_tracebacks` + a `redact_pii` processor before `JSONRenderer`. Full scaffolds in canon/technical-requirements.md.
 
-### Log levels + retention (Brain canon)
+### Log levels + retention
 
-| Level | Use for | Prod | OpenSearch retention |
+| Level | Use for | Prod | Retention |
 |---|---|---|---|
 | DEBUG | Step-by-step tracing | **OFF** | dev only |
 | INFO | Significant business events (order ingested, brief synthesized, call placed) | ON | 30 days |
-| WARN | Recoverable issues (vendor rate-limit, retry exhausted, cache-miss spike) | ON | 90 days |
+| WARN | Recoverable issues (vendor rate-limit, retry exhausted) | ON | 90 days |
 | ERROR | Errors handled (caught + degraded) | ON | 90 days |
 | FATAL | Critical failures (DB unreachable, OOM, init failed) | ON | 365 days |
 
-**Never DEBUG in production** — local dev only.
+**Never DEBUG in production.**
 
 ### Correlation wiring at the call site
 
-Carry `request_id` + `workspace_id` on every line via **AsyncLocalStorage** (Node) / **contextvars** (Python) so anything in request scope logs them without threading args:
+Carry `request_id` + `workspace_id` on every line via **AsyncLocalStorage** (Node) / **contextvars** (Python):
 
 ```typescript
 const ctx = new AsyncLocalStorage<{ requestId: string; workspaceId?: string }>();
@@ -68,24 +68,23 @@ app.addHook('onRequest', (req, _, done) =>
   ctx.run({ requestId: (req.headers['x-request-id'] as string) ?? randomUUID() }, done));
 app.addHook('preHandler', (req, _, done) => { ctx.getStore()!.workspaceId = req.workspaceId; done(); }); // from JWT, see auth-and-access
 export const log = () => logger.child({ request_id: ctx.getStore()?.requestId, workspace_id: ctx.getStore()?.workspaceId });
-// log().info({ orders_count: 42 }, 'orders.ingested');
 ```
 
-Searching OpenSearch for `request_id:abc123` then shows the **complete call chain** across all 7 services — the difference between a 5-minute debug session and a 4-hour one.
+OpenSearch search for `request_id:abc123` shows the **complete call chain** across all 7 services.
 
 ### What to log — and what not to
 
-**DO:** business events (`orders.ingested`, `brief.synthesized`, `call.placed`, `decision_log.recorded`); state transitions (`consent.granted/revoked`, `session.refreshed`); external-call **summaries** (vendor, account, latency, count); errors with full context (request_id, workspace_id, actor, stack, triggering inputs); perf-budget crossings (aggregated, once/min).
+**DO:** business events (`orders.ingested`, `brief.synthesized`, `call.placed`, `decision_log.recorded`); state transitions (`consent.granted/revoked`, `session.refreshed`); external-call **summaries** (vendor, account, latency, count); errors with full context; perf-budget crossings (aggregated, once/min).
 
-**DON'T:** DEBUG in prod; request/response bodies wholesale (sample at 1% if you must); inside tight loops; stack traces for client 4xx (their bug, not ours — only 5xx); PII (always mask); tokens/secrets/brand keys (always redact); `console.log`/`print` (skips redaction); spreading >1 logging library per service.
+**DON'T:** DEBUG in prod; request/response bodies wholesale (sample 1% if you must); inside tight loops; stack traces for client 4xx (only 5xx); PII (mask); tokens/secrets (redact); `console.log`/`print` (skips redaction); >1 logging library per service.
 
 ### Cost discipline — log batches, not items
 
-OpenSearch storage cost is real. For high-volume topics (Maya's ingestion), Kafka itself is the log of record — log only the **batch summary**, never per-item:
+For high-volume topics (ingestion), Kafka itself is the log of record — log only the **batch summary**:
 
 ```typescript
-// BAD — 5,000 log lines per poll:  for (const e of events) log().info({ id: e.id }, 'event.processed');
-// GOOD — one line per batch:
+// BAD: for (const e of events) log().info({ id: e.id }, 'event.processed');  // 5,000 lines/poll
+// GOOD:
 log().info({ count: events.length, source: 'shopify', latency_ms: t1 - t0, error_count: failed.length }, 'ingestion.batch.completed');
 ```
 
@@ -99,19 +98,19 @@ log().info({ count: events.length, source: 'shopify', latency_ms: t1 - t0, error
 
 ## Fluent Bit → OpenSearch (+ CloudWatch dual)
 
-Fluent Bit `tail`s container logs, applies the `kubernetes` filter, runs a **`redact.lua`** second-pass redaction (same field list as the logger), then fans out to the `opensearch` output (`brain-logs-${SERVICE_NAME}` index) and `cloudwatch_logs` (`/aws/eks/brain/${SERVICE_NAME}`). The conf + lua live in `infra/k8s/fluent-bit/` and canon/technical-requirements.md.
+Fluent Bit `tail`s container logs, applies the `kubernetes` filter, runs a **`redact.lua`** second-pass redaction (same field list as the logger), then fans out to `opensearch` (`brain-logs-${SERVICE_NAME}`) and `cloudwatch_logs`. Conf + lua in `infra/k8s/fluent-bit/`.
 
-## Kibana saved views (canon/technical-requirements.md)
+## Kibana saved views
 
 1. **System Health** — error rate + p99 + throughput per service
-2. **Per-Service Deep Dive** — one service's logs over a window
-3. **Per-Workspace Investigation** — every log line for a `workspace_id`
-4. **Trace Stitching** — filter by `trace_id` across all services for one request
+2. **Per-Service Deep Dive**
+3. **Per-Workspace Investigation** — every line for a `workspace_id`
+4. **Trace Stitching** — filter by `trace_id` across services
 5. **Cost-Routing Audit** — paradigm distribution per service (paradigm-bypass-spike trigger)
 
 ## CloudWatch metrics — standard set per service
 
-`RequestCount` (by status), `RequestDuration` (p50/p95/p99), `GrpcCallCount` (by downstream), `KafkaConsumerLag` (by topic+group), `ClickHouseQueryDuration` (by table), `PostgresQueryDuration` (by query class), plus `Brain/MCP/tool_calls_total` and `Brain/MCP/tool_cost_micros` (cost-routing audit). Emit via `@aws-sdk/client-cloudwatch` `PutMetricDataCommand` under namespace `Brain/${SERVICE_NAME}`. Keep under 100 unique metric streams per service (billing).
+`RequestCount` (by status), `RequestDuration` (p50/p95/p99), `GrpcCallCount` (by downstream), `KafkaConsumerLag` (by topic+group), `ClickHouseQueryDuration` (by table), `PostgresQueryDuration` (by class), plus `Brain/MCP/tool_calls_total` + `Brain/MCP/tool_cost_micros`. Emit under namespace `Brain/${SERVICE_NAME}`. Keep under 100 unique metric streams per service (billing).
 
 ## OpenSearch monitors → PagerDuty/Slack
 
@@ -126,52 +125,38 @@ clickhouse-stale       — max(date) on daily_metrics < now() - 30 min
 
 ## Traces + errors
 
-- **Traces:** auto-instrument Fastify/gRPC/Kafka via the matching `@opentelemetry/instrumentation-*` packages, exporting via the **ADOT (OTel) Collector** — NOT the X-Ray SDKs or the X-Ray Daemon (both enter **maintenance Feb 2026 / end-of-support Feb 2027**; do not add new instrumentation on them). Wrap business logic in manual spans (`tracer.start_as_current_span("amer_computation")`). The modern target is **CloudWatch Application Signals** (service-level SLOs/RED metrics) + **Transaction Search** (100%-sampled span search), with X-Ray as the underlying trace store. Sampling: **5% prod, 100% staging** — never blanket 100% prod ($$$); use Transaction Search for full-fidelity span lookups.
-- **Sentry:** `Sentry.init({ dsn, release: '<service>@<version>', tracesSampleRate: 0.05, beforeSend })`; `beforeSend` tags the event with `request_id`/`trace_id`/`workspace_id` from ALS so errors stitch to logs.
+- **Traces:** auto-instrument Fastify/gRPC/Kafka via `@opentelemetry/instrumentation-*`, exporting via the **ADOT (OTel) Collector** — NOT the X-Ray SDKs/Daemon (maintenance Feb 2026 / EOS Feb 2027; no new instrumentation on them). Wrap business logic in manual spans. Modern target: **CloudWatch Application Signals** (SLOs/RED metrics) + **Transaction Search** (100%-sampled span search), X-Ray as the trace store. Sampling: **5% prod, 100% staging** — never blanket 100% prod.
+- **Sentry:** `Sentry.init({ dsn, release: '<service>@<version>', tracesSampleRate: 0.05, beforeSend })`; `beforeSend` tags `request_id`/`trace_id`/`workspace_id` from ALS so errors stitch to logs.
 
 ## OpenTelemetry as the instrumentation API (NOT a backend swap)
 
-OpenTelemetry is allowed **only as the vendor-neutral instrumentation API in code** — the OTel SDK + auto-instrumentation packages produce spans/metrics/logs, and the **ADOT (OTel) Collector ships them to Brain's EXISTING AWS backends**: traces → **AWS X-Ray** (surfaced via CloudWatch **Application Signals** + **Transaction Search**), metrics → **CloudWatch**, logs → **OpenSearch** (via Fluent Bit). The instrumentation API is portable; the backends are locked. The **ADOT exporter is mandated** — the legacy X-Ray SDKs + Daemon enter maintenance Feb 2026 / EOS Feb 2027, so no new code targets them.
+OTel is allowed **only as the vendor-neutral instrumentation API in code** — the SDK + auto-instrumentation produce spans/metrics/logs; the **ADOT Collector ships them to Brain's EXISTING AWS backends**: traces → X-Ray (via Application Signals + Transaction Search), metrics → CloudWatch, logs → OpenSearch. The instrumentation API is portable; the backends are locked. The **ADOT exporter is mandated**.
 
-```
-code (OTel SDK: @opentelemetry/* / opentelemetry-python)
-  → ADOT (OTel) Collector  [NOT the X-Ray SDK/Daemon — maintenance Feb 2026 / EOS Feb 2027]
-     → X-Ray (traces; via CloudWatch Application Signals + Transaction Search) + CloudWatch (metrics) + OpenSearch (logs)
-```
-
-**Do NOT introduce Prometheus, Grafana, Loki, or Tempo.** OTel ≠ a new backend stack — it's the instrumentation layer in front of the backends Brain already runs. Anyone proposing a Prometheus/Grafana migration is changing a locked decision and needs an explicit ADR (and the answer is no).
+**Do NOT introduce Prometheus, Grafana, Loki, or Tempo.** Anyone proposing a Prometheus/Grafana migration is changing a locked decision and needs an explicit ADR (and the answer is no).
 
 ## Circuit breakers (every cross-service call)
 
-Every cross-service call (gRPC to a downstream, an external vendor API, a DB/cache dependency) is wrapped in a **circuit breaker** so a slow/failing dependency degrades gracefully instead of cascading.
+Every cross-service call (gRPC downstream, external vendor API, DB/cache) is wrapped in a circuit breaker so a slow/failing dependency degrades gracefully instead of cascading.
 
 | State | Behavior |
 |---|---|
-| **Closed** | Calls pass through; failures counted |
-| **Open** | Failure threshold crossed → fail fast (return fallback / cached / degraded) without calling the dependency |
-| **Half-open** | After a cooldown, allow a probe call; success → close, failure → re-open |
+| **Closed** | Calls pass; failures counted |
+| **Open** | Threshold crossed → fail fast (fallback/cached/degraded) without calling |
+| **Half-open** | After cooldown, allow a probe; success → close, failure → re-open |
 
-- Pair with **timeouts** (no call without a deadline — gRPC deadline, vendor httpx timeout) + **bounded retries** (exponential backoff + jitter).
-- Graceful degradation examples: api-gateway breaker on analytics-service opens → serve last Redis-cached KPIs; intelligence breaker on Anthropic opens → AI Chat returns template responses (mirrors the AWS FIS chaos drill in `devops-aws`).
-- Emit breaker state as a CloudWatch metric (`CircuitBreakerState` by downstream) + alarm on sustained Open.
+- Pair with **timeouts** (no call without a deadline) + **bounded retries** (exponential backoff + jitter).
+- Degradation: api-gateway breaker on analytics opens → serve last Redis-cached KPIs; intelligence breaker on Anthropic opens → AI Chat returns template responses (mirrors the AWS FIS chaos drill in `devops-aws`).
+- Emit breaker state as `CircuitBreakerState` (by downstream) + alarm on sustained Open.
 
 ## Every service has (the observability floor)
 
-Non-negotiable per service — verified before a service is "done" (`operational-readiness`):
-
-- **OTel instrumentation** (auto + manual spans) exporting to X-Ray/CloudWatch/OpenSearch
-- **Metrics** (CloudWatch standard set below)
-- **Tracing** (X-Ray, correlation IDs propagated)
-- **Structured logging** (pino/structlog, four correlation fields, PII-redacted)
-- **Retries** (bounded, backoff+jitter on transient failures)
-- **Health checks** (liveness + readiness + dependency probes — `operational-readiness`)
-- **Circuit breakers** (on every cross-service / external call)
+Verified before "done" (`operational-readiness`): OTel instrumentation (auto + manual spans); CloudWatch metrics; X-Ray tracing with correlation IDs; structured logging (four fields, PII-redacted); bounded retries (backoff+jitter); health checks (liveness + readiness + dependency); circuit breakers on every cross-service/external call.
 
 ## PII redaction rules
 
 NEVER log: `access_token`/`refresh_token`/JWTs/API keys; `email` (SHA-256 hash if you need identity comparison); `phone` (India customer PII); `pan_card`/`aadhaar`; full card or order-total+name combos; addresses; WhatsApp message content (unless explicit per-call opt-in). Three layers: logger field filter → Fluent Bit Lua → OpenSearch field mapping at display.
 
-## SLOs (canon/technical-requirements.md)
+## SLOs
 
 | Service | SLO |
 |---|---|
@@ -180,53 +165,41 @@ NEVER log: `access_token`/`refresh_token`/JWTs/API keys; `email` (SHA-256 hash i
 | analytics-service | 99.5% availability; p99 < 500ms on metric reads (Redis cached) |
 | intelligence-service | 99% availability; daily tick completes by 07:15 IST |
 | lifecycle-service | 99.9% availability; **0** out-of-window dial attempts; **0** DND-blocked dials succeeded |
-| notifications-service | 99.5% availability; **Morning Brief delivered by 07:20 IST on >99.5% of brand-days** (canon SLO) |
+| notifications-service | 99.5%; **Morning Brief delivered by 07:20 IST on >99.5% of brand-days** |
 | Mobile app | < 1% crash rate; p95 cold-start < 3s |
 
 ## Common failure modes
 
-- **Forgetting correlation IDs** — request_id missing → can't stitch across services. Detection: Kibana filter returns a partial trace.
-- **Logging tokens / PII** — three-layer redaction misses a field. Detection: synthetic test injects `email:'test@x.com'` and asserts it never reaches OpenSearch raw indices.
-- **No OTel propagation on Kafka** — trace breaks at the topic boundary. Use `instrumentation-kafkajs`; consumers must extract headers.
-- **OpenSearch hot-tier disk full** — Fluent Bit drops logs silently. Monitor cluster disk weekly.
+- **Forgetting correlation IDs** → can't stitch across services (Kibana filter returns a partial trace).
+- **Logging tokens/PII** — synthetic test injects `email:'test@x.com'` and asserts it never reaches OpenSearch raw.
+- **No OTel propagation on Kafka** — trace breaks at the topic boundary; use `instrumentation-kafkajs`, consumers extract headers.
+- **OpenSearch hot-tier disk full** — Fluent Bit drops logs silently; monitor cluster disk weekly.
 - **CloudWatch over-billed** — too many custom metrics × dimensions.
-- **No X-Ray sampling rule** — 100% prod = $$$. Default 5% prod, 100% staging.
-- **No circuit breaker on a cross-service call** — a slow downstream cascades into the caller's latency budget. Wrap every gRPC/vendor/DB call with a breaker + timeout.
-- **Proposing Prometheus/Grafana** — OTel is the instrumentation API; the backends (X-Ray/CloudWatch/OpenSearch) are locked. Don't swap the backend stack.
+- **No X-Ray sampling rule** — 100% prod = $$$; default 5% prod, 100% staging.
+- **No circuit breaker on a cross-service call** — wrap every gRPC/vendor/DB call with a breaker + timeout.
+- **Proposing Prometheus/Grafana** — the backends are locked.
 
 ## SLO error-budget policy
 
-An SLO without an error budget is a wish. Each named SLO converts to a **budget** = `(1 − target) × window`; burning it is what triggers action.
+An SLO without an error budget is a wish. Budget = `(1 − target) × window`.
 
-| SLO | Target | Monthly error budget (30d) |
+| SLO | Target | Monthly budget (30d) |
 |---|---|---|
-| Morning Brief delivered by 07:20 IST | >99.5% | ~0.15 brand-days/brand/mo (≈3.6h of "late") |
+| Morning Brief by 07:20 IST | >99.5% | ~0.15 brand-days/brand/mo |
 | Decision-Log write availability | >99.99% | ~4.3 min/mo |
 | API p95 | <2s | <0.5% of reqs may exceed 2s |
 | P0 connector freshness | <1h | <0.5% of poll-windows stale >1h |
 | Auto-execute reversal rate | <8% | reversals are the budget; >8% burns it |
 
-**Burn-rate alerting (two-window):**
-- **Fast-burn** — consuming **2% of the monthly budget in 1h** → **page** (something is actively broken; e.g. Decision-Log writes failing).
-- **Slow-burn** — sustained drain that exhausts the budget before the window ends → **ticket**, not a page.
-
-**Budget-burn policy:** alert at **50% / 75% / 90%** budget consumed. When the budget is **exhausted**, the team **freezes non-critical releases** to the affected service until the SLI recovers and the budget regenerates, and runs a **postmortem** (root cause + an action that protects the budget next month) — see `systematic-debugging` and the incident path in `devops-aws` auto-rollback. The auto-execute reversal SLO is special: crossing 15% trips the canon **auto-revert to recommend-only**, not just a freeze.
-
-**Monthly error-budget review:** Jatin + the service owner review remaining budget per SLO; a chronically-exhausted budget is a signal to invest in reliability before features.
+**Burn-rate alerting (two-window):** fast-burn — 2% of monthly budget in 1h → **page**; slow-burn — sustained drain → **ticket**. Alert at **50% / 75% / 90%** consumed. When exhausted: **freeze non-critical releases** to the affected service until the SLI recovers + run a postmortem. The auto-execute reversal SLO is special: crossing 15% trips the canon **auto-revert to recommend-only**, not just a freeze. Monthly review: Jatin + service owner.
 
 ## Brain wiring
 
 | Concern | Owner | Reference |
 |---|---|---|
-| Node services log standard (pino) | **Vikram** | canon/technical-requirements.md (logs) |
-| Python services log standard (structlog) | **Maya** | canon/technical-requirements.md |
-| Fluent Bit → OpenSearch shipping + retention/cost | **Jatin** | canon/technical-requirements.md (log shipping) |
-| PII redaction policy | **Shreya** | canon/technical-requirements.md (privacy) |
+| Node log standard (pino) | **Vikram** | canon/technical-requirements.md |
+| Python log standard (structlog) | **Maya** | canon/technical-requirements.md |
+| Fluent Bit shipping + retention/cost | **Jatin** | canon/technical-requirements.md |
+| PII redaction policy | **Shreya** | canon/technical-requirements.md |
 
-## References
-
-- `canon/technical-requirements.md` — canonical log spine + logger scaffolds + Kibana dashboards + monitors + cost-discipline dashboard
-- `skills/devops-aws/SKILL.md` — OpenSearch + Fluent Bit deployment; AWS FIS chaos (breaker behavior under failure)
-- `skills/security-baseline/SKILL.md` — PII redaction posture
-- `skills/operational-readiness/SKILL.md` — liveness/readiness/dependency probes
-- `skills/systematic-debugging/SKILL.md` — logs are the trail (backward root-cause tracing)
+Related: `devops-aws` (OpenSearch/Fluent Bit deploy + FIS chaos), `security-baseline` (PII posture), `operational-readiness` (probes), `systematic-debugging` (logs are the trail).

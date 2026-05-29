@@ -7,14 +7,14 @@
   },
   "metadata": {
     "description": "Private marketplace for the Brain Engineering OS plugin. Distributes the AI engineering team that builds the Brain commerce OS.",
-    "version": "0.26.0"
+    "version": "1.0.0"
   },
   "plugins": [
     {
       "name": "brain-engineering-os",
       "source": "./",
       "description": "An AI engineering team delivered as a Claude Code plugin. Orchestrates Rohan (CTO Advisor), Architect, Backend/Frontend/Mobile devs, Security, QA, and DevOps agents through an 8-stage requirement-to-release pipeline grounded in the Brain canon.",
-      "version": "0.26.0"
+      "version": "1.0.0"
     }
   ]
 }

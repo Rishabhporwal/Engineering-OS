@@ -1,6 +1,6 @@
 ---
 name: multi-tenancy-isolation
-description: Brain's tenant-isolation contract (technical-requirements §6 + canon/TECH/09 + TECH/01) — workspace_id = tenant = brand = billing unit, enforced at FOUR layers (JWT claim → api-gateway service-side assertion + requireRole on every mutation → Postgres RLS via SET LOCAL app.workspace_id → ClickHouse query-gateway rejecting un-scoped queries). Redis keys + S3 paths workspace-scoped; Kafka partition key = workspace_id + consumer asserts it; cross-brand benchmarks aggregate-only k≥5; the 5-role model; org→workspace→integration hierarchy + Models A/B/C/D. A single missed layer is a cross-brand data leak — P0, Shreya VETO, SLO 0 leaks. Use on ANY endpoint, query, event, MCP tool, or cache key that touches tenant data.
+description: workspace_id isolation at FOUR layers — JWT → api-gateway assert + requireRole → Postgres RLS → ClickHouse gateway. Redis/S3/Kafka scoped; k≥5; 5 roles; SLO 0 leaks.
 ---
 
 # Multi-Tenancy & Data Isolation
@@ -61,7 +61,7 @@ Direct `clickhouse_driver` calls that bypass the gateway are a security incident
 
 ## The 5-role model (RBAC — canonical R2)
 
-`viewer (1)` < `analyst (2)` < `agency (3, scoped + tagged)` < `operator (4)` < `owner (5)`. Owner: billing/integrations/auto-execute/delete. Operator: operational write, approve/reject, lifecycle, inbox (no billing/delete). Analyst: read + comment + goals/alerts (no approvals/execution). Agency: scoped per-brand grant, every action tagged + audited. Viewer: read-only, no PII, no exports, no actions. The per-action-class approval matrix is enforced in `application/` use-cases — never in an in-process map.
+`viewer (1)` < `analyst (2)` < `agency (3, scoped + tagged)` < `operator (4)` < `owner (5)`. Owner: billing/integrations/auto-execute/delete. Operator: operational write, approve/reject, lifecycle, inbox (no billing/delete). Analyst: read + comment + goals/alerts (no approvals/execution). Agency: scoped per-brand grant, every action tagged + audited. Viewer: read-only, no PII, no exports, no actions. The per-action-class approval matrix is enforced in `application/` use-cases — never in an in-process map. See [`auth-and-access`](../auth-and-access/SKILL.md).
 
 ## Cross-brand benchmarks + agency access
 
@@ -91,3 +91,4 @@ Direct `clickhouse_driver` calls that bypass the gateway are a security incident
 - `canon/TECH/09_security_observability.md` — auth, roles, defense-in-depth, admin BYPASSRLS + impersonation
 - `canon/TECH/01_data_architecture.md` §5 — Postgres RLS + ClickHouse gateway code
 - [`security-baseline`](../security-baseline/SKILL.md) · [`database-design`](../database-design/SKILL.md) · [`clickhouse-olap`](../clickhouse-olap/SKILL.md) · [`event-driven-kafka`](../event-driven-kafka/SKILL.md)
+</content>

@@ -1,0 +1,168 @@
+# Brain Engineering OS v2 — declarative pipeline
+#
+# This file is the SINGLE SOURCE OF TRUTH for control-flow: lanes, stages,
+# model tiers, routing, and the delta-review rules. In v1 this logic lived
+# inside the Opus cto-advisor prompt and was re-reasoned on every intake
+# (a major cost + drift surface). In v2 the orchestrator (pipeline/orchestrator.md)
+# reads THIS file and routes deterministically; agents carry only judgment.
+#
+# Validated by tools/pipeline_doctor.py. Routing tested by tools/ab_bench.py.
+
+version: 2
+
+# ---------------------------------------------------------------------------
+# Model tiers — the OS applies its own cost-routing doctrine to itself.
+# (v1 ran intake/security/final on Opus and re-ran them fully on every bounce.)
+# ---------------------------------------------------------------------------
+model_tiers:
+  intake_mechanical: haiku   # lane/dependency/persona-count are deterministic (lane-classifier.md)
+  intake_judgment:   sonnet  # requirement-quality + challenge synthesis
+  architect:         opus    # runs once per requirement; deep design reasoning — justified
+  builder:           sonnet
+  security_default:  sonnet  # loop is checklist + scanners + guard-presence checks
+  security_escalate: opus    # ONLY on a CRITICAL/compliance ambiguity needing deep reasoning
+  qa:                sonnet
+  final_judgment:    opus    # the go/no-go judgment call stays Opus
+  delta_reverify:    sonnet  # re-verifying an already-PASSed surface after a scoped fix
+  persona_bounded:   haiku
+  persona_deep:      sonnet
+
+# ---------------------------------------------------------------------------
+# Lanes — which stages run, by risk. Lane is assigned by lane-classifier.md.
+# CONSERVATIVE RULE (Founder): on any doubt between lanes, pick the higher one.
+# ---------------------------------------------------------------------------
+lanes:
+  express:
+    when: "zero trigger surfaces AND purely trivial (copy/docs/config/styling/zero-behavior refactor/clear registry repeat)"
+    stages: [intake, build, qa]          # no architect, no security, no final
+    personas: 0
+  standard:
+    when: "zero trigger surfaces AND not trivial; OR the foundational-scaffolding carve-out"
+    stages: [intake, architect, build, security, qa, final]
+    personas: "0-1"
+  high_stakes:
+    when: ">=1 trigger surface touched"
+    stages: [intake, architect, build, security, qa, final]
+    personas: 2
+    mutation_tests: required
+
+# ---------------------------------------------------------------------------
+# Stages — owner + model tier + the artifact each produces.
+# ---------------------------------------------------------------------------
+stages:
+  intake:    {n: 1, owner: cto-advisor,        model: intake_judgment, artifact: "02-cto-advisor-review.md"}
+  architect: {n: 2, owner: architect,          model: architect,       artifact: "03-architecture-plan.md"}
+  build:     {n: 3, owner: "<tagged-builders>", model: builder,        artifact: "0N-developer-report.md", parallel: true}
+  security:  {n: 4, owner: security-reviewer,  model: security_default, artifact: "security-review.md", veto: true}
+  qa:        {n: 5, owner: qa-agent,           model: qa,              artifact: "qa-review.md", veto: true}
+  final:     {n: 6, owner: cto-advisor,        model: final_judgment,  artifact: "11-final-review.md", veto: true}
+  deploy:    {n: 8, owner: platform-devops,    model: builder,         artifact: "13-deployment-report.md"}
+  # Stage 7 = Founder human gate (no agent).
+
+# Security ∥ QA run in parallel (one orchestrator message, two Agent calls).
+parallel_reviews: [security, qa]
+
+# ---------------------------------------------------------------------------
+# Routing — deterministic next-stage map the orchestrator follows.
+# ---------------------------------------------------------------------------
+routing:
+  intake:
+    ADVANCE: {express: build, standard: architect, high_stakes: architect}
+    needs_personas: "spawn personas (tiered) ∥, then re-spawn cto-advisor to synthesize"
+    CHALLENGE_BACK: founder
+    KILL: terminal
+  architect:
+    ADVANCE: build
+    BOUNCE: intake
+  build:
+    done: {express: qa, standard: parallel_reviews, high_stakes: parallel_reviews}
+    BOUNCE: architect
+  reviews:                       # security ∥ qa reconcile
+    both_PASS: {express: founder_gate, standard: final, high_stakes: final}
+    any_BOUNCE: build            # re-spawn responsible builder, then DELTA re-review (see below)
+  final:
+    PASS: founder_gate
+    BOUNCE: "<bounce_target>"
+  founder_gate:
+    approve: deploy
+    reject: intake
+
+safety_bound:
+  max_spawns_per_requirement: 20
+  on_exceed: "STOP, leave state consistent for /resume, surface to Founder (likely a loop)"
+
+# ---------------------------------------------------------------------------
+# DELTA RE-REVIEW — the dominant token-cost lever (fixes O12).
+# v1 re-ran the ENTIRE security+qa loop on any bounce, even a 1-char fix.
+# v2: the orchestrator passes review_scope to the re-spawned reviewer.
+# ---------------------------------------------------------------------------
+delta_review:
+  rule: |
+    On a BOUNCE-fix re-review:
+      - review_scope = full   IF the fix touches a high_stakes_path (below)
+      - review_scope = delta  OTHERWISE
+    A delta review re-verifies the bounced finding(s) + DIFF-PLUS-RELEVANT-SLICES,
+    NOT the whole surface, NOT diff-only. (Research: diff-only "risks missing global
+    interactions"; diff + ranked callers/imports/tests captures ~80–90% of needed
+    context at far below full cost.) The reviewer reads the prior PASS artifact + the
+    diff + the changed code's direct callers/importers/tests. Runs on
+    model_tiers.delta_reverify (sonnet/haiku) + effort:low.
+  regression_auto_block: "ANY test that passed before the bounce and now fails = AUTO-BLOCK, even in delta scope. This is the cheap guardrail that catches the cross-cutting regressions delta review structurally can't."
+  high_stakes_paths:            # a fix touching ANY of these forces a FULL re-review
+    - compliance      # DPDP / PDPL / DLT / NCPR / calling-hours / recording-consent / WhatsApp policy
+    - multi_tenancy   # workspace_id at any of the 4 layers
+    - metric_engine   # any metric / TS↔Python parity
+    - decision_log    # ai.decision_log writes
+    - money           # billing / GMV meter / minor-units math
+    - outbound_channel
+    - auth
+  full_reverify_also_when: "the diff exceeds the bounced finding's blast radius (new files/endpoints/migrations not named in the bounce)"
+
+# ---------------------------------------------------------------------------
+# PROMPT CACHING — fix #0, the highest-ROI lever (validated by research, was
+# under-weighted in the first design). Repeated agent calls share a large prefix
+# (system prompt + canon + tool defs). Cache reads cost ~0.1x input; real systems
+# cut 70–90%. "Not optional for agentic systems running >3–5 steps" — an 8-stage /
+# 11-agent pipeline is the textbook case.
+# ---------------------------------------------------------------------------
+caching:
+  principle: "STABILIZE the shared prefix, SHRINK only the variable part. Shrinking the system prompt helps per-call cost but a smaller prefix caches LESS — the two goals conflict unless you separate them."
+  stable_prefix_order:          # byte-stable, cached; never put per-run data here
+    - system_prompt             # prompts/system-prompt.md (frozen)
+    - tool_defs
+    - canon_context             # the specific TECH/NN § the task needs (stable per topic)
+    - role_boilerplate
+  cache_breakpoint: "on the LAST shared block (canon/tool defs), NOT on the per-task user message"
+  dynamic_after_breakpoint: "req_id, run-folder paths, the diff, per-task input, lazily-loaded skill bodies — ALL go AFTER the breakpoint. A lazily-loaded skill landing inside the prefix busts the cache for everything after it."
+  ttl: "use the 1-hour cache TTL for the shared system-prompt + canon — a busy multi-agent run cold-starts every 5 min otherwise, turning calls into expensive writes"
+  forbidden_in_prefix: "no timestamps, no per-run IDs, no random hex, no live state — these bust the cache on every spawn (this is why timestamps/IDs are appended, never prefixed)"
+  measure: "log cache_read_tokens via usage_logger; target >60% hit rate on the long-context stages before declaring a caching win (dashboard surfaces cache-hit %)"
+
+# ---------------------------------------------------------------------------
+# ADOPT-NEXT (research-backed, not yet built — ranked). See REBUILD-SPEC §13.
+# ---------------------------------------------------------------------------
+adopt_next:
+  - "Batch API (50% off) for non-interactive stages — full security/QA sweeps, eval runs, nightly reports; stacks with caching → ~5% of original price"
+  - "Eval-gated cascade: run the cheap model + a confidence/verifier check, escalate to Opus ONLY on low confidence — even some judgment stages skip Opus per-bounce (FrugalGPT: match frontier at up to 98% savings)"
+  - "Typed structured handoffs between stages (a bounce carries a structured delta, not re-explained prose) — kills retries + re-explanation (MetaGPT result)"
+  - "effort: tiering — delta-reviewer effort:low, architect effort:high (real Claude Code subagent field)"
+  - "Fork subagents (CLAUDE_CODE_FORK_SUBAGENT) for parallel re-review — inherit the parent's cached prefix, ~80% cheaper than fresh spawns"
+
+# ---------------------------------------------------------------------------
+# NEGATIVE-CONTROL DoD — kills the #1 recurring bounce cause (fixes O11).
+# Enforced in builder DoD + the QA gate.
+# ---------------------------------------------------------------------------
+verification_validity:
+  must_run_under_real_security_context: true   # NO BYPASSRLS / superuser for RLS/tenancy/auth tests
+  negative_control_required: true              # every probe/test MUST fail when the protection is removed
+  ban_tautological_parity: true                # parity asserted vs an INDEPENDENT source of truth, not itself
+  gate: "a green test under security-bypass, an inert probe, or a tautological parity test = FAIL (false confidence is worse than no test)"
+
+# ---------------------------------------------------------------------------
+# Telemetry — enforced, not prose (fixes O14/O13). See tools/usage_logger.py.
+# ---------------------------------------------------------------------------
+telemetry:
+  after_every_spawn: "orchestrator calls tools/usage_logger.py log ... with the Agent result's usage + review_scope + the actual model"
+  assert_before_advance: "tools/usage_logger.py assert ... — a missing row is a DEFECT (exit 3), re-log before routing on"
+  live_log_heartbeat: "/watch warns when live.log mtime lags active.json / usage.jsonl (silence != idle)"
+</content>

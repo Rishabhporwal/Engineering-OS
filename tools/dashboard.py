@@ -130,6 +130,10 @@ def build(eos: Path) -> dict:
     tok_by_agent, tok_by_feat, tok_by_stage, tok_by_day = Counter(), Counter(), Counter(), Counter()
     tok_total = 0
     est_cost = 0.0
+    # v2: consume the breakdown the orchestrator logs (was ignored in v1 — see eos-improvement-observations O10).
+    # Separates context-load (input + cache) from reasoning (output) and surfaces cache-hit rate + delta-review savings.
+    bd = {"input": 0, "output": 0, "cache_read": 0, "cache_creation": 0}
+    tok_by_scope = Counter()  # full vs delta re-review — proves the O12 lever
     for u in usage:
         n = int(u.get("total_tokens") or 0)
         tok_total += n
@@ -137,7 +141,14 @@ def build(eos: Path) -> dict:
         tok_by_feat[u.get("req_id", "?")] += n
         tok_by_stage[f'S{u.get("stage", "?")}'] += n
         tok_by_day[str(u.get("ts", ""))[:10]] += n
+        tok_by_scope[str(u.get("review_scope", "full"))] += n
+        bd["input"] += int(u.get("input_tokens") or 0)
+        bd["output"] += int(u.get("output_tokens") or 0)
+        bd["cache_read"] += int(u.get("cache_read_tokens") or 0)
+        bd["cache_creation"] += int(u.get("cache_creation_tokens") or 0)
         est_cost += n / 1e6 * MODEL_RATE.get(str(u.get("model", "")).lower(), DEFAULT_RATE)
+    _cache_in = bd["cache_read"] + bd["cache_creation"] + bd["input"]
+    cache_hit_rate = (bd["cache_read"] / _cache_in * 100) if _cache_in else 0.0
 
     # agent performance
     actors = defaultdict(lambda: {"events": 0, "stages": 0, "vetos": 0, "bounces": 0, "last": ""})
@@ -224,6 +235,8 @@ def build(eos: Path) -> dict:
         "tokens": {"total": tok_total, "cost": round(est_cost, 2),
                    "by_agent": dict(tok_by_agent), "by_feature": dict(tok_by_feat),
                    "by_stage": dict(tok_by_stage), "by_day": dict(tok_by_day),
+                   "breakdown": bd, "cache_hit_rate": round(cache_hit_rate, 1),
+                   "by_scope": dict(tok_by_scope),
                    "has_data": bool(usage)},
         "activity": [{"ts": str(e.get("ts", "")), "actor": e.get("actor", "?"),
                       "type": e.get("type", ""), "req": e.get("req_id", "")}
@@ -315,7 +328,8 @@ const TABS={
   setTimeout(()=>{sortable('feat',D.features.slice(),cols);document.getElementById('ff').oninput=e=>{const q=e.target.value.toLowerCase();const f=D.features.filter(x=>JSON.stringify(x).toLowerCase().includes(q));document.getElementById('feat').innerHTML=table(f,cols,'feat_t')}},0);
   return h},
  Tokens(){if(!D.tokens.has_data)return '<div class=panel><h2>Tokens &amp; cost</h2><div class=empty>No token usage logged yet. Runs after v0.14.0 record per-stage usage to <code>.engineering-os/usage.jsonl</code> (the orchestrator logs each spawn). This view fills in as the pipeline runs.</div></div>';
-  let h=`<div class=kpis>${kpi('Total tokens',fmt(D.tokens.total))}${kpi('Est. cost','$'+D.tokens.cost)}</div>`;
+  let h=`<div class=kpis>${kpi('Total tokens',fmt(D.tokens.total))}${kpi('Est. cost','$'+D.tokens.cost)}${kpi('Cache-hit %',D.tokens.cache_hit_rate+'%')}</div>`;
+  h+='<div class=grid2><div class=panel><h2>Context-load vs reasoning (the v2 measurement)</h2>'+bars({input:D.tokens.breakdown.input,cache_read:D.tokens.breakdown.cache_read,cache_creation:D.tokens.breakdown.cache_creation,output:D.tokens.breakdown.output},'#58a6ff')+'</div><div class=panel><h2>Re-review scope (delta vs full — the O12 lever)</h2>'+bars(D.tokens.by_scope,'#3fb950')+'</div></div>';
   h+='<div class=grid2><div class=panel><h2>Tokens by agent</h2>'+bars(D.tokens.by_agent,'#a371f7')+'</div><div class=panel><h2>Tokens by feature</h2>'+bars(D.tokens.by_feature,'#58a6ff')+'</div><div class=panel><h2>Tokens by stage</h2>'+bars(D.tokens.by_stage,'#3fb950')+'</div><div class=panel><h2>Tokens by day</h2>'+bars(D.tokens.by_day,'#d29922')+'</div></div>';
   h+='<div class=sub style="margin-top:8px">Cost is a rough estimate (blended $/1M: opus 30 · sonnet 6 · haiku 1.5).</div>';
   return h},

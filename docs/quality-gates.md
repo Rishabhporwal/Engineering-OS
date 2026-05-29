@@ -114,7 +114,7 @@ This document defines each gate's:
 - [ ] **Single-Primitive sweep** done — no duplicated audience builder / consent flow / decision log / notification / attribution / identity.
 - [ ] **DB schema additions** have a migration plan + RLS policy + index plan.
 - [ ] **Event topics** named per convention `<domain>.<entity>.<event_type>.v<version>`; partition key is `workspace_id`.
-- [ ] **API surfaces** (gRPC / tRPC / MCP) have proto sketches; breaking-change implications considered (`api-versioning-strategy`).
+- [ ] **API surfaces** (gRPC / tRPC / MCP) have proto sketches; breaking-change implications considered (`api-discipline`).
 - [ ] **Observability plan** lists metrics, logs, traces, alarms, dashboards.
 - [ ] **Test strategy** lists unit + integration + contract + (E2E / load if applicable) + real-network smoke.
 - [ ] **4 multi-tenancy layers** addressed (JWT, service, DB, Kafka).

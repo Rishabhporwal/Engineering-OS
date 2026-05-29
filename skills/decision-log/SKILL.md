@@ -1,6 +1,6 @@
 ---
 name: decision-log
-description: Brain's Decision Log (`ai.decision_log`) — THE MOAT. The append-update ledger that records every condition → recommendation → approval/edit/execution/reversal → 7d/30d outcome. Auto-load whenever an agent emits a recommendation, an MCP write tool fires, a lifecycle send / support resolution / auto-execute / reversal happens, or you wire the nightly outcome-attribution jobs. Every recommendation creates a row BEFORE display; MCP write tools auto-write via middleware; a workflow that cannot write here is not a Brain action. Money fields are minor units. Feeds Condition-Outcome memory (the learning loop).
+description: The ai.decision_log append-update ledger — THE MOAT. condition→recommendation→approval→execution→reversal→7d/30d outcome. Create-before-display; MCP auto-logs.
 ---
 
 # Decision Log — Brain's Moat
@@ -28,7 +28,7 @@ ai.decision_log(
 -- indexes: (workspace_id, created_at DESC), (workspace_id, agent_name, status), (workspace_id, action_type)
 ```
 
-`workspace_id` leads every index (multi-tenant; RLS-scoped). **All money is integer minor units + currency (BIGINT, never float/NUMERIC)** — `attributed_revenue_minor`, `attributed_cm2_minor`, `recovered_revenue_7d_minor`, `recovered_revenue_30d_minor`. JSONB columns carry the structured envelopes; promote a frequently-queried field to a generated column + index rather than scanning JSONB.
+`workspace_id` leads every index (multi-tenant; RLS-scoped — see [`multi-tenancy-isolation`](../multi-tenancy-isolation/SKILL.md)). **All money is integer minor units + currency (BIGINT, never float/NUMERIC).** JSONB columns carry the structured envelopes; promote a frequently-queried field to a generated column + index rather than scanning JSONB.
 
 ## Every field, and what it carries (business §7.2 contract ↔ schema column)
 
@@ -48,7 +48,7 @@ ai.decision_log(
 | **reversibility** | `reversibility` | reversible / partially_reversible / irreversible (irreversible → Owner-only). |
 | **approval_state** | `status` | proposed → approved/rejected/edited → queued → auto_executed/blocked → executed → reversed/failed → observed. |
 | **execution_state** | (in `status` + `executed_action`) | not_started / queued / sent / executed / failed / reversed. |
-| **channel** | `channel` + `evidence_refs` | Where the action happened (call/whatsapp/email/sms/ad_audience/no_action) + provider refs. |
+| **channel** | `channel` + `evidence_refs` | Where the action happened + provider refs. |
 | **cost** | (in `executed_action`/`expected_impact`) | Message, call, discount, ad spend, or refund cost (minor units). |
 | **revenue_attributed** | `attributed_revenue_minor` + `attributed_cm2_minor` | Placed / realized / CM2 revenue tied to this decision. |
 | **outcome_7d** | `outcome_7d` JSONB + `recovered_revenue_7d_minor` | Structured outcome 7 days later. |
@@ -78,11 +78,11 @@ reversal → UPDATE reversal={...}, status='reversed'
 30d job → UPDATE outcome_30d, recovered_revenue_30d_minor, learning_note
 ```
 
-**The row is created before anything is shown to a human.** A recommendation that reaches the UI without a `proposed` row already in `ai.decision_log` is a bug. Subsequent state changes (approve / edit / execute / reverse) **update the same row** — the Decision Log is append-with-status-transitions, not delete-and-rewrite.
+**The row is created before anything is shown to a human.** A recommendation that reaches the UI without a `proposed` row already in `ai.decision_log` is a bug. Subsequent state changes **update the same row** — append-with-status-transitions, not delete-and-rewrite.
 
 ## MCP write tools auto-write via middleware
 
-Every MCP **write** tool (`integrations.*.write`, `lifecycle.outreach.*`, `lifecycle.call.place`, `core.consent.update`, `core.goal.set`, refunds/replacements, budget changes) auto-writes/updates the Decision Log **through gateway middleware** — the handler never has to remember (technical-requirements §10, MCP contract). Tool schemas generate from the same protos as gRPC, so the action payload logged matches the action executed (cannot drift). Writing to an external API directly — bypassing the `mcpTool({...})` path — skips the Decision Log and is a code-review blocker.
+Every MCP **write** tool (`integrations.*.write`, `lifecycle.outreach.*`, `lifecycle.call.place`, `core.consent.update`, `core.goal.set`, refunds/replacements, budget changes) auto-writes/updates the Decision Log **through gateway middleware** — the handler never has to remember (technical-requirements §10, MCP contract). Tool schemas generate from the same protos as gRPC, so the action payload logged matches the action executed (cannot drift). Writing to an external API directly — bypassing the `mcpTool({...})` path — skips the Decision Log and is a code-review blocker. See [`mcp-protocol`](../mcp-protocol/SKILL.md).
 
 ```python
 # What the middleware does on every write-tool invocation (conceptual)
@@ -105,24 +105,24 @@ The **23:55 IST** attribution job (paradigm 1 — SQL; almost-zero LLM cost) wal
 
 ## The Kafka topic — `intelligence.decision.logged.v1` (retained forever)
 
-Every Decision Log write emits `intelligence.decision.logged.v1` (envelope keyed by `workspace_id`). **Retention is infinite** (MSK tiered storage → S3) — the Decision Log topic is one of the two never-expiring topic classes (the other is raw integrations). Downstream consumers: analytics (attribution), notifications (digests/audit), audit. Because the topic is replayable forever, any downstream materialization of decisions can be rebuilt from scratch.
+Every Decision Log write emits `intelligence.decision.logged.v1` (envelope keyed by `workspace_id`). **Retention is infinite** (MSK tiered storage → S3) — one of the two never-expiring topic classes (the other is raw integrations). Downstream consumers: analytics (attribution), notifications (digests/audit), audit. Because the topic is replayable forever, any downstream materialization of decisions can be rebuilt from scratch.
 
 ## How it feeds Condition-Outcome memory — the learning loop
 
-When a decision's outcome matures, it becomes a row in `ai.condition_outcome` (Postgres + pgvector), linked by `decision_log_id`, carrying the **16-dim Brand Fingerprint at decision time** (`brand_fingerprint_at_decision vector(16)`), the recommendation, whether it was approved/auto-executed, and the 7d/30d outcome + recovered revenue. Every agent, on every daily tick, runs a pgvector cosine k-NN: *"find the 5 most similar past conditions for this brand and what happened."*
+When a decision's outcome matures, it becomes a row in `ai.condition_outcome` (Postgres + pgvector), linked by `decision_log_id`, carrying the **16-dim Brand Fingerprint at decision time**, the recommendation, whether it was approved/auto-executed, and the 7d/30d outcome + recovered revenue. Every agent, on every daily tick, runs a pgvector cosine k-NN: *"find the 5 most similar past conditions for this brand and what happened."*
 
 ```
 condition = what was true   →  recommendation = what Brain suggested
 action    = what was done   →  outcome = what happened at 7d/30d  →  learning = what to change next
 ```
 
-This is the engine of compounding learning (business §7.4; TECH/05 §0.3): Brain gets measurably better at decisions for *that specific brand* because every prior decision + outcome lives here. It runs at SQL economics, so agents query it constantly — see `memory-layer-pgvector` and `agentic-design`.
+This is the engine of compounding learning (business §7.4; TECH/05 §0.3), at SQL economics. Full retrieval mechanics live in [`memory-layer-pgvector`](../memory-layer-pgvector/SKILL.md); agent wiring in [`agentic-design`](../agentic-design/SKILL.md).
 
 ## Verification / anti-patterns (code-review blockers)
 
-- **Agent recommendation with no `ai.decision_log` row** → blocker. Every agent method that emits a `Recommendation` MUST insert a `proposed` row before the rec can surface. Detection: a Morning Brief / Insights item with no `decision_log_id`.
+- **Agent recommendation with no `ai.decision_log` row** → blocker. Every agent method that emits a `Recommendation` MUST insert a `proposed` row before the rec can surface.
 - **External write that bypasses the MCP middleware** → blocker. Calling Meta/Google/Shopify/Razorpay/Shiprocket/BSP SDKs directly skips the auto-write. Always go through `mcpTool({...})`.
-- **Float / NUMERIC money** on `attributed_revenue_minor` / `attributed_cm2_minor` / `recovered_revenue_*_minor` → blocker. Integer minor units + `currency_code` only.
+- **Float / NUMERIC money** on any `*_minor` column → blocker. Integer minor units + `currency_code` only.
 - **Attribution on placed (not realized) revenue** → wrong number; outcome jobs read realized facts.
 - **Missing `workspace_id`** on a row or the topic envelope → cross-brand leak risk (P0).
 - **Delete-then-reinsert on status change** → breaks the immutable `id` + the `condition_outcome` FK. Update the existing row.
@@ -134,8 +134,5 @@ This is the engine of compounding learning (business §7.4; TECH/05 §0.3): Brai
 - `canon/technical-requirements.md` §9.3 — `ai.decision_log` schema + the create-before-display rule
 - `canon/business-requirements.md` §7 — Decision Log principle, fields (§7.2), Condition-Outcome memory (§7.4)
 - `canon/TECH/05_intelligence_layer.md` §0.3 — Condition-Outcome Pair Log + the daily learning-loop query
-- `skills/mcp-protocol/SKILL.md` — write tools auto-write Decision Log via middleware
-- `skills/agentic-design/SKILL.md` — agents emit recommendations as `proposed` rows
-- `skills/memory-layer-pgvector/SKILL.md` — Brand Fingerprint + Condition-Outcome retrieval
-- `skills/agentic-actions-auditor/SKILL.md` — auditing agent-emitted actions before they execute
-- `skills/multi-tenancy-isolation/SKILL.md` — `workspace_id` enforcement on the row + topic envelope
+- [`mcp-protocol`](../mcp-protocol/SKILL.md) · [`agentic-design`](../agentic-design/SKILL.md) · [`memory-layer-pgvector`](../memory-layer-pgvector/SKILL.md) · [`agentic-actions-auditor`](../agentic-actions-auditor/SKILL.md) · [`multi-tenancy-isolation`](../multi-tenancy-isolation/SKILL.md)
+</content>

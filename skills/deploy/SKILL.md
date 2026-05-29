@@ -20,4 +20,4 @@ The subagent (Jatin) then runs:
 
 Print Jatin's progress as he goes. The final `deployment-report.md` will be in the run folder.
 
-If any gate fails along the way, Jatin will bounce back to Stage 4 (security/QA triage) and update state.
+If any gate fails, Jatin bounces back to Stage 4 (security/QA triage) and updates state.

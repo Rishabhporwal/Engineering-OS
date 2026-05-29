@@ -39,7 +39,7 @@ Declare the change's **surface class first** — it determines which gate sectio
 | No HIGH findings | {{NO_HIGH}} | |
 | No India compliance violation | {{NO_INDIA_VIOLATION}} | DLT / NCPR / DND / calling hours / recording consent |
 | Every mutation endpoint guarded (`requireRole` + `requireWorkspaceMember` + Zod + `workspace_id` assertion) | {{MUTATION_GUARDED}} | |
-| Every new MCP tool / agent-emitted action audited (blast radius classified, human gate on irreversible/financial, idempotency, arg validation) | {{ACTIONS_AUDITED}} | per [`agentic-actions-auditor`](../skills/agentic-actions-auditor/SKILL.md) |
+| Every new MCP tool / agent-emitted action audited (blast radius classified, human gate on irreversible/financial, idempotency, arg validation) | {{ACTIONS_AUDITED}} | per [`agentic-safety`](../skills/agentic-safety/SKILL.md) |
 | Every new MCP tool tenant-checked + Decision Log middleware + auth scope | {{MCP_TENANT_CHECKED}} | |
 | Every new connector: OAuth AES-256-GCM + webhook signature + per-brand KMS key | {{CONNECTORS_TOKEN_ENCRYPTED}} | |
 | PII not in logs (sampled log lines reviewed) | {{PII_NOT_IN_LOGS}} | |

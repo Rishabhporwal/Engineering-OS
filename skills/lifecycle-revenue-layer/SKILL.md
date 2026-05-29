@@ -1,6 +1,6 @@
 ---
 name: lifecycle-revenue-layer
-description: Brain's revenue engine (canon/TECH/11) — lifecycle-service is a REVENUE CENTRE, not a cost centre. The Single-Primitive Audience (built once, consumed by call/WhatsApp/email/SMS/ad-audience/referral) with per-customer routing (high-value→call, mid→WhatsApp, low→email); RFM scoring (SQL), response modelling (ML), personalization (Haiku); the CallProvider vendor abstraction; the hard-coded compliance engine (09:00–21:00 IST, two-layer DND brand+NCPR, consent re-verify, DLT, 48h cap); the offer-governance ladder; attribution placed/realized/incremental; recovered-revenue 7d/30d → Decision Log. Always CM2-gated. Auto-load on any lifecycle-service work.
+description: lifecycle-service as REVENUE CENTRE — Single-Primitive Audience routed per-customer, RFM/response/personalize paradigms, CallProvider, queue compliance, CM2-gated offers.
 ---
 
 # Lifecycle & Revenue Execution Layer
@@ -15,7 +15,7 @@ description: Brain's revenue engine (canon/TECH/11) — lifecycle-service is a R
 
 The **Audience** is the primitive: built once (RFM segment + custom filters), then simultaneously pushed to the call queue, WhatsApp queue, email queue, SMS queue, ad-platform custom-audience sync, and referral engine — with **per-customer channel routing** applied (`high-value → call`, `mid → WhatsApp`, `low → email`). Adding a channel costs engineering **1×** (a new router), not **N×**. **This is why GMV-% pricing survives** — competitors with per-channel stacks pay N× and price per-channel.
 
-**Code-review blocks** (anti-pattern detection): "the email version of the audience builder", "a call-specific consent flow", "the WhatsApp Decision Log", "per-channel customer profiles". There is **one** audience builder, **one** consent model (core-service), **one** Decision Log (analytics-service), **one** unified customer record.
+**Code-review blocks** (anti-pattern detection): "the email version of the audience builder", "a call-specific consent flow", "the WhatsApp Decision Log", "per-channel customer profiles". There is **one** audience builder, **one** consent model (core-service), **one** Decision Log (analytics-service — [`decision-log`](../decision-log/SKILL.md)), **one** unified customer record.
 
 ## Cost-routing paradigms in the pipeline
 
@@ -46,7 +46,7 @@ NTILE(5) OVER (PARTITION BY brand_id ORDER BY cm2_contribution_365d ASC) AS m_sc
 
 ## Channel routers + CallProvider abstraction
 
-One router per channel (`whatsapp-router` → WhatsApp Cloud API — replies inside the **free service window** (24h customer-service reply; 72h ad-click entry-point) skip per-message template billing, `email-router` → SES, `sms-router` → Gupshup/Kaleyra DLT-registered, `ad-audience-router` → Meta Custom Audience / Google Customer Match). AI calling hides the vendor behind a stable contract so swapping is config, not a rewrite:
+One router per channel (`whatsapp-router` → WhatsApp Cloud API — replies inside the **free service window** skip per-message template billing; `email-router` → SES; `sms-router` → Gupshup/Kaleyra DLT-registered; `ad-audience-router` → Meta Custom Audience / Google Customer Match). AI calling hides the vendor behind a stable contract so swapping is config, not a rewrite:
 
 ```python
 class CallProvider(ABC):
@@ -62,20 +62,18 @@ Multiple providers can run concurrently (Bolna for Hindi, Vapi for English) — 
 
 ## The compliance engine (hard-coded, NOT feature-flaggable)
 
-Shipped as core infrastructure on **every** calling/sending path (`lifecycle-service/compliance.py`). This is a Shreya VETO surface ([`data-privacy-dpdp`](../data-privacy-dpdp/SKILL.md)):
+Shipped as core infrastructure on **every** calling/sending path (`lifecycle-service/compliance.py`). The full India regime (DLT, NCPR/DND two-layer scrub, 09:00–21:00 IST window, WhatsApp opt-in/templates/free-window, AI-voice disclosure, consent primitive) is owned by [`data-privacy-dpdp`](../data-privacy-dpdp/SKILL.md) — a Shreya VETO surface. This skill's job is the **lifecycle-specific enforcement point: the queue**, where each rule is applied before a send/dial fires:
 
-| Rule | Implementation |
+| Rule (regime detail in `data-privacy-dpdp`) | Lifecycle enforcement |
 |---|---|
-| **Calling hours 09:00–21:00 IST** | Blocked at **queue level** (not dialer). Pre-09:00 held in `pending_window`, flushed at 09:00; post-21:00 rescheduled next day. |
-| **Two-layer DND** | Every number checked vs (a) brand's own opt-out list **and** (b) TRAI **NCPR** before dialing. NCPR cache refreshed weekly. |
-| **Consent re-verify** | Excluded if `consent_status IN ('opted_out','withdrawn')` — checked **before every send**, not once. |
-| **DLT templates** | Every post-call WhatsApp/SMS template registered under the **brand's** DLT entity — Brain never commingles brands' registrations. |
-| **AI-voice disclosure + recording consent** | Every call opens with automated-caller disclosure; recording only if consented (else call proceeds, no audio retained). |
-| **48h frequency cap** | No customer contacted more than once / 48h by any Brain flow. Override only for VIP + Owner approval logged in audit. |
+| Calling hours 09:00–21:00 IST | Blocked at **queue level** (not dialer). Pre-09:00 held in `pending_window`, flushed at 09:00; post-21:00 rescheduled next day. |
+| Two-layer DND (brand opt-out + TRAI NCPR) | Every number checked vs both before dialing. NCPR cache refreshed weekly. |
+| Consent re-verify | Excluded if `consent_status IN ('opted_out','withdrawn')` — checked **before every send**, not once. |
+| DLT templates | Every post-call WhatsApp/SMS template registered under the **brand's** DLT entity — Brain never commingles brands' registrations. |
+| AI-voice disclosure + recording consent | Every call opens with automated-caller disclosure; recording only if consented. |
+| 48h frequency cap | No customer contacted more than once / 48h by any Brain flow. Override only for VIP + Owner approval logged in audit. |
 
-`CallComplianceEngine.can_call()` returns `ok` / `deferred(reason)` / `blocked(reason)`. **Compliance SLO: 0 DND-blocked + 0 out-of-window dial attempts** — non-zero is a rule violation.
-
-> **TRAI is sharpening rules on AI-driven / robocall telemarketing** (advance auto-dialer notification, call traceability) — Brain's AI-calling is in scope; keep the calling-hours / DLT / NCPR / DND / 48h-cap discipline above and verify the advance-notification + traceability path before any AI call fires ([`agentic-actions-auditor`](../agentic-actions-auditor/SKILL.md)).
+`CallComplianceEngine.can_call()` returns `ok` / `deferred(reason)` / `blocked(reason)`. **Compliance SLO: 0 DND-blocked + 0 out-of-window dial attempts.** TRAI is sharpening AI-calling rules (advance auto-dialer notification, call traceability) — verify the advance-notification + traceability path before any AI call fires ([`agentic-actions-auditor`](../agentic-actions-auditor/SKILL.md)).
 
 ## The offer-governance ladder (always CM2-gated)
 
@@ -95,7 +93,7 @@ Three views (business-requirements §11.5), and **every lifecycle surface shows 
 
 - **Placed** — customer clicked/replied and ordered within the window.
 - **Realized** — order delivered/paid/settled after post-order leakage (the honest number).
-- **Incremental** — campaign cohort vs holdout/baseline where testing exists.
+- **Incremental** — campaign cohort vs holdout/baseline ([`experimentation-holdouts`](../experimentation-holdouts/SKILL.md)).
 
 Recovered revenue is attributed at **7d and 30d** and written back to `ai.decision_log` (`recovered_revenue_7d_minor`, `recovered_revenue_30d_minor`, `channel`). The North-Star metric is **Recovered Revenue ÷ Brain GMV Fee** (target > 3× by month 3, > 5× by month 6 — below 3× means the brand is paying for a cost centre).
 
@@ -119,3 +117,4 @@ Recovered revenue is attributed at **7d and 30d** and written back to `ai.decisi
 - `canon/TECH/11_lifecycle_revenue_layer.md` — full service, segments, compliance engine, data model
 - `canon/business-requirements.md` §11 — offer ladder + attribution requirements
 - [`india-commerce-economics`](../india-commerce-economics/SKILL.md) · [`data-privacy-dpdp`](../data-privacy-dpdp/SKILL.md) · [`memory-layer-pgvector`](../memory-layer-pgvector/SKILL.md) · [`metric-engine`](../metric-engine/SKILL.md)
+</content>

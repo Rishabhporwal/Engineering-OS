@@ -52,11 +52,11 @@ This document is the **authoritative skill-to-role binding** for the Brain Engin
 
 | # | Skill | Domain | Primary | Shared with | Exposed as command |
 |---|-------|--------|---------|-------------|---------------------|
-| 1 | [`agentic-actions-auditor`](../skills/agentic-actions-auditor/SKILL.md) | SEC + AI | SEC | AIE, ARC | yes |
+| 1 | [`agentic-safety`](../skills/agentic-safety/SKILL.md) | SEC + AI | SEC | AIE, ARC | yes |
 | 2 | [`agentic-design`](../skills/agentic-design/SKILL.md) | AI | AIE | ARC, CTOA | yes |
-| 3 | [`api-contract-testing`](../skills/api-contract-testing/SKILL.md) | TEST | QA | BE, AIE, ARC | yes |
-| 4 | [`api-traffic-patterns`](../skills/api-traffic-patterns/SKILL.md) (pagination + rate-limiting) | BE | BE | AIE, FEW, FEM, OPS, SEC | yes |
-| 5 | [`api-versioning-strategy`](../skills/api-versioning-strategy/SKILL.md) | ARCH | ARC | BE, AIE, CTOA | yes |
+| 3 | [`api-discipline`](../skills/api-discipline/SKILL.md) | TEST | QA | BE, AIE, ARC | yes |
+| 4 | [`api-discipline`](../skills/api-discipline/SKILL.md) (pagination + rate-limiting) | BE | BE | AIE, FEW, FEM, OPS, SEC | yes |
+| 5 | [`api-discipline`](../skills/api-discipline/SKILL.md) | ARCH | ARC | BE, AIE, CTOA | yes |
 | 6 | [`app-store-deployment`](../skills/app-store-deployment/SKILL.md) | OPS | OPS | FEM | yes |
 | 7 | [`architecture-patterns`](../skills/architecture-patterns/SKILL.md) | ARCH | ARC | CTOA, BE, AIE | yes |
 | 8 | [`auth-and-access`](../skills/auth-and-access/SKILL.md) (sessions + RBAC) | SEC | SEC | BE, FEW, FEM, AIE, ARC | yes |
@@ -65,15 +65,15 @@ This document is the **authoritative skill-to-role binding** for the Brain Engin
 | 11 | [`clickhouse-olap`](../skills/clickhouse-olap/SKILL.md) | DATA | AIE | BE, ARC | yes |
 | 12 | [`code-review`](../skills/code-review/SKILL.md) | DISC | CTOA | QA, ARC, all devs | yes |
 | 13 | [`cost-routing-paradigms`](../skills/cost-routing-paradigms/SKILL.md) | DISC + AI | CTOA, AIE | all devs, QA, OPS | yes |
-| 14 | [`database-design`](../skills/database-design/SKILL.md) (incl. Supabase/Postgres patterns) | DATA | ARC | BE, AIE, SEC | yes |
-| 15 | [`defense-in-depth-validation`](../skills/defense-in-depth-validation/SKILL.md) (incl. XSS prevention) | SEC | SEC | BE, AIE, QA, FEW, FEM | yes |
+| 14 | [`data-layer`](../skills/data-layer/SKILL.md) (incl. Supabase/Postgres patterns) | DATA | ARC | BE, AIE, SEC | yes |
+| 15 | [`security-baseline`](../skills/security-baseline/SKILL.md) (incl. XSS prevention) | SEC | SEC | BE, AIE, QA, FEW, FEM | yes |
 | 16 | [`devops-aws`](../skills/devops-aws/SKILL.md) | OPS | OPS | ARC | yes |
 | 17 | [`domain-driven-design`](../skills/domain-driven-design/SKILL.md) | ARCH | ARC | **ALL** builders | yes |
 | 18 | [`engineering-discipline`](../skills/engineering-discipline/SKILL.md) | DISC | CTOA | **ALL** roles | yes |
 | 19 | [`event-driven-kafka`](../skills/event-driven-kafka/SKILL.md) | DATA + BE | BE | AIE, ARC, OPS | yes |
 | 20 | [`finishing-a-development-branch`](../skills/finishing-a-development-branch/SKILL.md) | OPS + DISC | OPS | **ALL** (commit discipline) | yes |
 | 21 | [`forecasting-prophet`](../skills/forecasting-prophet/SKILL.md) | AI | AIE | — | yes |
-| 22 | [`frontend-mobile`](../skills/frontend-mobile/SKILL.md) | FE-M | FEM | ARC, QA | yes |
+| 22 | [`mobile-surface`](../skills/mobile-surface/SKILL.md) | FE-M | FEM | ARC, QA | yes |
 | 23 | [`frontend-web`](../skills/frontend-web/SKILL.md) | FE-W | FEW | ARC, QA | yes |
 | 24 | [`grpc-buf`](../skills/grpc-buf/SKILL.md) | BE | BE | AIE, ARC | yes |
 | 25 | [`idempotency-handling`](../skills/idempotency-handling/SKILL.md) | BE | BE | AIE, QA | yes |
@@ -82,15 +82,15 @@ This document is the **authoritative skill-to-role binding** for the Brain Engin
 | 28 | [`kpi-dashboard-design`](../skills/kpi-dashboard-design/SKILL.md) | FE-W + PROD | FEW | FEM, PM | yes |
 | 29 | [`lifecycle-revenue-layer`](../skills/lifecycle-revenue-layer/SKILL.md) | AI + PROD | AIE | BE, SEC | yes |
 | 30 | [`mcp-protocol`](../skills/mcp-protocol/SKILL.md) (incl. building an MCP server) | AI + ARCH | AIE | ARC, BE | yes |
-| 31 | [`mobile-offline-support`](../skills/mobile-offline-support/SKILL.md) | FE-M | FEM | — | yes |
+| 31 | [`mobile-surface`](../skills/mobile-surface/SKILL.md) | FE-M | FEM | — | yes |
 | 32 | [`morning-brief-mobile`](../skills/morning-brief-mobile/SKILL.md) | FE-M + AI + PROD | FEM | AIE, FEW, PM | yes |
 | 33 | [`oauth-implementation`](../skills/oauth-implementation/SKILL.md) | SEC + INTG | AIE | BE, SEC | yes |
 | 34 | [`observability`](../skills/observability/SKILL.md) (incl. structured logging) | OBS | OPS | **ALL** roles | yes |
 | 35 | [`operational-readiness`](../skills/operational-readiness/SKILL.md) (incl. health-check endpoints) | OPS + OBS | OPS, QA | all devs, CTOA, BE, AIE | yes |
-| 36 | [`push-notification-setup`](../skills/push-notification-setup/SKILL.md) | FE-M | FEM | BE (notifications-service) | yes |
+| 36 | [`mobile-surface`](../skills/mobile-surface/SKILL.md) | FE-M | FEM | BE (notifications-service) | yes |
 | 37 | [`python-services`](../skills/python-services/SKILL.md) | BE | AIE | BE (parity), ARC | yes |
 | 38 | [`security-baseline`](../skills/security-baseline/SKILL.md) | SEC | SEC | **ALL** roles | yes |
-| 39 | [`sql-query-optimization`](../skills/sql-query-optimization/SKILL.md) | PERF + DATA | BE, AIE | ARC | yes |
+| 39 | [`data-layer`](../skills/data-layer/SKILL.md) | PERF + DATA | BE, AIE | ARC | yes |
 | 40 | [`subagent-orchestration`](../skills/subagent-orchestration/SKILL.md) (fan-out + pipeline dispatch) | DISC | CTOA | ARC | yes |
 | 41 | [`systematic-debugging`](../skills/systematic-debugging/SKILL.md) (incl. root-cause tracing) | DISC | all devs, QA | CTOA, SEC | yes |
 | 42 | [`task-tracker-integration`](../skills/task-tracker-integration/SKILL.md) | DISC + OPS | PM | OPS, CTOA | yes |
@@ -98,15 +98,15 @@ This document is the **authoritative skill-to-role binding** for the Brain Engin
 | 44 | [`testing-tdd`](../skills/testing-tdd/SKILL.md) (incl. mutation testing) | TEST | QA | all devs, AIE | yes |
 | 45 | [`turborepo`](../skills/turborepo/SKILL.md) | OPS | OPS | BE, FEW, FEM | yes |
 | 46 | [`verification-before-completion`](../skills/verification-before-completion/SKILL.md) | DISC | **ALL** roles | — | yes |
-| 47 | [`vulnerability-scanning`](../skills/vulnerability-scanning/SKILL.md) | SEC | SEC | OPS | yes |
+| 47 | [`security-baseline`](../skills/security-baseline/SKILL.md) | SEC | SEC | OPS | yes |
 | 48 | [`web-performance`](../skills/web-performance/SKILL.md) (audit + optimization) | PERF + FE-W | FEW | QA, OPS, ARC | yes |
 | 49 | [`writing-plans`](../skills/writing-plans/SKILL.md) | DISC | PM, ARC | **ALL** plan-emitting agents | yes |
 | 50 | [`caching-strategy`](../skills/caching-strategy/SKILL.md) | DATA + PERF | BE | AIE, OPS, SEC | yes |
 | 51 | [`metric-engine`](../skills/metric-engine/SKILL.md) | DATA + AI + PROD | AIE | BE, QA, FEW | yes |
-| 52 | [`region-adapter`](../skills/region-adapter/SKILL.md) | ARCH | ARC | CTOA, **ALL** builders | yes |
+| 52 | [`region-and-locale`](../skills/region-and-locale/SKILL.md) | ARCH | ARC | CTOA, **ALL** builders | yes |
 | 53 | [`multi-tenancy-isolation`](../skills/multi-tenancy-isolation/SKILL.md) | SEC + DATA | SEC | ARC, BE, AIE, **ALL** | yes |
 | 54 | [`memory-layer-pgvector`](../skills/memory-layer-pgvector/SKILL.md) | AI + DATA | AIE | ARC | yes |
-| 55 | [`data-privacy-dpdp`](../skills/data-privacy-dpdp/SKILL.md) | SEC + PROD | SEC | AIE, **ALL** | yes |
+| 55 | [`compliance-engine`](../skills/compliance-engine/SKILL.md) | SEC + PROD | SEC | AIE, **ALL** | yes |
 | 56 | [`decision-log`](../skills/decision-log/SKILL.md) | AI + DATA + PROD | AIE | BE, ARC, SEC, **ALL** | yes |
 | 57 | [`billing-metering`](../skills/billing-metering/SKILL.md) | BE + PROD | BE | AIE, ARC, OPS | yes |
 
@@ -118,15 +118,15 @@ This document is the **authoritative skill-to-role binding** for the Brain Engin
 | 59 | [`llm-evals`](../skills/llm-evals/SKILL.md) | AI + TEST | AIE, QA | ARC | yes |
 | 60 | [`incident-response`](../skills/incident-response/SKILL.md) | OPS | OPS | CTOA, SEC | yes |
 | 61 | [`experimentation-holdouts`](../skills/experimentation-holdouts/SKILL.md) | AI + PROD | AIE, PM | CTOA | yes |
-| 62 | [`prompt-injection-defense`](../skills/prompt-injection-defense/SKILL.md) | SEC + AI | SEC, AIE | ARC | yes |
+| 62 | [`agentic-safety`](../skills/agentic-safety/SKILL.md) | SEC + AI | SEC, AIE | ARC | yes |
 | 63 | [`data-quality`](../skills/data-quality/SKILL.md) | DATA + AI | AIE | BE, QA | yes |
 | 64 | [`progressive-delivery`](../skills/progressive-delivery/SKILL.md) | OPS | OPS | ARC | yes |
 | 65 | [`accessibility`](../skills/accessibility/SKILL.md) | FE-W + FE-M | FEW, FEM | QA | yes |
-| 66 | [`i18n-rtl`](../skills/i18n-rtl/SKILL.md) | FE-W + FE-M | FEW, FEM | ARC, PM | yes |
-| 67 | [`pci-compliance-scope`](../skills/pci-compliance-scope/SKILL.md) | SEC | SEC | BE, ARC | yes |
-| 68 | [`audit-log-immutability`](../skills/audit-log-immutability/SKILL.md) | SEC + DATA | SEC, BE | AIE, ARC | yes |
-| 69 | [`data-residency-enforcement`](../skills/data-residency-enforcement/SKILL.md) | SEC + OPS | OPS, SEC | ARC | yes |
-| 70 | [`soc2-readiness`](../skills/soc2-readiness/SKILL.md) | SEC + DISC | SEC | OPS, CTOA | yes |
+| 66 | [`region-and-locale`](../skills/region-and-locale/SKILL.md) | FE-W + FE-M | FEW, FEM | ARC, PM | yes |
+| 67 | [`compliance-attestation`](../skills/compliance-attestation/SKILL.md) | SEC | SEC | BE, ARC | yes |
+| 68 | [`compliance-attestation`](../skills/compliance-attestation/SKILL.md) | SEC + DATA | SEC, BE | AIE, ARC | yes |
+| 69 | [`region-and-locale`](../skills/region-and-locale/SKILL.md) | SEC + OPS | OPS, SEC | ARC | yes |
+| 70 | [`compliance-attestation`](../skills/compliance-attestation/SKILL.md) | SEC + DISC | SEC | OPS, CTOA | yes |
 | 71 | [`llm-gateway`](../skills/llm-gateway/SKILL.md) | AI | AIE | ARC, CTOA, OPS | yes |
 
 > **New (being added in parallel):** rows 56–57. `decision-log` covers the moat — the append-only `ai.decision_log` (condition → recommendation → approval/edit → execution → reversal → 7d/30d outcome; no Brain action exists unless it is logged). `billing-metering` covers realized-GMV %-pricing — `billing.gmv_meter` (placed/realized/billable GMV), billing on the **realized/delivered** number only (never placed GMV), tier rates, and the CM2 affordability guardrail.
@@ -156,11 +156,11 @@ This document is the **authoritative skill-to-role binding** for the Brain Engin
 
 ### Architect — Aryan (`architect`)
 - `architecture-patterns` (primary)
-- `region-adapter` (multi-region from day one)
+- `region-and-locale` (multi-region from day one)
 - `domain-driven-design` (mandatory — every backend service is bounded-context structured)
 - `tech-stack-evaluation` (rare)
-- `database-design`
-- `api-versioning-strategy`
+- `data-layer`
+- `api-discipline`
 - `engineering-discipline`
 - `agentic-design` (when designing AI surfaces)
 - `mcp-protocol` (external surfaces + building an MCP server)
@@ -174,16 +174,16 @@ This document is the **authoritative skill-to-role binding** for the Brain Engin
 - `backend-fastify-trpc-grpc` (primary)
 - `domain-driven-design` (every service he builds is DDD-structured)
 - `grpc-buf`
-- `database-design` (shared with ARC; incl. Supabase/Postgres patterns)
+- `data-layer` (shared with ARC; incl. Supabase/Postgres patterns)
 - `event-driven-kafka`
-- `api-traffic-patterns` (pagination + rate-limiting)
+- `api-discipline` (pagination + rate-limiting)
 - `idempotency-handling`
 - `caching-strategy` (ElastiCache/Redis)
 - `billing-metering` (realized-GMV %-pricing; `billing.*` schemas)
 - `oauth-implementation` (shared with AIE)
-- `sql-query-optimization` (shared with AIE)
+- `data-layer` (shared with AIE)
 - `operational-readiness` (incl. health-check endpoints; shared with OPS)
-- `defense-in-depth-validation` (shared with SEC)
+- `security-baseline` (shared with SEC)
 - `engineering-discipline`
 - `india-commerce-economics`
 - `cost-routing-paradigms`
@@ -194,9 +194,9 @@ This document is the **authoritative skill-to-role binding** for the Brain Engin
 - `frontend-web` (primary)
 - `kpi-dashboard-design`
 - `web-performance` (audit + optimization)
-- `defense-in-depth-validation` (incl. XSS prevention; shared with SEC)
+- `security-baseline` (incl. XSS prevention; shared with SEC)
 - `auth-and-access` (sessions + RBAC; shared with SEC)
-- `api-traffic-patterns` (consumer side)
+- `api-discipline` (consumer side)
 - `engineering-discipline`
 - `india-commerce-economics`
 - `cost-routing-paradigms`
@@ -204,12 +204,12 @@ This document is the **authoritative skill-to-role binding** for the Brain Engin
 - `verification-before-completion`
 
 ### Mobile Developer — Karan (`mobile-developer`)
-- `frontend-mobile` (primary)
+- `mobile-surface` (primary)
 - `morning-brief-mobile` (primary — this is *the* product surface)
-- `mobile-offline-support`
-- `push-notification-setup`
+- `mobile-surface`
+- `mobile-surface`
 - `app-store-deployment` (shared with OPS)
-- `defense-in-depth-validation` (incl. XSS, RN context; shared with SEC)
+- `security-baseline` (incl. XSS, RN context; shared with SEC)
 - `auth-and-access` (sessions + RBAC, mobile context; shared with SEC)
 - `engineering-discipline`
 - `india-commerce-economics`
@@ -232,7 +232,7 @@ This document is the **authoritative skill-to-role binding** for the Brain Engin
 - `lifecycle-revenue-layer` (when the agent affects revenue)
 - `integration-connectors` (ingestion-service is Python; Maya owns Python connectors)
 - `oauth-implementation` (shared with BE)
-- `sql-query-optimization` (shared with BE)
+- `data-layer` (shared with BE)
 - `cost-routing-paradigms` (this is **her primary discipline**)
 - `engineering-discipline`
 - `india-commerce-economics`
@@ -242,20 +242,20 @@ This document is the **authoritative skill-to-role binding** for the Brain Engin
 ### Security Reviewer — Shreya (`security-reviewer`)
 - `security-baseline` (primary — Shreya VETO authority)
 - `auth-and-access` (sessions + RBAC)
-- `defense-in-depth-validation` (incl. XSS prevention)
-- `vulnerability-scanning`
-- `agentic-actions-auditor` (audit agent-emitted actions before ship)
+- `security-baseline` (incl. XSS prevention)
+- `security-baseline`
+- `agentic-safety` (audit agent-emitted actions before ship)
 - `oauth-implementation` (security review side)
 - `india-commerce-economics` (DLT/NCPR/DND compliance is hers)
 - `multi-tenancy-isolation` (the 4-layer workspace_id contract — top VETO surface)
-- `data-privacy-dpdp` (India DPDP Act + PII lifecycle)
+- `compliance-engine` (India DPDP Act + PII lifecycle)
 - `engineering-discipline`
 - `code-review` (security pass)
 - `verification-before-completion`
 
 ### QA Agent — Tanvi (`qa-agent`)
 - `testing-tdd` (primary; incl. mutation testing)
-- `api-contract-testing`
+- `api-discipline`
 - `operational-readiness` (PASS verdict gate; incl. health checks)
 - `verification-before-completion` (her core discipline)
 - `code-review`
@@ -267,9 +267,9 @@ This document is the **authoritative skill-to-role binding** for the Brain Engin
 - `devops-aws` (primary)
 - `observability` (primary; incl. structured logging)
 - `turborepo`
-- `api-traffic-patterns` (gateway-level rate-limiting)
+- `api-discipline` (gateway-level rate-limiting)
 - `app-store-deployment` (shared with FEM)
-- `vulnerability-scanning` (CI gates)
+- `security-baseline` (CI gates)
 - `operational-readiness`
 - `finishing-a-development-branch` (Stage 8 commit/push discipline)
 - `engineering-discipline`
@@ -308,7 +308,7 @@ Four candidate skills are flagged but not implemented in this build:
 |-----------------|---------|-----|
 | `requirement-intake` | CTOA, PM | Standard for converting a Founder ask into a structured requirement. |
 | `dynamic-persona-spawning` | DYN | Discipline for choosing the 0–2 personas to spawn and how to weight inputs. |
-| `production-readiness-checklist` | CTOA, OPS | Composed Stage 6 gate aggregating `operational-readiness` (incl. health checks) + `observability` + `vulnerability-scanning`. |
+| `production-readiness-checklist` | CTOA, OPS | Composed Stage 6 gate aggregating `operational-readiness` (incl. health checks) + `observability` + `security-baseline`. |
 | `release-notes-and-changelog` | OPS, PM | Human-readable release notes derived from per-run journals at Stage 8. |
 
 Founder may approve creating these in V2.

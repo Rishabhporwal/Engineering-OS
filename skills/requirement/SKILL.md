@@ -12,26 +12,21 @@ The Founder's requirement text is:
 
 Steps:
 
-1. **Check for duplicates.** Read `.engineering-os/state/registry.json` and `.engineering-os/state/active.json`. If a similar requirement already exists, surface it and ask the Founder whether to merge or proceed as a new requirement.
+1. **Check for duplicates.** Read `.engineering-os/state/registry.json` and `.engineering-os/state/active.json`. If a similar requirement already exists, surface it and ask the Founder whether to merge or proceed as new.
 
 2. **Generate a `req_id`.** Pattern: `<kind>-<kebab-slug>` where kind ∈ `{feat, fix, chore, spike, exp}`. Slug is the kebab-cased core of the requirement (max ~6 words).
 
-3. **Create the run folder.** Format (v0.3.1+):
+3. **Create the run folder:**
    `.engineering-os/runs/<ISO-8601-UTC-no-colons>__<hex6>__<req-id>__<operator>/`
-   
-   Where:
-   - `<ISO-8601-UTC-no-colons>` — fresh from `date -u +%Y-%m-%dT%H-%M-%SZ` (colons replaced with hyphens for filesystem-safety). Per the UTC timestamp discipline durable rule, derive at action time; do NOT infer from prior artifacts.
-   - `<hex6>` — 6 random hex chars from `openssl rand -hex 3` (prevents same-second collisions when multiple intakes overlap).
+   - `<ISO-8601-UTC-no-colons>` — fresh from `date -u +%Y-%m-%dT%H-%M-%SZ` (colons → hyphens). Per the UTC timestamp durable rule, derive at action time; do NOT infer from prior artifacts.
+   - `<hex6>` — 6 random hex chars from `openssl rand -hex 3` (prevents same-second collisions).
    - `<req-id>` — the kebab-cased requirement ID.
-   - `<operator>` — current OS user (or `<actor>-via-cto-advisor` when CTOA intakes a child on Founder's behalf under delegation).
-   
+   - `<operator>` — current OS user (or `<actor>-via-cto-advisor` when CTOA intakes a child on the Founder's behalf under delegation).
    Example: `.engineering-os/runs/2026-05-17T14-22-31Z__a3f201__feat-abandoned-cart-recovery-gcc__rishabh/`
-   
-   The `<hex6>` suffix was added in v0.3.1 after the monitor caught children #3 and #4 in the Brain repo colliding on the same `2026-05-19T14-30-00Z` prefix. Collisions are now mechanically prevented.
 
 4. **Write `01-requirement.md`** using [templates/requirement-template.md](../../templates/requirement-template.md). Fill in `raw_text`, `submitted_by` (current operator), `submitted_at` (now). Other fields can be filled by CTO Advisor in Stage 1.
 
-5. **Update `.engineering-os/state/active.json`:** append the new requirement entry with `status: cto-review`, `stage: 1`, `current_owner: cto-advisor`. Write a `.bak.<ts>` first.
+5. **Update `.engineering-os/state/active.json`:** append the new entry with `status: cto-review`, `stage: 1`, `current_owner: cto-advisor`. Write a `.bak.<ts>` first.
 
 6. **Update `.engineering-os/state/registry.json`:** append the new req_id + title + first_seen timestamp.
 
@@ -40,41 +35,8 @@ Steps:
    {"ts":"...","actor":"system","type":"intake","req_id":"...","title":"...","submitted_by":"..."}
    ```
 
-8. **ORCHESTRATE the pipeline end-to-end.** YOU (this top-level session) are the orchestrator — you have the `Agent` tool; the agents you spawn do NOT (a subagent cannot spawn a subagent). So you drive every stage: spawn the right agent, read its returned `HANDOFF` block + re-read `state/active.json` (source of truth), and advance — until the Founder gate (Stage 7) or a terminal state. See [docs/orchestration.md](../../docs/orchestration.md) for the full model.
+8. **ORCHESTRATE the pipeline end-to-end.** The full orchestration logic now lives in **[pipeline/orchestrator.md](../../pipeline/orchestrator.md)** + **[pipeline/pipeline.yaml](../../pipeline/pipeline.yaml)** — follow `pipeline/orchestrator.md`. It defines the spawn loop, the stage transitions and lanes (express / standard / high-stakes), persona fan-out + model tiering, parallel review reconciliation, terminal narration, usage logging, and the safety bound. YOU (this top-level session) are the orchestrator — you have the `Agent` tool; spawned agents do NOT.
 
-   **Every spawn prompt MUST include:** the `req_id`, the run folder path, the explicit note *"you are a subagent with no Agent tool — do your stage, persist artifacts + update state/active.json + journals, and END with a HANDOFF block; do NOT attempt to spawn anything,"* the instruction *"append a live progress line to `.engineering-os/live.log` at each meaningful step,"* and (critical) the absolute plugin root for `${CLAUDE_PLUGIN_ROOT}` and project dir for `${CLAUDE_PROJECT_DIR}`.
-
-   **NARRATE to the terminal (the Founder is watching).** You are the live commentary. At the very start, print: *"Pipeline started for `<req_id>`. Follow the deep stream with `/watch` or `tail -f .engineering-os/live.log`."* Then, around EACH spawn, print a concise status line the Founder sees in the main terminal:
-   - before: `▶ Stage <N> — spawning <agent> (<persona>)…`
-   - after it returns: `✓ <persona>: <2–3 line summary of what it decided/did> → handing to <next>` (or `✗ <persona>: BOUNCE — <reason> → re-spawning <target>`).
-   This main-terminal narration + the agents' `live.log` lines together give full real-time visibility into what every agent is thinking, planning, and implementing.
-
-   **LOG TOKEN USAGE after each spawn (powers the dashboard's cost view + the optimization measurement).** Each Agent result reports the subagent's token usage. Immediately after a spawn returns, append one line to `${CLAUDE_PROJECT_DIR}/.engineering-os/usage.jsonl` — **log the full breakdown, not just the total**, so context-loading (input + cache) is separable from reasoning (output) and the cache-hit rate is visible:
-   ```sh
-   echo '{"ts":"<UTC ISO>","req_id":"<req>","agent":"<agent-id>","stage":<N>,"total_tokens":<total>,"input_tokens":<in>,"output_tokens":<out>,"cache_read_tokens":<cr>,"cache_creation_tokens":<cc>,"model":"<opus|sonnet|haiku>"}' >> ${CLAUDE_PROJECT_DIR}/.engineering-os/usage.jsonl
-   ```
-   Pull `input_tokens` / `output_tokens` / `cache_read_tokens` (= `cache_read_input_tokens`) / `cache_creation_tokens` (= `cache_creation_input_tokens`) from the **Agent result's `usage` object**; `total_tokens` stays for back-compat. **If the harness doesn't surface a field, omit it — never fabricate a number.** Why it matters: the targeted-index/`rtk`/concise-artifact optimizations cut *input+cache* (context-load), so without this split a per-stage saving is invisible (see `docs/token-optimization.md` §C). Use the agent's **actual** model — for **personas**, log the model the orchestrator overrode to (Haiku for bounded, Sonnet for deep — step a below), not the generator's default. This append-only stream is what `/dashboard` aggregates.
-
-   **Loop:**
-
-   a. **Stage 1 — spawn `cto-advisor`.** Read its HANDOFF + state:
-      - `CHALLENGE-BACK` / `KILL` → STOP. Surface to Founder. Done.
-      - `needs_personas` non-empty → spawn each persona via `dynamic-persona-generator` **IN PARALLEL** (multiple Agent calls in ONE message), each writing its `0N-persona-*.md`. **Tier the persona model (cost lever):** each `needs_personas` entry carries a depth tag — `:haiku` for a **bounded** stress-test (checklist/toolchain/naming/single-rule) or `:sonnet` for a **reasoning-heavy** one (migration method, compliance trade-offs, numeric parity). Pass it as the Agent `model` override on that persona's spawn (bounded personas on Haiku are ~6× cheaper than Sonnet). If a persona is untagged, default to `sonnet` (don't silently under-power). Then **re-spawn `cto-advisor`** to synthesize the persona concerns + finalize ADVANCE/CHALLENGE; re-read.
-      - `ADVANCE` + `feature_class=express` → next = the single relevant **builder** (Stage 3).
-      - `ADVANCE` + `standard`/`high-stakes` → next = **architect** (Stage 2).
-
-   b. **Stage 2 — spawn `architect`.** On ADVANCE → spawn the tagged **builder(s)** (Stage 3). If the plan tags multiple tracks (@vikram/@ananya/@karan/@maya), spawn them **IN PARALLEL** (one message, multiple Agent calls).
-
-   c. **Stage 3 — builders return.** Then by lane:
-      - `express` → spawn **`qa-agent`** only (Stage 5).
-      - `standard`/`high-stakes` → spawn **`security-reviewer` AND `qa-agent` IN PARALLEL** (Stages 4∥5). Tell each it is in PARALLEL REVIEW MODE: review, write its artifact, return a verdict, do not advance.
-
-   d. **Reconcile reviews:** both `PASS` → `express` goes to the Founder gate; `standard`/`high-stakes` → spawn **`cto-advisor`** (Stage 6 final review). Any `BOUNCE`/`FAIL` → spawn the responsible **builder** again (Stage 3) with the findings, then re-run the review.
-
-   e. **Stage 6 — cto-advisor returns.** `PASS` → ensure state is `awaiting-founder` → **STOP at the Founder gate.** `BOUNCE` → spawn the `bounce_target` and continue the loop.
-
-   f. **Safety bound:** cap at ~20 agent invocations per requirement. If exceeded, STOP, set state, and surface to Founder (likely a loop). Always leave `state/active.json` consistent so `/resume` can pick up.
-
-9. **At the Founder gate (Stage 7), STOP.** Print a concise pipeline summary: req_id, lane, stages run, any bounces, and: *"Pipeline reached the Founder gate. Run `/approve <req-id>` to ship (Stage 8) or `/reject <req-id> <reason>`."* Do NOT run Stage 8 — deploy happens only after `/approve`.
+9. **At the Founder gate (Stage 7), STOP.** Print a concise summary: req_id, lane, stages run, any bounces, and: *"Pipeline reached the Founder gate. Run `/approve <req-id>` to ship (Stage 8) or `/reject <req-id> <reason>`."* Do NOT run Stage 8 — deploy happens only after `/approve`.
 
 If anything fails (state corrupted, an agent errors, no write permission), surface it clearly, leave state consistent for `/resume`, and do not silently proceed.

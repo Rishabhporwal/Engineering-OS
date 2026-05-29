@@ -14,12 +14,7 @@ Steps:
 2. Read `.engineering-os/state/active.json`. Find the req_id.
 3. Write `12-founder-decision.json`:
    ```json
-   {
-     "decision": "rejected",
-     "ts": "...",
-     "actor": "rishabh",
-     "reason": "<the reason from $ARGUMENTS>"
-   }
+   { "decision": "rejected", "ts": "...", "actor": "rishabh", "reason": "<the reason from $ARGUMENTS>" }
    ```
 4. Update `state/active.json`: status → `rejected`. Stage stays at 7 (terminal until CTOA reroutes).
 5. Append a decision-log entry: type `decision`, decision `rejected`, reason.
@@ -27,4 +22,4 @@ Steps:
 7. **Invoke the `cto-advisor` subagent** to decide re-route target stage.
 8. Print: "Rejected. CTOA will re-route based on your reason."
 
-Tone: this is constructive. The Founder is the source of truth on intent; rejection means "the engineering work is not what I want this to become." The team adapts; nobody is fired.
+Tone: constructive. The Founder is the source of truth on intent; rejection means "the engineering work is not what I want this to become." The team adapts; nobody is fired.

@@ -1,6 +1,6 @@
 ---
 name: billing-metering
-description: Brain's billing engine — priced as a % of REALIZED/DELIVERED GMV (never placed), with a per-tier minimum monthly fee and a CM2 affordability-guardrail cap. Covers the monthly `billing.gmv_meter` pipeline from ClickHouse delivered facts, the ~30-day RTO re-truing (provisional → final), `fee = clamp(gmv_pct × billable_gmv, min_fee, cm2_cap_pct × CM2)`, tier %s (Launch ~1.0 / Growth ~0.75 / Scale ~0.5 / Enterprise custom), NO per-seat pricing, the Day 0–14 activation period, pass-through metering (`billing.usage_passthrough`), the value-proof ledger (recovered revenue ÷ fee), and the `billing.*` schema owned by core-service. Use when wiring the GMV meter, computing a fee, building an invoice, the value-proof view, or reviewing any billing PR. Money = integer minor units.
+description: Realized-GMV pricing — fee=clamp(gmv_pct×billable_gmv, min_fee, cm2_cap×CM2). Monthly gmv_meter from CH facts, ~30d RTO re-truing, no per-seat, value-proof. SQL-only.
 ---
 
 # Billing & Metering — Brain's Realized-GMV Pricing
@@ -11,12 +11,12 @@ Brain is priced as a **percentage of realized/delivered GMV** under management, 
 
 | Principle | Why |
 |---|---|
-| **Bill on realized/delivered GMV, not placed** | In a 25–35% COD-RTO market, billing on placed GMV charges brands for revenue that physically came back. Billing on placed GMV is a **code-review blocker** (canon anti-pattern, R5). |
-| **Minimum monthly fee per tier** | A cost-to-serve floor; the GMV % applies above it. Protects unit economics for the smallest qualifying brands and in low-revenue months. |
-| **CM2 affordability guardrail** | The fee is capped so it never consumes a disproportionate share of contribution margin. A brand should never feel Brain's fee is why it became unprofitable. |
-| **No per-seat** | Pricing aligns with commerce scale, not headcount. Per-seat pricing is **out of scope** — reject it in design. |
-| **Auditable to delivered orders** | Every billed rupee traces back to delivered facts in ClickHouse — the same truth discipline as the metric engine. |
-| **Value-proof always visible** | Every paying brand sees recovered-revenue ÷ fee and CM2-recovered ÷ fee. Brain is sold as a profit centre, so the ledger that proves it is first-class. |
+| **Bill on realized/delivered GMV, not placed** | In a 25–35% COD-RTO market, billing on placed GMV charges brands for revenue that physically came back. Billing on placed GMV is a **code-review blocker** (R5). Realized-GMV definition lives in [`india-commerce-economics`](../india-commerce-economics/SKILL.md) + [`metric-engine`](../metric-engine/SKILL.md). |
+| **Minimum monthly fee per tier** | A cost-to-serve floor; the GMV % applies above it. |
+| **CM2 affordability guardrail** | The fee is capped so it never consumes a disproportionate share of contribution margin. |
+| **No per-seat** | Pricing aligns with commerce scale, not headcount. Per-seat is **out of scope** — reject it in design. |
+| **Auditable to delivered orders** | Every billed rupee traces back to delivered facts in ClickHouse. |
+| **Value-proof always visible** | Every paying brand sees recovered-revenue ÷ fee and CM2-recovered ÷ fee. |
 
 ## The metered base — `billable_gmv` (R5)
 
@@ -35,7 +35,7 @@ placed_gmv        = Σ net_revenue_minor of orders created in month   (tax-EXCLU
 = billable_gmv
 ```
 
-GMV is metered on **net revenue (tax-exclusive)** — Brain never charges a % on the GST/VAT the brand merely collected for the government. (Tax extraction is per-SKU slab via the RegionAdapter — India GST 2.0 0/5/18/40, never a blended rate.)
+GMV is metered on **net revenue (tax-exclusive)** — Brain never charges a % on GST/VAT the brand merely collected for the government. (Per-SKU slab extraction is in the RegionAdapter — see [`india-commerce-economics`](../india-commerce-economics/SKILL.md).)
 
 ## The RTO lag problem — provisional then re-trued
 
@@ -52,7 +52,7 @@ def compute_monthly_fee(meter, plan) -> int:               # returns minor units
     raw     = int(plan.gmv_pct * meter.billable_gmv_minor)  # tier %-of-GMV
     floored = max(raw, plan.min_monthly_fee_minor)          # cost-to-serve floor
     cm2_cap = int(plan.cm2_cap_pct * meter.cm2_minor)       # affordability guardrail
-    # Guardrail only CAPS; it never raises the fee. If CM2 is tiny the cap may bind below the
+    # Guardrail only CAPS; never raises the fee. If CM2 is tiny the cap may bind below the
     # floor — flag for a commercial conversation, never silently over-charge.
     return min(floored, cm2_cap) if cm2_cap > 0 else floored
 ```
@@ -68,7 +68,7 @@ The guardrail makes the fee the **lower of** (`gmv_pct × billable_gmv`) or (`cm
 | **Scale** | ~0.50% | higher floor | ~12% | bundled |
 | **Enterprise** | custom / fixed annual | negotiated | negotiated | **itemized** |
 
-Exact numbers are commercial decisions tuned with telemetry; the **code** must support floor + % + the CM2 cap + per-brand caps. Defaults seeded per region at onboarding.
+Exact numbers are commercial; the **code** must support floor + % + the CM2 cap + per-brand caps. Defaults seeded per region at onboarding.
 
 ## Activation period — no bill before the data is trustworthy
 
@@ -89,7 +89,7 @@ billing.usage_passthrough(
 )
 ```
 
-- **Bundled tiers (Launch/Growth/Scale):** Brain absorbs pass-through **below the per-brand cap**; above cap → soft throttle (lower-priority outreach / LLM pause) then a tier-upgrade conversation. Caps enforced by `pylibs/brain_cost_router` (LLM) + the lifecycle-service compliance/cost layer (telephony/messaging).
+- **Bundled tiers (Launch/Growth/Scale):** Brain absorbs pass-through **below the per-brand cap**; above cap → soft throttle then a tier-upgrade conversation. LLM caps enforced in the gateway ([`cost-routing-paradigms`](../cost-routing-paradigms/SKILL.md), [`llm-gateway`](../llm-gateway/SKILL.md)); telephony/messaging by the lifecycle cost layer.
 - **Enterprise (itemized):** pass-through is a separate invoice line.
 - Cost sources are the **same counters** the cost-discipline dashboard reads (TECH/12 §5), so billing and cost-control never disagree.
 
@@ -130,17 +130,17 @@ billing.invoices(
 -- + billing.usage_passthrough (above)
 ```
 
-Every workspace-scoped `billing.*` table carries `workspace_id` + RLS (4-layer tenancy). Money columns are **BIGINT minor units** — never NUMERIC/float for money.
+Every workspace-scoped `billing.*` table carries `workspace_id` + RLS (4-layer tenancy — [`multi-tenancy-isolation`](../multi-tenancy-isolation/SKILL.md)). Money columns are **BIGINT minor units** — never NUMERIC/float for money.
 
 ## Invoicing & collection notes
 
-- **Provider routing by currency:** INR via Razorpay; AED/SAR/USD via Stripe (Phase 4); each line item carries its metered-evidence reference. **Idempotency:** invoice generation keyed `(workspace_id, period_month, status)` — re-runs are no-ops (`idempotency-handling`).
-- **Tax on Brain's own fee:** Brain charges output GST on its SaaS fee to Indian brands — in the invoice, separate from the brand's commerce GST, never in the GMV meter.
+- **Provider routing by currency:** INR via Razorpay; AED/SAR/USD via Stripe (Phase 4); each line item carries its metered-evidence reference. **Idempotency:** invoice generation keyed `(workspace_id, period_month, status)` — re-runs are no-ops ([`idempotency-handling`](../idempotency-handling/SKILL.md)).
+- **Tax on Brain's own fee:** Brain charges output GST on its SaaS fee to Indian brands — separate from the brand's commerce GST, never in the GMV meter.
 - **Dunning:** failed payment → retry → soft degradation (**analytics stay; outbound execution pauses**) → Owner escalation. Analytics are never cut off mid-cycle for billing reasons (trust).
 
 ## Value proof (always-on — non-negotiable)
 
-Every workspace exposes a value-proof view (web Home + monthly report + mobile): Brain-attributed placed/realized revenue (Decision Log `attributed_revenue_minor` + 7d/30d realized attribution); recovered/protected CM2 (`attributed_cm2_minor` + lifecycle attribution); the Brain fee (`billing.invoices`); **recovered revenue ÷ fee** (target >3× by month 3, >5× by month 6); **CM2 recovered ÷ fee** (positive + expanding); operator time saved. Brain is sold as a profit centre, so the ledger that proves it is first-class.
+Every workspace exposes a value-proof view (web Home + monthly report + mobile): Brain-attributed placed/realized revenue (Decision Log `attributed_revenue_minor` + 7d/30d realized attribution); recovered/protected CM2 (`attributed_cm2_minor` + lifecycle attribution); the Brain fee (`billing.invoices`); **recovered revenue ÷ fee** (target >3× by month 3, >5× by month 6); **CM2 recovered ÷ fee** (positive + expanding); operator time saved. Incremental numbers come from holdout measurement ([`experimentation-holdouts`](../experimentation-holdouts/SKILL.md)). Brain is sold as a profit centre, so the ledger that proves it is first-class.
 
 ## Cost-routing audit (this feature)
 
@@ -155,7 +155,7 @@ Every workspace exposes a value-proof view (web Home + monthly report + mobile):
 
 ## FinOps: per-workspace cost-to-serve
 
-The `min_monthly_fee` floor is a *blunt* cost-to-serve guard. The sharper check — and the engineering defence of **%-of-GMV pricing at the brand level** — is attributing **infra cost per workspace** and comparing it to that workspace's **realized-GMV fee**. `cost-routing-paradigms` already governs LLM cost; this adds the **infra** side.
+The `min_monthly_fee` floor is a *blunt* cost-to-serve guard. The sharper check — the engineering defence of **%-of-GMV pricing at the brand level** — is attributing **infra cost per workspace** and comparing it to that workspace's **realized-GMV fee**. `cost-routing-paradigms` governs LLM cost; this adds the **infra** side.
 
 **Cost-to-serve inputs (all already metered per `workspace_id`):**
 
@@ -172,12 +172,12 @@ cost_to_serve(ws, month) = ch_bytes_cost + kafka_cost + eks_compute_share + llm_
 gross_margin(ws)         = realized_gmv_fee(ws) − cost_to_serve(ws)
 ```
 
-**Margin alert:** when `cost_to_serve / realized_gmv_fee` crosses a threshold (e.g. >40%), the workspace is a unit-economics risk — flag for a tier/cap conversation **before** it goes negative, the same forward-looking discipline as the RTO true-up. A workspace whose cost-to-serve approaches its fee is the signal the flat floor alone can't see. This is reporting/FinOps, not the fee path — the fee stays **SQL-only and deterministic** (above). Ties to `cost-routing-paradigms` (LLM) — infra cost-to-serve is the missing other half.
+**Margin alert:** when `cost_to_serve / realized_gmv_fee` crosses a threshold (e.g. >40%), the workspace is a unit-economics risk — flag for a tier/cap conversation **before** it goes negative. This is reporting/FinOps, not the fee path — the fee stays **SQL-only and deterministic** (above).
 
 ## Anti-patterns (reject in review)
 
-- **Billing on placed GMV** — code-review **blocker**. The base is realized/delivered GMV (`placed − cancelled − RTO − refunds − failed_payments`), re-trued for RTO lag.
-- **Per-seat pricing** — **out of scope**. Pricing is %-of-GMV; adding teammates never changes the bill.
+- **Billing on placed GMV** — code-review **blocker**. The base is realized/delivered GMV, re-trued for RTO lag.
+- **Per-seat pricing** — **out of scope**.
 - **Float/NUMERIC for money** — money is integer minor units + `currency_code`.
 - **Charging a % on GST/VAT** — the meter is on net (tax-exclusive) revenue.
 - **Re-issuing a closed invoice** for the RTO true-up — always reconcile forward as a next-month delta line.
@@ -192,16 +192,17 @@ gross_margin(ws)         = realized_gmv_fee(ws) − cost_to_serve(ws)
 | `billing.*` schema + GMV meter + fee computation | **Vikram** (core-service) | canon/TECH/15 + technical-requirements §17.2 |
 | ClickHouse delivered-facts aggregation | **Maya** (analytics-service) | `clickhouse-olap`, `metric-engine` |
 | CM2 input for the guardrail | **Maya** | `metric-engine` (CM2 = CM1 − marketing) |
-| Pass-through counters (LLM/messaging/calls) | **Maya** + **Jatin** | TECH/12 cost router; lifecycle cost layer |
+| Pass-through counters | **Maya** + **Jatin** | TECH/12 cost router; lifecycle cost layer |
 | Invoice provider integration (Razorpay/Stripe) | **Vikram** | `idempotency-handling` |
 | Value-proof view (web + mobile) | **Ananya** + **Karan** | `frontend-web`, `frontend-mobile`, `kpi-dashboard-design` |
 | Commercial terms (tiers, floors, caps) | **Founder** | business §15.2 |
 
 ## References
 
-- `canon/TECH/15_billing_metering.md` — the full billing spec (pipeline, re-truing, schema, invoicing, open questions)
-- `canon/business-requirements.md` §15 — pricing principle, indicative packaging, included value, pass-through + caps
+- `canon/TECH/15_billing_metering.md` — the full billing spec (pipeline, re-truing, schema, invoicing)
+- `canon/business-requirements.md` §15 — pricing principle, packaging, pass-through + caps
 - `canon/technical-requirements.md` §17.2 + §9.8 — billing/metering resolution + `billing.*` DDL
-- `skills/metric-engine/SKILL.md` — realized/delivered revenue + CM2 definitions (the billing base)
-- `skills/cost-routing-paradigms/SKILL.md` — the per-brand LLM cap that feeds pass-through
-- `skills/idempotency-handling/SKILL.md` — invoice-generation idempotency
+- [`metric-engine`](../metric-engine/SKILL.md) — realized/delivered revenue + CM2 (the billing base)
+- [`cost-routing-paradigms`](../cost-routing-paradigms/SKILL.md) — the per-brand LLM cap feeding pass-through
+- [`idempotency-handling`](../idempotency-handling/SKILL.md) — invoice-generation idempotency
+</content>

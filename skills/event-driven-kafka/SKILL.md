@@ -1,276 +1,85 @@
 ---
 name: event-driven-kafka
-description: Brain's async backbone — Amazon MSK + AWS Glue Schema Registry + Avro. Auto-load whenever designing topics, writing producers/consumers, handling idempotency, exactly-once delivery, DLQ + retry, schema evolution. Multi-tenant: every event envelope carries workspace_id; partition key IS workspace_id. Backed by infinite retention via MSK tiered storage to S3 — every downstream materialization is replayable.
+description: Brain's async backbone — MSK + Glue Schema Registry + Avro. Topics/producers/consumers, broker-level idempotence, DLQ/retry, schema evolution. Partition key IS workspace_id; replayable.
 ---
 
 # Event-Driven — MSK + Glue Schema Registry + Avro
 
-Brain's async backbone is **Amazon MSK** (managed Kafka) + **AWS Glue Schema Registry** (Avro) + **MSK Connect** (Debezium for Postgres → Kafka CDC). **Topics with infinite retention** (S3-backed tiered storage) so every downstream materialization is replayable.
+Brain's async backbone: **Amazon MSK** + **AWS Glue Schema Registry** (Avro) + **MSK Connect** (Debezium for Postgres→Kafka CDC). **Infinite retention** (S3-backed tiered storage) so every downstream materialization is replayable.
 
-## When to use Kafka (in Brain context)
+## When to use Kafka
+Source data ingestion (`integrations.orders.v1`, …) · cross-service state propagation (`operations.workspace.changed.v1`) · trigger fan-out (`intelligence.anomaly.detected.v1` → notifications) · replay (late-data backfills, reconciliation) · CDC (Postgres WAL → Kafka).
+**NOT for:** synchronous service calls (gRPC) · simple cron jobs (EventBridge Scheduler) · in-process queues (no BullMQ — push to Kafka).
 
-Brain uses Kafka for:
+## Topic naming: `<domain>.<entity>.<event_type>.v<version>`
+Producers/consumers (representative): `integrations.{orders,shipments,ads,refunds,customers}.v1` (ingestion → analytics/intelligence) · `operations.{workspace,settings,goals}.changed.v1` (core → all) · `analytics.metrics.daily_materialized.v1` + `analytics.customer_state.changed.v1` (analytics → intelligence/lifecycle) · `intelligence.{anomaly.detected,insight.generated,morning_brief.generated}.v1` (→ notifications) · `lifecycle.outreach.completed.v1` + `lifecycle.recovered_revenue.attributed.v1` · `notifications.alert.fired.v1`.
 
-- **Source data ingestion** — Maya publishes canonical events (`integrations.orders.v1`, etc.)
-- **Cross-service state propagation** — `operations.workspace.changed.v1`, `analytics.metrics.daily_materialized.v1`
-- **Trigger fan-out** — `intelligence.anomaly.detected.v1` → notifications-service + alerts
-- **Replay** — late-data backfills, reconciliation jobs replay from infinite retention
-- **CDC** — Debezium streams Postgres WAL → Kafka so analytics-service can mirror recent OLTP state
-
-Brain does NOT use Kafka for:
-- Synchronous service-to-service calls (gRPC instead — see canon/technical-requirements.md)
-- Simple cron-triggered jobs (EventBridge Scheduler)
-- In-process job queues (we don't have BullMQ; if you need queues, push the event to Kafka)
-
-## Topic naming convention
-
-```
-<domain>.<entity>.<event_type>.v<version>
-```
-
-| Topic | Producer | Consumers |
-|---|---|---|
-| `integrations.orders.v1` | ingestion-service | analytics-service, intelligence-service |
-| `integrations.shipments.v1` | ingestion-service | analytics-service (RTO state) |
-| `integrations.ads.v1` | ingestion-service | analytics-service |
-| `integrations.refunds.v1` | ingestion-service | analytics-service |
-| `integrations.customers.v1` | ingestion-service | analytics-service, intelligence-service (Brand Fingerprint) |
-| `operations.workspace.changed.v1` | core-service | all |
-| `operations.settings.changed.v1` | core-service | analytics-service (cache invalidation), intelligence-service |
-| `operations.goals.changed.v1` | core-service | analytics-service (RAG re-evaluation), notifications-service |
-| `analytics.metrics.daily_materialized.v1` | analytics-service | intelligence-service, notifications-service |
-| `analytics.customer_state.changed.v1` | analytics-service | intelligence-service, lifecycle-service (RFM refresh) |
-| `intelligence.anomaly.detected.v1` | intelligence-service | notifications-service |
-| `intelligence.insight.generated.v1` | intelligence-service | notifications-service |
-| `intelligence.morning_brief.generated.v1` | intelligence-service | notifications-service (push at 07:00 IST) |
-| `lifecycle.outreach.completed.v1` | lifecycle-service | analytics-service (attribution job input) |
-| `lifecycle.recovered_revenue.attributed.v1` | analytics-service | notifications-service |
-| `notifications.alert.fired.v1` | notifications-service | (audit) |
-
-## Topic configuration
-
+## Topic config
 ```yaml
-# infra/stacks/kafka.ts CDK config
-topic:
-  name: integrations.orders.v1
-  partitions: 24                       # workspace_id hash distribution
-  replicationFactor: 3
-  configs:
-    retention.ms: -1                   # infinite (tiered storage)
-    compression.type: zstd
-    cleanup.policy: delete
-    segment.ms: 86400000               # 1 day
-    min.insync.replicas: 2
+partitions: 24                  # workspace_id hash distribution
+replicationFactor: 3
+configs: { retention.ms: -1, compression.type: zstd, cleanup.policy: delete, segment.ms: 86400000, min.insync.replicas: 2 }
 ```
-
-Per-domain retention rule:
-- `integrations.*` → infinite (S3 tiered storage; for replay)
-- `analytics.*` → 30 days
-- `operations.*` → 30 days
-- `intelligence.*` → 90 days
-- `lifecycle.*` → infinite for outreach + recovered_revenue (attribution audit trail)
-- `notifications.*` → 30 days
+Per-domain retention: `integrations.*` infinite (replay) · `analytics.*`/`operations.*`/`notifications.*` 30d · `intelligence.*` 90d · `lifecycle.*` infinite for outreach + recovered_revenue (attribution audit).
 
 ## Partition key — workspace_id (NON-NEGOTIABLE)
-
 ```python
-await producer.send_and_wait(
-    topic="integrations.orders.v1",
-    key=workspace_id.encode(),         # ← partition by workspace
-    value=avro_encoded,
-)
+await producer.send_and_wait(topic="integrations.orders.v1", key=workspace_id.encode(), value=avro_encoded)
 ```
-
-Single workspace's events always land in the same partition → ordering guaranteed per workspace. Cross-workspace ordering is not preserved (and is irrelevant for Brain).
+A workspace's events always land in the same partition → per-workspace ordering guaranteed. Cross-workspace ordering is not preserved (irrelevant for Brain).
 
 ## Avro schemas + Glue Schema Registry
+Schemas in `protos/events/<domain>/<entity>.v<n>.avsc` with `workspace_id`, `source`, `source_event_id` (idempotency), `occurred_at_ms`, `ingested_at_ms`, monetary `*_minor` (long/paisa), nullable fields as `["null", T]` with defaults. Registered with Glue. **Compatibility: BACKWARD** by default (consumers older than producers still work).
 
-```avro
-// protos/events/integrations/orders.v1.avsc
-{
-  "type": "record",
-  "namespace": "brain.events.integrations",
-  "name": "OrderEvent",
-  "doc": "Canonical order event from any source (Shopify, etc.)",
-  "fields": [
-    { "name": "workspace_id",    "type": "string", "doc": "Tenant UUID" },
-    { "name": "source",          "type": "string", "doc": "shopify | woocommerce | manual" },
-    { "name": "source_event_id", "type": "string", "doc": "Stable per source (idempotency)" },
-    { "name": "order_id",        "type": "string" },
-    { "name": "customer_id",     "type": "string" },
-    { "name": "occurred_at_ms",  "type": "long", "logicalType": "timestamp-millis" },
-    { "name": "ingested_at_ms",  "type": "long", "logicalType": "timestamp-millis" },
-    { "name": "total_minor",     "type": "long", "doc": "Paisa (Int64)" },
-    { "name": "discount_minor",  "type": "long", "default": 0 },
-    { "name": "tax_minor",       "type": "long", "default": 0 },
-    { "name": "shipping_minor",  "type": "long", "default": 0 },
-    { "name": "payment_method",  "type": "string", "doc": "cod | prepaid" },
-    { "name": "campaign_id",     "type": ["null", "string"], "default": null },
-    { "name": "pincode",         "type": ["null", "string"], "default": null }
-  ]
-}
-```
+### Schema evolution
+Allowed (BACKWARD): add a field WITH a default · remove a field that always had a default · promote `int→long`, `float→double`.
+Forbidden (→ `.v2`): rename a field · remove a required field · incompatible type change.
+CI gate: `buf breaking` for protos; Glue rejects incompatible Avro.
 
-Registered with Glue Schema Registry. Compatibility mode: **BACKWARD** by default (consumers older than producers still work). Breaking changes → new topic version (`.v2`).
+## Idempotency (NON-NEGOTIABLE) — broker-level is primary
+Stable `event_id` per source: Shopify `(workspace_id, order.id)` · Meta `(workspace_id, ad_account_id, campaign_id, date)` · Google `(workspace_id, customer_id, campaign_id, date)` · Shiprocket `(workspace_id, awb_code, status)` · Klaviyo `(workspace_id, event_id)` · rollups `(workspace_id, table, date, customer_type, channel)`.
 
-## Schema evolution rules
-
-Allowed (BACKWARD compatible):
-- Add a new field WITH a default
-- Remove a field that always had a default
-- Promote `int` → `long`, `float` → `double`
-
-Forbidden (use `.v2`):
-- Rename a field
-- Remove a required field
-- Change a field's type to incompatible
-
-CI gate: `buf breaking` for proto files; Glue Schema Registry rejects incompatible Avro changes.
-
-## Idempotency (NON-NEGOTIABLE)
-
-Every event has a stable `event_id` per source:
-
-| Source | event_id formula |
-|---|---|
-| Shopify orders | `(workspace_id, order.id)` |
-| Meta insights | `(workspace_id, ad_account_id, campaign_id, date)` |
-| Google insights | `(workspace_id, customer_id, campaign_id, date)` |
-| Shiprocket shipments | `(workspace_id, awb_code, status)` |
-| Klaviyo events | `(workspace_id, event_id)` |
-| analytics rollups | `(workspace_id, table, date, customer_type, channel)` |
-
-Producer side — the primary guarantee is at the broker, the app-level check is a backstop:
-
-1. **Broker-level idempotent producer** — `enable.idempotence=true` (default-on since Kafka 3.0) + **`acks=all`**. This dedupes producer retries at the broker so a retry never double-publishes. This is the primary exactly-once-into-the-log guarantee, not Redis.
-2. **Transactional producer + `read_committed` consumers** for the outbox / Decision-Log cross-partition writes — wrap the produce(s) in `producer.transaction()` so a partial multi-partition write never becomes visible; downstream consumers set `isolation.level=read_committed` so they only ever see committed batches.
-3. **Redis SETNX is the app-level backstop only** (e.g., dedup across separate producer sessions / connector re-runs), NOT the primary guarantee:
-
+1. **Broker-level idempotent producer — the primary guarantee:** `enable.idempotence=true` (default-on since Kafka 3.0) + **`acks=all`** dedupes producer retries at the broker so a retry never double-publishes. This is exactly-once-into-the-log, not Redis.
+2. **Transactional producer + `read_committed` consumers** for outbox / Decision-Log cross-partition writes — wrap produce(s) in `producer.transaction()` so a partial multi-partition write never becomes visible.
+3. **Redis SETNX is the app-level backstop only** (dedup across separate producer sessions / connector re-runs), NOT the primary guarantee.
 ```typescript
-// Confluent client — idempotent + acks=all (PRIMARY guarantee)
-const producer = kafka.producer({
-  'enable.idempotence': true,   // default-on since Kafka 3.0; dedupes retries at the broker
-  'acks': 'all',
-});
-
-// Redis SETNX — app-level backstop, NOT the primary dedup
-const key = `idempotency:${source}:${workspaceId}:${eventId}`;
-const setResult = await redis.set(key, '1', 'NX', 'EX', 86400);   // 24h TTL
-if (!setResult) return;                                            // already seen
-await producer.send({ topic, messages: [...] });
+const producer = kafka.producer({ 'enable.idempotence': true, 'acks': 'all' });  // PRIMARY
+const setResult = await redis.set(`idempotency:${source}:${workspaceId}:${eventId}`, '1', 'NX', 'EX', 86400);
+if (!setResult) return;  // app-level backstop only
 ```
+Consumer side: ClickHouse `ReplicatedReplacingMergeTree` handles late-arriving updates.
 
-Consumer side (ReplicatedReplacingMergeTree in ClickHouse handles late-arriving updates):
+## Manual commit (no auto-commit)
+Auto-commit is at-most-once → data loss on crash. Commit manually after a successful write.
 ```python
+consumer = AIOKafkaConsumer("integrations.orders.v1", group_id="analytics-orders",
+    enable_auto_commit=False, value_deserializer=avro_deserializer)
 async for msg in consumer:
     await write_to_clickhouse_replacing(msg.value)
     await consumer.commit({TopicPartition(msg.topic, msg.partition): msg.offset + 1})
 ```
+TS: `@confluentinc/kafka-javascript` (KafkaJS abandoned under Kafka 4.0) — `consumer.run({ autoCommit: false, eachMessage })`.
 
-## Manual commit (no auto-commit)
+## Consumer group naming: `<service>-<purpose>`
+`analytics-orders-consumer` · `intelligence-anomaly-detector` · `notifications-alerts` · `lifecycle-rfm-refresh`. One group per logical workload; same group shares partitions, different groups each get every message. Partition count = max parallelism.
 
-Auto-commit at-most-once → data loss on crash. Manual commit after successful write:
-
-```python
-# Python — aiokafka
-consumer = AIOKafkaConsumer(
-    "integrations.orders.v1",
-    bootstrap_servers=settings.KAFKA_BROKERS,
-    group_id="analytics-orders",
-    enable_auto_commit=False,            # MANUAL
-    value_deserializer=avro_deserializer,
-)
+## DLQ + retry
 ```
-
-```typescript
-// TS — @confluentinc/kafka-javascript (KafkaJS is abandoned/broken under Kafka 4.0)
-const consumer = kafka.consumer({
-  groupId: 'notifications-alerts',
-  sessionTimeout: 30000,
-  heartbeatInterval: 3000,
-});
-
-await consumer.run({
-  eachMessage: async ({ topic, partition, message, heartbeat }) => {
-    await processMessage(message);
-    // Auto-commits at the end if `autoCommit: true` (default) — set false for manual:
-  },
-  autoCommit: false,
-});
+integrations.orders.v1 → (fail) → integrations.orders.retry-1.v1 (60s) → retry-2.v1 (5min) → orders.dlq.v1 (manual triage)
 ```
-
-## Consumer group naming
-
-```
-<service>-<purpose>
-```
-
-Examples:
-- `analytics-orders-consumer` — analytics-service consuming `integrations.orders.v1`
-- `intelligence-anomaly-detector` — intelligence-service consuming `analytics.metrics.daily_materialized.v1`
-- `notifications-alerts` — notifications-service consuming `intelligence.anomaly.detected.v1`
-- `lifecycle-rfm-refresh` — lifecycle-service consuming `analytics.customer_state.changed.v1`
-
-One consumer group per logical workload. Two consumers in the same group share the partitions; two consumers in different groups both get every message.
-
-## DLQ + retry pattern
-
-```
-Topic: integrations.orders.v1
-  ↓ consumer fails
-Retry topic: integrations.orders.retry-1.v1   (60s delay)
-  ↓ fails again
-Retry topic: integrations.orders.retry-2.v1   (5 min delay)
-  ↓ fails again
-DLQ topic: integrations.orders.dlq.v1         (manual triage)
-```
-
-Implementation: a Kafka Streams or per-service wrapper that re-publishes after a delay, with retry count in headers. DLQ has a manual consumer (admin UI) for triage.
+A per-service wrapper / Kafka Streams re-publishes after a delay with retry count in headers. DLQ has a manual triage consumer (admin UI surfaces depth + age).
 
 ## CDC via Debezium on MSK Connect
+Postgres WAL → Debezium → `cdc.public.<table>.v1` → analytics-service mirrors recent OLTP state in CH (`audience`, `outreach`, `rfm_score`, `ai.decision_log`) without querying core-service's Postgres directly.
 
-```
-Postgres WAL  →  Debezium connector (MSK Connect)  →  Kafka topic: cdc.public.<table>.v1
-                                                            ↓
-                                                       analytics-service consumes for recent-OLTP mirror in CH
-```
+## Monitoring
+`MSK/KafkaConsumerLag` per group/topic (alarm > threshold) · `MSK/UnderReplicatedPartitions` (alarm if non-zero) · `MSK/KafkaBytesIn/Out`. OpenSearch monitor `kafka-consumer-lag-spike` → PagerDuty after 5 min.
 
-Used for `audience`, `outreach`, `rfm_score`, `ai.decision_log` — analytics needs recent state without querying core-service's Postgres directly.
-
-## Monitoring (canon/technical-requirements.md)
-
-CloudWatch metrics emitted:
-- `MSK/KafkaConsumerLag` per consumer group per topic — alarm when > threshold
-- `MSK/KafkaBytesIn` / `MSK/KafkaBytesOut`
-- `MSK/UnderReplicatedPartitions` — alarm if non-zero
-
-OpenSearch monitor:
-- `kafka-consumer-lag-spike` — `MSK/KafkaConsumerLag > <threshold>` for 5 minutes → PagerDuty
-
-## Per-workspace fan-out at scale
-
-100k req/min target:
-- 24 partitions per topic gives ~4K msg/sec/partition headroom
-- Single workspace can occupy multiple consumers in parallel (different services in different groups)
-- For very large workspaces, key-based throttling: ingestion-service backoffs per-workspace to avoid head-of-line blocking
+## Scale (100k req/min)
+24 partitions ≈ 4K msg/s/partition headroom · a workspace can occupy multiple consumers across services in different groups · large workspaces use per-workspace key-based throttling at ingestion to avoid head-of-line blocking.
 
 ## Common failure modes
-
-- **Auto-commit producing data loss** — consumer crashes after commit, before processing. Use manual commit.
-- **Non-idempotent producer** — retry double-publishes. Set `enable.idempotence=true` + `acks=all` (broker-level, primary); Redis SETNX is the app-level backstop.
-- **Schema-breaking change without bump** — Glue rejects. Use additive evolution; `.v2` for breaking.
-- **Missing workspace_id in envelope** — downstream can't partition. Producer call MUST include it.
-- **Cross-workspace ordering assumption** — don't make it. Partition key is workspace_id, not global.
-- **Consumer group rebalance loops** — `session.timeout.ms` too low or sticky partition pressure. Tune timeout; partition count = max parallelism.
-- **DLQ ignored** — DLQ messages pile up; manual triage missed. Admin dashboard surfaces DLQ depth + age.
-- **`integrations.*` retention finite** — defeats replay. Configure infinite + tiered storage.
+Auto-commit data loss (use manual) · non-idempotent producer (set `enable.idempotence=true` + `acks=all`; Redis SETNX is backstop only) · schema-breaking change without bump (Glue rejects; use `.v2`) · missing `workspace_id` in envelope · cross-workspace ordering assumption · rebalance loops (tune `session.timeout.ms`) · DLQ ignored (surface depth+age) · `integrations.*` finite retention (defeats replay — configure infinite).
 
 ## References
-
-- `canon/technical-requirements.md` — canonical Kafka topology + per-source flows
-- `canon/technical-requirements.md` §kafka + §debezium
-- `skills/backend-fastify-trpc-grpc/SKILL.md` — TS @confluentinc/kafka-javascript patterns (Brain's Node services consume + produce here)
-- `skills/python-services/SKILL.md` §kafka — aiokafka patterns
-- `skills/integration-connectors/SKILL.md` — producer side (Maya's domain)
-- `skills/clickhouse-olap/SKILL.md` §kafka-engine-tables — CH consumer engine pattern
-- `skills/devops-aws/SKILL.md` §msk — MSK CDK config
+`canon/technical-requirements.md` §kafka + §debezium · `backend-fastify-trpc-grpc` (TS Confluent client) · `python-services` (aiokafka) · `integration-connectors` (producer side) · `clickhouse-olap` (CH Kafka engine tables) · `devops-aws` §msk · `idempotency-handling`.

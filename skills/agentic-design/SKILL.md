@@ -1,13 +1,13 @@
 ---
 name: agentic-design
-description: Brain's product-internal AI-agent build pattern — the 15 AICMO/AICOO/AICFO + AI CX recommenders that live in intelligence-service. Agent base class, @paradigm + @mcp_tool decorators, the daily tick (06:55→07:15 IST fan-out → Sonnet Morning Brief synthesis), Memory Layer (Brand Fingerprint via pgvector) query pattern, graduation tracker, Decision Log writes, recommendation-only-until-graduated. These are PRODUCT agents, NOT the Engineering OS build team. Auto-load when creating/modifying a product-internal agent.
+description: The 15 product AICMO/AICOO/AICFO + AI CX recommenders — Agent base class, @paradigm/@mcp_tool, daily tick → Sonnet brief, Memory query, graduation, Decision Log writes.
 ---
 
 # Agentic Design — Brain's Product-Internal AI Agents
 
 This skill covers **the product's internal AI agents** — the 15 AICMO/AICOO/AICFO + AI CX recommenders that Brain ships, living in `intelligence-service`. These are product features, NOT engineering-team members. Maya implements them; Aryan reviews the contracts. **Do not conflate these product agents with the 11-agent Engineering OS build team** (TECH/17) — they are different things.
 
-> **Agents call the LiteLLM gateway, not the Anthropic SDK directly.** Every LLM step below resolves through Brain's model-agnostic gateway: `@paradigm("small_llm"|"frontier_llm")` names a **routed policy tier** and the gateway routes to the cheapest eval-passing model (frontier default = Claude Sonnet 4.6, eval-gated + swappable). The `@paradigm` + `@mcp_tool` decorators are unchanged; the model behind a tier is now gateway policy. See [`llm-gateway`](../llm-gateway/SKILL.md).
+> **Agents call the LiteLLM gateway, not the Anthropic SDK directly.** Every LLM step resolves through Brain's model-agnostic gateway: `@paradigm("small_llm"|"frontier_llm")` names a **routed policy tier** and the gateway routes to the cheapest eval-passing model (frontier default = Claude Sonnet 4.6, eval-gated + swappable). The `@paradigm` + `@mcp_tool` decorators are unchanged; the model behind a tier is gateway policy. See [`llm-gateway`](../llm-gateway/SKILL.md).
 
 **Canonical doc:** `canon/TECH/14_agent_roster.md` (+ `canon/TECH/05_intelligence_layer.md`, `canon/technical-requirements.md` §9). This skill is operational.
 
@@ -25,22 +25,17 @@ Three groups + AI CX, all in `intelligence-service`. Every agent runs the daily 
 
 > Phase mapping (TECH/14 §rollout): Phase 3 W23-26 brings Meta/Google/Conversion (alert-only); W27-30 Cross-Channel/Logistics/Returns/Cashflow; W31-36 Creative/Pricing/Inventory/Pricing-Margin; **Phase 4** TikTok/Snap/Festival/Marketplace + first auto-execute graduations. Every agent ships human-in-the-loop first.
 
-## Universal agent pattern (canon/TECH/14_agent_roster.md §1, §5)
+## Universal agent pattern (canon/TECH/14 §1, §5)
 
 ```python
 # apps/intelligence-service/src/agents/_base/agent.py
-from abc import ABC, abstractmethod
-
 class Agent(ABC):
     name: str
     description: str
 
     async def daily_tick(self, workspace_id: UUID, as_of: date) -> list[Recommendation]:
-        # 1. Memory query (find similar past states)
-        history = await query_brand_fingerprint(workspace_id, as_of, k=5)
-        # 2. Run paradigm-appropriate models (mostly ML)
-        signals = await self._run_paradigm_models(workspace_id, as_of, history)
-        # 3. Return ranked recommendations
+        history = await query_brand_fingerprint(workspace_id, as_of, k=5)   # Memory query
+        signals = await self._run_paradigm_models(workspace_id, as_of, history)  # mostly ML
         return self.rank_and_score(signals)
 
     @abstractmethod
@@ -51,9 +46,6 @@ Every agent method carries `@paradigm(...)` + `@mcp_tool(...)`:
 
 ```python
 # apps/intelligence-service/src/agents/aicmo/meta.py
-from .._base import Agent, mcp_tool, paradigm
-from .._base.memory_query import query_brand_fingerprint
-
 class AICMOMeta(Agent):
     name = "aicmo-meta"
     description = "Meta Ads creative, budget pacing, ad-set optimisation"
@@ -67,23 +59,15 @@ class AICMOMeta(Agent):
     @paradigm("ml", model="ewma_ctr_v1")
     @mcp_tool("ai.agent.aicmo_meta.evaluate_creative_fatigue")
     async def detect_creative_fatigue(self, workspace_id, as_of) -> list[Recommendation]:
-        # EWMA on CTR / CPM / CPA per campaign per ad set; threshold cross
-        ...
-
-    @paradigm("ml", model="budget_response_curve_v1")
-    @mcp_tool("ai.agent.aicmo_meta.recommend_budget_change")
-    async def recommend_budget_change(self, workspace_id, as_of, history) -> list[Recommendation]:
-        # Isotonic regression on (spend, aMER); pick spend maximizing CM2 contribution
-        ...
+        ...  # EWMA on CTR / CPM / CPA per campaign per ad set; threshold cross
 
     @paradigm("integration_writeback")
     @mcp_tool("integrations.meta.adjust_campaign_budget")
     async def adjust_campaign_budget(self, workspace_id, campaign_id, new_daily_budget_minor, decision_log_id=None) -> AdjustmentResult:
-        # Calls api-gateway MCP write tool; middleware auto-writes Decision Log
-        ...
+        ...  # Calls api-gateway MCP write tool; middleware auto-writes Decision Log
 ```
 
-## Daily Tick Orchestration (canon/TECH/05_intelligence_layer.md; canon/technical-requirements.md §9)
+## Daily Tick Orchestration (canon/TECH/05; technical-requirements §9)
 
 ```
 06:55 IST — daily_tick.py fires
@@ -94,9 +78,7 @@ For each workspace × each agent (parallel; each agent < 5 min budget):
    3. Generate ranked recommendations
    4. Persist to Decision Log (state: pending if agent not graduated)
    ▼
-07:15 IST — morning_brief.py fires
-   ▼
-Top-3 priority-scored across all agents per workspace
+07:15 IST — morning_brief.py fires → top-3 priority-scored across all agents per workspace
    ▼
 @paradigm("frontier_llm", model="claude-sonnet-4-6", token_budget=2000)
    Sonnet synthesizes plain-English Morning Brief: action + magnitude + outcome + safety
@@ -104,31 +86,15 @@ Top-3 priority-scored across all agents per workspace
 notifications-service receives ai.morning_brief.generated.v1 → push 07:00–09:00 IST
 ```
 
-**The Morning Brief Synthesizer is the only Frontier-LLM call in the daily loop.** Everything upstream is paradigm 1 or 2. SLO: Morning Brief delivered by **07:20 IST on >99.5% of days**. (18:00 Evening Pulse · 23:55 7d/30d outcome attribution backfill run the same primitives at lower cadence.)
+**The Morning Brief Synthesizer is the only Frontier-LLM call in the daily loop.** Everything upstream is paradigm 1 or 2. SLO: Morning Brief delivered by **07:20 IST on >99.5% of days**. (18:00 Evening Pulse · 23:55 outcome attribution backfill run the same primitives at lower cadence.)
 
-## Memory Layer (canon/TECH/05_intelligence_layer.md — Maya owns the schema)
+## Memory Layer query (Maya owns the schema — full detail in `memory-layer-pgvector`)
 
-```sql
--- Brand Fingerprint: one vector per brand per day
-CREATE TABLE ai.brand_fingerprint (
-  workspace_id        UUID NOT NULL,
-  as_of_date          DATE NOT NULL,
-  fingerprint         vector(16) NOT NULL,     -- pgvector; 16-dim daily brand-state vector (canon TECH/05)
-  metrics_snapshot    JSONB NOT NULL,
-  outcomes_7d         JSONB,
-  outcomes_30d        JSONB,
-  cross_brand_opt_in  BOOLEAN NOT NULL DEFAULT FALSE,
-  created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  PRIMARY KEY (workspace_id, as_of_date)
-);
-CREATE INDEX brand_fingerprint_hnsw ON ai.brand_fingerprint USING hnsw (fingerprint vector_cosine_ops) WITH (m = 16, ef_construction = 64);
-```
-
-Query helper:
+Agents retrieve similar past brand-states via pgvector cosine k-NN on the 16-dim `ai.brand_fingerprint`. Schema, the 5 memory subsystems, HNSW index tuning, and the Condition-Outcome learning loop live in [`memory-layer-pgvector`](../memory-layer-pgvector/SKILL.md). The agent-side helper:
 
 ```python
 async def query_brand_fingerprint(workspace_id, as_of, k=5, cross_brand=False):
-    """Cosine k-NN on Brand Fingerprint. Paradigm 2 (ML)."""
+    """Cosine k-NN on Brand Fingerprint. Paradigm 2 (ML). workspace_id-scoped unless cross_brand opt-in."""
     consent_filter = "" if cross_brand else " AND workspace_id = $1"
     return await db.fetch(f"""
         SELECT workspace_id, as_of_date, similarity_score, outcomes_7d, outcomes_30d
@@ -144,15 +110,15 @@ async def query_brand_fingerprint(workspace_id, as_of, k=5, cross_brand=False):
 
 ## AI infrastructure layers (the `ai/` dir)
 
-The monorepo's top-level `ai/` dir holds the cross-cutting AI infrastructure that every agent + AI workflow consumes (Single-Primitive Rule applied to AI). KEEP the custom agent base class + `@paradigm` cost-routing + Memory Layer — these layers sit *on top*, not instead.
+The monorepo's top-level `ai/` dir holds cross-cutting AI infrastructure every agent + AI workflow consumes (Single-Primitive Rule applied to AI). KEEP the custom agent base class + `@paradigm` cost-routing + Memory Layer — these layers sit *on top*, not instead.
 
 | Layer | What it is | Brain rule |
 |---|---|---|
-| **Prompts** | Versioned, testable, evaluated prompt templates | Every prompt is a versioned artifact (`ai/prompts/<name>.vN`); no inline string prompts in agent code; changes go through eval before ship |
-| **Guardrails** | Input/output validation, PII redaction, jailbreak + injection checks, schema enforcement on LLM output | Every Frontier-LLM call passes guardrails in + out; bad output → fallback, never raw-through to the user |
-| **Evaluations / benchmarks** | Golden-set + regression evals per prompt/agent (accuracy, faithfulness, cost, latency) | A prompt change ships only if its eval ≥ baseline; CI gate (see `testing-tdd`) |
-| **RAG** | Retrieval over Brand Fingerprint + decision history + brand notes | Retrieve-then-synthesize; cite supporting_data; retrieval is paradigm 1/2 (SQL/ML), synthesis is the only Frontier step |
-| **Embeddings + vector-search** | Embedding generation + cosine k-NN on **pgvector** (NOT a dedicated vector DB) | Vectors live in `ai.brand_fingerprint` (pgvector); HNSW index; query via the Memory Layer helper |
+| **Prompts** | Versioned, testable prompt templates | Every prompt is a versioned artifact (`ai/prompts/<name>.vN`); no inline string prompts; changes go through eval before ship |
+| **Guardrails** | Input/output validation, PII redaction, jailbreak/injection checks, schema enforcement | Every Frontier-LLM call passes guardrails in + out; bad output → fallback, never raw-through to the user |
+| **Evaluations** | Golden-set + regression evals per prompt/agent | A prompt change ships only if its eval ≥ baseline; CI gate — see [`llm-evals`](../llm-evals/SKILL.md) |
+| **RAG** | Retrieval over Brand Fingerprint + decision history + brand notes | Retrieve-then-synthesize; cite supporting_data; retrieval is paradigm 1/2, synthesis the only Frontier step |
+| **Embeddings + vector-search** | Embedding gen + cosine k-NN on **pgvector** (NOT a dedicated vector DB) | Vectors live in `ai.brand_fingerprint` (pgvector); HNSW index; query via the Memory Layer helper |
 | **Orchestration** | The agent base class + daily-tick + cross-agent choreography | Custom base class (NOT LangGraph); `@paradigm` + `@mcp_tool` on every action |
 
 **Every AI workflow supports: tracing + retries + fallback + guardrails + observability.**
@@ -166,14 +132,14 @@ input → guardrails(in) → RAG retrieve (pgvector k-NN, paradigm 1/2)
         · structured log + cost metric per call (request_id/trace_id/workspace_id)
 ```
 
-- **Tracing:** wrap each step in an X-Ray span (`observability`); the whole chain stitches under one `trace_id`.
-- **Retries + provider fallback:** transient LLM errors → the gateway retries with backoff and advances down the tier's fallback chain (`llm-gateway`); deterministic failures → fallback, not retry.
+- **Tracing:** wrap each step in an X-Ray span ([`observability`](../observability/SKILL.md)); the chain stitches under one `trace_id`.
+- **Retries + provider fallback:** transient LLM errors → the gateway retries with backoff and advances down the tier's fallback chain ([`llm-gateway`](../llm-gateway/SKILL.md)); deterministic failures → fallback, not retry.
 - **Fallback:** budget breach or guardrail rejection → drop to a lower paradigm (small_llm, then template) rather than failing the Morning Brief.
-- **Guardrails + observability:** mandatory on every call; the cost-routing audit (Frontier-LLM rate > 1%) is a tier-1 trigger (`cost-routing-paradigms`, `observability`).
+- The cost-routing audit (Frontier-LLM rate > 1%) is a tier-1 trigger ([`cost-routing-paradigms`](../cost-routing-paradigms/SKILL.md)).
 
-Vectors stay on **pgvector** in `intelligence-service`'s Postgres (per-service DB ownership — `architecture-patterns`). Do NOT add a dedicated vector DB; do NOT replace the base class with LangGraph.
+Vectors stay on **pgvector** in `intelligence-service`'s Postgres (per-service DB ownership — [`architecture-patterns`](../architecture-patterns/SKILL.md)). Do NOT add a dedicated vector DB; do NOT replace the base class with LangGraph.
 
-## Graduation framework (canon/TECH/14_agent_roster.md §6)
+## Graduation framework (canon/TECH/14 §6)
 
 Per-agent, per-tool, per-brand. 90-day rolling window.
 
@@ -184,10 +150,7 @@ Per-agent, per-tool, per-brand. 90-day rolling window.
 | High (price change) | 85% | 75% | 100 | 2% | ≤5%; SKU <20% revenue |
 | Very high (courier reallocation) | 90% | 80% | 200 | 1% | brand opt-in only |
 
-**T_acc** = predicted-direction-matches-actual outcome (7d + 30d)
-**T_app** = Owner approval rate
-**N_min** = minimum logged recommendations
-**R_max** = max % of fired recommendations that produced worse outcome than baseline
+**T_acc** = predicted-direction-matches-actual outcome (7d + 30d) · **T_app** = Owner approval rate · **N_min** = minimum logged recommendations · **R_max** = max % of fired recommendations that produced worse outcome than baseline.
 
 Owner can revoke graduation any time. Auto-degraduate when accuracy drops below threshold. Founder reviews retirement after 30 days of degraded performance.
 
@@ -209,56 +172,37 @@ class Recommendation:
     paradigm: str                       # which @paradigm produced this
 ```
 
-## Cross-agent choreography (canon/TECH/14_agent_roster.md §5)
+## Cross-agent choreography (canon/TECH/14 §5)
 
 ```
 AICMO-Meta detects creative fatigue (ML)
-   ▼
-AICMO-Meta MCP-calls AICMO-Cross-Channel for reallocation
-   ▼
+   ▼ MCP-calls AICMO-Cross-Channel for reallocation
 AICMO-Cross-Channel optimises new allocation (ML)
-   ▼
-AICMO-Cross-Channel MCP-calls AICFO-Cashflow for verification
-   ▼
-AICFO-Cashflow returns "OK with this allocation"
+   ▼ MCP-calls AICFO-Cashflow for verification → "OK with this allocation"
    ▼
 Morning Brief Synthesizer (Sonnet) writes the unified item
-   ▼
-Owner approves → MCP write-backs fire → Decision Log records the chain
+   ▼ Owner approves → MCP write-backs fire → Decision Log records the chain
 ```
 
-This is the agentic pattern. Each agent is a specialist; the Morning Brief Synthesizer (only Frontier-LLM step) does cross-agent narrative.
+Each agent is a specialist; the Morning Brief Synthesizer (only Frontier-LLM step) does cross-agent narrative.
 
 ## Agent ADR (one per agent — `memory/decisions/ADR-<NNN>-agent-<name>.md`)
 
-Includes:
-- Scope (one line)
-- Paradigm map (per method)
-- MCP tools exposed
-- Graduation criteria + magnitude cap
-- Cross-agent dependencies (who this agent calls, who calls it)
-- Per-brand cost projection at expected volume
-- Failure modes + auto-degraduation triggers
+Scope (one line) · paradigm map (per method) · MCP tools exposed · graduation criteria + magnitude cap · cross-agent dependencies · per-brand cost projection at expected volume · failure modes + auto-degraduation triggers.
 
 ## Common failure modes
 
-- **Defaulting to LLM in `_run_paradigm_models`** — Brain invariant violation; Aryan blocks. Detection: agent method uses Sonnet for what EWMA / XGBoost would solve.
+- **Defaulting to LLM in `_run_paradigm_models`** — Brain invariant violation; Aryan blocks. Detection: agent uses Sonnet for what EWMA / XGBoost would solve.
 - **Missing `@paradigm` on agent method** — cost-discipline dashboard can't track. CI rejects.
-- **Stale Memory Layer** — fingerprint not updated daily → k-NN returns outdated patterns. Detection: `max(ai.brand_fingerprint.as_of_date) < now() - 2 days`.
-- **Graduated agent regression** — outcome accuracy drops below T_acc but tool stays auto-execute. Nightly job auto-degraduates; ops follow-up.
-- **Cross-brand pattern leak** — fingerprint query without `cross_brand_opt_in = TRUE` filter on consenting brand. Detection: pgvector query has no consent filter.
-- **Recommendation spam** — agent produces >5 recommendations per workspace per day; Morning Brief Synthesizer drowns. Cap at agent.rank_and_score level.
+- **Stale Memory Layer** — fingerprint not updated daily. Detection: `max(ai.brand_fingerprint.as_of_date) < now() - 2 days`.
+- **Graduated agent regression** — outcome accuracy drops below T_acc but tool stays auto-execute. Nightly job auto-degraduates.
+- **Cross-brand pattern leak** — fingerprint query without `cross_brand_opt_in = TRUE` filter on a consenting brand.
+- **Recommendation spam** — agent produces >5 recommendations per workspace per day. Cap at agent.rank_and_score level.
 
 ## References
 
-- `canon/TECH/14_agent_roster.md` — canonical 15-agent roster + graduation framework + rollout
-- `canon/TECH/05_intelligence_layer.md` — Memory Layer (Brand Fingerprint, condition_outcome), daily loop, Plan Module, AI Chat
+- `canon/TECH/14_agent_roster.md` — canonical roster + graduation framework + rollout
+- `canon/TECH/05_intelligence_layer.md` — Memory Layer, daily loop, Plan Module, AI Chat
 - `canon/TECH/13_mcp_protocol.md` — MCP tool registration + Decision Log middleware
-- `canon/TECH/12_cost_routing_compute.md` — paradigm decorator
-- `skills/cost-routing-paradigms/SKILL.md` — the four-paradigm gate
-- `skills/llm-gateway/SKILL.md` — the LiteLLM gateway agents call for every LLM step (routed tiers, fallback, budgets)
-- `skills/forecasting-prophet/SKILL.md` — Prophet for AICMO-Festival, AICOO-Inventory, AICFO-Cashflow
-- `skills/mcp-protocol/SKILL.md` — agent.invoke + tool schemas
-- `skills/claude-api/SKILL.md` — Claude as the frontier-default backend behind the gateway (prompt caching, retries — the Frontier-LLM step)
-- `skills/observability/SKILL.md` — tracing + cost metrics + guardrail/fallback observability
-- `skills/architecture-patterns/SKILL.md` — the `ai/` dir + pgvector per-service DB ownership
+- [`cost-routing-paradigms`](../cost-routing-paradigms/SKILL.md) · [`llm-gateway`](../llm-gateway/SKILL.md) · [`forecasting-prophet`](../forecasting-prophet/SKILL.md) · [`mcp-protocol`](../mcp-protocol/SKILL.md) · [`claude-api`](../claude-api/SKILL.md) · [`observability`](../observability/SKILL.md) · [`memory-layer-pgvector`](../memory-layer-pgvector/SKILL.md) · [`architecture-patterns`](../architecture-patterns/SKILL.md)
+</content>
