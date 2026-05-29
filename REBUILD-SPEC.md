@@ -51,9 +51,9 @@ v2/
 │   ├── system-prompt.md              # ~120 ln (was 300) — universal rules only, no restatement
 │   ├── anti-blind-agreement.md       # kept
 │   └── challenge-framework.md        # kept
-├── agents/                           # 11 slim files (~50–80 ln each) — unique role behavior only
-│   ├── _agent-template.md            # the canonical slim shape
+├── agents/                           # 11 slim files (~50–80 ln each) — ONLY real agents (anything here loads as an agent)
 │   ├── cto-advisor.md ... (×11)
+├── templates/agent-template.md       # the canonical slim shape (in templates/, NOT agents/)
 ├── pipeline/                         # NEW — control-flow lives here, not in prompts
 │   ├── pipeline.yaml                 # declarative: lanes, stages, routing, model tiers, delta-review rules
 │   ├── lane-classifier.md            # the trigger-surface → lane decision table (was buried in cto-advisor)
