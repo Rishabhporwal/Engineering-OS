@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -30,6 +31,12 @@ TERMINAL = {"shipped", "rejected", "killed"}
 
 def _now() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _atomic_write(path: Path, data: dict) -> None:
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(json.dumps(data, indent=2) + "\n")
+    os.replace(tmp, path)  # atomic — never leave a torn/invalid live file (SRE F4)
 
 
 def main() -> int:
@@ -68,11 +75,11 @@ def main() -> int:
             })
         registry_p.write_text(json.dumps(registry, indent=2) + "\n")
 
-        # backup then shrink active.json
+        # backup then shrink active.json (atomic)
         bak = active_p.with_suffix(f".json.bak.{_now().replace(':', '-')}")
         bak.write_text(active_p.read_text())
         active["active_requirements"] = keep
-        active_p.write_text(json.dumps(active, indent=2) + "\n")
+        _atomic_write(active_p, active)
         print(f"pruned {len(moved)} terminal req(s) → registry.json; active.json now holds {len(keep)} in-flight")
     else:
         print(f"no terminal reqs to prune; active.json holds {len(keep)} in-flight")

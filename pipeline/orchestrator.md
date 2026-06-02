@@ -9,8 +9,17 @@
 Every spawn prompt MUST include:
 - the `req_id`, the run-folder path, the absolute `${CLAUDE_PLUGIN_ROOT}` and `${CLAUDE_PROJECT_DIR}`;
 - the model tier from `pipeline.yaml.stages.<stage>.model` (override per persona / delta as noted);
-- the note: *"you are a subagent with no Agent tool — do your stage, persist artifacts + update `state/active.json` + journals, END with a HANDOFF block; do NOT attempt to spawn anything";*
+- the note: *"you are a subagent with no Agent tool — do your stage, persist artifacts + journals, declare your intended state in the HANDOFF `state` fields (do NOT write `state/active.json` yourself — the orchestrator is the sole writer), END with a HANDOFF block; do NOT attempt to spawn anything";*
 - *"append a live progress line to `.engineering-os/live.log` at each meaningful step."*
+
+## State is written by the orchestrator only (fixes the parallel-write race)
+
+You spawn builders and reviewers **in parallel**; if each wrote `active.json` directly, concurrent read-modify-writes would clobber the source-of-truth file. So subagents NEVER write it — they return their intended `state` in the HANDOFF block, and **you apply it serially + atomically** after each spawn returns:
+```sh
+uv run ${CLAUDE_PLUGIN_ROOT}/tools/state_update.py --project-dir ${CLAUDE_PROJECT_DIR} \
+  --req <req_id> --status <handoff.state.status> --stage <handoff.state.stage> --owner <handoff.state.owner>
+```
+Apply each parallel agent's delta one at a time (you are single-threaded — that's the guarantee). `state_update.py` writes atomically (`os.replace`) so a crash never leaves invalid JSON live.
 
 ## Per-spawn telemetry — ENFORCED (not prose; fixes O14/O13)
 

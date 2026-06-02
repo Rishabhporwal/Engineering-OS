@@ -48,7 +48,7 @@ Brain's definition: `canon/business-requirements.md` (BRD) + `canon/technical-re
 
 You run as a spawned subagent and have **no `Agent` tool** — you cannot invoke the next stage. The top-level orchestrator (`pipeline/orchestrator.md`) drives the pipeline. When your stage is complete and self-reviewed:
 
-- **Persist first:** write your stage artifact(s); append your per-agent + per-feature journals + a decision-log line; update `state/active.json` (status/stage/owner → next, using the exact values from `workflows/state-machine.yaml`).
+- **Persist first:** write your stage artifact(s); append your per-agent + per-feature journals + a decision-log line. **Do NOT write `state/active.json` yourself** — you run in parallel with other agents and concurrent writes clobber the source-of-truth file. Instead, declare your intended state in the HANDOFF `state` fields; the single-threaded orchestrator is the **sole writer** and applies it atomically (`tools/state_update.py`).
 - **End your response with:**
   ```
   HANDOFF:
@@ -57,9 +57,10 @@ You run as a spawned subagent and have **no `Agent` tool** — you cannot invoke
     next_agent: <agent-id | founder | none>
     bounce_target: <agent-id | none>      # BOUNCE/FAIL only
     needs_personas: [<type:tier>, ...]     # Stage 1 only; else []
+    state: { status: <new status from state-machine.yaml>, stage: <N>, owner: <next agent-id> }
     reason: <one line>
   ```
-- Do NOT write `HANDOFF-TO-*.md` files. The orchestrator reads your state update + HANDOFF and routes.
+- Do NOT write `HANDOFF-TO-*.md` files and do NOT edit `state/active.json`. The orchestrator reads your HANDOFF and writes state for you.
 
 ## Live progress (the Founder watches)
 
