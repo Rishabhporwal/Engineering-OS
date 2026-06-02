@@ -48,7 +48,7 @@ Around each spawn:
 4. **Reconcile reviews** (use `docs/finding-severity-rubric.md` so Security/QA converge, not bounce each other):
    - both `PASS` → `express` → Founder gate; else → `final` (S6).
    - any `BOUNCE`/`FAIL` → re-spawn the responsible **builder** with the findings, then **DELTA RE-REVIEW** (next section).
-5. **Final (S6) — `cto-advisor`** (model `final_judgment`). `PASS` → ensure `awaiting-founder` → STOP at Founder gate. `BOUNCE` → spawn `bounce_target`, continue.
+5. **Final (S6) — `final-reviewer`** (model `final_judgment`). `PASS` → ensure `awaiting-founder` → STOP at Founder gate. `BOUNCE` → spawn `bounce_target`, continue.
 6. **Safety bound:** cap at 20 spawns. On exceed, STOP, leave state consistent for `/resume`, surface to Founder.
 
 ## Delta re-review (the dominant cost lever; fixes O12)

@@ -106,7 +106,7 @@ stages:
 
   - id: 6
     name: cto-advisor-final-review
-    owner: cto_advisor
+    owner: final_reviewer
     inputs: [all_prior_artifacts]
     outputs: [final_review]
     gate: G6

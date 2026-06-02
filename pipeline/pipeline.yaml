@@ -55,7 +55,7 @@ stages:
   build:     {n: 3, owner: "<tagged-builders>", model: builder,        artifact: "0N-developer-report.md", parallel: true}
   security:  {n: 4, owner: security-reviewer,  model: security_default, artifact: "security-review.md", veto: true}
   qa:        {n: 5, owner: qa-agent,           model: qa,              artifact: "qa-review.md", veto: true}
-  final:     {n: 6, owner: cto-advisor,        model: final_judgment,  artifact: "11-final-review.md", veto: true}
+  final:     {n: 6, owner: final-reviewer,        model: final_judgment,  artifact: "11-final-review.md", veto: true}
   deploy:    {n: 8, owner: platform-devops,    model: builder,         artifact: "13-deployment-report.md"}
   # Stage 7 = Founder human gate (no agent).
 
