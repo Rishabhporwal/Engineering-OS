@@ -32,6 +32,19 @@ model_tiers:
 # CONSERVATIVE RULE (Founder): on any doubt between lanes, pick the higher one.
 # ---------------------------------------------------------------------------
 lanes:
+  # EXPERIMENTAL (opt-in via /requirement --lean, default OFF until the A/B proves it).
+  # The strategic-review thesis: one disciplined Sonnet session — carrying the canon +
+  # challenge-framework + negative-control DoD + memory recall — does build AND structured
+  # self-review against the security/QA/compliance checklist, escalating to the full pipeline
+  # ONLY if it discovers a trigger surface mid-build. If the A/B (docs/lean-vs-full-ab.md)
+  # shows lean ≈ full quality at a fraction of cost on no-trigger work, flip this to the default
+  # and demote the multi-agent pipeline to the high_stakes carve-out.
+  lean:
+    when: "OPT-IN only (--lean). Zero trigger surfaces. One Sonnet builder session: build + self-review vs the gate checklists."
+    stages: [build]                      # the single tagged builder also self-gates (no separate review spawns)
+    personas: 0
+    escalate_if: "any trigger surface (compliance/tenancy/metric/decision-log/money/outbound/auth) is discovered mid-build → abort lean, restart as high_stakes"
+    self_review_against: [security-baseline, qa-agent DoD, compliance-engine, verification_validity]
   express:
     when: "zero trigger surfaces AND purely trivial (copy/docs/config/styling/zero-behavior refactor/clear registry repeat)"
     stages: [intake, build, qa]          # no architect, no security, no final
