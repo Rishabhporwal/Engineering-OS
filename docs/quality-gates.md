@@ -298,7 +298,9 @@ This document defines each gate's:
 
 1. **Static check (precondition):** Before declaring "ready," the responsible agent reads this file and self-checks the gate it's about to hand off across.
 2. **Reviewer check (postcondition):** The next-stage owner reads this file and verifies each condition against the evidence.
-3. **CI check:** A subset of gates are automated (paradigm decorator present, test coverage threshold, security scan exit code, contract test diff). CI fails the merge if these are not green — even before any agent gates run.
+3. **CI check (mechanical, non-LLM — fails the merge before any agent gate runs):**
+   - **The OS itself** is gated by `.github/workflows/eos-self-gate.yml` — `pipeline_doctor` (graph consistency), `secret_scan` (O1), `validity_check` (O11 anti-patterns), agent-frontmatter + JSON validity, tools-compile. This runs on every plugin PR.
+   - **The Brain PRODUCT repo** instantiates its own gate from that template + `paradigm_check.py` (the `@paradigm` decorator is present and honest), a test-coverage threshold, the security-scanner suite exit codes, and `buf breaking` (contract diff). A red gate fails the merge — even before any agent gate runs. *(If the product CI is not yet wired, that is itself a gap to close — do not rely on the agent gates alone for the mechanical checks.)*
 
 > **No gate can be "waived" silently.** If the team needs to ship despite a gate failure, the CTO Advisor must escalate to Founder for an explicit, logged waiver — which becomes a tech-debt item with an owner and a date.
 

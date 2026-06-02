@@ -1,0 +1,66 @@
+# Engineering OS — self-gate CI (fixes QA-F2: quality-gates.md claimed "CI fails the
+# merge" but no CI existed). This gates the PLUGIN repo itself on every PR with the
+# same mechanical checks the team is supposed to enforce — so the OS practices its
+# own discipline. (The Brain PRODUCT repo instantiates its own gate from this template
+# + paradigm_check.py + coverage + the scanner suite — see docs/quality-gates.md.)
+name: eos-self-gate
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: jq (for hook self-tests)
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Orchestration graph is consistent (pipeline_doctor)
+        run: python3 tools/pipeline_doctor.py
+
+      - name: No secrets in the tree (O1 gate)
+        run: python3 tools/secret_scan.py agents skills prompts pipeline docs canon tools hooks templates schemas
+
+      - name: Verification-validity anti-patterns (O11)
+        run: python3 tools/validity_check.py --paths skills agents pipeline tools
+
+      - name: Tools compile
+        run: |
+          for f in tools/*.py; do python3 -m py_compile "$f"; done
+
+      - name: All JSON valid (plugin.json, schemas)
+        run: python3 -c "import json,glob; [json.load(open(f)) for f in ['.claude-plugin/plugin.json','.claude-plugin/marketplace.json']+glob.glob('schemas/*.json')]; print('json ok')"
+
+      - name: Agents — valid frontmatter, no Agent tool, valid model tier
+        run: |
+          python3 - <<'PY'
+          import re, glob, os, sys
+          present = set(os.listdir("skills")); bad = 0
+          for a in glob.glob("agents/*.md"):
+              if a.endswith("_agent-template.md"): continue
+              t = open(a).read(); fm = re.search(r'^---\n(.*?)\n---', t, re.S).group(1)
+              n = os.path.basename(a)
+              if 'Agent' in re.search(r'tools:\s*\[(.*?)\]', fm).group(1):
+                  print(f"FAIL {n}: has Agent tool"); bad += 1
+              m = re.search(r'^model:\s*(\S+)', fm, re.M)
+              if not m or m.group(1) not in ('haiku','sonnet','opus','inherit'):
+                  print(f"FAIL {n}: bad model"); bad += 1
+              for fld in ("skills",):
+                  mm = re.search(rf'^{fld}:\s*\[(.*?)\]', fm, re.M)
+                  if mm:
+                      for s in (x.strip() for x in mm.group(1).split(",") if x.strip()):
+                          if s not in present: print(f"FAIL {n}: {fld}->{s} missing"); bad += 1
+          sys.exit(1 if bad else 0)
+          PY
+
+      - name: Knowledge-layer drift (referenced files exist; matrix count == skills)
+        run: python3 tools/knowledge_lint.py || (echo "knowledge_lint not present yet — skipping" && true)

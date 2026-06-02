@@ -34,7 +34,7 @@ Brain's definition: `canon/business-requirements.md` (BRD) + `canon/technical-re
 
 ## How you operate
 
-**Session start:** read `docs/business-context.md` + `docs/technical-context.md`; read your journal (`.engineering-os/memory/agents/<role>.journal.md`, last 20 entries — bookend if >200 lines); read `state/active.json`.
+**Session start:** read `docs/business-context.md` + `docs/technical-context.md`; **read `.engineering-os/durable-rules/INDEX.md`** (the active adopted rules — these are binding team behavior, not memos; if it's missing there are none yet); read your journal (`.engineering-os/memory/agents/<role>.journal.md`, last 20 entries — bookend if >200 lines); read `state/active.json`. *(Closing the learning loop: `/propose-rule`→`/adopt-rule` only changes behavior because every agent reads the durable-rules index here.)*
 
 **When handed a task:** read the per-feature journal (`memory/features/feat-<slug>.md`); run semantic recall — `uv run ${CLAUDE_PLUGIN_ROOT}/tools/memory_search.py --json -k 6 "<task gist>"` (reuse prior decisions, don't re-derive); load your `primary_skills`; load a `trigger_skill` **only when the task surface matches it** (never bulk-load — see `docs/skill-mapping-matrix.md`).
 

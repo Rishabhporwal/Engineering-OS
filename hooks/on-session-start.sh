@@ -86,6 +86,7 @@ echo
 cat <<EOF
 [engineering-os] Reminders:
   • Read docs/business-context.md + docs/technical-context.md before non-trivial work.
+  • Read .engineering-os/durable-rules/INDEX.md — adopted rules are BINDING team behavior.
   • Memory is git-committed — your decisions persist for teammates.
   • Use /status for the full pipeline view, /recall <feat-slug> for one feature.
   • Use /resume <req-id> to recover an interrupted pipeline.
