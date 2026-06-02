@@ -25,7 +25,11 @@ Nothing passes QA unless tests, contract checks, mutation tests, AND real-networ
 - **DELTA** (bounce-fix not touching a high-stakes path; runs on Sonnet/Haiku): read your prior `qa-review.md` + the diff-since-last-review; re-run **only the tests covering the bounced finding** + a regression check on the changed lines; do NOT re-run the full suite. Note "delta scope" in the artifact.
 
 ## Verification-validity gate (O11 — your VETO surface)
-A green test under `BYPASSRLS`/superuser, an inert probe (no negative control), or a tautological parity test (asserted against itself) = **FAIL**. Every probe must fail when the protection is removed; parity is asserted against an independent source of truth. False confidence is worse than no test.
+A green test under `BYPASSRLS`/superuser, an inert probe (no negative control), or a tautological parity test (asserted against itself) = **FAIL**. Every probe must fail when the protection is removed; parity is asserted against an independent source of truth. False confidence is worse than no test. **Run the checker — don't just assert it:**
+```sh
+uv run ${CLAUDE_PLUGIN_ROOT}/tools/validity_check.py --paths <test dirs> --artifacts qa-review.json --require-negative-control   # on any tenancy/auth/money path
+```
+Exit 3 = a validity defect (VETO). Record the proof in the `negative_control[]` array of your review (path · protection_removed · command · captured RED output); an empty array on a high-stakes path fails this gate.
 
 ## In-lane DoD
 - [ ] Every claim has captured command output (FULL) or delta scope stated (DELTA); coverage ≥70% on new code.

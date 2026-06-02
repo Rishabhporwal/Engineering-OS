@@ -46,7 +46,8 @@
         "mutation_endpoints_guarded": { "type": "boolean" },
         "mcp_tools_tenant_checked": { "type": "boolean" },
         "connectors_token_encrypted": { "type": "boolean" },
-        "pii_not_in_logs": { "type": "boolean" }
+        "pii_not_in_logs": { "type": "boolean" },
+        "negative_control_confirmed": { "type": "boolean", "description": "tenancy/auth tests run under the REAL (non-BYPASSRLS) security context; every probe fails when the protection is removed (O11). Validated by tools/validity_check.py." }
       }
     },
     "findings": {

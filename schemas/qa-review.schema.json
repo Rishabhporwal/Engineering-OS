@@ -28,7 +28,22 @@
         "metric_registry_parity": { "type": "boolean" },
         "operational_readiness_green": { "type": "boolean" },
         "mutation_tests_present_on_high_stakes_paths": { "type": "boolean" },
+        "negative_control_confirmed": { "type": "boolean" },
         "no_flaky_tests": { "type": "boolean" }
+      }
+    },
+    "negative_control": {
+      "description": "O11 — the #1 recurring bounce. For every security/tenancy/auth/money path, prove the test can FAIL: remove the protection, run, capture the red output. An empty array on a high-stakes path is a Tanvi VETO (validated by tools/validity_check.py). A green test under BYPASSRLS / an inert probe / a tautological parity assert is FAIL.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "protection_removed", "command", "observed_failure_output"],
+        "properties": {
+          "path": { "type": "string", "description": "the protected path (e.g. orders RLS, requireRole on POST /x)" },
+          "protection_removed": { "type": "string", "description": "what guard was removed to prove the test exercises it" },
+          "command": { "type": "string" },
+          "observed_failure_output": { "type": "string", "description": "captured RED output proving the test failed with the guard gone" }
+        }
       }
     },
     "test_runs": {
