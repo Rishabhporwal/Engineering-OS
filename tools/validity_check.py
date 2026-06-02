@@ -58,9 +58,16 @@ def iter_files(paths: list[Path]):
             yield p
 
 
+_CODE_SUFFIXES = {".py", ".ts", ".tsx", ".sql", ".js", ".tsx"}
+
+
 def scan_antipatterns(files) -> list[str]:
     viol = []
     for f in files:
+        # anti-patterns live in CODE; .md/.json prose that mentions BYPASSRLS as an
+        # example (docs, this tool, the schemas) must not false-positive.
+        if f.suffix not in _CODE_SUFFIXES:
+            continue
         try:
             text = f.read_text(errors="ignore")
         except OSError:
