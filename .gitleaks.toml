@@ -1,0 +1,42 @@
+# gitleaks config for the Engineering OS repo itself (O1 fix: scan the team's
+# OWN audit-trail commits, not just the product). Use alongside tools/secret_scan.py
+# (the portable, no-deps gate). Run: gitleaks protect --staged  (or via pre-commit).
+title = "Brain Engineering OS secret gate"
+
+[extend]
+useDefault = true   # inherit gitleaks' built-in rules (AWS, GitHub, Stripe, JWT, private keys, …)
+
+# Extra rules for the exact O1 classes (DTC-connector tokens gitleaks defaults miss).
+[[rules]]
+id = "shopify-secret"
+description = "Shopify app secret / access token"
+regex = '''shp(ss|pat|at|ca)_[A-Fa-f0-9]{32,}'''
+
+[[rules]]
+id = "google-oauth-client-secret"
+description = "Google OAuth client secret"
+regex = '''GOCSPX-[A-Za-z0-9_-]{20,}'''
+
+[[rules]]
+id = "meta-long-lived-token"
+description = "Meta/Facebook long-lived access token"
+regex = '''EAA[A-Za-z0-9]{80,}'''
+
+[[rules]]
+id = "db-connection-string-password"
+description = "Database/broker connection string with inline password"
+regex = '''(postgres|postgresql|mysql|mongodb(\+srv)?|redis|rediss|amqp)://[^:@/\s]+:[^@/\s]{6,}@'''
+
+[[rules]]
+id = "razorpay-live"
+description = "Razorpay live key"
+regex = '''rzp_live_[A-Za-z0-9]{14,}'''
+
+[allowlist]
+description = "Plugin's own pattern files + docs that illustrate (not embed) secrets"
+paths = [
+  '''hooks/secret-patterns\.toml''',
+  '''hooks/secret-patterns\.txt''',
+  '''\.gitleaks\.toml''',
+  '''tools/secret_scan\.py''',
+]

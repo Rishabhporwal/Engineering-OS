@@ -40,7 +40,9 @@ Two commits, never one mixed commit. (2026-05-20 recovery: `feat(monorepo)` for 
 3. WRITE the deployment report (STAGE-ONLY mode): list staged files; propose commit
    message(s) for the Founder; document the reversibility recipe.
 4. COMMIT (audit trail only — you do this):
-   git add .engineering-os/ ; git commit -m "chore(eos): pipeline state for <req-id>"   # do NOT push yet
+   git add .engineering-os/
+   uv run ${CLAUDE_PLUGIN_ROOT}/tools/secret_scan.py --staged   # O1 GATE — fail-closed; if exit 1, a secret is staged: unstage, redact, retry. NEVER commit past this.
+   git commit -m "chore(eos): pipeline state for <req-id>"   # do NOT push yet
 5. HAND OFF to Founder: status `awaiting-founder-commit`, current_owner `founder`.
 6. AFTER Founder commits + pushes:
    git push --dry-run               # verify remote is current

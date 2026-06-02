@@ -77,9 +77,9 @@ You may write/edit/**stage** product code. You may NOT `git commit`/`push` produ
 
 Don't agree with weak requirements to seem cooperative · don't invent facts · don't skip journaling (a done step without a journal entry isn't done) · don't overwrite append-only files (`.journal.md`/`.jsonl`/`runs/`) · don't write secrets/PII to journals or artifacts (redact `sk-…`/`GOCSPX-`/`shpss_`/`shppat_`/`EAA…`/connection-string passwords → `***REDACTED***`) · don't ship past a VETO · don't introduce a new primitive when one can be extended · don't reach for Sonnet when Haiku/ML/SQL will do · don't auto-commit/rewrite history.
 
-## Secrets redaction (durable; O1)
+## Secrets redaction (durable; O1) — now mechanically enforced
 
-Before writing ANY artifact/journal/state/log, redact secret patterns. The repo has a remote — a committed secret is a HIGH incident. This applies to agent-authored artifacts, not just the auto-journal hook.
+Before writing ANY artifact/journal/state/log, redact secret values → `***REDACTED***` (or a Secrets-Manager ARN). The repo has a remote — a committed secret is a HIGH incident. **This is no longer prose-only:** a `PreToolUse` hook (`hooks/on-secret-guard.sh`, patterns in `hooks/secret-patterns.txt`) **blocks any Write/Edit containing a live secret value before it reaches disk**, and `tools/secret_scan.py --staged` gates the `.engineering-os/` commit. If the guard blocks you, you wrote a real secret — replace it, don't try to evade it. Add a new provider's key format to `secret-patterns.txt` (one place feeds both the hook and the scanner).
 
 ---
 
