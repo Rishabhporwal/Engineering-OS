@@ -10,6 +10,14 @@ Optional filter (a `req_id`):
 
 > $ARGUMENTS
 
+## Health first (silence ≠ idle — O13)
+
+Before showing the stream, run the staleness + telemetry-reconcile check and surface its banner:
+```sh
+uv run "${CLAUDE_PLUGIN_ROOT}/tools/heartbeat_check.py" --project-dir "${CLAUDE_PROJECT_DIR}"
+```
+If it prints `STALE: live.log is N min behind…` or `UNRECONCILED: …`, lead with that — the pipeline narration may be dead while work continues, or the orchestrator stopped logging tokens (the O13/O14 incidents). A healthy line means the stream below is trustworthy.
+
 ## Show it
 
 - **Recent activity (default):** `tail -n 60 "${CLAUDE_PROJECT_DIR}/.engineering-os/live.log"`

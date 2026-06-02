@@ -20,6 +20,15 @@
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/on-post-tool-use.sh"
           }
         ]
+      },
+      {
+        "matcher": "Task|Agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/on-subagent-usage.sh"
+          }
+        ]
       }
     ],
     "PreToolUse": [
