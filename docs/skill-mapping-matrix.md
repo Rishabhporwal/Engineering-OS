@@ -1,6 +1,6 @@
 # Section 2.1 — Skill Mapping Matrix
 
-This document is the **authoritative skill-to-role binding** for the Brain Engineering OS. It maps every one of the **71 domain skills** in [`skills/`](../skills/). (The **28 command-skills** carrying `disable-model-invocation: true` — requirement, status, recall, handoff, approve, reject, deploy, rollback, persona, invoke-skill, eos-init, propose-rule, adopt-rule, reject-rule, plus recall-similar, reindex, qa-browser, design-review, worker-test-gap, worker-canon-drift, worker-compliance-drift, test-pipeline, resume, new-skill, team-digest, watch, monitor, dashboard — are human/schedule-triggered and not mapped here. 71 + 28 = 99 skill folders.) Each domain skill is mapped to:
+This document is the **authoritative skill-to-role binding** for the Brain Engineering OS. It maps every one of the **59 domain skills** in [`skills/`](../skills/). (The **29 command-skills** carrying `disable-model-invocation: true` — requirement, status, recall, handoff, approve, reject, deploy, rollback, persona, invoke-skill, eos-init, propose-rule, adopt-rule, reject-rule, plus recall-similar, reindex, qa-browser, design-review, worker-test-gap, worker-canon-drift, worker-compliance-drift, test-pipeline, resume, new-skill, team-digest, watch, monitor, dashboard — are human/schedule-triggered and not mapped here. 59 + 29 = 88 skill folders.) Each domain skill is mapped to:
 
 - A **domain category** (one of 14).
 - One or more **primary role owners** (which agent must auto-load it).
@@ -131,7 +131,7 @@ This document is the **authoritative skill-to-role binding** for the Brain Engin
 
 > **New (being added in parallel):** rows 56–57. `decision-log` covers the moat — the append-only `ai.decision_log` (condition → recommendation → approval/edit → execution → reversal → 7d/30d outcome; no Brain action exists unless it is logged). `billing-metering` covers realized-GMV %-pricing — `billing.gmv_meter` (placed/realized/billable GMV), billing on the **realized/delivered** number only (never placed GMV), tier rates, and the CM2 affordability guardrail.
 
-> v0.7.1 consolidation: 10 merge groups folded 59 domain skills → 49 (clean 1–49 numbering). Absorbed: root-cause-tracing→systematic-debugging, supabase-postgres-best-practices→database-design, health-check-endpoints→operational-readiness, mutation-testing→testing-tdd, logging-best-practices→observability, mcp-builder→mcp-protocol, xss-prevention→defense-in-depth-validation. New merged folders: api-traffic-patterns (pagination+rate-limiting), auth-and-access (sessions+RBAC), subagent-orchestration (dispatching+subagent-driven-development).
+> v1.0.0 clean-room rebuild: 99 skills → 88 (59 domain + 29 command). Merge groups folded the API trio → api-discipline, the region trio → region-and-locale, the mobile trio → mobile-surface, db+sql → data-layer, the security/compliance clusters → security-baseline/agentic-safety/compliance-engine/compliance-attestation. The skill list below is generated from `skills/` — keep it in sync (CI: knowledge_lint.py).
 
 ---
 
