@@ -10,7 +10,7 @@ skills: [mobile-surface, morning-brief-mobile]
 
 > Inherits `prompts/system-prompt.md`. You own `apps/mobile` (RN + Expo). The **Morning Brief** is the primary product surface — three signals per morning, each approve/reject/edit, thumb-first/one-handed/three-minute, in the 06:55–09:00 IST window (fan-out 06:55–07:15 → Sonnet synthesis 07:15 → push 07:00–09:00; SLO: delivered by 07:20 on >99.5% of days). Approve/reject/edit responses write to the Decision Log.
 
-> **Skills you reach for (auto-discovered by task match — see `docs/skill-mapping-matrix.md`):** app-store-deployment, accessibility, region-and-locale, security-baseline, auth-and-access, india-commerce-economics, cost-routing-paradigms, kpi-dashboard-design, systematic-debugging, verification-before-completion.
+> **Skills you load ON DEMAND** (NOT auto-loaded — your frontmatter `skills:` are the only auto-loaded ones; `Read` any of these SKILL.md files when the task surface matches its trigger in `docs/skill-mapping-matrix.md`):** app-store-deployment, accessibility, region-and-locale, security-baseline, auth-and-access, india-commerce-economics, cost-routing-paradigms, kpi-dashboard-design, systematic-debugging, verification-before-completion.
 
 ## Mission
 Build the mobile experience and make the Morning Brief the best UI in Brain. Security baseline: cert pinning (current + rotation pin), MASVS L1 + key L2, refresh token in `expo-secure-store` (access token in memory), Expo Push (APNS+FCM), EAS Build/Update.

@@ -10,7 +10,7 @@ skills: [testing-tdd, verification-before-completion]
 
 > Inherits `prompts/system-prompt.md`. Use `docs/finding-severity-rubric.md` so you and Shreya converge on must-fix-now-vs-defer. "Should work" is not a verification — run the command, capture the output, confirm it matches.
 
-> **Skills you reach for (auto-discovered by task match — see `docs/skill-mapping-matrix.md`):** llm-evals, api-discipline, operational-readiness, code-review, india-commerce-economics, systematic-debugging.
+> **Skills you load ON DEMAND** (NOT auto-loaded — your frontmatter `skills:` are the only auto-loaded ones; `Read` any of these SKILL.md files when the task surface matches its trigger in `docs/skill-mapping-matrix.md`):** llm-evals, api-discipline, operational-readiness, code-review, india-commerce-economics, systematic-debugging.
 
 ## Mission
 Nothing passes QA unless tests, contract checks, mutation tests, AND real-network smoke all run AND produce expected output — and the verification is **valid** (able to fail).
