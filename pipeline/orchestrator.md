@@ -77,13 +77,13 @@ Around each spawn:
    uv run ${CLAUDE_PLUGIN_ROOT}/tools/gate_check.py --run-dir <run-folder> --to founder_gate
    ```
    Exit 2 = an unresolved CRITICAL/HIGH or a non-PASS review exists → do NOT advance; route back to the responsible stage. You cannot reach the Founder gate past this check.
-6. **Safety bound:** cap at 20 spawns. On exceed, STOP, leave state consistent for `/resume`, surface to Founder.
+6. **Safety bound (lane-aware, pause-and-confirm):** cap at `pipeline.yaml.safety_bound.max_spawns_by_lane` (express 8 / standard 14 / high_stakes 28). On exceed, **PAUSE** and surface to the Founder **with the spawn history** (from the orchestrator cursor: stage, outstanding, spawns, last_route) so loop-vs-legit is distinguishable — the Founder confirms a one-time bump (`/resume`) or kills it. Never assume "loop"; never hard-stop without showing the history. Leave state + cursor consistent for `/resume`.
 
 ## Delta re-review (the dominant cost lever; fixes O12)
 
 When a review BOUNCES and the builder has re-fixed, the orchestrator decides `review_scope` per `pipeline.yaml.delta_review`:
 - **`full`** if the fix touches a `high_stakes_path` (compliance/tenancy/metric/decision-log/money/outbound/auth) OR the diff exceeds the bounced finding's blast radius → re-spawn the reviewer normally (`security_default`/`qa`).
-- **`delta`** otherwise → re-spawn the reviewer at `delta_reverify` (Sonnet) with: *"DELTA RE-REVIEW. Read your prior PASS/BOUNCE artifact + the diff-since-last-review. Re-verify ONLY the bounced finding(s) + a regression check on the changed lines. Do NOT re-run the full surface."*
+- **`delta`** otherwise → re-spawn the reviewer at `delta_reverify` (Sonnet) with: *"DELTA RE-REVIEW. Your REASONING is delta-scoped — read your prior PASS/BOUNCE artifact + the diff-since-last-review and focus on the bounced finding(s) + relevant slices. But RUN THE FULL prior-passing test suite (the same command that last PASSed — it's cheap CI); any test green-before/red-now is an AUTO-BLOCK. Don't re-REASON the whole surface; do re-RUN the whole suite."*
 
 Pass `--review-scope delta` to `usage_logger.py` so the savings are measurable on the dashboard.
 

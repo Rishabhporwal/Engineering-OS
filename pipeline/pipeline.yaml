@@ -101,8 +101,22 @@ routing:
     reject: intake
 
 safety_bound:
-  max_spawns_per_requirement: 20
-  on_exceed: "STOP, leave state consistent for /resume, surface to Founder (likely a loop)"
+  # Lane-aware (SRE F5): a flat 20 was a footgun — a legit high_stakes feature with
+  # parallel builder tracks + 2 reviewers + a couple of bounces burns ~18-20 spawns
+  # while behaving correctly, then force-stops indistinguishably from a runaway loop.
+  max_spawns_by_lane:
+    express: 8
+    standard: 14
+    high_stakes: 28
+  on_exceed:
+    action: "PAUSE-AND-CONFIRM, not a hard stop"
+    do: |
+      At the lane cap, STOP and surface to the Founder WITH the spawn history (from the
+      orchestrator cursor: stage, outstanding, spawns, last_route) so loop-vs-legit is
+      DISTINGUISHABLE. The Founder either confirms a one-time bump (`/resume` continues) or
+      kills it. Do NOT assume "likely a loop" — a big feature legitimately reaching the cap
+      looks identical to a loop only if you hide the history. Always leave state + cursor
+      consistent for /resume.
 
 # ---------------------------------------------------------------------------
 # DELTA RE-REVIEW — the dominant token-cost lever (fixes O12).
@@ -120,7 +134,19 @@ delta_review:
     context at far below full cost.) The reviewer reads the prior PASS artifact + the
     diff + the changed code's direct callers/importers/tests. Runs on
     model_tiers.delta_reverify (sonnet/haiku) + effort:low.
-  regression_auto_block: "ANY test that passed before the bounce and now fails = AUTO-BLOCK, even in delta scope. This is the cheap guardrail that catches the cross-cutting regressions delta review structurally can't."
+  regression_auto_block:
+    rule: "ANY test that passed before the bounce and now fails = AUTO-BLOCK, even in delta scope — the guardrail for the cross-cutting regressions delta review structurally can't catch."
+    decoupled_from_scope: |
+      CRITICAL (Architect F3): the auto-block only works if the FULL prior-passing suite
+      actually RUNS. So decouple the two — exploit "cheap to run the whole suite, expensive
+      to re-REASON the whole surface":
+        - The LLM REVIEW is delta-scoped (read prior PASS + diff + relevant slices).
+        - The TEST SUITE is NOT — on every bounce-fix the orchestrator/QA runs the ENTIRE
+          prior-passing test set (it's CI, not an LLM call). A red in an UNTOUCHED file the
+          diff silently broke (transitive import / shared type / migration side-effect) then
+          fires the auto-block. Without this, delta review is blind to exactly its own failure mode.
+      Implementation: QA delta mode runs `<full test command>` (the same one that last PASSed),
+      not a changed-lines subset; only its REASONING about findings is delta-scoped.
   high_stakes_paths:            # a fix touching ANY of these forces a FULL re-review
     - compliance      # DPDP / PDPL / DLT / NCPR / calling-hours / recording-consent / WhatsApp policy
     - multi_tenancy   # workspace_id at any of the 4 layers
