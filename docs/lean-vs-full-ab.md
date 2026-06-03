@@ -36,7 +36,7 @@ Before the lean question, the *model-tiering* lever (P0-2 split + Security-off-O
 ```sh
 uv run tools/ab_project.py --usage <brain-repo>/.engineering-os/usage.jsonl
 ```
-On the 6 real v1 requirements (55 spawns, 68% Opus) this projects **\~46% lower cost** (\→\) from tiering alone — repricing each real spawn at its v2 model tier, token counts held constant. That validates the v2 *full-pipeline* cost fix. The lean-vs-full run below is the SEPARATE question of whether the pipeline should run at all on no-trigger work.
+On the 6 real v1 requirements (55 spawns, 68% Opus) this projects **~46% lower cost (≈$115 → $62)** from tiering alone — repricing each real spawn at its v2 model tier, token counts held constant. That validates the v2 *full-pipeline* cost fix. The lean-vs-full run below is the SEPARATE question of whether the pipeline should run at all on no-trigger work.
 
 ## Honesty note
 The static footprint cuts (−71% prompt, −74% descriptions) are **not** the cost story — against an Opus-dominated bill they're ~2–5% of dollars. The real levers are **model tier × review rounds** (now addressed by the P0-2 cto-advisor split + Security-on-Sonnet) and **whether the ceremony runs at all** (this A/B). Run the meter before claiming a number.
