@@ -31,7 +31,9 @@ jobs:
         run: python3 tools/secret_scan.py agents skills prompts pipeline docs canon tools hooks templates schemas
 
       - name: Verification-validity anti-patterns (O11)
-        run: python3 tools/validity_check.py --paths skills agents pipeline tools
+        # scans agent/skill/pipeline prose for bypass-test anti-patterns; tools/ is excluded
+        # because validity_check.py + classify_lane.py legitimately CONTAIN the pattern strings.
+        run: python3 tools/validity_check.py --paths skills agents pipeline
 
       - name: Tools compile
         run: |
