@@ -4,9 +4,15 @@
 
 The output: `feature_class ∈ {express, standard, high_stakes}` + `trigger_surfaces_touched[]` + one-line rationale. Recorded on the requirement in `state/active.json` and in the intake review.
 
-## Step 1 — Trigger-surface scan (decides high-stakes)
+## Step 1 — Trigger-surface scan (decides high-stakes) — DETERMINISTIC
 
-Does the requirement touch ANY of these surfaces?
+> Run by a **tool, not a model judgment** (the high-blast-radius part must not depend on the cheapest model spotting a surface in prose):
+> ```sh
+> uv run ${CLAUDE_PLUGIN_ROOT}/tools/classify_lane.py --text "<requirement>" [--diff <staged-diff>]
+> ```
+> It emits `trigger_surfaces_touched[]`. The intake agent may **ADD** a surface the scan missed; it may **NEVER silently REMOVE** one the scan flagged. ≥1 surface ⇒ `high_stakes`. This closes the "a Haiku miss strips Security off a compliance change" gap.
+
+Surfaces the scan checks (and the intake agent cross-checks):
 
 | Surface | Examples |
 |---|---|

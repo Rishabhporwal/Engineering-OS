@@ -48,7 +48,11 @@ Around each spawn:
 
 ## The loop (routes per `pipeline.yaml.routing`)
 
-1. **Intake (S1) — spawn `cto-advisor`** (model `intake_judgment`).
+1. **Intake (S1)** — first run the **deterministic lane scan**, then spawn `cto-advisor` (model `intake_judgment`, Sonnet) with the result:
+   ```sh
+   uv run ${CLAUDE_PLUGIN_ROOT}/tools/classify_lane.py --text "<requirement>"
+   ```
+   Pass `feature_class` + `trigger_surfaces_touched` into the spawn prompt; the agent validates (may ADD a surface, never REMOVE one). This is what makes the lane robust to a model miss.
    - `CHALLENGE-BACK` / `KILL` → STOP, surface to Founder.
    - `needs_personas` non-empty → spawn each persona via `dynamic-persona-generator` **IN PARALLEL** (one message, multiple Agent calls), each at its tagged model (`:haiku`→`persona_bounded`, `:sonnet`→`persona_deep`). Then **re-spawn `cto-advisor`** to synthesize; re-read.
    - `ADVANCE` → `express`: next = the one builder (S3); `standard`/`high_stakes`: next = `architect` (S2).
