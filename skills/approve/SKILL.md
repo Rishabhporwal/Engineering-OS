@@ -30,6 +30,11 @@ Steps:
 5. Update `state/active.json`: status → `approved`, stage → 8, owner → `platform-devops`.
 6. Append a decision-log entry of type `decision` with `actor: rishabh, decision: approved`.
 7. Append journal under `platform.journal.md` ("Founder approval received").
+7a. **VETO gate before deploy (non-LLM, fail-closed).** Run:
+   ```sh
+   uv run ${CLAUDE_PLUGIN_ROOT}/tools/gate_check.py --run-dir <run-folder> --to deploy
+   ```
+   Exit 2 = an unresolved CRITICAL/HIGH, a non-PASS review, or a missing review artifact → **refuse the deploy** and tell the Founder which finding blocks it. A Founder "approve" cannot ship past an open CRITICAL; only a Founder-logged waiver via Rohan can (which becomes tracked tech-debt).
 8. **Drive Stage 8 (you are top-level — you have the Agent tool).** Spawn the `platform-devops` subagent for Stage 8, passing the absolute `${CLAUDE_PLUGIN_ROOT}` + `${CLAUDE_PROJECT_DIR}` and the note "you have no Agent tool — do Stage 8, persist artifacts/state/journals, return a HANDOFF block." Read its returned HANDOFF + state:
    - `shipped` / `monitoring` → done; print the deployment summary.
    - `rolled-back` (BOUNCE) → the rollback re-enters Stage 4: spawn `security-reviewer`, then continue the orchestration loop (per `pipeline/orchestrator.md`).

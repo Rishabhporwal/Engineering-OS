@@ -68,9 +68,15 @@ Around each spawn:
 2. **Architect (S2)** → on ADVANCE spawn the tagged builder(s). Multiple tracks (`@vikram`/`@ananya`/`@karan`/`@maya`) → spawn **IN PARALLEL**.
 3. **Builders (S3) return** → `express`: spawn `qa-agent` only. `standard`/`high_stakes`: spawn `security-reviewer` AND `qa-agent` **IN PARALLEL** (PARALLEL REVIEW MODE: review, write artifact, return verdict, do not advance).
 4. **Reconcile reviews** (use `docs/finding-severity-rubric.md` so Security/QA converge, not bounce each other):
-   - both `PASS` → `express` → Founder gate; else → `final` (S6).
+   - both `PASS` → `express` → **run the VETO gate before the Founder gate** (below); else → `final` (S6).
    - any `BOUNCE`/`FAIL` → re-spawn the responsible **builder** with the findings, then **DELTA RE-REVIEW** (next section).
-5. **Final (S6) — `final-reviewer`** (model `final_judgment`). `PASS` → ensure `awaiting-founder` → STOP at Founder gate. `BOUNCE` → spawn `bounce_target`, continue.
+5. **Final (S6) — `final-reviewer`** (model `final_judgment`). `PASS` → **run the VETO gate**, then ensure `awaiting-founder` → STOP at Founder gate. `BOUNCE` → spawn `bounce_target`, continue.
+
+   **VETO gate (non-LLM, before ANY Founder-gate transition):** a VETO must be a state-machine invariant, not your good behavior. Before setting `awaiting-founder`, run:
+   ```sh
+   uv run ${CLAUDE_PLUGIN_ROOT}/tools/gate_check.py --run-dir <run-folder> --to founder_gate
+   ```
+   Exit 2 = an unresolved CRITICAL/HIGH or a non-PASS review exists → do NOT advance; route back to the responsible stage. You cannot reach the Founder gate past this check.
 6. **Safety bound:** cap at 20 spawns. On exceed, STOP, leave state consistent for `/resume`, surface to Founder.
 
 ## Delta re-review (the dominant cost lever; fixes O12)
