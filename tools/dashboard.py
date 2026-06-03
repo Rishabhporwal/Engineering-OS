@@ -34,6 +34,21 @@ STAGES = {1: "Intake", 2: "Architect", 3: "Build", 4: "Security",
 # rough blended $ per 1M tokens (input+output) — estimate only
 MODEL_RATE = {"opus": 30.0, "sonnet": 6.0, "haiku": 1.5}
 DEFAULT_RATE = 8.0
+
+
+def _v2_tier(stage, agent: str, v1_model: str) -> str:
+    """v2 model tier by (stage, agent) — mirrors tools/ab_project.py. Used for the
+    projected-vs-actual cost panel (how much the v2 tiering saves on the loaded data)."""
+    try:
+        st = int(stage)
+    except (TypeError, ValueError):
+        return v1_model
+    if st == 1 and agent == "cto-advisor":   return "sonnet"
+    if st == 1 and "persona" in agent:        return v1_model
+    if st == 2:                                return "opus"
+    if st in (3, 4, 5, 8):                     return "sonnet"
+    if st == 6:                                return "opus"
+    return v1_model
 BUG_HINT = ("bounce", "bounced", "veto", "violation", "rollback", "reject", "remediation", "fail")
 TERMINAL = ("shipped", "rejected", "killed", "done")
 
@@ -134,6 +149,8 @@ def build(eos: Path) -> dict:
     # Separates context-load (input + cache) from reasoning (output) and surfaces cache-hit rate + delta-review savings.
     bd = {"input": 0, "output": 0, "cache_read": 0, "cache_creation": 0}
     tok_by_scope = Counter()  # full vs delta re-review — proves the O12 lever
+    proj_actual = 0.0   # cost at each spawn's logged model
+    proj_v2 = 0.0       # cost if every spawn ran at its v2 model tier (ab_project logic)
     for u in usage:
         n = int(u.get("total_tokens") or 0)
         tok_total += n
@@ -146,9 +163,13 @@ def build(eos: Path) -> dict:
         bd["output"] += int(u.get("output_tokens") or 0)
         bd["cache_read"] += int(u.get("cache_read_tokens") or 0)
         bd["cache_creation"] += int(u.get("cache_creation_tokens") or 0)
-        est_cost += n / 1e6 * MODEL_RATE.get(str(u.get("model", "")).lower(), DEFAULT_RATE)
+        m1 = str(u.get("model", "")).lower()
+        est_cost += n / 1e6 * MODEL_RATE.get(m1, DEFAULT_RATE)
+        proj_actual += n / 1e6 * MODEL_RATE.get(m1, DEFAULT_RATE)
+        proj_v2 += n / 1e6 * MODEL_RATE.get(_v2_tier(u.get("stage"), str(u.get("agent", "")), m1), DEFAULT_RATE)
     _cache_in = bd["cache_read"] + bd["cache_creation"] + bd["input"]
     cache_hit_rate = (bd["cache_read"] / _cache_in * 100) if _cache_in else 0.0
+    proj_savings_pct = round((proj_actual - proj_v2) / proj_actual * 100, 0) if proj_actual else 0.0
 
     # agent performance
     actors = defaultdict(lambda: {"events": 0, "stages": 0, "vetos": 0, "bounces": 0, "last": ""})
@@ -237,6 +258,8 @@ def build(eos: Path) -> dict:
                    "by_stage": dict(tok_by_stage), "by_day": dict(tok_by_day),
                    "breakdown": bd, "cache_hit_rate": round(cache_hit_rate, 1),
                    "by_scope": dict(tok_by_scope),
+                   "proj_actual": round(proj_actual, 2), "proj_v2": round(proj_v2, 2),
+                   "proj_savings_pct": proj_savings_pct,
                    "has_data": bool(usage)},
         "activity": [{"ts": str(e.get("ts", "")), "actor": e.get("actor", "?"),
                       "type": e.get("type", ""), "req": e.get("req_id", "")}
@@ -328,7 +351,12 @@ const TABS={
   setTimeout(()=>{sortable('feat',D.features.slice(),cols);document.getElementById('ff').oninput=e=>{const q=e.target.value.toLowerCase();const f=D.features.filter(x=>JSON.stringify(x).toLowerCase().includes(q));document.getElementById('feat').innerHTML=table(f,cols,'feat_t')}},0);
   return h},
  Tokens(){if(!D.tokens.has_data)return '<div class=panel><h2>Tokens &amp; cost</h2><div class=empty>No token usage logged yet. Runs after v0.14.0 record per-stage usage to <code>.engineering-os/usage.jsonl</code> (the orchestrator logs each spawn). This view fills in as the pipeline runs.</div></div>';
-  let h=`<div class=kpis>${kpi('Total tokens',fmt(D.tokens.total))}${kpi('Est. cost','$'+D.tokens.cost)}${kpi('Cache-hit %',D.tokens.cache_hit_rate+'%')}</div>`;
+  let h=`<div class=kpis>${kpi('Total tokens',fmt(D.tokens.total))}${kpi('Est. cost','$'+D.tokens.cost)}${kpi('Cache-hit %',D.tokens.cache_hit_rate+'%')}${kpi('v2-tier headroom',D.tokens.proj_savings_pct+'%')}</div>`;
+  const pa=D.tokens.proj_actual, pv=D.tokens.proj_v2, save=(pa-pv).toFixed(2);
+  h+='<div class=panel><h2>Projected vs actual — model-tiering (ab_project)</h2>'
+    +'<div class=sub>Re-prices each logged spawn at its v2 model tier (intake/security/qa/build→Sonnet, architect/final→Opus), token counts held constant. If this data is already v2, headroom→~0; if v1, it shows the tiering savings still on the table.</div>'
+    +bars({'actual ($)':Math.round(pa),'v2-tiered ($)':Math.round(pv)},'#f0883e')
+    +`<div class=sub style="margin-top:6px"><b>$${pa.toFixed(2)} → $${pv.toFixed(2)}</b> = <b>${D.tokens.proj_savings_pct}%</b> lower ($${save} saved) from tiering alone. Caching not credited (upside). Confirm live with ab_bench.py.</div></div>`;
   h+='<div class=grid2><div class=panel><h2>Context-load vs reasoning (the v2 measurement)</h2>'+bars({input:D.tokens.breakdown.input,cache_read:D.tokens.breakdown.cache_read,cache_creation:D.tokens.breakdown.cache_creation,output:D.tokens.breakdown.output},'#58a6ff')+'</div><div class=panel><h2>Re-review scope (delta vs full — the O12 lever)</h2>'+bars(D.tokens.by_scope,'#3fb950')+'</div></div>';
   h+='<div class=grid2><div class=panel><h2>Tokens by agent</h2>'+bars(D.tokens.by_agent,'#a371f7')+'</div><div class=panel><h2>Tokens by feature</h2>'+bars(D.tokens.by_feature,'#58a6ff')+'</div><div class=panel><h2>Tokens by stage</h2>'+bars(D.tokens.by_stage,'#3fb950')+'</div><div class=panel><h2>Tokens by day</h2>'+bars(D.tokens.by_day,'#d29922')+'</div></div>';
   h+='<div class=sub style="margin-top:8px">Cost is a rough estimate (blended $/1M: opus 30 · sonnet 6 · haiku 1.5).</div>';
