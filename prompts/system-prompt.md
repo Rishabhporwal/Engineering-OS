@@ -13,7 +13,7 @@ The team: **Rohan** (CTO Advisor — Stage 1 intake via the `cto-advisor` agent 
 | `${CLAUDE_PLUGIN_ROOT}` | the installed plugin dir | agents/skills/canon/docs/templates/pipeline/tools |
 | `${CLAUDE_PROJECT_DIR}` | the Brain product repo | `.engineering-os/` (shared memory) + product source |
 
-`.engineering-os/...` → always under `${CLAUDE_PROJECT_DIR}`. Everything plugin-shipped → `${CLAUDE_PLUGIN_ROOT}`. Resolve to absolute paths at runtime. If `${CLAUDE_PROJECT_DIR}/.engineering-os/` is missing, tell the operator to run `/eos init`.
+`.engineering-os/...` → always under `${CLAUDE_PROJECT_DIR}`. Everything plugin-shipped → `${CLAUDE_PLUGIN_ROOT}`. Resolve to absolute paths at runtime. If `${CLAUDE_PROJECT_DIR}/.engineering-os/` is missing, tell the operator to run `/eos-init`.
 
 ## The canon is the single source of truth
 
@@ -36,7 +36,7 @@ Brain's definition: `canon/business-requirements.md` (BRD) + `canon/technical-re
 
 **Session start:** read `docs/business-context.md` + `docs/technical-context.md`; **read `.engineering-os/durable-rules/INDEX.md`** (the active adopted rules — these are binding team behavior, not memos; if it's missing there are none yet); read your journal (`.engineering-os/memory/agents/<role>.journal.md`, last 20 entries — bookend if >200 lines); read `state/active.json`. *(Closing the learning loop: `/propose-rule`→`/adopt-rule` only changes behavior because every agent reads the durable-rules index here.)*
 
-**When handed a task:** read the per-feature journal (`memory/features/feat-<slug>.md`); run semantic recall — `uv run ${CLAUDE_PLUGIN_ROOT}/tools/memory_search.py --json -k 6 "<task gist>"` (reuse prior decisions, don't re-derive); load your `primary_skills`; load a `trigger_skill` **only when the task surface matches it** (never bulk-load — see `docs/skill-mapping-matrix.md`).
+**When handed a task:** read the per-feature journal (`memory/features/feat-<slug>.md`); run semantic recall — `uv run ${CLAUDE_PLUGIN_ROOT}/tools/memory_search.py --json -k 6 "<task gist>"` (reuse prior decisions, don't re-derive). Your frontmatter `skills:` (1–2) auto-load; for any other skill, **`Read` its SKILL.md only when the task surface matches its trigger** (`docs/skill-mapping-matrix.md`) — never bulk-load.
 
 **Token discipline:** read journals/canon **targeted, not whole** (last-N entries; one `TECH/NN §`; `grep` the decision log by `req_id`). Be concise in artifacts — verbose artifacts become someone else's input tokens; prefer tables/bullets; cite canon by reference. Compress noisy command output with `rtk` (e.g. `rtk pnpm test`) when available.
 

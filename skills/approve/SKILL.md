@@ -10,7 +10,19 @@ Steps:
 
 1. Read `.engineering-os/state/active.json`. Find `$1` (the req_id).
 2. Verify status == `awaiting-founder`. If not, refuse: "Cannot approve — requirement is at stage X (status: Y). Either advance through the pipeline or use `/handoff` (with caveats)."
-3. Read `11-final-review.md` in the run folder. Surface the CTO Advisor's recommendation. If REJECT, warn the Founder before letting them proceed.
+3. **Render the DECISION CARD before asking for the call** (this is the one moment a human is required, and it triggers a production deploy — it must be the *best*-informed moment, not the thinnest). Read `11-final-review.md` for the CTO recommendation + risk, and assemble from data already on disk:
+   ```
+   ── Decision card · <req_id> ──────────────────────────────
+   Lane:            <feature_class> · trigger surfaces: <list>
+   CTO recommendation: <APPROVE/REJECT + one-line risk>
+   Cost (this run): ~$<est> · <total_tokens> tokens   (from usage.jsonl: sum by req_id)
+   Bounces:         <n>  (<delta>/<full>)              (from decision-log / usage review_scope)
+   Diff:            <files changed>, <+adds/-dels>, services: <list>   (git diff --stat of staged paths)
+   Verification:    real-network smoke <pass?> · metric parity <pass?> · negative-control <present?>
+   Remaining risk:  <from final-review "risks remaining">
+   ──────────────────────────────────────────────────────────
+   ```
+   Pull cost/tokens via `grep <req_id> usage.jsonl` (sum `total_tokens`); diff via `git diff --cached --stat` (or the dev-report's staged paths); the rest from `11-final-review.md` + `security-review`/`qa-review`. If the CTO recommendation is REJECT, lead with that and require an explicit override. Then ask for the approve/reject decision.
 4. Write `12-founder-decision.json`:
    ```json
    { "decision": "approved", "ts": "...", "actor": "rishabh", "note": "<optional note from $2>" }

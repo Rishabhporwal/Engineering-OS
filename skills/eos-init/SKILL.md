@@ -113,7 +113,7 @@ The plugin agents read/write here automatically. You typically don't touch these
 > Append-only. See ${CLAUDE_PLUGIN_ROOT}/docs/role-empowerment-model.md for entry shape.
 
 ## <NOW_ISO> — system — bootstrap
-**Action:** Journal initialized by /eos init on <NOW_ISO>.
+**Action:** Journal initialized by /eos-init on <NOW_ISO>.
 ```
 
 Create one file per role:

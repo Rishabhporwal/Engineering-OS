@@ -1,6 +1,6 @@
 # Brain Engineering OS — Onboarding
 
-> The complete picture of the AI engineering team. If you're new, read this top to bottom once. Current version: **v0.26.0**. The team builds **Brain** — the AI-native commerce operating system for DTC brands, **India-first** at launch with **UAE/GCC** sequenced for Phase 4. The full canon is `canon/business-requirements.md` (BRD) + `canon/technical-requirements.md` + `canon/TECH/00–18` (TRD/knowledge-base), condensed for agents in `docs/business-context.md` + `docs/technical-context.md`. New since 0.7.1: risk-based lanes, semantic memory, parallel review, background workers, paradigm gate, browser/visual QA, the `/careful` guard, the pipeline doctor, 6 new domain skills, cross-engineer `/team-digest`, the **top-level orchestrator** (one `/requirement` runs the team end-to-end), **live activity logs** (`/watch`), **live monitoring mode** (`/monitor`), an **interactive PM-grade dashboard** (`/dashboard` — agent performance, bugs, features, tokens & cost), and **token-usage logging**. **Product engineers: jump to §12 — "Get the most from the team."**
+> The complete picture of the AI engineering team. If you're new, read this top to bottom once. Current version: **v1.0.0**. The team builds **Brain** — the AI-native commerce operating system for DTC brands, **India-first** at launch with **UAE/GCC** sequenced for Phase 4. The full canon is `canon/business-requirements.md` (BRD) + `canon/technical-requirements.md` + `canon/TECH/00–18` (TRD/knowledge-base), condensed for agents in `docs/business-context.md` + `docs/technical-context.md`. New since 0.7.1: risk-based lanes, semantic memory, parallel review, background workers, paradigm gate, browser/visual QA, the `/careful` guard, the pipeline doctor, 6 new domain skills, cross-engineer `/team-digest`, the **top-level orchestrator** (one `/requirement` runs the team end-to-end), **live activity logs** (`/watch`), **live monitoring mode** (`/monitor`), an **interactive PM-grade dashboard** (`/dashboard` — agent performance, bugs, features, tokens & cost), and **token-usage logging**. **Product engineers: jump to §12 — "Get the most from the team."**
 
 ---
 
@@ -16,7 +16,7 @@ An **AI engineering team delivered as a Claude Code plugin**. You give it a requ
 
 | Persona | Role | Model | Stage(s) | Authority |
 |---|---|---|---|---|
-| **Rohan** | CTO Advisor (Founder's shadow) | opus | 1 (intake) + 6 (final review) | **VETO** at Stage 6 |
+| **Rohan** | CTO Advisor (Founder's shadow) | sonnet (intake) / opus (final) | 1 (cto-advisor) + 6 (final-reviewer) | **VETO** at Stage 6 |
 | (runtime) | Dynamic Persona Generator | sonnet | 1 | spawns **0–2** stress-test personas by complexity |
 | **Aryan** | Architect | opus | 2 | API/schema/paradigm/service-boundary decisions |
 | **Vikram** | Backend Developer (Node/Fastify) | sonnet | 3 | implementation within plan |
@@ -41,9 +41,9 @@ Founder /requirement
   → Stage 7  Rishabh: /approve or /reject  ← the human gate
   → Stage 8  Jatin: stage product code, commit .engineering-os, CI → ArgoCD → 48h monitor
 ```
-Each stage **plans → executes → self-reviews → verifies → returns a `HANDOFF` block**; the **top-level `/requirement` orchestrator** reads it + `state/active.json` and spawns the next stage (subagents can't spawn subagents on this platform — orchestration lives at the top level; see [docs/orchestration.md](docs/orchestration.md)). The Founder intervenes only at Stage 7 and at the final push.
+Each stage **plans → executes → self-reviews → verifies → returns a `HANDOFF` block**; the **top-level `/requirement` orchestrator** reads it + `state/active.json` and spawns the next stage (subagents can't spawn subagents on this platform — orchestration lives at the top level; see [pipeline/orchestrator.md](pipeline/orchestrator.md)). The Founder intervenes only at Stage 7 and at the final push.
 
-## 5. The skill library — 99 folders (71 domain + 28 command)
+## 5. The skill library — 88 folders (59 domain + 29 command)
 **Domain skills** are model-auto-loaded per each agent's owned-skill list (see [docs/skill-mapping-matrix.md](docs/skill-mapping-matrix.md)). **Command-skills** carry `disable-model-invocation: true` and run only when a human types `/brain-engineering-os:<name>`.
 
 - **Architecture/discipline:** architecture-patterns, domain-driven-design, region-adapter, api-versioning-strategy, tech-stack-evaluation, engineering-discipline, code-review, writing-plans, verification-before-completion, systematic-debugging, subagent-orchestration, finishing-a-development-branch, cost-routing-paradigms
@@ -86,24 +86,24 @@ A **7-service, DDD, event-driven** architecture:
 - **Day-one invariants:** cost-routing paradigms, the Single-Primitive Rule, multi-tenant `workspace_id` (4 layers), integer minor-units money, the Decision Log, the region-adapter, the metric registry (TS↔Python parity), proto-defined gRPC contracts, OLTP/OLAP split, idempotency, and the Morning Brief as the primary surface.
 
 ## 10. Using it
+
+> ⚠️ **Plugin changes only take effect after you RESTART your Claude Code session** (the running session holds the old plugin in memory). After any `/plugin update`, restart — then `/status` shows the loaded version. This is the #1 silent gotcha (O5).
+
 ```
 /plugin marketplace add Rishabhporwal/Engineering-OS
-/plugin install brain-engineering-os
-# in your Brain repo:
-/brain-engineering-os:eos-init                       # one-time scaffold of .engineering-os/
-/brain-engineering-os:requirement <what to build>    # start the pipeline
-/brain-engineering-os:status                          # what's in flight
-/brain-engineering-os:recall <feat-slug>              # full per-feature history (exact)
-/brain-engineering-os:recall-similar <description>    # semantic search across ALL memory
-/brain-engineering-os:team-digest                     # what the whole team built + challenges
-/brain-engineering-os:approve <req-id>                # the Founder gate (Stage 7)
-/brain-engineering-os:test-pipeline                   # validate plugin health (pipeline doctor)
+/plugin install brain-engineering-os                  # then RESTART the session
+/eos-init                                             # one-time scaffold of .engineering-os/
 ```
+**Happy path:** `/requirement <what to build>` (add `--lean` to A/B the one-session lane) · `/status` (what's in flight) · `/watch [req-id]` (live play-by-play + a STALE banner if the pipeline went dark) · `/dashboard` (agents/bugs/features/tokens & cost — snapshot, re-run to refresh) · `/approve <req-id>` / `/reject <req-id> <reason>` (Founder gate — `/approve` shows a cost/risk **decision card**).
+
+**When stuck** (the commands you need most under stress): `/resume <req-id>` (recover an interrupted pipeline, no lost work) · `/decide <req-id> <ruling>` (resolve a HARD gate — e.g. a DPDP basis block — that `/resume` can't clear) · `/handoff <req-id> <stage>` (manual move; VETOs still apply) · `/rollback <req-id>` · `/test-pipeline` (orchestration health).
+
+**Memory + review:** `/recall <feat-slug>` (exact) · `/recall-similar <description>` (semantic) · `/team-digest` (cross-engineer overview).
 
 ## 11. Repo layout (the plugin)
 ```
-agents/      11 subagent definitions
-skills/      99 skill folders (71 domain + 28 command)  +  tools/  (uv scripts: memory, browse, pipeline_doctor, team_digest, paradigm_check, dashboard)
+agents/      12 subagent definitions (11 + final-reviewer; cto-advisor=Sonnet intake, final-reviewer=Opus)
+skills/      88 skill folders (59 domain + 29 command)  +  tools/  (uv scripts: memory, browse, pipeline_doctor, team_digest, paradigm_check, dashboard)
 prompts/     system-prompt, anti-blind-agreement, challenge-framework
 canon/       business-requirements.md, technical-requirements.md (source of truth)
 docs/        operating manual, primers, matrix, quality-gates, role-empowerment, …
@@ -140,4 +140,4 @@ Because `.engineering-os/` is committed and pulled, **the team knows about every
 > The mental model: **you bring intent and judgment; the team brings memory, knowledge, skills, and execution.** The more the team runs, the smarter its shared memory gets — for everyone.
 
 ---
-*See [docs/operating-system.md](docs/operating-system.md) for the full operating manual, [docs/team-collaboration.md](docs/team-collaboration.md) for the multi-engineer model, and [docs/REBUILD-PROMPT.md](docs/REBUILD-PROMPT.md) to regenerate the team from scratch.*
+*See [REBUILD-SPEC.md](REBUILD-SPEC.md) for the v2 design + rationale, [pipeline/orchestrator.md](pipeline/orchestrator.md) for how the team runs end-to-end, and [docs/workflow.md](docs/workflow.md) for the stage-by-stage flow.*

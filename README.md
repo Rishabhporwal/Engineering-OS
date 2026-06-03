@@ -161,7 +161,7 @@ When a teammate finishes a feature and pushes, the next teammate who pulls recei
 
 If you're curious: `~/.claude/plugins/brain-engineering-os/` contains agents, skills, commands, hooks, the Brain canon, workflows, schemas, templates, and the operating manual. It's all plain markdown. Plugins distributed via Claude Code are not cryptographically protected — they're out of your daily workflow, but technically readable if you go looking.
 
-For implementation details, see [docs/plugin-architecture.md](docs/plugin-architecture.md) and [docs/memory-and-git-sync.md](docs/memory-and-git-sync.md) (visible to plugin maintainers; teammates don't need them).
+For implementation details, see [REBUILD-SPEC.md](REBUILD-SPEC.md) (v2 design + rationale) and [pipeline/orchestrator.md](pipeline/orchestrator.md) (how the team runs).
 
 ---
 
@@ -185,6 +185,8 @@ When the plugin updates, teammates run:
 ```
 /plugin update brain-engineering-os
 ```
+
+⚠️ **Then RESTART your Claude Code session.** Plugin changes only load on restart — the running session holds the old plugin in memory, so an update without a restart silently keeps running the old pipeline (the #1 gotcha, O5). After restarting, `/status` shows the loaded version.
 
 No code changes in their Brain product repo. The plugin in `~/.claude/plugins/` refreshes; the agents have new capabilities; their memory in `.engineering-os/` carries forward.
 
