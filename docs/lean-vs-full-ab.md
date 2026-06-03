@@ -30,6 +30,14 @@ If true → flip `lean` to the default lane and demote the full pipeline to the 
 | Lean misses defects full caught | Keep full as default; lean stays opt-in for trivia only |
 | Mixed | Tune the lean self-review checklist; re-run on 5 more |
 
+## Tiering baseline (already measurable from real v1 data)
+
+Before the lean question, the *model-tiering* lever (P0-2 split + Security-off-Opus) can be projected from your real v1 telemetry NOW:
+```sh
+uv run tools/ab_project.py --usage <brain-repo>/.engineering-os/usage.jsonl
+```
+On the 6 real v1 requirements (55 spawns, 68% Opus) this projects **\~46% lower cost** (\→\) from tiering alone — repricing each real spawn at its v2 model tier, token counts held constant. That validates the v2 *full-pipeline* cost fix. The lean-vs-full run below is the SEPARATE question of whether the pipeline should run at all on no-trigger work.
+
 ## Honesty note
 The static footprint cuts (−71% prompt, −74% descriptions) are **not** the cost story — against an Opus-dominated bill they're ~2–5% of dollars. The real levers are **model tier × review rounds** (now addressed by the P0-2 cto-advisor split + Security-on-Sonnet) and **whether the ceremony runs at all** (this A/B). Run the meter before claiming a number.
 </content>
