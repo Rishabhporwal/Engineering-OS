@@ -6,11 +6,14 @@
 
 ## Per-spawn contract (every Agent call)
 
-Every spawn prompt MUST include:
-- the `req_id`, the run-folder path, the absolute `${CLAUDE_PLUGIN_ROOT}` and `${CLAUDE_PROJECT_DIR}`;
+**Order the spawn prompt CACHE-STABLE-FIRST (the #1 cost lever — `pipeline.yaml §caching`):** build every spawn prompt as a **stable prefix** then a **variable suffix**, never interleaved. Stable prefix (byte-identical across spawns → the harness caches it): the role/stage framing + the fixed plugin paths + which canon/skills to consult. Variable suffix (the only changing bytes, placed LAST after a clear `--- TASK ---` delimiter): `req_id`, run-folder path, the diff, the specific task + findings. Putting per-run data first would bust the cache for every call; keeping it last maximizes the cached prefix.
+
+Every spawn prompt MUST include (stable prefix unless noted):
+- the absolute `${CLAUDE_PLUGIN_ROOT}` and `${CLAUDE_PROJECT_DIR}`;
 - the model tier from `pipeline.yaml.stages.<stage>.model` (override per persona / delta as noted);
 - the note: *"you are a subagent with no Agent tool — do your stage, persist artifacts + journals, declare your intended state in the HANDOFF `state` fields (do NOT write `state/active.json` yourself — the orchestrator is the sole writer), END with a HANDOFF block; do NOT attempt to spawn anything";*
-- *"append a live progress line to `.engineering-os/live.log` at each meaningful step."*
+- *"append a live progress line to `.engineering-os/live.log` at each meaningful step";*
+- **VARIABLE suffix (last):** the `req_id`, the run-folder path, the diff, and the task specifics + any bounce findings.
 
 ## State is written by the orchestrator only (fixes the parallel-write race)
 

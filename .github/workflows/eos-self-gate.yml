@@ -35,6 +35,9 @@ jobs:
         # because validity_check.py + classify_lane.py legitimately CONTAIN the pattern strings.
         run: python3 tools/validity_check.py --paths skills agents pipeline
 
+      - name: Prompt-cache stable-prefix discipline
+        run: python3 tools/cache_lint.py
+
       - name: Tools compile
         run: |
           for f in tools/*.py; do python3 -m py_compile "$f"; done
