@@ -11,7 +11,12 @@ Resume an interrupted pipeline. Target requirement (a `req_id`; if empty, list a
 ## Steps
 
 1. **Read `.engineering-os/state/active.json`.** Identify the requirement by the `req_id` argument; if no argument, list every requirement NOT in a terminal state (`shipped` / `rejected` / `killed`) with its stage + owner, and ask which to resume.
-2. **Reconstruct context** (don't trust memory — read it): the requirement's run folder, its per-feature journal (`memory/features/feat-<slug>.md`), and the recent decision-log lines. Establish what's DONE and what's PENDING.
+1a. **Read the orchestrator cursor FIRST** (the scheduler's own in-flight plan, more precise than status alone):
+    ```sh
+    uv run ${CLAUDE_PLUGIN_ROOT}/tools/orchestrator_cursor.py get --project-dir ${CLAUDE_PROJECT_DIR} --req <req-id>
+    ```
+    If a cursor exists, it tells you the exact **outstanding spawns** (agents spawned but not yet returned) + `awaiting_reconcile` + `last_route` — re-await/re-spawn precisely those, instead of inferring from status. If no cursor, fall back to status + artifacts (below).
+2. **Reconstruct context** (don't trust memory — read it): the requirement's run folder, its per-feature journal (`memory/features/feat-<slug>.md`), and the recent decision-log lines. Establish what's DONE and what's PENDING (cross-check against the cursor's `outstanding`).
 3. **Determine the resume point** from `status` + the last journal entry + which numbered artifacts already exist in the run folder.
 4. **Re-invoke the responsible agent** via the Agent tool with a `RESUME` prompt that states: the stage, the run folder, what was already completed (artifact list), and what remains. The agent re-reads its journal + canon + runs `/recall-similar`, then continues — it MUST NOT redo completed work.
 5. **Guard against duplicate work:** if `status` is mid-parallel-review, check whether `09-security-review.md` / `10-qa-review.md` already exist before re-spawning Shreya / Tanvi. If express lane, resume at the single builder or Tanvi as appropriate.

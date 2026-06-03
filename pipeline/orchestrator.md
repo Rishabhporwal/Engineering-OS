@@ -21,6 +21,15 @@ uv run ${CLAUDE_PLUGIN_ROOT}/tools/state_update.py --project-dir ${CLAUDE_PROJEC
 ```
 Apply each parallel agent's delta one at a time (you are single-threaded — that's the guarantee). `state_update.py` writes atomically (`os.replace`) so a crash never leaves invalid JSON live.
 
+## Persist your OWN loop state (crash recovery)
+
+You are the SPOF: your in-flight plan (which parallel spawns are outstanding, what's awaiting reconcile, the spawn count) lives only in your context — a mid-pipeline compaction/crash loses it. After **every routing decision** (every spawn issued or returned), write your cursor:
+```sh
+uv run ${CLAUDE_PLUGIN_ROOT}/tools/orchestrator_cursor.py set --project-dir ${CLAUDE_PROJECT_DIR} \
+  --req <req_id> --stage <N> --outstanding <agents-spawned-not-yet-returned> --last-route "<one line>" --bump-spawns
+```
+On a clean Founder-gate/terminal, `clear` it. `/resume` rebuilds the *scheduler* from this cursor — not just the requirement status — so it re-awaits the exact outstanding spawns instead of guessing.
+
 ## Per-spawn telemetry — ENFORCED (not prose; fixes O14/O13)
 
 Immediately after each spawn returns:
