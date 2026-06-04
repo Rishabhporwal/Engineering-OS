@@ -49,10 +49,17 @@ lanes:
     when: "zero trigger surfaces AND purely trivial (copy/docs/config/styling/zero-behavior refactor/clear registry repeat)"
     stages: [intake, build, qa]          # no architect, no security, no final
     personas: 0
+    # POST-BUILD RECHECK (fixes the war-game's only NO): the lane was fixed from the requirement
+    # TEXT at intake, before any code existed. A "rename a label" can grow into a requireRole/
+    # workspace_id change at build time and ship through express with NO security review. So at
+    # build→qa the orchestrator re-runs classify_lane on the ACTUAL staged diff:
+    escalate_if: "post-build `classify_lane --diff <staged> --prior <intake-surfaces>` returns escalate=true (the diff touched a surface the text missed) → VOID express, restart as high_stakes (reinstate architect + security + final)."
+    always_run_on_qa: "validity_check --paths <changed test files> — the always-on BYPASSRLS/inert/tautology scan, forced even on express, so a bypass-green test can't ride the lane's 'trivial' framing past the only gate."
   standard:
     when: "zero trigger surfaces AND not trivial; OR the foundational-scaffolding carve-out"
     stages: [intake, architect, build, security, qa, final]
     personas: "0-1"
+    escalate_if: "post-build `classify_lane --diff <staged> --prior <intake-surfaces>` returns escalate=true → add the missing high_stakes rigor (2 personas + mutation tests) for the surface the diff revealed."
   high_stakes:
     when: ">=1 trigger surface touched"
     stages: [intake, architect, build, security, qa, final]

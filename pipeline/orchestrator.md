@@ -69,7 +69,15 @@ Around each spawn:
    - `needs_personas` non-empty → spawn each persona via `dynamic-persona-generator` **IN PARALLEL** (one message, multiple Agent calls), each at its tagged model (`:haiku`→`persona_bounded`, `:sonnet`→`persona_deep`). Then **re-spawn `cto-advisor`** to synthesize; re-read.
    - `ADVANCE` → `express`: next = the one builder (S3); `standard`/`high_stakes`: next = `architect` (S2).
 2. **Architect (S2)** → on ADVANCE spawn the tagged builder(s). Multiple tracks (`@vikram`/`@ananya`/`@karan`/`@maya`) → spawn **IN PARALLEL**.
-3. **Builders (S3) return** → `express`: spawn `qa-agent` only. `standard`/`high_stakes`: spawn `security-reviewer` AND `qa-agent` **IN PARALLEL** (PARALLEL REVIEW MODE: review, write artifact, return verdict, do not advance).
+3. **Builders (S3) return → POST-BUILD LANE RECHECK FIRST (non-LLM; fixes the only war-game NO).** The lane was fixed from the requirement TEXT at intake, before any code existed. Before routing to review, re-classify on the ACTUAL staged diff:
+   ```sh
+   git -C ${CLAUDE_PROJECT_DIR} diff --cached > /tmp/<req>.diff
+   uv run ${CLAUDE_PLUGIN_ROOT}/tools/classify_lane.py --text "<requirement>" \
+     --prior "<intake trigger_surfaces_touched>" --diff /tmp/<req>.diff
+   ```
+   - `escalate: true` (the diff touched a surface the text missed) → **the express/standard shortcut is VOID.** Restart as `high_stakes`: reinstate architect (if skipped) + security + final; record the escalation + the new surfaces on state; re-run from the architect/build review with full rigor. A "rename a label" that became a `requireRole`/`workspace_id` change can NO LONGER ship through express with no security review.
+   - `escalate: false` → lane stands; proceed.
+   Then route: `express` → spawn `qa-agent` only (and pass it the **forced** `validity_check --paths <changed test files>` so the always-on BYPASSRLS/inert/tautology scan runs even on express). `standard`/`high_stakes` → spawn `security-reviewer` AND `qa-agent` **IN PARALLEL** (PARALLEL REVIEW MODE: review, write artifact, return verdict, do not advance).
 4. **Reconcile reviews** (use `docs/finding-severity-rubric.md` so Security/QA converge, not bounce each other):
    - both `PASS` → `express` → **run the VETO gate before the Founder gate** (below); else → `final` (S6).
    - any `BOUNCE`/`FAIL` → re-spawn the responsible **builder** with the findings, then **DELTA RE-REVIEW** (next section).

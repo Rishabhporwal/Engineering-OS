@@ -31,6 +31,8 @@ uv run ${CLAUDE_PLUGIN_ROOT}/tools/validity_check.py --paths <test dirs> --artif
 ```
 Exit 3 = a validity defect (VETO). Record the proof in the `negative_control[]` array of your review (path · protection_removed · command · captured RED output); an empty array on a high-stakes path fails this gate.
 
+**On the EXPRESS lane you are the ONLY gate (no Security, no Final) — so ALWAYS run `validity_check --paths <changed test files>` regardless of the 'trivial' framing.** The anti-pattern scan (BYPASSRLS / superuser DSN / DISABLE RLS / tautology) is lane-independent and free; do NOT skip it because the lane says "copy change." A bypass-green test must not ride express past you. (The orchestrator also re-classifies the diff before you run — if it revealed an auth/tenancy/money surface, the lane is already VOID and you won't be the only gate.)
+
 ## In-lane DoD
 - [ ] Every claim has captured command output (FULL) or delta scope stated (DELTA); coverage ≥70% on new code.
 - [ ] Real-network smoke captured; metric parity confirmed; operational-readiness green; mutation tests on high-stakes paths.

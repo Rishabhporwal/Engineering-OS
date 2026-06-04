@@ -62,24 +62,40 @@ def scan(text: str, diff: str) -> list[str]:
 def main() -> int:
     ap = argparse.ArgumentParser(prog="classify_lane")
     ap.add_argument("--text", required=True)
-    ap.add_argument("--diff", help="path to a file containing the staged diff (optional)")
+    ap.add_argument("--diff", help="path to a file containing the staged diff (optional). At the "
+                    "build→review transition, pass the ACTUAL staged diff — surfaces a 'trivial' "
+                    "requirement text missed but the code touched are caught here (the post-build recheck).")
+    ap.add_argument("--prior", help="comma-list of surfaces recorded at intake. If set, the tool reports "
+                    "new_surfaces (in the diff but NOT in --prior) and escalate=true when any appear — "
+                    "this is the express/standard VOID-and-restart signal.")
     args = ap.parse_args()
     diff = ""
     if args.diff and Path(args.diff).exists():
         diff = Path(args.diff).read_text(errors="ignore")
+    elif args.diff:                                  # allow inline diff text too
+        diff = args.diff
 
     surfaces = scan(args.text, diff)
-    if surfaces:
-        fc, why = "high_stakes", f"trigger surface(s): {', '.join(surfaces)}"
-    else:
-        # triviality is a judgment the intake agent makes; the tool only proves NO surface.
-        fc, why = "standard_or_express", "no trigger surface detected (intake agent picks express vs standard on triviality)"
-    print(json.dumps({
-        "feature_class": fc,
+    out = {
+        "feature_class": "high_stakes" if surfaces else "standard_or_express",
         "trigger_surfaces_touched": surfaces,
-        "rationale": why,
-        "rule": "deterministic scan — the intake agent may ADD a surface it spots, never silently REMOVE one flagged here; >=1 surface => high_stakes (conservative)."
-    }, indent=2))
+        "rationale": (f"trigger surface(s): {', '.join(surfaces)}" if surfaces
+                      else "no trigger surface detected (intake agent picks express vs standard on triviality)"),
+        "rule": "deterministic scan — may ADD a surface, never silently REMOVE one; >=1 surface => high_stakes (conservative).",
+    }
+    if args.prior is not None:
+        prior = {s.strip() for s in args.prior.split(",") if s.strip()}
+        new_surfaces = [s for s in surfaces if s not in prior]
+        out["prior_surfaces"] = sorted(prior)
+        out["new_surfaces"] = new_surfaces
+        out["escalate"] = bool(new_surfaces)
+        out["recheck"] = (
+            f"POST-BUILD RECHECK: the diff revealed {new_surfaces} that the requirement text missed — "
+            f"VOID the current lane and RESTART as high_stakes (reinstate architect/security/final)."
+            if new_surfaces else
+            "POST-BUILD RECHECK: the diff introduced no surface beyond the intake classification — lane stands."
+        )
+    print(json.dumps(out, indent=2))
     return 0
 
 
