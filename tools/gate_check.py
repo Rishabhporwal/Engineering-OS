@@ -33,9 +33,18 @@ GATES = {
 }
 PASS_RE = re.compile(r"\b(verdict|recommendation|decision)\b[:\s*]*\**\s*(PASS|APPROVE)\b", re.I)
 FAIL_RE = re.compile(r"\b(verdict|recommendation|decision)\b[:\s*]*\**\s*(FAIL|BOUNCE|REJECT|VETO)\b", re.I)
-# a CRITICAL/HIGH finding line not marked resolved/deferred/accepted
 SEV_RE = re.compile(r"\b(severity[:\s*]*\**\s*)?(critical|high)\b", re.I)
-RESOLVED_RE = re.compile(r"\b(resolved|fixed|deferred|defer|accepted|waived|n/?a|mitigated)\b", re.I)
+# ONLY an explicit resolution clears a CRITICAL/HIGH. "mitigated"/"deferred"/"accepted"
+# do NOT clear it (war-game: a CRITICAL tagged 'mitigated' without being mitigated walked
+# through). You cannot ship past a CRITICAL by deferring it — only a Founder-logged waiver can.
+RESOLVED_RE = re.compile(r"\b(resolved|fixed in [0-9a-f]{6,}|founder.?waiver|waiver.?logged)\b", re.I)
+# Deferring security/compliance work to a follow-up is the evasion that has NO severity keyword
+# ("window enforcement deferred to a follow-up"). If defer-language sits near a security/compliance
+# keyword, BLOCK regardless of whether 'critical/high' was written.
+DEFER_RE = re.compile(r"\b(deferred?|follow.?up|next.?sprint|tech.?debt|backlog|TODO|later|punt(ed)?)\b", re.I)
+SECKW_RE = re.compile(r"\b(window|9.?am|9.?pm|ncpr|dnd|consent|rls|requirerole|requireworkspacemember|"
+                      r"secret|pii|cross.?tenant|workspace_id|bypassrls|plaintext|encrypt|kms|"
+                      r"compliance|dpdp|pdpl|dlt|traceab|tenant)\b", re.I)
 
 
 def find_artifact(run_dir: Path, stem: str) -> Path | None:
@@ -76,8 +85,14 @@ def check_artifact(p: Path) -> list[str]:
     elif not PASS_RE.search(text):
         reasons.append(f"{p.name}: no explicit PASS verdict found")
     for line in text.splitlines():
+        # (1) a CRITICAL/HIGH finding line that isn't explicitly resolved → block (a bare
+        #     'mitigated'/'deferred' no longer clears it — only resolved/fixed-in-<sha>/waiver does).
         if SEV_RE.search(line) and not RESOLVED_RE.search(line) and re.search(r"finding|issue|vuln|severity", line, re.I):
-            reasons.append(f"{p.name}: possible unresolved CRITICAL/HIGH → {line.strip()[:90]}")
+            reasons.append(f"{p.name}: unresolved CRITICAL/HIGH → {line.strip()[:90]}")
+        # (2) the no-severity-keyword evasion: security/compliance work deferred to a follow-up.
+        #     defer-language NEAR a security keyword blocks regardless of whether 'critical' was written.
+        elif DEFER_RE.search(line) and SECKW_RE.search(line) and not RESOLVED_RE.search(line):
+            reasons.append(f"{p.name}: security/compliance work deferred to a follow-up (cannot advance past it) → {line.strip()[:90]}")
     return reasons
 
 
