@@ -35,6 +35,7 @@ Two commits, never one mixed commit. (2026-05-20 recovery: `feat(monorepo)` for 
    git status                       # confirm tree matches the dev report's file list
    git add <path1> <path2> ...      # NEVER -A / . ; exclude .engineering-os
    git diff --cached --stat         # verify the staged set is exactly intended
+   uv run ${CLAUDE_PLUGIN_ROOT}/tools/secret_scan.py --staged   # O1 GATE on PRODUCT code too — the Founder commits this later, so a secret must be caught HERE. Exit 1 → unstage, redact, retry. NEVER hand off past this.
 2. INTEGRITY GATES — run + capture output (per verification-before-completion):
    build, typecheck, lint, app-code-diff sentinel. No green claim without evidence.
 3. WRITE the deployment report (STAGE-ONLY mode): list staged files; propose commit
