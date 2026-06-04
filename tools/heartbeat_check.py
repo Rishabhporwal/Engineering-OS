@@ -73,12 +73,13 @@ def main() -> int:
         print("  WARN: state/usage exist but live.log is missing — no narration at all.")
         problems += 1
 
-    # 2. reconcile heartbeat (spawns that happened) vs usage (spawns that logged tokens)
+    # 2. reconcile heartbeat (spawns that returned) vs usage (spawns that logged tokens)
     hb = _load(heartbeat)
     us = _load(usage)
-    if hb:
+    returned = [r for r in hb if r.get("event", "spawn_returned") == "spawn_returned"]
+    if returned:
         usage_keys = {(r.get("req_id"), str(r.get("agent")), str(r.get("stage"))) for r in us}
-        gaps = [r for r in hb
+        gaps = [r for r in returned
                 if (r.get("req_id"), str(r.get("agent")), str(r.get("stage"))) not in usage_keys
                 and r.get("req_id") not in (None, "?")]
         if gaps:
@@ -88,8 +89,28 @@ def main() -> int:
                 print(f"      {g.get('agent')} S{g.get('stage')} {g.get('req_id')} @ {g.get('ts')}")
             problems += 1
 
+    # 3. OUTSTANDING spawns = issued but not yet returned (harness-captured, crash-recovery ground
+    #    truth). After a crash these are the tracks /resume must re-await — invisible to the prose cursor.
+    issued = [r for r in hb if r.get("event") == "spawn_issued"]
+    if issued:
+        ret_keys = [(r.get("req_id"), str(r.get("agent")), str(r.get("stage"))) for r in returned]
+        outstanding = []
+        seen_ret = list(ret_keys)
+        for r in issued:
+            k = (r.get("req_id"), str(r.get("agent")), str(r.get("stage")))
+            if k in seen_ret:
+                seen_ret.remove(k)          # pair each issuance with one return
+            else:
+                outstanding.append(r)
+        if outstanding:
+            print(f"  OUTSTANDING: {len(outstanding)} spawn(s) ISSUED but not yet returned — if the "
+                  f"orchestrator crashed, /resume must re-await exactly these (not infer from status):")
+            for o in outstanding[:8]:
+                print(f"      {o.get('agent')} S{o.get('stage')} {o.get('req_id')} @ {o.get('ts')}")
+            # outstanding is informational for /resume, not a health failure on its own
+
     if problems == 0:
-        print(f"heartbeat_check: healthy (live.log fresh; {len(hb)} spawns reconciled vs {len(us)} usage rows)")
+        print(f"heartbeat_check: healthy (live.log fresh; {len(returned)} returns reconciled vs {len(us)} usage rows)")
         return 0
     return 1
 

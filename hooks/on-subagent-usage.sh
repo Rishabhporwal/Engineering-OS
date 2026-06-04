@@ -28,6 +28,16 @@ PROJ="${CLAUDE_PROJECT_DIR:-.}"
 EOS="$PROJ/.engineering-os"
 [ -d "$EOS" ] || exit 0
 
+# Which lifecycle event fired. PreToolUse = the spawn was ISSUED; PostToolUse = it RETURNED.
+# Capturing ISSUANCE from the harness (not the orchestrator's prose cursor write) is the crash-
+# recovery fix: after a crash, outstanding = issued-but-not-returned, both harness-captured, so a
+# builder spawned in the pre-crash window is no longer invisible to /resume.
+EVENT=$(printf '%s' "$PAYLOAD" | jq -r '.hook_event_name // .hook_event // .event // empty' 2>/dev/null || true)
+case "$EVENT" in
+  PreToolUse)  KIND="spawn_issued";   WORD="issued" ;;
+  *)           KIND="spawn_returned"; WORD="returned" ;;   # PostToolUse or unknown → treat as return
+esac
+
 # subagent type is the agent id; req_id / stage / model are embedded in the spawn prompt
 AGENT=$(printf '%s' "$PAYLOAD" | jq -r '.tool_input.subagent_type // .tool_input.subagentType // empty' 2>/dev/null || true)
 PROMPT=$(printf '%s' "$PAYLOAD" | jq -r '.tool_input.prompt // .tool_input.description // empty' 2>/dev/null || true)
@@ -36,10 +46,10 @@ STAGE=$(printf '%s' "$PROMPT" | grep -oiE 'stage[ _:#-]*[0-9]' | head -1 | grep 
 MODEL=$(printf '%s' "$PROMPT" | grep -oiE '\b(opus|sonnet|haiku)\b' | head -1 || true)
 TS=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
-printf '{"ts":"%s","agent":"%s","stage":"%s","req_id":"%s","model":"%s","event":"spawn_returned"}\n' \
-  "$TS" "${AGENT:-unknown}" "${STAGE:-?}" "${REQ:-?}" "${MODEL:-?}" >> "$EOS/spawn-heartbeat.jsonl" 2>/dev/null || true
+printf '{"ts":"%s","agent":"%s","stage":"%s","req_id":"%s","model":"%s","event":"%s"}\n' \
+  "$TS" "${AGENT:-unknown}" "${STAGE:-?}" "${REQ:-?}" "${MODEL:-?}" "$KIND" >> "$EOS/spawn-heartbeat.jsonl" 2>/dev/null || true
 
-printf '%s [heartbeat] %s S%s %s returned\n' \
-  "$(date -u +%H:%M:%SZ)" "${AGENT:-subagent}" "${STAGE:-?}" "${REQ:-?}" >> "$EOS/live.log" 2>/dev/null || true
+printf '%s [heartbeat] %s S%s %s %s\n' \
+  "$(date -u +%H:%M:%SZ)" "${AGENT:-subagent}" "${STAGE:-?}" "${REQ:-?}" "$WORD" >> "$EOS/live.log" 2>/dev/null || true
 
 exit 0
