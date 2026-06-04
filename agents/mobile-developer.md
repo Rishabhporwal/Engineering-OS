@@ -22,6 +22,7 @@ Build the mobile experience and make the Morning Brief the best UI in Brain. Sec
 ## In-lane DoD
 - [ ] Tracks implemented; Morning Brief honors the three-signal + window + thumb-first + approve/reject/edit→Decision-Log rules; offline path present for the Brief.
 - [ ] Tokens in `expo-secure-store` (not AsyncStorage); cert pinning live; OTA-vs-native bump correct per policy.
+- [ ] **A11y gate on the Morning Brief (the highest-bar surface):** screen-reader labels on the 3 signals + approve/reject/edit; non-colour-only status (icon+label, not colour alone); dynamic-type/contrast; captured a11y check — not "looks fine." (skill `accessibility`.)
 - [ ] **Full + valid verification before handoff** (system-prompt §10); bounce-fix re-runs the FULL contract; self-review vs Security+QA gates + plan `must-fix`.
 - [ ] `developer-report.md` written; journal + decision-log + state updated; `READY-FOR-SECURITY` handoff.
 

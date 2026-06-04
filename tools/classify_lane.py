@@ -40,8 +40,20 @@ SURFACES = {
                         [r"email_hash", r"phone_hash", r"customers?\b"]),
     "schema_proto":    ([r"migration", r"schema change", r"new table", r"add column", r"\.proto\b", r"new field"],
                         [r"\.proto$", r"migrations?/", r"prisma/.*\.sql", r"CREATE TABLE", r"ALTER TABLE"]),
-    "money":           ([r"billing", r"\bgmv\b", r"\bfee\b", r"invoice", r"pricing", r"minor.units", r"payment", r"settlement", r"\bcm2\b"],
-                        [r"_minor\b", r"billing\.", r"gmv_meter", r"currency_code"]),
+    # MONEY = moving/computing money, NOT merely displaying a money metric. War-game: triggering
+    # on bare metric NAMES (cm2/gmv) force-routed read-only dashboard cards to high_stakes (Sim 1)
+    # AND a formatMoney refactor slipped (Sim 5). So: text patterns are money-MUTATION verbs;
+    # the real money-math signal is a `*_minor`/billing path in the DIFF (caught at the post-build
+    # recheck). A card that merely *shows* CM2 matches neither → standard/express.
+    "money":           ([r"billing", r"invoice", r"\brefund", r"settlement", r"payment", r"\bcharge\b",
+                         r"charge[sd]?\b", r"\bfee\b", r"pricing", r"minor.?units", r"gmv.?meter",
+                         r"(compute|calculate|recompute|meter)\s+\w*\s*(revenue|gmv|cm2|margin|fee)"],
+                        [r"_minor\b", r"billing\.", r"gmv_meter", r"currency_code", r"clamp\("]),
+    # METRIC_ENGINE = changing how a number is COMPUTED (formula/parity/registry) — high stakes
+    # because it shifts numbers product-wide. NOT a metric NAME (a display card uses an existing one).
+    "metric_engine":   ([r"metric registry", r"formula book", r"\bparity\b", r"metric definition",
+                         r"new metric", r"recompute", r"lib-metrics", r"brain_metrics", r"ts.?python parity"],
+                        [r"packages/lib-metrics", r"pylibs/brain_metrics", r"metric.?registry"]),
     "compliance":      ([r"\bdpdp\b", r"\bpdpl\b", r"\bdlt\b", r"\bncpr\b", r"\bdnd\b", r"consent", r"calling.hours", r"9.?am.?9.?pm",
                          r"recording", r"opt.?in", r"template", r"residency", r"in.region"],
                         [r"consent", r"compliance", r"ap-south-1"]),
