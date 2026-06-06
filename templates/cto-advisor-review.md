@@ -1,6 +1,6 @@
-# CTO Advisor Review — {{STAGE_LABEL}}
+# Engineering Advisor Review — {{STAGE_LABEL}}
 
-> Filled by the CTO Advisor agent in Stage 1 (intake) or Stage 6 (final review).
+> Filled by the Engineering Advisor agent in Stage 1 (intake) or Stage 6 (final review).
 > Validates against [schemas/cto-advisor-review.schema.json](../schemas/cto-advisor-review.schema.json).
 
 | Field | Value |
@@ -38,26 +38,28 @@
 
 ---
 
-## Paradigm recommendation
+## Effort-tier recommendation
 
-**Recommended paradigm:** `{{PARADIGM}}`  *(sql / ml / small_llm / frontier_llm)*
+**Recommended effort tier:** `{{PARADIGM}}`  *(deterministic / statistical-ml / small-model / large-model)*
 
 **Why:** {{PARADIGM_WHY}}
 
-> Architect (Aryan) may refine in Stage 2 — this is a first-pass read.
+> The Architect may refine in Stage 2 — this is a first-pass read.
 
 ---
 
-## India context check
+## Product Canon impact check
+
+> Read the relevant Canon slots for the touched surfaces and record impact. Fill the rows that apply to this product; mark the rest `n/a`.
 
 | Lens | Impact |
 |------|--------|
-| **RTO** | {{RTO_IMPACT}} |
-| **COD** | {{COD_IMPACT}} |
-| **GST** | {{GST_IMPACT}} |
-| **Festival seasonality** | {{FESTIVAL_IMPACT}} |
-| **Pincode reliability** | {{PINCODE_IMPACT}} |
-| **Telecom compliance (DLT / NCPR / DND / calling hours)** | {{TELECOM_IMPACT}} |
+| **Business/financial metrics** *(per METRICS.md)* | {{RTO_IMPACT}} |
+| **Money handling** *(minor units + currency_code)* | {{COD_IMPACT}} |
+| **Invariants touched** *(per INVARIANTS.md)* | {{GST_IMPACT}} |
+| **Region/locale impact** *(via the RegionAdapter seam)* | {{FESTIVAL_IMPACT}} |
+| **Trigger surfaces touched** *(per TRIGGER-SURFACES.md)* | {{PINCODE_IMPACT}} |
+| **Compliance regime impact** *(per COMPLIANCE.md)* | {{TELECOM_IMPACT}} |
 
 ---
 
@@ -80,7 +82,7 @@
 | Sub-review | Verdict |
 |------------|---------|
 | Requirement alignment | {{REQ_ALIGN}} |
-| Paradigm audit (`@paradigm` decorators match plan) | {{PARADIGM_AUDIT}} |
+| Effort-tier audit (declarations match plan) | {{PARADIGM_AUDIT}} |
 | Architecture quality (Single-Primitive Rule held) | {{ARCH_QUALITY}} |
 | Code quality (sampled 3–5 files) | {{CODE_QUALITY}} |
 | Security review pass-through | {{SEC_PASS}} |
@@ -93,7 +95,7 @@
 
 **Production-readiness assessment:** {{PROD_READY_ASSESSMENT}}
 
-**Recommendation to Founder:** **{{RECOMMENDATION}}**  *(APPROVE / APPROVE-WITH-CAVEATS / REJECT)*
+**Recommendation to the Stakeholder:** **{{RECOMMENDATION}}**  *(APPROVE / APPROVE-WITH-CAVEATS / REJECT)*
 
 **Caveats (if any):**
 - {{CAVEAT_1}}

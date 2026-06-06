@@ -1,16 +1,16 @@
 # Rule Proposal — {{PROPOSAL_ID}}
 
-> A proposed change to the team's operating rules. Lives at `.engineering-os/rule-proposals/<ISO-ts>__<slug>.md` in the Brain product repo.
-> Proposed by an agent or operator; ADOPTED only when Founder runs `/engineering-os:adopt-rule <proposal-path>`.
+> A proposed change to the team's operating rules. Lives at `.engineering-os/rule-proposals/<ISO-ts>__<slug>.md` in the consuming product repo.
+> Proposed by an agent or operator; ADOPTED only when the Stakeholder runs `/engineering-os:adopt-rule <proposal-path>`.
 > Agents CANNOT self-promote a proposal to a durable rule.
 
 | Field | Value |
 |---|---|
 | **proposal_id** | `{{PROPOSAL_ID}}` *(kebab-case slug)* |
-| **proposed_by** | `{{PROPOSED_BY}}` *(persona name or "rishabh" / operator handle)* |
+| **proposed_by** | `{{PROPOSED_BY}}` *(role name, or the Stakeholder / operator handle)* |
 | **proposed_at** | {{PROPOSED_AT}} |
-| **target_scope** | {{TARGET_SCOPE}} *(e.g., "stage-3-developer", "all-agents", "platform-devops-only", "stage-7-founder-gate")* |
-| **status** | proposed *(transitions to "adopted" or "rejected" on Founder action)* |
+| **target_scope** | {{TARGET_SCOPE}} *(e.g., "stage-3-developer", "all-agents", "platform-devops-only", "stage-7-stakeholder-gate")* |
+| **status** | proposed *(transitions to "adopted" or "rejected" on Stakeholder action)* |
 
 ---
 
@@ -64,7 +64,7 @@
 
 ## Cost of NOT adopting
 
-> What continues to go wrong if Founder rejects this proposal?
+> What continues to go wrong if the Stakeholder rejects this proposal?
 
 {{COST_OF_NOT_ADOPTING}}
 
@@ -75,7 +75,7 @@
 | Field | Value |
 |---|---|
 | **decided_at** | {{DECIDED_AT}} *(filled by /engineering-os:adopt-rule or /reject-rule)* |
-| **decided_by** | rishabh *(Founder; agents cannot decide their own rules)* |
+| **decided_by** | {{DECIDED_BY}} *(the Stakeholder; agents cannot decide their own rules)* |
 | **decision** | {{DECISION}} *(adopted / rejected / deferred)* |
 | **rationale** | {{DECISION_RATIONALE}} |
 | **durable_rule_path** | {{DURABLE_RULE_PATH}} *(if adopted, path to the new file in .engineering-os/durable-rules/)* |

@@ -1,57 +1,58 @@
-# Brain Engineering OS — the canonical 8-stage pipeline as data.
+# Engineering OS — the canonical 8-stage pipeline as data.
 # Read by hooks, slash commands, and documentation generators.
 
 name: requirement-to-release
 description: >
-  The 8-stage pipeline every Brain feature flows through, from Founder
+  The 8-stage pipeline every feature flows through, from Stakeholder
   submission to production deploy.
 schema_version: 1
 
-# Personas — must match agents/ filenames and .engineering-os/memory/agents/ paths.
+# Personas (the OS roles) — must match agents/ filenames and .engineering-os/memory/agents/ paths.
+# Human/team identities (if any) attach per adoption in .engineering-os/team-roster.md.
 personas:
   cto_advisor:
-    persona_name: Rohan
+    role: Engineering Advisor
     agent: cto-advisor
     journal: cto-advisor.journal.md
   dynamic_persona: { agent: dynamic-persona-generator, journal: null }
   architect:
-    persona_name: Aryan
+    role: Architect
     agent: architect
     journal: architect.journal.md
   backend_developer:
-    persona_name: Vikram
+    role: Backend Engineer
     agent: backend-developer
     journal: backend.journal.md
   frontend_web_developer:
-    persona_name: Ananya
+    role: Frontend/Web Engineer
     agent: frontend-web-developer
     journal: frontend-web.journal.md
   mobile_developer:
-    persona_name: Karan
+    role: Mobile Engineer
     agent: mobile-developer
     journal: frontend-mobile.journal.md
   intelligence_engineer:
-    persona_name: Maya
+    role: AI/ML Engineer
     agent: intelligence-engineer
     journal: intelligence.journal.md
   security_reviewer:
-    persona_name: Shreya
+    role: Security Reviewer
     agent: security-reviewer
     journal: security.journal.md
   qa_agent:
-    persona_name: Tanvi
+    role: QA Engineer
     agent: qa-agent
     journal: qa.journal.md
   platform_devops:
-    persona_name: Jatin
+    role: Platform/SRE
     agent: platform-devops
     journal: platform.journal.md
   product_manager:
-    persona_name: Priya
+    role: Delivery Coordinator
     agent: product-manager
     journal: product.journal.md
-  founder:
-    persona_name: Rishabh
+  stakeholder:
+    role: Stakeholder
     agent: null  # human
 
 stages:
@@ -63,7 +64,7 @@ stages:
     spawns_subagents: [dynamic_persona_generator, count: "0-2 by complexity"]
     gate: G1
     next_on_advance: 2
-    on_challenge_back: founder
+    on_challenge_back: stakeholder
     on_kill: archive
 
   - id: 2
@@ -112,22 +113,22 @@ stages:
     gate: G6
     veto: true
     next_on_pass: 7
-    on_bounce_target: dynamic  # CTOA chooses
+    on_bounce_target: dynamic  # the Engineering Advisor chooses
 
   - id: 7
-    name: founder-approval
-    owner: founder
+    name: stakeholder-approval
+    owner: stakeholder
     human_gate: true
     inputs: [final_review, full_run_artifacts]
-    outputs: [founder_decision]
+    outputs: [stakeholder_decision]
     gate: G7
     next_on_approve: 8
-    on_reject: 6  # CTOA re-routes
+    on_reject: 6  # the Engineering Advisor re-routes
 
   - id: 8
     name: platform-devops
     owner: platform_devops
-    inputs: [founder_decision]
+    inputs: [stakeholder_decision]
     outputs: [deployment_report]
     gate: [G8, G9]
     auto_rollback_triggers:
@@ -140,7 +141,7 @@ stages:
     on_rollback: 4
 
 # ---------------------------------------------------------------------------
-# Lanes (v0.8.0 — risk-based tiering). Rohan assigns the lane at Stage 1.
+# Lanes (risk-based tiering). The Engineering Advisor assigns the lane at Stage 1.
 # The lane decides WHICH stages run. The 8-stage list above is the full path
 # (= high-stakes). Express and standard skip stages to cut wall-clock + tokens.
 # Classifier rules + trigger-surface list: ../docs/feature-tiering.md.
@@ -151,17 +152,17 @@ lanes:
       Trivial change with ZERO trigger-surface touch (copy, docs, config,
       dependency bump, styling, pure refactor with no behavior change, or a
       clear repeat of a registry pattern). Skips Architect (2), Security (4),
-      Final-review (6) — i.e. all three Opus-heavy stages.
+      Final-review (6) — i.e. all three deep-tier-heavy stages.
     requires_empty_trigger_surfaces: true   # any trigger surface ⇒ NOT express
     stages: [1, 3, 5, 7, 8]
     stage_notes:
-      1: "Rohan: classify + confirm trivial. 0 personas. No brainstorm. Hand straight to ONE dev."
+      1: "Engineering Advisor: classify + confirm trivial. 0 personas. No brainstorm. Hand straight to ONE dev."
       3: "Single relevant builder only. No fan-out."
-      5: "Tanvi: real-network smoke + lint only. No mutation tests."
-      7: "Founder gate (or existing delegation auto-approve)."
-      8: "Jatin: standard deploy + 48h monitor."
+      5: "QA Engineer: real-network smoke + lint only. No mutation tests."
+      7: "Stakeholder gate (or existing delegation auto-approve)."
+      8: "Platform/SRE: standard deploy + 48h monitor."
     personas: 0
-    mandatory_veto: []          # Shreya skipped — express never touches her surfaces
+    mandatory_veto: []          # Security Reviewer skipped — express never touches its surfaces
     artifacts: combined          # 1 combined artifact, not the full numbered set
 
   standard:
@@ -170,13 +171,13 @@ lanes:
     requires_empty_trigger_surfaces: true
     stages: [1, 2, 3, 4, 5, 6, 7, 8]
     personas: "0-1"
-    mandatory_veto: [qa_agent]   # Shreya runs but rarely blocks; Tanvi always gates
+    mandatory_veto: [qa_agent]   # Security Reviewer runs but rarely blocks; QA always gates
     artifacts: key               # key artifacts only
 
   high-stakes:
     description: >
-      Touches a trigger surface (auth, multi-tenancy, MCP tools, connectors,
-      outbound channels, PII, schema/proto, money, India compliance). Full rigor.
+      Touches a trigger surface (auth, multi-tenancy, agent/MCP tools, connectors,
+      outbound channels, PII, schema/proto, money, the product's compliance regime). Full rigor.
     requires_empty_trigger_surfaces: false
     stages: [1, 2, 3, 4, 5, 6, 7, 8]
     personas: 2

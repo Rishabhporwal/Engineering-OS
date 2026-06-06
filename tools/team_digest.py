@@ -6,7 +6,7 @@
 """
 Engineering OS — team digest (Goal 3: cross-engineer awareness).
 
-When multiple product engineers use the team on one Brain repo, each operates
+When multiple engineers use the team on one product repo, each operates
 their own sessions — but the memory is git-shared. This synthesizes that shared
 memory into ONE view so any engineer instantly sees what the WHOLE team has
 built and the challenges everyone hit — not just their own work.

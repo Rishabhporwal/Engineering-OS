@@ -1,8 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://brain.pipadacapital.com/engineering-os/schemas/agent-registry.schema.json",
+  "$id": "https://engineering-os.dev/engineering-os/schemas/agent-registry.schema.json",
   "title": "Agent Registry",
-  "description": "The 11 agents in the Brain Engineering OS (10 named roles + the runtime dynamic-persona-generator), with persona, skills, stage(s), and authority.",
+  "description": "The 11 agents in the Engineering OS (10 named roles + the runtime dynamic-persona-generator), with persona, skills, stage(s), and authority.",
   "type": "object",
   "required": ["schema_version", "generated_at", "agents"],
   "properties": {
@@ -17,7 +17,7 @@
         "properties": {
           "id": { "type": "string", "description": "Slug used in agents/ filename." },
           "role": { "type": "string", "description": "Human-readable role." },
-          "persona": { "type": ["string", "null"], "description": "Named persona; null for shadow CTO Advisor." },
+          "persona": { "type": ["string", "null"], "description": "Human name assigned to the role per adoption (in .engineering-os/team-roster.md); null if unassigned." },
           "stages": {
             "type": "array",
             "items": { "type": "integer", "minimum": 1, "maximum": 8 }

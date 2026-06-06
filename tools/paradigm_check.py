@@ -4,23 +4,25 @@
 # dependencies = []
 # ///
 """
-Engineering OS — paradigm-drift gate (Point D).
+Engineering OS — paradigm-drift gate.
 
-Promotes the @paradigm convention (cost-routing-paradigms: SQL > ML > small_llm >
-frontier_llm) from "audited by Rohan" to "enforced in CI". HEURISTIC, line-based —
-a fast signal, not a proof. It flags three drift classes:
+Promotes the @paradigm convention (cheapest sufficient effort: deterministic/SQL ≫ ML
+≫ small model ≫ large model) from "audited by hand" to "enforced in CI". HEURISTIC,
+line-based — a fast signal, not a proof. It flags three drift classes:
 
-  1. MISSING   — an LLM call (Anthropic SDK / claude-* model) with no @paradigm
-                 marker within the window above it.
+  1. MISSING   — an LLM call (an example: an Anthropic SDK / claude-* call) with no
+                 @paradigm marker within the window above it.
   2. NON_LLM   — an LLM call inside a path declared `sql` or `ml` (those
                  paradigms must not call an LLM at all).
-  3. ESCALATED — a frontier/opus-tier model used under a `small_llm` path.
+  3. ESCALATED — a large/frontier-tier model used under a `small_llm` path.
 
-Paradigm tiers are `sql` / `ml` / `small_llm` / `frontier_llm` (canon TECH/12).
-Paradigms 3 & 4 are model-agnostic, gateway-routed: the decorator names a policy
-tier, the LiteLLM gateway resolves the model. The legacy `haiku` / `sonnet`
-spellings are still recognised (mapped to small_llm / frontier_llm) for
-backward-compat with pre-rename code.
+Paradigm tiers are `sql` / `ml` / `small_llm` / `frontier_llm` (the cost doctrine; see
+skill `cost-routing-paradigms`). The top two LLM tiers are model-agnostic, gateway-routed:
+the decorator names a policy tier, the model gateway resolves the concrete model. The
+legacy `haiku` / `sonnet` spellings are still recognised (mapped to small_llm /
+frontier_llm) for backward-compat with pre-rename code. The concrete model names below
+(claude-*, sonnet/opus/haiku) are illustrative examples of one provider binding — a
+product's STACK.md may bind these tiers to different models.
 
 Markers recognised (Python decorator or TS/JS comment):
   @paradigm("frontier_llm")  @paradigm(Paradigm.SMALL_LLM)

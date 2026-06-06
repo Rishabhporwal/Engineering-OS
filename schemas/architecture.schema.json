@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://brain.pipadacapital.com/engineering-os/schemas/architecture.schema.json",
+  "$id": "https://engineering-os.dev/engineering-os/schemas/architecture.schema.json",
   "title": "Architecture Plan (Stage 2)",
   "type": "object",
   "required": [
@@ -59,17 +59,18 @@
       "properties": {
         "topics_added": { "type": "array", "items": { "type": "string" } },
         "topics_changed": { "type": "array", "items": { "type": "string" } },
-        "partition_key": { "type": "string", "const": "workspace_id" },
+        "partition_key": { "type": "string", "const": "tenant_id" },
         "exactly_once_strategy": { "type": "string" }
       }
     },
     "single_primitive_sweep": {
       "type": "object",
-      "required": ["audience_builder", "consent", "decision_log", "notifications", "attribution", "identity"],
+      "description": "Single-Primitive Rule check across the product's cross-cutting concerns (declared in the Product Canon). Keys here are illustrative generic concerns; bind them to the product's actual primitives in INVARIANTS.md.",
+      "required": ["tenant_isolation", "consent", "audit_log", "notifications", "attribution", "identity"],
       "properties": {
-        "audience_builder": { "enum": ["reused", "extended", "violated-needs-discussion"] },
+        "tenant_isolation": { "enum": ["reused", "extended", "violated-needs-discussion"] },
         "consent": { "enum": ["reused", "extended", "violated-needs-discussion"] },
-        "decision_log": { "enum": ["reused", "extended", "violated-needs-discussion"] },
+        "audit_log": { "enum": ["reused", "extended", "violated-needs-discussion"] },
         "notifications": { "enum": ["reused", "extended", "violated-needs-discussion"] },
         "attribution": { "enum": ["reused", "extended", "violated-needs-discussion"] },
         "identity": { "enum": ["reused", "extended", "violated-needs-discussion"] }
@@ -110,14 +111,15 @@
       }
     },
     "security_considerations": { "type": "string" },
-    "india_context": { "type": "string" },
+    "region_context": { "type": "string", "description": "Region/locale-varying considerations addressed via the RegionAdapter seam." },
     "region_adapter_impact": { "type": "string" },
     "cost_estimate": {
       "type": "object",
-      "required": ["llm_tokens_per_day", "inr_per_month_at_expected_load"],
+      "required": ["llm_tokens_per_day", "cost_per_month_at_expected_load"],
       "properties": {
         "llm_tokens_per_day": { "type": "integer" },
-        "inr_per_month_at_expected_load": { "type": "number" },
+        "cost_per_month_at_expected_load": { "type": "number", "description": "Estimated monthly run cost in minor units of the reporting currency_code." },
+        "currency_code": { "type": "string", "description": "ISO 4217 code for cost_per_month_at_expected_load." },
         "assumed_load": { "type": "string" }
       }
     },
@@ -153,7 +155,7 @@
         "required": ["track_id", "owner_persona", "task_list"],
         "properties": {
           "track_id": { "type": "string", "description": "e.g., 'be-recover-route'" },
-          "owner_persona": { "enum": ["vikram", "ananya", "karan", "maya"] },
+          "owner_persona": { "enum": ["backend-developer", "frontend-web-developer", "mobile-developer", "intelligence-engineer"] },
           "task_list": {
             "type": "array",
             "minItems": 1,

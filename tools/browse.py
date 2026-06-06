@@ -4,13 +4,13 @@
 # dependencies = ["playwright>=1.40"]
 # ///
 """
-Engineering OS — real-browser + visual QA engine (gstack-inspired, Point: browser QA).
+Engineering OS — real-browser + visual QA engine (browser QA).
 
-Drives a REAL Chromium (via Playwright) so QA (Tanvi) and the web dev (Ananya)
-verify actual rendered behaviour — console errors, failed requests, broken
+Drives a REAL Chromium (via Playwright) so the QA Engineer and the Frontend/Web
+Engineer verify actual rendered behaviour — console errors, failed requests, broken
 flows, visual state — instead of trusting mocks. This is plugin-side DEV
-TOOLING (in tools/), NOT a Brain product runtime dependency, so it does not
-touch Brain's locked product stack.
+TOOLING (in tools/), NOT a product runtime dependency, so it does not
+touch the product's stack.
 
 Subcommands (all print JSON to stdout; human note to stderr):
   check <url> [--screenshot OUT] [--full-page] [--headed] [--wait load|domcontentloaded|networkidle]

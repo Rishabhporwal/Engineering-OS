@@ -1,14 +1,14 @@
 # Security Review — {{REQ_ID}}
 
-> Filled by Shreya in Stage 4. **VETO authority** on CRITICAL/HIGH and India compliance.
+> Filled by the Security Reviewer in Stage 4. **VETO authority** on CRITICAL/HIGH and the product's compliance regime.
 > Validates against [schemas/security-review.schema.json](../schemas/security-review.schema.json).
 
 | Field | Value |
 |-------|-------|
 | **req_id** | `{{REQ_ID}}` |
-| **Actor** | security-reviewer (Shreya) |
+| **Actor** | security-reviewer |
 | **Timestamp** | {{TS}} |
-| **Verdict** | **{{VERDICT}}**  *(PASS / BOUNCE — a Shreya BOUNCE is a VETO; nothing advances past it)* |
+| **Verdict** | **{{VERDICT}}**  *(PASS / BOUNCE — a Security Reviewer BOUNCE is a VETO; nothing advances past it)* |
 
 ---
 
@@ -18,16 +18,16 @@ Declare the change's **surface class first** — it determines which gate sectio
 
 | Surface | Touched? | If "No" → these sections are N/A |
 |---|:---:|---|
-| Network / API (tRPC / gRPC / MCP endpoint, any mutation) | {{TOUCH_API}} | "mutation endpoint guarded", "MCP tool" gates |
-| Outbound channel (call / WhatsApp / SMS / email / ad-audience) | {{TOUCH_OUTBOUND}} | the entire **India compliance checks (P0)** section |
-| Connector / external credential | {{TOUCH_CONNECTOR}} | "connector OAuth / KMS" gate |
-| Customer PII (phone / email / address / order data) | {{TOUCH_PII}} | PII-in-logs gate + DPDP data-flow review |
+| Network / API (any RPC / typed-procedure / tool endpoint, any mutation) | {{TOUCH_API}} | "mutation endpoint guarded", "tool surface" gates |
+| Outbound channel (any user-facing channel — call / message / email / audience) | {{TOUCH_OUTBOUND}} | the entire **compliance checks (P0)** section |
+| Connector / external credential | {{TOUCH_CONNECTOR}} | "connector OAuth / secrets" gate |
+| Customer PII (any personal data the Canon classifies as PII) | {{TOUCH_PII}} | PII-in-logs gate + data-protection data-flow review |
 | Money movement (billing / pricing / refund / payout) | {{TOUCH_MONEY}} | money-handling review |
 | Agent-emitted action / auto-execute | {{TOUCH_AGENT_ACTION}} | agentic-actions-auditor gate |
 
-**ALWAYS-ON (run regardless of class — the VETO still holds on anything these find):** dependency / vuln scans · secrets grep on the staged diff · supply-chain (every new dep justified) · input validation on any new boundary · and for ANY money-*derived* code, the **minor-units / no-float / no-LLM-produced-numbers** check.
+**ALWAYS-ON (run regardless of class — the VETO still holds on anything these find):** dependency / vuln scans · secrets grep on the staged diff · supply-chain (every new dep justified) · input validation on any new boundary · and for ANY money-*derived* code, the **minor-units / no-float / no-model-produced-numbers** check.
 
-> **Library / registry-only fast-path:** if every surface above is "No" (a pure library / metric / util change — no network/auth/PII/outbound/connector/money-movement surface), say so here, run the ALWAYS-ON checks, and mark the surface-specific gates + the India-compliance section **N/A — out of scope (library-only)**. This is a *scoping* statement, not a gate skip.
+> **Library / registry-only fast-path:** if every surface above is "No" (a pure library / metric / util change — no network/auth/PII/outbound/connector/money-movement surface), say so here, run the ALWAYS-ON checks, and mark the surface-specific gates + the compliance section **N/A — out of scope (library-only)**. This is a *scoping* statement, not a gate skip.
 
 ---
 
@@ -37,11 +37,11 @@ Declare the change's **surface class first** — it determines which gate sectio
 |------|:------:|-------|
 | No CRITICAL findings | {{NO_CRITICAL}} | |
 | No HIGH findings | {{NO_HIGH}} | |
-| No India compliance violation | {{NO_INDIA_VIOLATION}} | DLT / NCPR / DND / calling hours / recording consent |
-| Every mutation endpoint guarded (`requireRole` + `requireWorkspaceMember` + Zod + `workspace_id` assertion) | {{MUTATION_GUARDED}} | |
-| Every new MCP tool / agent-emitted action audited (blast radius classified, human gate on irreversible/financial, idempotency, arg validation) | {{ACTIONS_AUDITED}} | per [`agentic-safety`](../skills/agentic-safety/SKILL.md) |
-| Every new MCP tool tenant-checked + Decision Log middleware + auth scope | {{MCP_TENANT_CHECKED}} | |
-| Every new connector: OAuth AES-256-GCM + webhook signature + per-brand KMS key | {{CONNECTORS_TOKEN_ENCRYPTED}} | |
+| No compliance-regime violation | {{NO_COMPLIANCE_VIOLATION}} | against the product's compliance regime (per COMPLIANCE.md) |
+| Every mutation endpoint guarded (`requireRole` + tenant-membership check + input-validation schema + `tenant_id` assertion) | {{MUTATION_GUARDED}} | |
+| Every new tool surface / agent-emitted action audited (blast radius classified, human gate on irreversible/financial, idempotency, arg validation) | {{ACTIONS_AUDITED}} | per [`agentic-safety`](../skills/agentic-safety/SKILL.md) |
+| Every new tool surface tenant-checked + audit-log middleware + auth scope | {{MCP_TENANT_CHECKED}} | |
+| Every new connector: OAuth with authenticated encryption + webhook signature + per-tenant managed key | {{CONNECTORS_TOKEN_ENCRYPTED}} | |
 | PII not in logs (sampled log lines reviewed) | {{PII_NOT_IN_LOGS}} | |
 
 ---
@@ -78,30 +78,34 @@ Declare the change's **surface class first** — it determines which gate sectio
 
 ## Scan results
 
+> The concrete scanners are bound per runtime in the Product Canon's STACK.md. Examples below; fill the rows that apply, mark the rest `n/a`.
+
 | Tool | Result |
 |------|--------|
-| `pnpm audit` | {{PNPM_AUDIT}} |
-| Snyk | {{SNYK}} |
-| Bandit (Python) | {{BANDIT}} |
-| `safety check` (Python) | {{SAFETY}} |
-| `pip-audit` | {{PIP_AUDIT}} |
-| Trivy (image + filesystem) | {{TRIVY}} |
+| Dependency audit (package manager) | {{PNPM_AUDIT}} |
+| SCA / vuln scanner | {{SNYK}} |
+| Static analysis (SAST) | {{BANDIT}} |
+| Dependency safety check | {{SAFETY}} |
+| Dependency audit (secondary runtime) | {{PIP_AUDIT}} |
+| Image + filesystem scanner | {{TRIVY}} |
 | OWASP Dependency-Check | {{OWASP_DC}} |
 
 ---
 
-## India compliance checks (P0)
+## Compliance checks (P0)
+
+> Drawn from the product's compliance regime (per COMPLIANCE.md). The rows below are *examples* of channel/consent/retention controls; replace with the specific controls the Canon declares, and mark any that don't apply `n/a`.
 
 | Check | Status | Evidence |
 |-------|:------:|----------|
-| Calling hours hard-coded 09:00–21:00 IST at queue level | {{CALLING_HOURS}} | |
-| Two-layer DND block (brand opt-out + TRAI NCPR) | {{DND_TWO_LAYER}} | |
-| AI call disclosure prompt present | {{AI_DISCLOSURE}} | |
-| Recording consent prompt present + decline path verified | {{RECORDING_CONSENT}} | |
-| DLT template registration check enforced | {{DLT_CHECK}} | |
-| 48h per-customer frequency cap enforced | {{FREQ_CAP}} | |
+| Channel send-window enforced at queue level (per COMPLIANCE.md) | {{CALLING_HOURS}} | |
+| Opt-out / do-not-contact block enforced (regime + per-tenant) | {{CHANNEL_OPTOUT_CHECK}} | |
+| AI/automated-contact disclosure present (if required) | {{AI_DISCLOSURE}} | |
+| Recording/processing consent present + decline path verified | {{RECORDING_CONSENT}} | |
+| Channel template/registration check enforced (if required) | {{CHANNEL_TEMPLATE_CHECK}} | |
+| Per-recipient frequency cap enforced | {{FREQ_CAP}} | |
 
-> If any India compliance check is RED, this is a **P0 bounce** and a Founder page.
+> If any compliance check is RED, this is a **P0 bounce** and a Stakeholder page.
 
 ---
 
@@ -129,5 +133,5 @@ Declare the change's **surface class first** — it determines which gate sectio
 
 ## Handoff
 
-- **If PASS:** Tanvi (Stage 5).
+- **If PASS:** QA Engineer (Stage 5).
 - **If BOUNCE:** {{BOUNCE_TARGET_PERSONA}} (Stage 3).

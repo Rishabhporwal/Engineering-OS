@@ -30,8 +30,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import team_digest  # noqa: E402
 
 STAGES = {1: "Intake", 2: "Architect", 3: "Build", 4: "Security",
-          5: "QA", 6: "Final", 7: "Founder", 8: "Deploy"}
-# rough blended $ per 1M tokens (input+output) — estimate only
+          5: "QA", 6: "Final", 7: "Stakeholder", 8: "Deploy"}
+# rough blended $ per 1M tokens (input+output) — estimate only. The model names below are
+# illustrative example tiers (small/large model rates); a product's STACK.md may bind
+# different models — only the relative magnitudes drive the cost panel.
 MODEL_RATE = {"opus": 30.0, "sonnet": 6.0, "haiku": 1.5}
 DEFAULT_RATE = 8.0
 
@@ -270,7 +272,7 @@ def build(eos: Path) -> dict:
 
 SHELL = r"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Brain — Engineering Dashboard</title><style>
+<title>Engineering OS — Engineering Dashboard</title><style>
 :root{color-scheme:dark}*{box-sizing:border-box}
 body{margin:0;font:14px/1.5 -apple-system,Segoe UI,Roboto,sans-serif;background:#0d1117;color:#e6edf3}
 header{padding:16px 24px;border-bottom:1px solid #21262d;display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px}
@@ -304,7 +306,7 @@ input.filter{background:#0d1117;border:1px solid #30363d;color:#e6edf3;border-ra
 .bar .x{font-size:9px;color:#8b949e;margin-top:4px;max-width:54px;overflow:hidden;text-overflow:ellipsis}
 .hidden{display:none}
 </style></head><body>
-<header><h1>🧠 Brain — Engineering Dashboard</h1><span class="sub" id="gen"></span></header>
+<header><h1>Engineering OS — Engineering Dashboard</h1><span class="sub" id="gen"></span></header>
 <nav id="nav"></nav>
 <div class="wrap" id="app"></div>
 <script>const D=__DATA__;

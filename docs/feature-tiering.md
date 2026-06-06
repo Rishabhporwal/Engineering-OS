@@ -100,7 +100,7 @@ Because Express skips the Architect, Security, and the Advisor's Stage-6 final r
    ▼ Stage 3  Frontend Engineer: minimal edit + real-network smoke. Writes 08-express-report.md.
    │          Invokes QA directly (skips Security).
    ▼ Stage 5  QA: smoke + lint + minimal secrets-grep. PASS.
-   │          Sets awaiting-founder (skips the Advisor's Stage 6).
+   │          Sets awaiting-stakeholder (skips the Advisor's Stage 6).
    ▼ Stage 7  Stakeholder: /approve
    ▼ Stage 8  Platform/SRE: deploy + post-deploy monitor.
 ```
@@ -134,11 +134,11 @@ The numbered run-folder artifacts are partly audit record, partly ceremony. The 
 | `09-security-review.md` | — | ✅ | ✅ |
 | `10-qa-review.md` | brief (smoke) | ✅ | ✅ |
 | `11-final-review.md` | — | lean | full |
-| `12-founder-decision.json` | ✅ | ✅ | ✅ |
+| `12-stakeholder-decision.json` | ✅ | ✅ | ✅ |
 | `13-deployment-report.md` | ✅ | ✅ | ✅ |
 | `14-retro.md` | — | terse | full |
 
-*(Artifact filenames retain their canonical `cto-advisor` / `founder` tokens to match the run-folder schema; they denote the Engineering-Advisor and Stakeholder roles respectively.)*
+*(Artifact filenames retain their canonical `cto-advisor` / `stakeholder` tokens to match the run-folder schema; they denote the Engineering-Advisor and Stakeholder roles respectively.)*
 
 ¹ Express `02` is a short stub: the Lane decision + ADVANCE, not the full template.
 ² Standard folds the handoff into the architecture plan (no separate `07`); high-stakes keeps `07` separate at calibrated depth.

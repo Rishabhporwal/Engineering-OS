@@ -1,8 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://brain.pipadacapital.com/engineering-os/schemas/requirement.schema.json",
+  "$id": "https://engineering-os.dev/engineering-os/schemas/requirement.schema.json",
   "title": "Requirement",
-  "description": "A Founder-submitted requirement entering the Engineering OS pipeline at Stage 1.",
+  "description": "A Stakeholder-submitted requirement entering the Engineering OS pipeline at Stage 1.",
   "type": "object",
   "required": ["schema_version", "req_id", "title", "raw_text", "submitted_by", "submitted_at"],
   "properties": {
@@ -14,7 +14,7 @@
     },
     "title": { "type": "string", "minLength": 4, "maxLength": 120 },
     "raw_text": { "type": "string", "minLength": 1 },
-    "submitted_by": { "type": "string", "description": "Who submitted (typically 'rishabh')." },
+    "submitted_by": { "type": "string", "description": "Who submitted (typically the Stakeholder)." },
     "submitted_at": { "type": "string", "format": "date-time" },
     "tier_impact": {
       "type": "array",
@@ -22,11 +22,11 @@
     },
     "region_impact": {
       "type": "array",
-      "items": { "enum": ["in", "ae", "sa", "us", "eu", "lat", "sea", "afr"] }
+      "items": { "type": "string", "description": "Region/locale code(s) this requirement affects (via the RegionAdapter seam), e.g. an ISO 3166 code or a region grouping defined in the Product Canon." }
     },
     "feature_class": {
       "enum": ["express", "standard", "high-stakes"],
-      "description": "Pipeline lane, assigned by Rohan at Stage 1. express = trivial change with zero trigger-surface touch (skips Architect, Security, Final-review); standard = normal feature, no trigger surface; high-stakes = touches a trigger surface (full pipeline + mutation tests + 2 personas + mandatory Shreya VETO). See docs/feature-tiering.md."
+      "description": "Pipeline lane, assigned by the Engineering Advisor at Stage 1. express = trivial change with zero trigger-surface touch (skips Architect, Security, Final-review); standard = normal feature, no trigger surface; high-stakes = touches a trigger surface (full pipeline + mutation tests + 2 personas + mandatory Security Reviewer VETO). See docs/feature-tiering.md."
     },
     "feature_class_rationale": {
       "type": "string",
@@ -35,14 +35,14 @@
     "trigger_surfaces_touched": {
       "type": "array",
       "items": {
-        "enum": ["auth", "multi-tenancy", "mcp-tools", "connectors", "outbound-channels", "pii", "schema-proto", "money", "india-compliance"]
+        "enum": ["auth", "multi-tenancy", "mcp-tools", "connectors", "outbound-channels", "pii", "schema-proto", "money", "compliance"]
       },
-      "description": "High-stakes surfaces this requirement touches. MUST be empty for feature_class=express; any entry forces high-stakes. Mirrors Shreya's review triggers."
+      "description": "High-stakes surfaces this requirement touches (declared in the Product Canon's TRIGGER-SURFACES.md). MUST be empty for feature_class=express; any entry forces high-stakes. Mirrors the Security Reviewer's review triggers."
     },
     "problem_statement": { "type": "string" },
     "target_user": {
       "type": "string",
-      "description": "Persona + tier (e.g., 'Founder of Mid-Market brand', 'CFO of Enterprise')."
+      "description": "Persona + tier (e.g., 'Stakeholder of a mid-market product', 'Finance lead of an enterprise account')."
     },
     "success_metric": { "type": "string", "description": "How we'll know it worked." },
     "constraints": {

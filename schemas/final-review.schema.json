@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://brain.pipadacapital.com/engineering-os/schemas/final-review.schema.json",
+  "$id": "https://engineering-os.dev/engineering-os/schemas/final-review.schema.json",
   "title": "Final CTO Advisor Review (Stage 6)",
   "type": "object",
   "required": [
@@ -10,7 +10,7 @@
     "ts",
     "verdict",
     "subreviews",
-    "recommendation_to_founder"
+    "recommendation_to_stakeholder"
   ],
   "properties": {
     "schema_version": { "type": "integer", "const": 1 },
@@ -43,8 +43,8 @@
     },
     "risks_remaining": { "type": "array", "items": { "type": "string" } },
     "production_readiness_assessment": { "type": "string" },
-    "recommendation_to_founder": { "enum": ["APPROVE", "APPROVE-WITH-CAVEATS", "REJECT"] },
-    "founder_caveats": { "type": "array", "items": { "type": "string" } },
+    "recommendation_to_stakeholder": { "enum": ["APPROVE", "APPROVE-WITH-CAVEATS", "REJECT"] },
+    "stakeholder_caveats": { "type": "array", "items": { "type": "string" } },
     "bounce_target_stage": { "type": "integer", "minimum": 1, "maximum": 8 },
     "bounce_rationale": { "type": "string" }
   },

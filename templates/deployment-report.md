@@ -1,13 +1,13 @@
 # Deployment Report — {{REQ_ID}}
 
-> Filled by Jatin in Stage 8.
+> Filled by the Platform/SRE Engineer in Stage 8.
 > Validates against [schemas/deployment.schema.json](../schemas/deployment.schema.json).
 > Updated at three checkpoints: after CI, after staging, after the 48h monitor.
 
 | Field | Value |
 |-------|-------|
 | **req_id** | `{{REQ_ID}}` |
-| **Actor** | platform-devops (Jatin) |
+| **Actor** | platform-devops |
 | **Timestamp (latest update)** | {{TS}} |
 | **Deploy class** | **{{DEPLOY_CLASS}}**  *(service / library / mobile / infra / docs-config)* |
 
@@ -15,19 +15,19 @@
 
 ## 0. Deploy class (fast-path)
 
-Declare the **deploy class first** — it determines which sections apply. Sections that don't apply to the class are legitimately **N/A — out of scope** with a one-line reason (don't fabricate ArgoCD/canary detail for a change that has none).
+Declare the **deploy class first** — it determines which sections apply. Sections that don't apply to the class are legitimately **N/A — out of scope** with a one-line reason (don't fabricate continuous-delivery/canary detail for a change that has none). The concrete deploy tooling for each seam is bound in the Product Canon's STACK.md.
 
 | Class | What ships | Sections that apply | Sections N/A |
 |---|---|---|---|
-| **service** | a backend/edge service (api-gateway, core, ingestion, analytics, intelligence, lifecycle, notifications) | §1 CI · §2 staging · §3 prod (ArgoCD + canary) · §4 monitor · §5 dashboards | — |
-| **library** | a shared package (`packages/*`, `pylibs/*`, metric registry) consumed by services | §1 CI (lint/typecheck/test/build + **metric-parity if the registry changed**) · §4 monitor of the **consuming services** · §5 only if a new metric/panel is emitted | §2/§3 ArgoCD sync + canary — **no independent deploy; ships with the next build of its consuming service(s) — name them in §3** |
-| **mobile** | `apps/mobile` | §1 CI · EAS Build/Submit + OTA-vs-native decision (note in §3) · §4 monitor (Sentry/crash-free) | ArgoCD/canary (mobile uses EAS, not ArgoCD) |
-| **infra** | `infra/cdk` | §1 CI · `cdk diff`/`cdk deploy` (note in §3) · §4 monitor | app canary; dashboards unless infra adds them |
+| **service** | a backend/edge service (per the service map in STACK.md) | §1 CI · §2 staging · §3 prod (continuous-delivery sync + canary) · §4 monitor · §5 dashboards | — |
+| **library** | a shared package (per the package layout in STACK.md — e.g. the metric registry) consumed by services | §1 CI (lint/typecheck/test/build + **metric-parity if the registry changed**) · §4 monitor of the **consuming services** · §5 only if a new metric/panel is emitted | §2/§3 deploy sync + canary — **no independent deploy; ships with the next build of its consuming service(s) — name them in §3** |
+| **mobile** | the mobile app (per STACK.md) | §1 CI · mobile build/submit + OTA-vs-native decision (note in §3) · §4 monitor (crash-free rate) | continuous-delivery/canary (mobile uses its own release pipeline) |
+| **infra** | infrastructure-as-code (per STACK.md) | §1 CI · infra plan/apply (note in §3) · §4 monitor | app canary; dashboards unless infra adds them |
 | **docs-config** | docs / config only | §1 CI (lint) | §2–§5 — no runtime deploy |
 
-> **Library fast-path:** a `packages/*` / `pylibs/*` change has **no ArgoCD sync of its own**. Verify CI green (incl. metric-parity if the registry changed), record which **consuming services** will pick it up on their next deploy (§3), point the 48h monitor at those services, and mark §2 + §3-canary **N/A — ships with consuming service**.
+> **Library fast-path:** a shared-package change has **no deploy sync of its own**. Verify CI green (incl. metric-parity if the registry changed), record which **consuming services** will pick it up on their next deploy (§3), point the 48h monitor at those services, and mark §2 + §3-canary **N/A — ships with consuming service**.
 
-> **New-service + affected-scope gate (service class):** if this is a **NEW service**, confirm its CI/CD pipeline + its **own ArgoCD Application** were created with it (the day-one rule — never retrofitted). Confirm the deploy was **affected-scoped**: only the changed service + its transitive dependents were built/pushed/synced (via `turbo --affected`), **not a deploy-all** of the monorepo.
+> **New-service + affected-scope gate (service class):** if this is a **NEW service**, confirm its CI/CD pipeline + its **own deploy unit** were created with it (the day-one rule — never retrofitted). Confirm the deploy was **affected-scoped**: only the changed service + its transitive dependents were built/pushed/synced (via the build graph's affected-detection), **not a deploy-all** of the repo.
 
 ---
 
@@ -42,7 +42,7 @@ Declare the **deploy class first** — it determines which sections apply. Secti
 | Typecheck | {{CI_TYPECHECK}} |
 | Test | {{CI_TEST}} |
 | Build | {{CI_BUILD}} |
-| Image push to ECR | {{CI_IMAGE_PUSH}} |
+| Artifact/image push to registry | {{CI_IMAGE_PUSH}} |
 
 ---
 
@@ -50,7 +50,7 @@ Declare the **deploy class first** — it determines which sections apply. Secti
 
 | Field | Value |
 |-------|-------|
-| **ArgoCD sync** | {{ARGO_STAGING_SYNC}} |
+| **Deploy sync** | {{ARGO_STAGING_SYNC}} |
 | **Smoke** | {{STAGING_SMOKE}} |
 | **Metric parity** | {{STAGING_METRIC_PARITY}} |
 | **Dashboard sanity** | {{STAGING_DASHBOARD_SANITY}} |
@@ -68,7 +68,7 @@ Declare the **deploy class first** — it determines which sections apply. Secti
 
 | Field | Value |
 |-------|-------|
-| **ArgoCD sync** | {{ARGO_PROD_SYNC}} |
+| **Deploy sync** | {{ARGO_PROD_SYNC}} |
 | **Strategy** | {{DEPLOY_STRATEGY}}  *(all-at-once / canary-10 / canary-25 / canary-50)* |
 | **Canary started at** | {{CANARY_START}} |
 | **Canary promoted at** | {{CANARY_PROMOTE}} |
@@ -105,7 +105,7 @@ Declare the **deploy class first** — it determines which sections apply. Secti
 
 ## 6. Release notes
 
-> Human-readable summary suitable for the Founder + Brand-facing changelog (V2 — auto-generated).
+> Human-readable summary suitable for the Stakeholder + a user-facing changelog (auto-generated).
 
 {{RELEASE_NOTES}}
 
@@ -119,14 +119,14 @@ Declare the **deploy class first** — it determines which sections apply. Secti
 
 ---
 
-## 8. Final journal entry (Jatin)
+## 8. Final journal entry (Platform/SRE)
 
 > Posted to `.engineering-os/memory/agents/platform.journal.md`.
 
 ```markdown
-## {{TS}} — Jatin (platform-devops) — {{REQ_ID}} — SHIPPED
+## {{TS}} — platform-devops — {{REQ_ID}} — SHIPPED
 **Stage:** 8 (deploy + monitor)
-**Action:** Production deploy completed via ArgoCD (strategy: {{DEPLOY_STRATEGY}}). 48h monitor: {{MONITOR_STATUS}}.
+**Action:** Production deploy completed via the deploy pipeline (strategy: {{DEPLOY_STRATEGY}}). 48h monitor: {{MONITOR_STATUS}}.
 **Dashboards:** {{DASHBOARD_URL}}
 **Release notes:** see deployment-report.md §6.
 ```

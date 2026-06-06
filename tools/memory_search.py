@@ -17,11 +17,12 @@ only loaded when there are genuinely new entries. Use --no-refresh to skip.
 
 Used by:
   - the /recall-similar command-skill (human, markdown output)
-  - agents during their loop (--json), e.g. Rohan at Stage 1 / Aryan at Stage 2.
+  - agents during their loop (--json), e.g. the Engineering Advisor at Stage 1 /
+    the Architect at Stage 2.
 
 Usage:
-  uv run tools/memory_search.py "abandoned cart recovery for COD"
-  uv run tools/memory_search.py -k 5 --json "RFM segment reuse"
+  uv run tools/memory_search.py "rate limiting on the public API"
+  uv run tools/memory_search.py -k 5 --json "idempotent webhook handler"
   uv run tools/memory_search.py --no-refresh "fast read, skip the freshness check"
 """
 from __future__ import annotations

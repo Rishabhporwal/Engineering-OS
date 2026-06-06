@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://brain.pipadacapital.com/engineering-os/schemas/retro.schema.json",
+  "$id": "https://engineering-os.dev/engineering-os/schemas/retro.schema.json",
   "title": "Retro (Stage 6 close)",
   "description": "Per-child retrospective written by CTO Advisor at the close of Stage 6. Feeds the lessons-learned registry. Append-only.",
   "type": "object",
@@ -38,7 +38,7 @@
           "applies_to": {
             "type": "array",
             "items": {
-              "enum": ["process", "code", "security", "india-compliance", "numeric-parity", "cost-routing", "single-primitive", "migration", "agent-discipline", "pipeline-mechanics", "infra"]
+              "enum": ["process", "code", "security", "compliance", "numeric-parity", "cost-routing", "single-primitive", "migration", "agent-discipline", "pipeline-mechanics", "infra"]
             }
           },
           "evidence": { "type": "string" }

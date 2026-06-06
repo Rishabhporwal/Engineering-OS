@@ -16,14 +16,14 @@ This document defines each gate's:
 
 **Condition:**
 - [ ] If this requirement is a child of a meta-tracker, its `blocks` field has been read from the parent's `proposed_children[]`.
-- [ ] Every blocker in `blocks` has `status == "shipped"` OR `status == "founder-override-of-dependency-rule"` in `state/active.json`.
+- [ ] Every blocker in `blocks` has `status == "shipped"` OR `status == "stakeholder-override-of-dependency-rule"` in `state/active.json`.
 - [ ] If any blocker is unshipped: the Advisor REFUSES to proceed past G0 and surfaces to the Stakeholder.
 
 **Evidence:**
 - Audit-log event: `{"actor":"cto-advisor","type":"dependency-precheck","req_id":"...","blockers":[...],"all_blockers_shipped":<bool>}`.
 - On violation: a `pending-stakeholder-attention.md` artifact in the run folder explaining the unshipped blocker(s).
 
-**Bounce target on fail:** No bounce — work is REFUSED, not bounced. State becomes `blocked-on-dependency` with `current_owner=founder`. The Stakeholder either waits for the blocker to ship or invokes `/engineering-os:override-dependency-rule` with a written rationale (which becomes a logged audit-trail entry).
+**Bounce target on fail:** No bounce — work is REFUSED, not bounced. State becomes `blocked-on-dependency` with `current_owner=stakeholder`. The Stakeholder either waits for the blocker to ship or invokes `/engineering-os:override-dependency-rule` with a written rationale (which becomes a logged audit-trail entry).
 
 **Why this exists:** a child requirement can ship while a declared blocker is still orphaned at Stage 1, and the Advisor can approve it on the Stakeholder's behalf without flagging the violation. G0 makes the check mechanical.
 
@@ -90,7 +90,7 @@ This document defines each gate's:
 - [ ] Requirement has a clear **target user** (persona + tier).
 - [ ] Requirement has a **success metric** (how do we know it worked).
 - [ ] Requirement has at least one stated **constraint** (cost, time, regulatory, technical).
-- [ ] G0 (pre-flight dependency check) PASSED — if this is a child req, all declared blockers are `shipped` or `founder-override-of-dependency-rule`.
+- [ ] G0 (pre-flight dependency check) PASSED — if this is a child req, all declared blockers are `shipped` or `stakeholder-override-of-dependency-rule`.
 - [ ] Persona count (0, 1, or 2) recorded with rationale per the complexity classifier in `agents/cto-advisor.md`. If 1 or 2 personas spawned, each surfaced at least one concern. If 0 personas, the Advisor's own analysis stands as the synthesis.
 - [ ] Engineering Advisor decision is one of: ADVANCE, CHALLENGE-BACK, KILL.
 

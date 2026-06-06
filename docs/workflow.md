@@ -304,7 +304,7 @@ These three responsibilities together = **smooth autonomous flow**. The orchestr
 
 ### Outputs
 - `final-review.md`.
-- Status: `final-review` → `awaiting-founder` (PASS) | `final-bounced` (FAIL).
+- Status: `final-review` → `awaiting-stakeholder` (PASS) | `final-bounced` (FAIL).
 
 ### Expected duration
 - 20–60 minutes.
@@ -338,7 +338,7 @@ These three responsibilities together = **smooth autonomous flow**. The orchestr
 
 ### Outputs
 - Approval or rejection in the audit log (`.engineering-os/decision-log/`).
-- Status: `awaiting-founder` → `approved` (Stage 8) | `rejected` (terminal).
+- Status: `awaiting-stakeholder` → `approved` (Stage 8) | `rejected` (terminal).
 
 ### Expected duration
 - Up to the Stakeholder. Pipeline waits.

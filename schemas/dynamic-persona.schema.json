@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://brain.pipadacapital.com/engineering-os/schemas/dynamic-persona.schema.json",
+  "$id": "https://engineering-os.dev/engineering-os/schemas/dynamic-persona.schema.json",
   "title": "Dynamic Persona Review (Stage 1)",
   "description": "Output from one of the 0-2 personas spawned in Stage 1 (count by complexity).",
   "type": "object",
@@ -18,10 +18,10 @@
         "compliance-officer",
         "data-quality-skeptic",
         "ai-cost-realist",
-        "ops-on-call",
-        "founder-economic-skeptic",
+        "ops-skeptic",
+        "cost-realist",
         "regional-expansion-officer",
-        "agency-partner",
+        "partner-integrator",
         "enterprise-buyer",
         "competitive-analyst",
         "engineering-debt-realist"
@@ -51,7 +51,7 @@
     "linked_skills": {
       "type": "array",
       "items": { "type": "string" },
-      "description": "Curated skills this persona consulted (e.g., 'india-commerce-economics')."
+      "description": "Curated skills this persona consulted (e.g., 'security-baseline')."
     }
   },
   "additionalProperties": false

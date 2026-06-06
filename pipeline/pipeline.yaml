@@ -1,8 +1,8 @@
-# Brain Engineering OS v2 — declarative pipeline
+# Engineering OS v2 — declarative pipeline
 #
 # This file is the SINGLE SOURCE OF TRUTH for control-flow: lanes, stages,
 # model tiers, routing, and the delta-review rules. In v1 this logic lived
-# inside the Opus cto-advisor prompt and was re-reasoned on every intake
+# inside the deep-tier cto-advisor prompt and was re-reasoned on every intake
 # (a major cost + drift surface). In v2 the orchestrator (pipeline/orchestrator.md)
 # reads THIS file and routes deterministically; agents carry only judgment.
 #
@@ -12,35 +12,39 @@ version: 2
 
 # ---------------------------------------------------------------------------
 # Model tiers — the OS applies its own cost-routing doctrine to itself.
-# (v1 ran intake/security/final on Opus and re-ran them fully on every bounce.)
+# (v1 ran intake/security/final on the deep tier and re-ran them fully on every bounce.)
+# The tier values below (haiku/sonnet/opus) are ILLUSTRATIVE bindings of three
+# generic effort levels — mechanical ≈ haiku, standard ≈ sonnet, deep ≈ opus.
+# A product may bind these keys to whatever models its STACK.md declares; the
+# KEYS (intake_mechanical, architect, …) are the cross-file interface — preserved.
 # ---------------------------------------------------------------------------
 model_tiers:
-  intake_mechanical: haiku   # lane/dependency/persona-count are deterministic (lane-classifier.md)
-  intake_judgment:   sonnet  # requirement-quality + challenge synthesis
-  architect:         opus    # runs once per requirement; deep design reasoning — justified
-  builder:           sonnet
-  security_default:  sonnet  # loop is checklist + scanners + guard-presence checks
-  security_escalate: opus    # ONLY on a CRITICAL/compliance ambiguity needing deep reasoning
-  qa:                sonnet
-  final_judgment:    opus    # the go/no-go judgment call stays Opus
-  delta_reverify:    sonnet  # re-verifying an already-PASSed surface after a scoped fix
-  persona_bounded:   haiku
-  persona_deep:      sonnet
+  intake_mechanical: haiku   # mechanical: lane/dependency/persona-count are deterministic (lane-classifier.md)
+  intake_judgment:   sonnet  # standard: requirement-quality + challenge synthesis
+  architect:         opus    # deep: runs once per requirement; deep design reasoning — justified
+  builder:           sonnet  # standard
+  security_default:  sonnet  # standard: loop is checklist + scanners + guard-presence checks
+  security_escalate: opus    # deep: ONLY on a CRITICAL/compliance ambiguity needing deep reasoning
+  qa:                sonnet  # standard
+  final_judgment:    opus    # deep: the go/no-go judgment call stays on the deep tier
+  delta_reverify:    sonnet  # standard: re-verifying an already-PASSed surface after a scoped fix
+  persona_bounded:   haiku   # mechanical
+  persona_deep:      sonnet  # standard
 
 # ---------------------------------------------------------------------------
 # Lanes — which stages run, by risk. Lane is assigned by lane-classifier.md.
-# CONSERVATIVE RULE (Founder): on any doubt between lanes, pick the higher one.
+# CONSERVATIVE RULE (Stakeholder): on any doubt between lanes, pick the higher one.
 # ---------------------------------------------------------------------------
 lanes:
   # EXPERIMENTAL (opt-in via /requirement --lean, default OFF until the A/B proves it).
-  # The strategic-review thesis: one disciplined Sonnet session — carrying the canon +
+  # The strategic-review thesis: one disciplined standard-tier session — carrying the canon +
   # challenge-framework + negative-control DoD + memory recall — does build AND structured
   # self-review against the security/QA/compliance checklist, escalating to the full pipeline
   # ONLY if it discovers a trigger surface mid-build. If the A/B (docs/lean-vs-full-ab.md)
   # shows lean ≈ full quality at a fraction of cost on no-trigger work, flip this to the default
   # and demote the multi-agent pipeline to the high_stakes carve-out.
   lean:
-    when: "OPT-IN only (--lean). Zero trigger surfaces. One Sonnet builder session: build + self-review vs the gate checklists."
+    when: "OPT-IN only (--lean). Zero trigger surfaces. One standard-tier builder session: build + self-review vs the gate checklists."
     stages: [build]                      # the single tagged builder also self-gates (no separate review spawns)
     personas: 0
     escalate_if: "any trigger surface (compliance/tenancy/metric/decision-log/money/outbound/auth) is discovered mid-build → abort lean, restart as high_stakes"
@@ -51,7 +55,7 @@ lanes:
     personas: 0
     # POST-BUILD RECHECK (fixes the war-game's only NO): the lane was fixed from the requirement
     # TEXT at intake, before any code existed. A "rename a label" can grow into a requireRole/
-    # workspace_id change at build time and ship through express with NO security review. So at
+    # tenant-key change at build time and ship through express with NO security review. So at
     # build→qa the orchestrator re-runs classify_lane on the ACTUAL staged diff:
     escalate_if: "post-build `classify_lane --diff <staged> --prior <intake-surfaces>` returns escalate=true (the diff touched a surface the text missed) → VOID express, restart as high_stakes (reinstate architect + security + final)."
     always_run_on_qa: "validity_check --paths <changed test files> — the always-on BYPASSRLS/inert/tautology scan, forced even on express, so a bypass-green test can't ride the lane's 'trivial' framing past the only gate."
@@ -77,7 +81,7 @@ stages:
   qa:        {n: 5, owner: qa-agent,           model: qa,              artifact: "qa-review.md", veto: true}
   final:     {n: 6, owner: final-reviewer,        model: final_judgment,  artifact: "11-final-review.md", veto: true}
   deploy:    {n: 8, owner: platform-devops,    model: builder,         artifact: "13-deployment-report.md"}
-  # Stage 7 = Founder human gate (no agent).
+  # Stage 7 = Stakeholder human gate (no agent).
 
 # Security ∥ QA run in parallel (one orchestrator message, two Agent calls).
 parallel_reviews: [security, qa]
@@ -89,7 +93,7 @@ routing:
   intake:
     ADVANCE: {express: build, standard: architect, high_stakes: architect}
     needs_personas: "spawn personas (tiered) ∥, then re-spawn cto-advisor to synthesize"
-    CHALLENGE_BACK: founder
+    CHALLENGE_BACK: stakeholder
     KILL: terminal
   architect:
     ADVANCE: build
@@ -98,17 +102,17 @@ routing:
     done: {express: qa, standard: parallel_reviews, high_stakes: parallel_reviews}
     BOUNCE: architect
   reviews:                       # security ∥ qa reconcile
-    both_PASS: {express: founder_gate, standard: final, high_stakes: final}
+    both_PASS: {express: stakeholder_gate, standard: final, high_stakes: final}
     any_BOUNCE: build            # re-spawn responsible builder, then DELTA re-review (see below)
   final:
-    PASS: founder_gate
+    PASS: stakeholder_gate
     BOUNCE: "<bounce_target>"
-  founder_gate:
+  stakeholder_gate:
     approve: deploy
     reject: intake
 
 safety_bound:
-  # Lane-aware (SRE F5): a flat 20 was a footgun — a legit high_stakes feature with
+  # Lane-aware (Platform/SRE): a flat 20 was a footgun — a legit high_stakes feature with
   # parallel builder tracks + 2 reviewers + a couple of bounces burns ~18-20 spawns
   # while behaving correctly, then force-stops indistinguishably from a runaway loop.
   max_spawns_by_lane:
@@ -118,9 +122,9 @@ safety_bound:
   on_exceed:
     action: "PAUSE-AND-CONFIRM, not a hard stop"
     do: |
-      At the lane cap, STOP and surface to the Founder WITH the spawn history (from the
+      At the lane cap, STOP and surface to the Stakeholder WITH the spawn history (from the
       orchestrator cursor: stage, outstanding, spawns, last_route) so loop-vs-legit is
-      DISTINGUISHABLE. The Founder either confirms a one-time bump (`/resume` continues) or
+      DISTINGUISHABLE. The Stakeholder either confirms a one-time bump (`/resume` continues) or
       kills it. Do NOT assume "likely a loop" — a big feature legitimately reaching the cap
       looks identical to a loop only if you hide the history. Always leave state + cursor
       consistent for /resume.
@@ -140,7 +144,7 @@ delta_review:
     interactions"; diff + ranked callers/imports/tests captures ~80–90% of needed
     context at far below full cost.) The reviewer reads the prior PASS artifact + the
     diff + the changed code's direct callers/importers/tests. Runs on
-    model_tiers.delta_reverify (sonnet/haiku) + effort:low.
+    model_tiers.delta_reverify (the standard/mechanical tier) + effort:low.
   regression_auto_block:
     rule: "ANY test that passed before the bounce and now fails = AUTO-BLOCK, even in delta scope — the guardrail for the cross-cutting regressions delta review structurally can't catch."
     decoupled_from_scope: |
@@ -154,12 +158,14 @@ delta_review:
           fires the auto-block. Without this, delta review is blind to exactly its own failure mode.
       Implementation: QA delta mode runs `<full test command>` (the same one that last PASSed),
       not a changed-lines subset; only its REASONING about findings is delta-scoped.
+  # NOTE: these keys are the cross-file surface interface (classify_lane.py emits them,
+  # the orchestrator consumes them) — preserved verbatim; only the examples are de-brained.
   high_stakes_paths:            # a fix touching ANY of these forces a FULL re-review
-    - compliance      # DPDP / PDPL / DLT / NCPR / calling-hours / recording-consent / WhatsApp policy
-    - multi_tenancy   # workspace_id at any of the 4 layers
-    - metric_engine   # any metric / TS↔Python parity
-    - decision_log    # ai.decision_log writes
-    - money           # billing / GMV meter / minor-units math
+    - compliance      # the product's compliance regime (per COMPLIANCE.md)
+    - multi_tenancy   # the tenant-isolation key at any of the isolation layers
+    - metric_engine   # any metric / cross-runtime parity (the metric registry, per METRICS.md)
+    - decision_log    # system-of-record audit-log writes
+    - money           # money math (minor units) — billing / metering paths
     - outbound_channel
     - auth
   full_reverify_also_when: "the diff exceeds the bounced finding's blast radius (new files/endpoints/migrations not named in the bounce)"
@@ -189,7 +195,7 @@ caching:
 # ---------------------------------------------------------------------------
 adopt_next:
   - "Batch API (50% off) for non-interactive stages — full security/QA sweeps, eval runs, nightly reports; stacks with caching → ~5% of original price"
-  - "Eval-gated cascade: run the cheap model + a confidence/verifier check, escalate to Opus ONLY on low confidence — even some judgment stages skip Opus per-bounce (FrugalGPT: match frontier at up to 98% savings)"
+  - "Eval-gated cascade: run the cheap model + a confidence/verifier check, escalate to the deep tier ONLY on low confidence — even some judgment stages skip the deep tier per-bounce (FrugalGPT: match frontier at up to 98% savings)"
   - "Typed structured handoffs between stages (a bounce carries a structured delta, not re-explained prose) — kills retries + re-explanation (MetaGPT result)"
   - "effort: tiering — delta-reviewer effort:low, architect effort:high (real Claude Code subagent field)"
   - "Fork subagents (CLAUDE_CODE_FORK_SUBAGENT) for parallel re-review — inherit the parent's cached prefix, ~80% cheaper than fresh spawns"
@@ -211,4 +217,3 @@ telemetry:
   after_every_spawn: "orchestrator calls tools/usage_logger.py log ... with the Agent result's usage + review_scope + the actual model"
   assert_before_advance: "tools/usage_logger.py assert ... — a missing row is a DEFECT (exit 3), re-log before routing on"
   live_log_heartbeat: "/watch warns when live.log mtime lags active.json / usage.jsonl (silence != idle)"
-</content>
