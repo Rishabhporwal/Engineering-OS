@@ -31,21 +31,23 @@ BEFORE claiming any status or expressing satisfaction:
 Skip any step = lying, not verifying.
 ```
 
-## Brain verification commands (canonical)
+## Verification commands (examples — bind to your `STACK.md`)
+
+The exact commands come from the product's `STACK.md`; the *shape* is what transfers. Illustrative bindings:
 
 ```bash
-# TypeScript / Node (api-gateway, core, notifications, lifecycle Node)
-pnpm test ; pnpm test:e2e ; pnpm typecheck ; pnpm lint ; pnpm build
-# Python (ingestion, analytics, intelligence, lifecycle Python)
-uv run pytest ; uv run pytest --cov ; uv run mypy . ; uv run ruff check .
-# gRPC contracts (proto changes)
-buf generate ; buf lint ; buf breaking --against '.git#branch=main'
-# ClickHouse migrations
-dbt run --target staging ; dbt test --target staging
-# Mobile (RN + Expo)
-pnpm --filter mobile typecheck ; pnpm --filter mobile test ; pnpm --filter mobile detox test
+# Compiled/typed runtime (e.g. TS/Node)
+<test> ; <e2e> ; <typecheck> ; <lint> ; <build>
+# Interpreted runtime (e.g. Python)
+<unit tests> ; <coverage> ; <type check> ; <lint>
+# Internal-API contracts (proto/schema changes)
+<codegen> ; <schema lint> ; <breaking-change check against main>
+# Data-store migrations
+<run migrations --target staging> ; <test migrations --target staging>
+# Mobile (if in scope)
+<mobile typecheck> ; <mobile test> ; <mobile e2e>
 # Real-network smoke (the floor for PASS)
-curl -s -o /dev/null -w "%{http_code}\n" https://staging.brain.pipadacapital.com/api/health/ready
+curl -s -o /dev/null -w "%{http_code}\n" https://staging.<product-domain>/health/ready
 ```
 
 **Inverted-handoff fallback** (subagent Bash denied, per prompts/system-prompt.md): the agent enumerates the exact commands; the orchestrator runs them; the agent verifies the reported output — do NOT trust on faith, ask for the failing test names and counts.
@@ -55,26 +57,26 @@ curl -s -o /dev/null -w "%{http_code}\n" https://staging.brain.pipadacapital.com
 | Claim | Requires | NOT sufficient |
 |---|---|---|
 | "Tests pass" | Fresh run, 0 failures, count shown | Yesterday's pass; "should pass" |
-| "Build succeeds" | Fresh `pnpm build` exit 0 OR `uv run` install+import | Linter clean; "logs look good" |
-| "Lint clean" | Fresh `pnpm lint` / `ruff check` exit 0 | Eyeballing the diff |
-| "Type check passes" | Fresh `pnpm typecheck` / `mypy` exit 0 | "I followed the types" |
+| "Build succeeds" | Fresh build command exit 0 OR install+import | Linter clean; "logs look good" |
+| "Lint clean" | Fresh lint command exit 0 | Eyeballing the diff |
+| "Type check passes" | Fresh type-check command exit 0 | "I followed the types" |
 | "Bug fixed" | Test reproducing the original symptom now passes | Code changed, assumed fixed |
 | "Regression test works" | Red-green cycle: revert fix → FAILS → restore → PASSES | Test passes once |
-| "Tanvi PASS" | k6 smoke + Playwright/Detox green + paradigm-audit + metric-parity | Component tests green |
-| "Shreya APPROVED" | Each threat-model finding has a verification snippet AND it succeeds | "Looks safe" |
+| "QA PASS" | load/real-network smoke + e2e green + cost-tier audit + metric-parity | Component tests green |
+| "Security APPROVED" | Each threat-model finding has a verification snippet AND it succeeds | "Looks safe" |
 | "Sub-agent done" | Diff inspected (`git diff`) + verification re-run by orchestrator | Sub-agent's report |
 | "Requirements met" | Line-by-line spec checklist, each item verified | "Tests pass, must be done" |
 
 ## Red flags — STOP
 
-"should pass / should work / probably works"; "Great! / Perfect! / Done! / All set!"; about to commit/push/open PR; about to emit a `→ <next-agent>` handoff; trusting a sub-agent or vendor success report (did you OPEN the Stryker report?); partial verification (unit pass when integration matters); "just this once"; wording implying success without saying it ("ready for QA", "shipping it").
+"should pass / should work / probably works"; "Great! / Perfect! / Done! / All set!"; about to commit/push/open PR; about to emit a `→ <next-agent>` handoff; trusting a sub-agent or vendor success report (did you OPEN the mutation/coverage report?); partial verification (unit pass when integration matters); "just this once"; wording implying success without saying it ("ready for QA", "shipping it").
 
 ## Rationalization prevention
 
 | Excuse | Reality |
 |---|---|
 | "I'm confident" | Confidence ≠ evidence |
-| "Linter passed" | Linter ≠ compiler ≠ tests ≠ smoke |
+| "Linter passed" | Linter ≠ type checker ≠ tests ≠ smoke |
 | "Tests passed yesterday" | Code changed; run them again |
 | "The orchestrator will run it" | Then wait for the output, with counts, before claiming PASS |
 | "I'm tired and want to move on" | Exhaustion is when most regressions ship |
@@ -83,29 +85,29 @@ curl -s -o /dev/null -w "%{http_code}\n" https://staging.brain.pipadacapital.com
 ## Key patterns
 
 ```
-Tests:      ✅ [pnpm test] [49/49 passed, 0 failed, exit 0] → "Tests pass"   ❌ "Should pass now"
-Regression: ✅ write→FAIL→fix→PASS→revert→FAIL→restore→PASS → "confirmed"    ❌ "I wrote a regression test" (no revert)
-Build:      ✅ [pnpm build] [exit 0, dist/main.js created] → "Build passes"  ❌ "Types compile, build should work"
-Smoke:      ✅ [curl health/ready 200][curl happy-path 200, valid JSON]      ❌ "in-process app.request() returned 200"
-Sub-agent:  ✅ runs git diff + re-runs verification + reads counts           ❌ trust the "all good"
+Tests:      ✅ [<test cmd>] [49/49 passed, 0 failed, exit 0] → "Tests pass"   ❌ "Should pass now"
+Regression: ✅ write→FAIL→fix→PASS→revert→FAIL→restore→PASS → "confirmed"     ❌ "I wrote a regression test" (no revert)
+Build:      ✅ [<build cmd>] [exit 0, build artifact created] → "Build passes" ❌ "Types compile, build should work"
+Smoke:      ✅ [curl health/ready 200][curl happy-path 200, valid JSON]       ❌ "in-process request() returned 200"
+Sub-agent:  ✅ runs git diff + re-runs verification + reads counts            ❌ trust the "all good"
 ```
 
-## Why this matters for Brain
+## Why this matters
 
-Brain ships financial-adjacent metrics (CM2, MER, recovered-revenue) and a regulated channel (AI calling under DLT/NCPR). A false "PASS" costs the Founder's trust in the entire MER dashboard the moment a customer asks "why did CM2 drop ₹2L last week?" and the answer is "a test that wasn't actually run masked a bug." The 7d/30d attribution windows mean a bug shipped today shows up two weeks later, past the ability to map cause to effect.
+When a product ships financial-adjacent metrics and operates regulated channels (see `COMPLIANCE.md`), a false "PASS" costs the Stakeholder's trust in the entire product the moment a user asks "why did this number drop last week?" and the answer is "a test that wasn't actually run masked a bug." Delayed-attribution windows mean a bug shipped today can surface weeks later, past the ability to map cause to effect.
 
 ## When to apply
 
-ALWAYS before: any completion/success/ready claim; any expression of satisfaction; committing/pushing/opening a PR; emitting a `→ <next-agent>` handoff; moving to the next task; delegating to a sub-agent (verify its output); writing in `memory/qa/<slug>.md` that Tanvi cleared a feature; writing in `memory/incidents/<date>-<slug>.md` that an incident is resolved.
+ALWAYS before: any completion/success/ready claim; any expression of satisfaction; committing/pushing/opening a PR; emitting a `→ <next-agent>` handoff; moving to the next task; delegating to a sub-agent (verify its output); writing in `memory/qa/<slug>.md` that QA cleared a feature; writing in `memory/incidents/<date>-<slug>.md` that an incident is resolved.
 
-## Brain wiring
+## Wiring
 
 | Concern | Owner | Reference |
 |---|---|---|
-| Every builder's verification floor | Vikram, Maya, Ananya, Karan | their agent MDs + Iron Law #5 |
-| QA PASS/FAIL discipline | **Tanvi** | canon/technical-requirements.md |
+| Every builder's verification floor | Backend, AI/ML, Frontend, Mobile Engineers | their agent MDs + Iron Law #5 |
+| QA PASS/FAIL discipline | **QA Engineer** | the Product Canon (`.engineering-os/knowledge-base/`) |
 | Inverted-handoff verification | orchestrator | prompts/system-prompt.md |
-| Audit trail of verification claims | `memory/qa/<slug>.md` + Decision Log | |
+| Audit trail of verification claims | `memory/qa/<slug>.md` + the system-of-record audit log | |
 
 Related: `testing-tdd`, `systematic-debugging`, `operational-readiness`.
 

@@ -4,7 +4,7 @@ description: Show the state of every in-flight requirement (or one specific by r
 disable-model-invocation: true
 ---
 
-Show the current state of the Brain Engineering OS pipeline.
+Show the current state of the Engineering OS pipeline.
 
 If `$ARGUMENTS` is empty:
 
@@ -22,4 +22,4 @@ If `$ARGUMENTS` is a req_id:
 4. Print the most recent decision-log entries for this req_id (grep `.engineering-os/decision-log/`).
 5. Print "Next action: <who> should <what>" based on current status.
 
-For any blocked / stuck requirement (>2 days in same stage), surface a recommendation: Bounce back? Escalate to CTOA? Page Founder?
+For any blocked / stuck requirement (>2 days in same stage), surface a recommendation: Bounce back? Escalate to the Engineering Advisor? Page the Stakeholder?

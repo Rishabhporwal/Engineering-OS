@@ -1,88 +1,89 @@
 ---
 name: tech-stack-evaluation
-description: Brain's stack is LOCKED — use ONLY when adding a layer not in the stack (e.g. the AI calling vendor) or proposing a layer swap needing an ADR. For routine work, skip and reference canon.
+description: The stack-DECISION framework. The OS is stack-agnostic — each seam is bound in the product's STACK.md via an ADR during Foundation. Use when adding a layer not yet in the Canon, or proposing a layer swap that needs an ADR. For routine work, skip and reference the Canon.
 ---
 
-# Tech Stack Evaluation — Stack Is Locked
+# Tech Stack Evaluation — Decide Deliberately, Then Lock
 
-## Brain's stack is locked
+## The OS is stack-agnostic; the product's stack is decided in the Canon
 
-The full table is the locked decision in `canon/technical-requirements.md`, reflected in `prompts/system-prompt.md` and `memory/business-context.md`. **For routine work, don't re-run evaluation — reference the canon.**
+The Engineering OS does not prescribe a technology. **Each architectural seam is bound to a concrete technology in the product's `STACK.md`** (in `.engineering-os/knowledge-base/`), produced during the Foundation phase via an ADR (see `engineering-os-blueprint/09-reference-architecture.md` and `engineering-os-blueprint/04-architecture-and-decisions.md`). **Once a seam is chosen and recorded in `STACK.md`, it is locked** — for routine work, don't re-run evaluation; reference the Canon.
 
-| Layer | Choice |
+The seams a `STACK.md` typically binds (the technology in each cell is the *product's* choice, not a mandate):
+
+| Seam | What `STACK.md` binds it to |
 |---|---|
-| Frontend (web) | Next.js 16 App Router, shadcn/ui, Tailwind, Recharts + Visx, Redux Toolkit + TanStack Query + nuqs |
-| Frontend (mobile, PRIMARY) | React Native + Expo SDK 56, Tamagui, Expo Router, redux-persist on AsyncStorage, victory-native, EAS Build |
-| Edge API | Fastify + tRPC (typed end-to-end) |
-| Internal API | gRPC over HTTP/2 via Protobuf; `buf` codegen (TS + Python) |
-| Agent surface | MCP server inside api-gateway |
-| OLTP | Supabase Postgres + RLS + Auth |
-| OLAP | ClickHouse Cloud (workspace_id-sharded; query gateway in `pylibs/brain_clickhouse`) |
-| Cache | ElastiCache Redis (cluster mode) |
-| Vector | pgvector in Postgres (Memory Layer) |
-| Async | Amazon MSK + AWS Glue Schema Registry + Avro |
-| CDC | Debezium on MSK Connect |
-| Search / Logs | AWS OpenSearch (Fluent Bit log spine + Phase 3 search) |
-| Object | S3 |
-| CDN + DNS | CloudFront + Route 53 |
-| Orchestration | EKS + Karpenter + ArgoCD |
-| IaC | AWS CDK (TypeScript) |
-| Secrets | AWS Secrets Manager + per-pod IRSA |
-| CI/CD | GitHub Actions OIDC → ECR → ArgoCD; EAS Build + Update for mobile |
-| LLM | LiteLLM gateway (self-hosted on EKS, ap-south-1) → Claude default (Sonnet 4.6 synthesis + Haiku 4.5 bounded NL) with prompt caching |
-| Email / SMS / WhatsApp | AWS SES; Gupshup or Kaleyra (DLT); WhatsApp Cloud API (Gupshup BSP) |
-| AI Calling | Pilot Path A (Bolna/Smallest.ai) or Path B (Vapi/Retell); parallel-build Path C (native) at ~5K calls/day |
-| Observability | Fluent Bit → OpenSearch + CloudWatch + X-Ray + Sentry + PostHog |
+| Web frontend | a web framework + UI/charting libs + state strategy |
+| Mobile frontend (if any) | a mobile framework + build/release pipeline |
+| Edge / public API | an HTTP framework + typed contract layer |
+| Internal API | an internal RPC/contract layer with codegen across runtimes |
+| Agent / tool surface | how models/tools are exposed (e.g. an MCP server) |
+| OLTP store | a transactional database + row-level isolation |
+| OLAP store | an analytical store (with the tenant key leading the sort order) |
+| Cache | a caching layer + invalidation discipline |
+| Vector / similarity | a vector index appropriate to the workload |
+| Async backbone | a message bus + schema registry |
+| Search / Logs | a log/search spine |
+| Object storage | a blob store |
+| CDN + DNS | edge delivery + DNS |
+| Orchestration | a container/scheduler platform |
+| IaC | an infrastructure-as-code tool |
+| Secrets | a managed secret store + per-workload identity |
+| CI/CD | a pipeline + artifact registry + deploy mechanism |
+| Model gateway | a single entry point routing to the chosen model(s) |
+| Outbound channels | email/SMS/chat/voice providers (per `COMPLIANCE.md`) |
+| Observability | logs + metrics + traces + error tracking |
 
 ## When to use this skill (RARELY)
 
-1. **Adding a new layer not in the stack** — e.g., the AI calling vendor.
-2. **Proposing a layer swap** — write an explicit ADR with: failure mode of current choice, swap cost, migration path, security review (Shreya).
-3. **Phase 4 expansion** — US region, multi-3PL (Delhivery, Bluedart direct), new payment processors.
+1. **Adding a new seam/layer not yet bound in `STACK.md`** — e.g. a new outbound-channel vendor.
+2. **Proposing a layer swap** — write an explicit ADR with: failure mode of the current choice, swap cost, migration path, Security Reviewer sign-off.
+3. **A scope expansion that forces a new technology** — a new region, a new integration class, a new payment/processor surface.
 
-Otherwise: **skip this skill.**
+Otherwise: **skip this skill** and reference the Canon.
 
 ## The evaluation principle (when you ARE evaluating)
 
 > **The simplest tool that meets the requirement over the project's expected lifetime wins.**
 
-Don't add complexity for hypothetical scale or one-off needs. Lifetime-weight the choice — if you'll need it in 6 months, build it now ("Kafka in slice 3" costs 3-5× "Kafka in slice 1, even with one consumer"). Document every choice in an ADR.
+Don't add complexity for hypothetical scale or one-off needs. Lifetime-weight the choice — if you'll need it in 6 months, build it now (introducing a message bus in slice 3 costs 3-5× introducing it in slice 1, even with one consumer). Document every choice in an ADR.
 
 ## ADR template for stack additions / swaps
 
 ```markdown
 ---
 adr: NNN
-title: <Layer> — <Choice>
+title: <Seam> — <Choice>
 status: proposed | accepted | superseded
 date: YYYY-MM-DD
 ---
 # Context — Why are we evaluating this? What constraint forced it?
-# Options Considered — per option: Pros / Cons / Cost ($/mo) / Migration cost from current
+# Options Considered — per option: Pros / Cons / Cost (per month) / Migration cost from current
 # Decision — We chose **<X>** because: <reasons>
 # Consequences — What it enables / locks us into / new failure modes
-# Rejected alternatives — Why each is wrong for Brain at this Phase
+# Rejected alternatives — Why each is wrong for THIS product at this stage
 ```
 
-## AI calling vendor — the live decision
+## Worked example — choosing an outbound-voice/channel vendor
 
-Brain has an OPEN evaluation:
+A typical "buy vs. partner vs. build" evaluation for a regulated outbound channel (the specific vendors are illustrative):
 
 | Path | Strengths | Weaknesses | TTM |
 |---|---|---|---|
-| A — India vendor (Bolna, Smallest.ai) | Hindi/Hinglish accents; STD trunking ₹0.30-0.60/min; vendor handles DLT/DND | Vendor dependency; less control | 4-6 wk |
-| B — Global vendor (Vapi, Retell, ElevenLabs, Bland) | Best voice quality + latency; mature SDKs | $0.05-0.15/min; SIP plumbing for India compliance | 4-6 wk + SIP trunk |
-| C — Native (Deepgram/Whisper + Haiku + ElevenLabs/Cartesia + Plivo/Exotel) | Full control; long-term margin | 4-6 mo build; voice-agent engineer | 4-6 mo |
+| A — Regional vendor | Local accents/numbers; vendor handles regional channel-compliance registration | Vendor dependency; less control | 4-6 wk |
+| B — Global vendor | Best quality + latency; mature SDKs | Higher per-unit cost; extra plumbing for regional compliance | 4-6 wk + integration |
+| C — Build native | Full control; long-term margin | Multi-month build; specialist engineer | 4-6 mo |
 
-**Heuristic:** Months 1-6 partner (A or B); 6-12 parallel-build C if volume > 5K calls/day; 12+ migrate primary to C, keep partner as overflow + regional-language hedge. Vendor abstraction in `lifecycle-service/call_router.py` makes swaps a config change; production can run multiple providers concurrently.
+**Heuristic:** early on, partner (A or B); once volume justifies it, parallel-build C; later, migrate primary to C and keep a partner as overflow + a regional hedge. Put the vendor behind an adapter (e.g. a `channel_router`) so swaps are a config change and production can run multiple providers concurrently. The specific compliance obligations come from `COMPLIANCE.md`.
 
 ## Common failure modes
 
-- **Re-evaluating a locked stack** — the ADR is written; reference it.
-- **Choosing on hype, not Brain fit** — "everyone uses Pulsar now" doesn't matter if MSK is locked.
-- **Forgetting Phase context** — lifetime-weight at the project level, but stage spend per Phase.
+- **Re-evaluating an already-locked seam** — the ADR is written; reference it.
+- **Choosing on hype, not product fit** — "everyone uses X now" doesn't matter if `STACK.md` already binds the seam well.
+- **Forgetting stage context** — lifetime-weight at the project level, but stage the spend per phase.
 
 ## References
 
-- `canon/technical-requirements.md` — canonical stack table + AI calling vendor decision
+- The product's `STACK.md` (in `.engineering-os/knowledge-base/`) — the canonical seam→technology bindings + their ADRs
+- `engineering-os-blueprint/04-architecture-and-decisions.md` (ADR discipline) · `engineering-os-blueprint/09-reference-architecture.md` (seam catalogue)
 - Related: `architecture-patterns` (when a pattern change implies a stack change), `version-upgrade-policy` (version cadence within the locked stack)

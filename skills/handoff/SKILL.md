@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 **Use sparingly.** This is the manual escape hatch. Normal flow uses the per-stage agent handoff signals (READY-FOR-SECURITY, etc.) and goes through the gate checks.
 
-Manual handoff still respects VETOs — Shreya can reject security-bypassed work; Tanvi can reject QA-bypassed work.
+Manual handoff still respects VETOs — the Security Reviewer can reject security-bypassed work; the QA Engineer can reject QA-bypassed work.
 
 Steps:
 

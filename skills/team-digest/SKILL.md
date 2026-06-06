@@ -23,7 +23,7 @@ uv run "${CLAUDE_PLUGIN_ROOT}/tools/team_digest.py" $ARGUMENTS
 - **Lessons learned** — count from the registry.
 
 ## When to use it
-- **Joining a Brain repo / a teammate's first session** — instant situational awareness after `git pull`.
+- **Joining a repo / a teammate's first session** — instant situational awareness after `git pull`.
 - **Before starting a feature** — check nobody's already on it and see related challenges (then `/recall-similar` for detail).
 - **Standup / weekly review** — `--days 7` for a shipping + challenge summary.
 

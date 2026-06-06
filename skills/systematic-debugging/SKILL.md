@@ -5,7 +5,7 @@ description: Four-phase debugging (Root Cause → Pattern → Hypothesis → Imp
 
 # Systematic Debugging
 
-Random fixes waste time and create new bugs. In a 7-service distributed system (Postgres, ClickHouse, Kafka, Redis, gRPC, MCP, Expo, CloudFront…) every "quick fix" risks creating a worse one.
+Random fixes waste time and create new bugs. In a distributed system (e.g. multiple services over Postgres, an OLAP store, a message bus, a cache, RPC, an agent/tool layer, a mobile runtime, a CDN…) every "quick fix" risks creating a worse one.
 
 **Core principle:** ALWAYS find root cause before attempting fixes. Symptom fixes are failure.
 
@@ -19,7 +19,7 @@ If you haven't completed Phase 1, you cannot propose fixes.
 
 ## When to use
 
-ANY technical issue: test failure, prod bug, unexpected behaviour, perf regression, build failure, integration drift. ESPECIALLY when under time pressure, when "one quick fix" seems obvious, when you've already tried multiple fixes, or when the Founder wants it fixed NOW (systematic IS faster than thrashing). Simple bugs have root causes too — don't skip.
+ANY technical issue: test failure, prod bug, unexpected behaviour, perf regression, build failure, integration drift. ESPECIALLY when under time pressure, when "one quick fix" seems obvious, when you've already tried multiple fixes, or when the Stakeholder wants it fixed NOW (systematic IS faster than thrashing). Simple bugs have root causes too — don't skip.
 
 ---
 
@@ -29,33 +29,33 @@ Complete each before proceeding to the next.
 
 ### Phase 1 — Root Cause Investigation
 
-1. **Read errors carefully** — Brain logs land in OpenSearch (Fluent Bit → OpenSearch). The exact message + stack trace + `request_id` + `workspace_id` is almost always already there. Don't paraphrase. Don't skim.
-2. **Reproduce consistently** — can you trigger it reliably? In staging? In a specific tenant? Exact steps? If not reproducible → gather more data, don't guess.
-3. **Check recent changes** — `git log --since='24 hours ago'`; ArgoCD application history; new connector config / ADR / MCP tool?
-4. **Gather evidence at component boundaries** (Brain is distributed — assume nothing about which service is broken). For each boundary the request crosses, log what enters and exits:
+1. **Read errors carefully** — your log aggregator almost always already holds the exact message + stack trace + correlation IDs (`request_id` + the tenant/user keys). Don't paraphrase. Don't skim.
+2. **Reproduce consistently** — can you trigger it reliably? In staging? For a specific tenant? Exact steps? If not reproducible → gather more data, don't guess.
+3. **Check recent changes** — `git log --since='24 hours ago'`; deploy/release history; new connector config / ADR / tool definition?
+4. **Gather evidence at component boundaries** (a distributed system — assume nothing about which service is broken). For each boundary the request crosses, log what enters and exits:
    ```
-   Web BFF → api-gateway:      request_id, workspace_id, auth claim
-   api-gateway → core-service: gRPC request, response, latency
-   core-service → Postgres:    SQL, params (sanitized), row count
-   core-service → Kafka:       topic, partition, offset, message_id
-   ingestion-service → vendor: endpoint, status, retry count
+   web/BFF → API gateway:    request_id, tenant key, auth claim
+   gateway → core service:   RPC request, response, latency
+   service → datastore:      query, params (sanitized), row count
+   service → message bus:    topic, partition, offset, message_id
+   ingestion → external API: endpoint, status, retry count
    ```
-   Brain's single correlation ID runs across all surfaces — search OpenSearch for `request_id:abc123` and you see every hop.
+   A single correlation ID runs across all surfaces — search the log aggregator for `request_id:abc123` and you see every hop.
 5. **Trace data flow backwards** (see below). When the error is deep in the call stack, the fix usually isn't there.
 
 ### Phase 2 — Pattern Analysis
 
-1. **Find working examples** — another Brain service / connector / tenant that does this correctly?
-2. **Compare against references** — TECH docs, ADRs, the canonical implementation.
+1. **Find working examples** — another service / connector / tenant that does this correctly?
+2. **Compare against references** — the Product Canon (HLD/LLD, INVARIANTS), ADRs, the canonical implementation.
 3. **Identify differences** — list every difference; don't assume "that can't matter."
-4. **Understand dependencies** — Postgres extension? Kafka topic? EKS IAM role? Vendor token rotation?
+4. **Understand dependencies** — a datastore extension? A message-bus topic? An infra/IAM role? Vendor token rotation?
 
 ### Phase 3 — Hypothesis and Testing
 
 1. **Form one hypothesis** — "I think X is the root cause because Y." Be specific. Write it down.
 2. **Test minimally** — smallest change to verify. One variable at a time. Never bundle.
 3. **Verify before continuing** — yes → Phase 4. No → new hypothesis (do NOT pile fixes).
-4. **Say "I don't understand X"** — ask `aryan-architect`, `shreya-security`, or `rohan-cto-advisor` per layer.
+4. **Say "I don't understand X"** — ask the `architect`, `security-reviewer`, or `cto-advisor` per layer.
 
 ### Phase 4 — Implementation
 
@@ -63,83 +63,80 @@ Complete each before proceeding to the next.
 2. **Implement one fix** at the root cause. ONE change. No "while I'm here" cleanups (Iron Law #4 — Surgical Changes).
 3. **Verify the fix** — full suite + the repro test (see `verification-before-completion`).
 4. **If fix doesn't work — STOP. Count attempts.** <3: return to Phase 1 with new info. **≥3: STOP — question the architecture.**
-5. **3+ fixes failed → architecture question.** Pattern: each fix reveals new shared state/coupling elsewhere, requires "massive refactoring," or creates new symptoms in different paths. Ask: is this pattern fundamentally sound? Escalate the architecture call to Aryan + Rohan. This is NOT a failed hypothesis — it's a wrong architecture.
+5. **3+ fixes failed → architecture question.** Pattern: each fix reveals new shared state/coupling elsewhere, requires "massive refactoring," or creates new symptoms in different paths. Ask: is this pattern fundamentally sound? Escalate the architecture call to the Architect + Engineering Advisor. This is NOT a failed hypothesis — it's a wrong architecture.
 
 ---
 
 ## Backward root-cause tracing
 
-Phase 1's hardest step. Bugs manifest deep in the call stack — a Kafka offset-commit failure traced to a tRPC handler that didn't `await`; a ClickHouse insert failure traced to a Pydantic model with a stray `None`; an AI call placed outside calling hours traced to a Decision Log replay that bypassed the compliance engine. Your instinct is to fix where the error appears. That's symptom-treatment.
+Phase 1's hardest step. Bugs manifest deep in the call stack — a message-bus offset-commit failure traced to a handler that didn't `await`; an OLAP insert failure traced to a model with a stray `None`; an action emitted outside a permitted window traced to an audit-log replay that bypassed the compliance check. Your instinct is to fix where the error appears. That's symptom-treatment.
 
 **Trace backward through the call chain until you find the original trigger. Fix at the source.**
 
-1. **Observe the symptom** — read the exact error (`Code: 50. DB::Exception: Mandatory column 'workspace_id' has no value`).
-2. **Find the immediate cause** — what directly throws? `await ch.insert("events_raw", rows)`.
-3. **Ask what called this, with what value?** — `rows` from `batch.events`; `batch` from `ShopifyConnector.poll()`.
+1. **Observe the symptom** — read the exact error (e.g. `Mandatory column 'tenant_id' has no value`).
+2. **Find the immediate cause** — what directly throws? `await store.insert("events_raw", rows)`.
+3. **Ask what called this, with what value?** — `rows` from `batch.events`; `batch` from `Connector.poll()`.
 4. **Keep tracing upward**, recording the value at each hop:
    ```
-   ShopifyConnector.poll() → maps ShopifyOrderEvent → Kafka shopify.orders.v1
-     → ingestion consumer batches → BatchProcessor.process() → ch.insert(...)
-   #  ShopifyOrderEvent.workspace_id == None for one row
+   Connector.poll() → maps OrderEvent → bus topic orders.v1
+     → ingestion consumer batches → BatchProcessor.process() → store.insert(...)
+   #  OrderEvent.tenant_id == None for one row
    ```
-5. **Find the original trigger.** Here: an old migration left `integrations` rows with `workspace_id=NULL`.
+5. **Find the original trigger.** Here: an old migration left `integrations` rows with `tenant_id=NULL`.
 
-**Fix at source, not symptom:** wrong — filter bad rows in the insert. Right — (1) backfill the missing `workspace_id`; (2) add NOT NULL constraint; (3) defense-in-depth — `ShopifyConnector` raises on missing `workspace_id`, never produces the event (see `defense-in-depth-validation`).
+**Fix at source, not symptom:** wrong — filter bad rows in the insert. Right — (1) backfill the missing tenant key; (2) add a NOT NULL constraint; (3) defense-in-depth — `Connector` raises on a missing tenant key, never produces the event (see `multi-tenancy-isolation`).
 
 ### When async boundaries lose the stack
 
-Across Kafka, gRPC, BullMQ the call stack is gone. Instrument **before** the dangerous call (after-fail loses inputs):
+Across a message bus, RPC, or a job queue the call stack is gone. Instrument **before** the dangerous call (after-fail loses inputs):
 
 ```python
 async def insert_events(rows):
-    if any(r.workspace_id is None for r in rows):
+    if any(r.tenant_id is None for r in rows):
         import traceback
-        logger.error("DEBUG events with null workspace_id", extra={
-            "null_count": sum(1 for r in rows if r.workspace_id is None),
+        logger.error("DEBUG events with null tenant_id", extra={
+            "null_count": sum(1 for r in rows if r.tenant_id is None),
             "stack": traceback.format_stack(),
             "request_id": correlation_id.get(),
         })
-    await ch.insert("events_raw", rows)
+    await store.insert("events_raw", rows)
 ```
 
-Use `logger.error()` not `print()` so it lands in OpenSearch with the `request_id`.
+Use `logger.error()` not `print()` so it lands in the log aggregator with the `request_id`.
 
 ### Cross-service tracing
 
-A single correlation ID runs web BFF → api-gateway → gRPC → service → Kafka → consumer. Search OpenSearch for one `request_id` for the complete chain across all 7 services. For span timing use AWS X-Ray:
-```bash
-aws xray get-trace-summaries --start-time $(date -u -d '-1 hour' +%s) --end-time $(date +%s)
-```
+A single correlation ID runs web/BFF → API gateway → RPC → service → message bus → consumer. Search the log aggregator for one `request_id` to get the complete chain across every service. For span timing use the distributed-tracing backend (OpenTelemetry / X-Ray / equivalent), querying its trace-summaries API over the relevant window.
 
 ### Finding which test polluted shared state
 
 ```bash
-pnpm test --bail              # stop at first failure
-pnpm test --shard 1/4         # narrow by shard
-for f in $(find . -name '*.test.ts' | sort); do
-  echo "=== $f ===" && pnpm vitest run "$f" || break   # find the polluter
+<test-runner> --bail              # stop at first failure
+<test-runner> --shard 1/4         # narrow by shard
+for f in $(find . -name '*.test.*' | sort); do
+  echo "=== $f ===" && <test-runner> run "$f" || break   # find the polluter
 done
-for i in {1..20}; do pnpm test:e2e --spec e2e/morning-brief.spec.ts || echo "Failed at run $i"; done
+for i in {1..20}; do <e2e-runner> --spec e2e/<flow>.spec.* || echo "Failed at run $i"; done
 ```
 
-### Real Brain example — the JWT entropy bug (slice-3)
+### Worked example — the JWT entropy bug
 
-**Symptom:** integration tests intermittently failed JWT verification with "bad signature." **Trace:** test signs JWT with local secret → api-gateway verify hook reads `JWT_SECRET` (12 chars) → `jose` HMAC-SHA256 tolerates short secrets → parallel tests mutated `JWT_SECRET` mid-flight. **Root cause:** `JWT_SECRET` was both `< 32` bytes (Shreya HIGH) AND mutated, breaking parallel test isolation. **Fix (layered):** (1) fail-fast on missing `JWT_SECRET`; (2) fail-fast on `< 32` bytes — entropy floor; (3) fresh per-test secret + hermetic verifier; (4) Decision Log row on `session.invalidate_all`. Stop at "bump the secret length" and the pollution bug survives.
+**Symptom:** integration tests intermittently failed JWT verification with "bad signature." **Trace:** test signs JWT with a local secret → the gateway verify hook reads `JWT_SECRET` (12 chars) → the HMAC-SHA256 library tolerates short secrets → parallel tests mutated `JWT_SECRET` mid-flight. **Root cause:** `JWT_SECRET` was both `< 32` bytes (a Security HIGH) AND mutated, breaking parallel test isolation. **Fix (layered):** (1) fail-fast on missing `JWT_SECRET`; (2) fail-fast on `< 32` bytes — entropy floor; (3) fresh per-test secret + hermetic verifier; (4) an audit-log row on `session.invalidate_all`. Stop at "bump the secret length" and the pollution bug survives.
 
 ---
 
-## Brain-specific debugging cheatsheet
+## Debugging cheatsheet
 
 | Symptom | Where to look first | Owner |
 |---|---|---|
-| "Tests pass locally, fail in CI" | tsconfig drift; missing build output; ESM/CJS mismatch | Vikram |
-| "ClickHouse query suddenly slow" | EXPLAIN PIPELINE; partition pruning; MV merge lag; `system.parts` | Maya |
-| "Webhook from Shopify fires twice" | idempotency key cardinality; Shopify retry; consumer offset | Maya |
-| "Decision Log row missing" | api-gateway logs for request_id; tx rollback; MCP write scope | Vikram + Maya |
-| "Push didn't arrive at 07:05 IST" | EAS push receipt; APNS/FCM error; opt-out state; synthesis log | Karan + Maya |
-| "AI call placed at 22:00 IST" | compliance engine config; calling-hours guard; NCPR cache freshness | Maya + Shreya |
-| "MER differs between dashboard and DB" | metric-registry parity (TS vs Python); v1↔v2 reconciliation | Maya + Tanvi |
-| "EKS pod restart loop" | liveness probe failure mode; cold cache; OOMKilled | Jatin + Vikram |
+| "Tests pass locally, fail in CI" | build-config drift; missing build output; module-format (ESM/CJS) mismatch | Backend Engineer |
+| "OLAP query suddenly slow" | query plan; partition pruning; materialized-view merge lag; storage-parts stats | AI/ML Engineer |
+| "Webhook from a connector fires twice" | idempotency key cardinality; vendor retry; consumer offset | AI/ML Engineer |
+| "Audit-log row missing" | gateway logs for request_id; tx rollback; write-tool scope | Backend Engineer + AI/ML Engineer |
+| "Scheduled notification didn't arrive" | push receipt; APNS/FCM error; opt-out state; synthesis log | Mobile Engineer + AI/ML Engineer |
+| "Action emitted outside the permitted window" | compliance-check config; time-window guard; consent/registry cache freshness | AI/ML Engineer + Security Reviewer |
+| "A metric differs between dashboard and store" | metric-registry parity across runtimes; version reconciliation | AI/ML Engineer + QA Engineer |
+| "Pod restart loop" | liveness probe failure mode; cold cache; OOMKilled | Platform/SRE + Backend Engineer |
 | "Sub-agent reported success but code is broken" | `git diff`; re-run verification; trust nothing | orchestrator |
 
 ## Red flags — STOP and return to Phase 1
@@ -161,15 +158,15 @@ for i in {1..20}; do pnpm test:e2e --spec e2e/morning-brief.spec.ts || echo "Fai
 
 If investigation truly leaves it environmental/external/timing-dependent: (1) document in `memory/incidents/<date>-<slug>.md`; (2) implement handling (retry, timeout, circuit breaker, clearer error); (3) add monitoring so the next instance has more evidence. But 95% of "no root cause" cases are incomplete investigation.
 
-## Brain wiring
+## OS wiring
 
 | Concern | Owner | Reference |
 |---|---|---|
-| Incident debugging | **Jatin** | canon/technical-requirements.md (incident playbook) |
+| Incident debugging | **Platform/SRE** | Product Canon `PLAYBOOK-incident.md` |
 | Service-level debugging | each builder | service-specific skill |
-| Cross-service correlation | request_id + workspace_id everywhere | canon/technical-requirements.md |
-| Postmortems with root cause | **Jatin** + the builder | `blueprints/postmortem.md` |
+| Cross-service correlation | request_id + the tenant/user keys everywhere | `observability` |
+| Postmortems with root cause | **Platform/SRE** + the builder | `incident-response` |
 
-Related: `defense-in-depth-validation`, `verification-before-completion`, `observability`.
+Related: `multi-tenancy-isolation`, `verification-before-completion`, `observability`.
 
-Slice-3 impact: systematic 15–30 min to fix vs 2–3 hrs thrashing; first-time fix rate 95% vs 40%; near-zero new bugs vs common.
+Impact of working systematically: 15–30 min to fix vs 2–3 hrs thrashing; first-time fix rate ~95% vs ~40%; near-zero new bugs vs common.

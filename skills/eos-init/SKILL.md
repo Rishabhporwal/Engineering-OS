@@ -1,16 +1,18 @@
 ---
 name: eos-init
-description: One-time scaffold of the Brain Engineering OS shared memory into the current Brain product repo. Run once per Brain project.
+description: One-time scaffold of the Engineering OS shared memory into the consuming product repo. Run once per project.
 disable-model-invocation: true
 ---
 
-Initialize the Brain Engineering OS shared memory in the current project.
+Initialize the Engineering OS shared memory in the current project.
 
-This command writes `.engineering-os/` + `.gitattributes` into `${CLAUDE_PROJECT_DIR}`. Run it once per Brain product repo. Subsequent teammates who clone the repo will already have the scaffold — they only need to install the plugin (`/plugin install engineering-os`).
+This command writes `.engineering-os/` + `.gitattributes` into `${CLAUDE_PROJECT_DIR}` (the consuming product repo). Run it once per repo. Subsequent teammates who clone the repo will already have the scaffold — they only need to install the plugin (`/plugin install engineering-os`).
+
+This scaffolds the OS's **shared memory** only. The product itself is defined separately, in the **Product Canon** (`.engineering-os/knowledge-base/`), produced in the Foundation phase from the `canon/` template (see `engineering-os-blueprint/10-adoption-and-product-canon.md`). `/eos-init` does not write the Canon — it prepares the memory substrate the team writes into.
 
 ## What this command does
 
-1. **Detect** `${CLAUDE_PROJECT_DIR}` (the Brain product repo root).
+1. **Detect** `${CLAUDE_PROJECT_DIR}` (the consuming product repo root).
 2. **Refuse** if `${CLAUDE_PROJECT_DIR}/.engineering-os/` already exists — that means the project was already initialized. Print "already initialized; nothing to do" and exit.
 3. **Refuse** if `${CLAUDE_PROJECT_DIR}/.git` does not exist — the Engineering OS depends on git for shared memory. Print "no git repo found; run `git init` first" and exit.
 4. **Confirm with the operator** (unless `$ARGUMENTS == "yes"`) — show what will be written and ask for confirmation. Files to write:
@@ -28,19 +30,19 @@ This command writes `.engineering-os/` + `.gitattributes` into `${CLAUDE_PROJECT
    - `${CLAUDE_PROJECT_DIR}/.engineering-os/durable-rules/.gitkeep` (adopted rules land here)
    - `${CLAUDE_PROJECT_DIR}/.engineering-os/lessons-learned.md` with header:
      ```
-     # Brain Engineering OS — Lessons Learned
+     # Engineering OS — Lessons Learned
 
-     > Append-only registry. Each entry sourced from a per-child retro (`14-retro.md`).
-     > CTOA reads relevant entries at every Stage 1 intake.
+     > Append-only registry. Each entry sourced from a per-requirement retro (`14-retro.md`).
+     > The Engineering Advisor reads relevant entries at every Stage 1 intake.
      > Mutation rule: append only.
 
-     No lessons filed yet. First entry will come from the first child's retro.
+     No lessons filed yet. First entry will come from the first requirement's retro.
      ```
-   - `${CLAUDE_PROJECT_DIR}/.engineering-os/pending-founder-attention.md` with header:
+   - `${CLAUDE_PROJECT_DIR}/.engineering-os/pending-stakeholder-attention.md` with header:
      ```
-     # Pending Founder Attention
+     # Pending Stakeholder Attention
 
-     > Items here require Founder review. Agents add lines; Founder acts and strikes them through.
+     > Items here require Stakeholder review. Agents add lines; the Stakeholder acts and strikes them through.
      > Each line names the issue, the artifact path, and the slash command to act.
 
      (no items)
@@ -65,9 +67,9 @@ This command writes `.engineering-os/` + `.gitattributes` into `${CLAUDE_PROJECT
 ### `.engineering-os/README.md`
 
 ```markdown
-# `.engineering-os/` — Shared Memory (Brain product repo)
+# `.engineering-os/` — Shared Memory (product repo)
 
-This directory holds the Brain Engineering OS shared agent memory. It is **committed to git**. Every teammate who clones the repo and runs `git pull` receives the full state of every prior run.
+This directory holds the Engineering OS shared agent memory. It is **committed to git**. Every teammate who clones the repo and runs `git pull` receives the full state of every prior run.
 
 Do NOT add this directory to `.gitignore`. Do NOT remove `.gitattributes`.
 
@@ -117,21 +119,21 @@ The plugin agents read/write here automatically. You typically don't touch these
 ```
 
 Create one file per role:
-- `cto-advisor.journal.md`
-- `architect.journal.md` (Aryan)
-- `backend.journal.md` (Vikram)
-- `frontend-web.journal.md` (Ananya)
-- `frontend-mobile.journal.md` (Karan)
-- `intelligence.journal.md` (Maya)
-- `security.journal.md` (Shreya)
-- `qa.journal.md` (Tanvi)
-- `platform.journal.md` (Jatin)
-- `product.journal.md` (Priya)
+- `cto-advisor.journal.md` (Engineering Advisor)
+- `architect.journal.md` (Architect)
+- `backend.journal.md` (Backend Engineer)
+- `frontend-web.journal.md` (Frontend/Web Engineer)
+- `frontend-mobile.journal.md` (Mobile Engineer)
+- `intelligence.journal.md` (AI/ML Engineer)
+- `security.journal.md` (Security Reviewer)
+- `qa.journal.md` (QA Engineer)
+- `platform.journal.md` (Platform/SRE)
+- `product.journal.md` (Delivery Coordinator)
 
 ### `.gitattributes` (append to existing or create)
 
 ```gitattributes
-# Brain Engineering OS — merge rules for append-only shared memory
+# Engineering OS — merge rules for append-only shared memory
 .engineering-os/memory/agents/*.journal.md merge=union
 .engineering-os/memory/features/*.md merge=union
 .engineering-os/decision-log/**/*.jsonl merge=union

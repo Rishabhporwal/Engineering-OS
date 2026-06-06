@@ -1,13 +1,15 @@
 ---
 name: api-discipline
-description: Contract testing, versioning + traffic across Brain's tRPC/gRPC/MCP surfaces — buf breaking, Pact, deprecation/sunset, keyset pagination (OFFSET banned), token-bucket limits.
+description: Contract testing, versioning + traffic across tRPC/gRPC/MCP surfaces — buf breaking, Pact, deprecation/sunset, keyset pagination (OFFSET banned), token-bucket rate limits.
 ---
 
 # API Discipline — Contracts, Versions, Traffic
 
-Three surfaces, one discipline. **tRPC** (web/mobile BFF, Zod-inferred), **gRPC** (internal services via `buf` — see `grpc-buf`), **MCP** (agents + external partners — see `mcp-protocol`). Contract details are canonical in `canon/technical-requirements.md`; this is the operational playbook.
+> **Reference implementation.** This skill documents one concrete binding of a seam (see `engineering-os-blueprint/09-reference-architecture.md`). The OS is stack-agnostic — your product's `STACK.md` may bind this seam to different technology. The *patterns* here (not the vendor) are what transfer.
 
-A breaking change in any surface propagates silently: a renamed `OrderEvent` field stops analytics materializing, the dashboard MER drops to zero, the Founder notices three days later. The three parts below are the structural alternative to "we'll review carefully."
+Three surfaces, one discipline. **tRPC** (web/mobile BFF, Zod-inferred), **gRPC** (internal services via `buf` — see `grpc-buf`), **MCP** (agents + external partners — see `mcp-protocol`). Contract details are canonical in the Product Canon (`STACK.md` / LLD); this is the operational playbook.
+
+A breaking change in any surface propagates silently: a renamed `OrderEvent` field stops analytics materializing, a downstream metric drops to zero, and someone notices three days later. The three parts below are the structural alternative to "we'll review carefully."
 
 ---
 
@@ -30,7 +32,7 @@ End-to-end typed inference is most of the protection — drift is a TS build err
 Versioned by name + schema version (`analytics.waterfall.compute.v2`). **Never edit a tool schema in place** — register `vN+1`, mark old `deprecated: true` (redirects internally with translation) for ≥1 release. Schemas generate from `protos/` so MCP↔gRPC cannot drift.
 
 ## Pact — consumer-driven, for cross-language semantic contracts
-The `.proto` covers the wire format; Pact covers the *semantic* contract (e.g. "`CreateOrder` with `currency=INR` stores `gst_excluded = round(amount*100/118)`"). Use when Python ingestion calls Node core over gRPC.
+The `.proto` covers the wire format; Pact covers the *semantic* contract (e.g. "`CreateOrder` with a given currency stores the tax-excluded amount as a derived integer minor-unit value"). Use when a Python service calls a Node service over gRPC.
 ```typescript
 const provider = new PactV3({ consumer: 'core-service', provider: 'intelligence-service' });
 // .given(state).uponReceiving(...).withRequest(...).willRespondWith({ body: MatchersV3.like({...}) })
@@ -39,7 +41,7 @@ const provider = new PactV3({ consumer: 'core-service', provider: 'intelligence-
 Use matchers (`like`, `eachLike`, `uuid`), validate structure not values, cover error paths (404/409/429/503). Hard-coded business values belong in integration tests, not contracts.
 
 ## OpenAPI / JSON Schema
-Only the external read-only surface (Enterprise clients writing their own client) — generate from tRPC via `trpc-to-openapi`, gate on schema validation in middleware.
+Only the external read-only surface (clients writing their own client) — generate from tRPC via `trpc-to-openapi`, gate on schema validation in middleware.
 
 ## CI gates
 | PR touches | Gate |
@@ -58,7 +60,7 @@ Only the external read-only surface (Enterprise clients writing their own client
 **Breaking (new version):** remove/rename field · change type · remove enum value · add required input · tighten validation · change a field's *meaning* while keeping the name (silent break — worst kind).
 
 ## gRPC proto rules
-Never renumber a tag · never change a field's type · never remove a field (mark `reserved`) · always add with new tag numbers. Breaking → new `package brain.<svc>.v2`; v1 stays ≥1 minor release.
+Never renumber a tag · never change a field's type · never remove a field (mark `reserved`) · always add with new tag numbers. Breaking → new `package <product>.<svc>.v2`; v1 stays ≥1 minor release.
 
 ## tRPC / MCP deprecation headers
 ```http
@@ -71,70 +73,70 @@ After sunset, return `410 Gone` with `{ error: "VERSION_SUNSET", migration_url }
 ## Deprecation timeline (canonical — min 6 months)
 | Phase | Duration | Action |
 |---|---|---|
-| Deprecated | ≥3 mo | `Deprecation`+`Sunset` headers; MCP `deprecated:true`; email Enterprise consumers |
+| Deprecated | ≥3 mo | `Deprecation`+`Sunset` headers; MCP `deprecated:true`; email external consumers |
 | Sunset announced | ≥2 mo (overlaps) | email all consumers + migration guide; UI nudge for internal callers still on v1 |
 | Read-only | 1 mo | mutating calls → `410`; reads still work |
 | Shutdown | — | all calls `410`; code removed next release |
-Sooner only with all-Owner approval + Decision Log entries from every consuming workspace.
+Sooner only with the Engineering Advisor's approval + an audit-log entry from every consuming tenant.
 
 ## v1↔v2 reconciliation (legacy single-tenant → multi-tenant migration)
-Migration W14–16: W14 v2 in shadow (v1 canonical, data flows to both) · W15 Tanvi runs reconciliation daily · W16 cutover (v2 canonical, v1 read-only → 6-month timeline). **Any dashboard-metric divergence > 1% blocks cutover** (parity tests, Tanvi).
+Phased cutover: run v2 in shadow (v1 canonical, data flows to both) → run reconciliation daily → cutover (v2 canonical, v1 read-only → 6-month timeline). **Any metric divergence > 1% blocks cutover** (parity tests, QA Engineer).
 
 ## Practices
-Support N-1 minimum · ≥6-month window · monitor per-version usage (TanStack Query logs which version each request uses) · ship `docs/migrations/<from>-to-<to>.md` with code examples · migrate internal callers before announcing external sunset · Decision Log row when a sunset endpoint starts returning 410.
+Support N-1 minimum · ≥6-month window · monitor per-version usage (TanStack Query logs which version each request uses) · ship `docs/migrations/<from>-to-<to>.md` with code examples · migrate internal callers before announcing external sunset · audit-log row when a sunset endpoint starts returning 410.
 
 ---
 
 # Part 3 — Traffic: pagination + rate limiting
 
 ## Cursor (keyset) pagination — OFFSET is BANNED in prod paths
-OFFSET scans rows it discards (page 50 = 50× page 1). Default for every list endpoint (orders, customers, decision_log, audiences). OFFSET only in bounded internal admin tooling.
+OFFSET scans rows it discards (page 50 = 50× page 1). Default for every list endpoint. OFFSET only in bounded internal admin tooling.
 ```typescript
 const listInput = z.object({ cursor: z.string().datetime().nullish(), limit: z.number().min(1).max(200).default(50) });
-// WHERE workspace_id = current_setting('app.workspace_id')::uuid
+// WHERE tenant_id = current_setting('app.tenant_id')::uuid
 //   AND ($1::timestamptz IS NULL OR created_at < $1)
 // ORDER BY created_at DESC, id DESC LIMIT $2   -- fetch limit+1 to detect hasMore
 // return { data, nextCursor: hasMore ? last.created_at.toISOString() : null }
 ```
-- Cursor = last item's sort key. For ties use a **compound `(created_at, id)`** cursor (base64url-encode for high-write tables: decision_log, raw events).
-- Sort column must be indexed with **`workspace_id` leading** (see `data-layer`).
+- Cursor = last item's sort key. For ties use a **compound `(created_at, id)`** cursor (base64url-encode for high-write tables).
+- Sort column must be indexed with **the tenant key leading** (see `data-layer`).
 - Max limit 200, default 50, never "unlimited." Don't `COUNT(*)` a multi-million-row table for a total.
 - UI: "load more"/infinite scroll, never "page X of Y." BFF uses TanStack `useInfiniteQuery` consuming `nextCursor`.
-- ClickHouse: cursor cheap when `ORDER BY` matches the primary key; for >5k-row drill-downs, server-side aggregate before paginating — never pull raw points to the client.
+- OLAP: cursor cheap when `ORDER BY` matches the primary key; for >5k-row drill-downs, server-side aggregate before paginating — never pull raw points to the client.
 - MCP/canonical envelope: `{ "data": [...], "nextCursor": "...", "hasMore": true }` — external clients honor `nextCursor` like internal ones.
 
 ## Rate limiting — distributed token bucket / sliding window
-Protect api-gateway, throttle per-brand by tier, prevent connector spikes from blowing vendor quotas.
+Protect the api-gateway, throttle per-tenant by tier, prevent connector spikes from blowing vendor quotas.
 
 | Algorithm | When |
 |---|---|
-| Token bucket | api-gateway per-brand — allows bursts (dashboard refreshes) |
-| Sliding window log | high-precision (Decision Log writes, AI dispatch) where exact count matters |
-| Fixed window | cheap per-IP defense at CloudFront; not per-brand |
+| Token bucket | api-gateway per-tenant — allows bursts (dashboard refreshes) |
+| Sliding window log | high-precision (audit writes, dispatch) where exact count matters |
+| Fixed window | cheap per-IP defense at the CDN; not per-tenant |
 
-**Distributed state via ElastiCache** — in-process buckets break under EKS auto-scaling.
+**Distributed state via a shared cache (Redis)** — in-process buckets break under horizontal auto-scaling.
 ```typescript
-// Fastify preHandler, ElastiCache-backed sliding window (INCR + EXPIRE in a Lua script)
+// Fastify preHandler, Redis-backed sliding window (INCR + EXPIRE in a Lua script)
 const TIER_LIMITS = { launch:{max:60}, growth:{max:120}, scale:{max:600}, enterprise:{max:6000} }; // per 60s
 // emit X-RateLimit-Limit/Remaining/Reset; on over-limit → 429 + Retry-After (never 503/500)
 ```
-Per-vendor **outbound** throttling (ingestion): ElastiCache as a global semaphore so replicas share the budget (Shopify 2 rps/shop, Meta ~200 calls/hr/app-user).
+Per-vendor **outbound** throttling (ingestion): the shared cache as a global semaphore so replicas share the budget (e.g. a vendor's per-shop / per-app rate limits).
 
-| Tier | GMV fee (of realized GMV) | Budget/brand |
-|---|---|---|
-| Launch | ~1.0% | 60 rpm |
-| Growth | ~0.75% | 120 rpm |
-| Scale | ~0.5% | 600 rpm |
-| Enterprise | Custom | 6,000 rpm or custom |
+| Tier | Budget/tenant |
+|---|---|
+| Launch | 60 rpm |
+| Growth | 120 rpm |
+| Scale | 600 rpm |
+| Enterprise | 6,000 rpm or custom |
 
-Always emit `X-RateLimit-*` so clients back off · 429+`Retry-After`, never 503 · per-brand AND per-IP (CloudFront does IP) · never rate-limit `/health/*` · cost-cap-aware AI throttle: brand over 80% monthly LLM budget → Sonnet→Haiku (see `cost-routing-paradigms`).
+Always emit `X-RateLimit-*` so clients back off · 429+`Retry-After`, never 503 · per-tenant AND per-IP (CDN does IP) · never rate-limit `/health/*` · cost-cap-aware model throttle: a tenant over 80% of its monthly model budget → route to a cheaper tier (see `cost-routing-paradigms`).
 
 ---
 
 ## Anti-patterns
-`OFFSET 5000 LIMIT 50` on decision_log · `SELECT COUNT(*)` for a total over millions of rows · page numbers in URLs · ordering by `id` only · `limit=10000` · in-place gRPC tag / MCP schema edits · deploying without Pact verification · breaking change without a new version.
+`OFFSET 5000 LIMIT 50` on a large audit table · `SELECT COUNT(*)` for a total over millions of rows · page numbers in URLs · ordering by `id` only · `limit=10000` · in-place gRPC tag / MCP schema edits · deploying without Pact verification · breaking change without a new version.
 
 ## Wiring
-tRPC versioning/lists/quotas → Vikram · gRPC `buf breaking`/packages → Aryan+Vikram · MCP versioning → Vikram+Maya · v1↔v2 reconciliation → Tanvi+Maya · CH drill-down pagination + outbound/AI throttling → Maya · migration guides → owner+Priya.
+tRPC versioning/lists/quotas → Backend Engineer · gRPC `buf breaking`/packages → Architect + Backend Engineer · MCP versioning → Backend Engineer + AI/ML Engineer · v1↔v2 reconciliation → QA Engineer + AI/ML Engineer · OLAP drill-down pagination + outbound/model throttling → AI/ML Engineer · migration guides → owner + Delivery Coordinator.
 
 Related: `grpc-buf`, `mcp-protocol`, `data-layer` (index for cursors), `cost-routing-paradigms`, `integration-connectors`, `observability` (429 rate as SLO).

@@ -1,53 +1,55 @@
 ---
 name: event-driven-kafka
-description: Brain's async backbone — MSK + Glue Schema Registry + Avro. Topics/producers/consumers, broker-level idempotence, DLQ/retry, schema evolution. Partition key IS workspace_id; replayable.
+description: Reference implementation — an async backbone on Kafka + a schema registry: topics/producers/consumers, broker-level idempotence, DLQ/retry, schema evolution. Partition key IS the tenant key; replayable.
 ---
 
-# Event-Driven — MSK + Glue Schema Registry + Avro
+# Event-Driven — Kafka + Schema Registry + Avro
 
-Brain's async backbone: **Amazon MSK** + **AWS Glue Schema Registry** (Avro) + **MSK Connect** (Debezium for Postgres→Kafka CDC). **Infinite retention** (S3-backed tiered storage) so every downstream materialization is replayable.
+> **Reference implementation.** This skill documents one concrete binding of the async-backbone seam (see `engineering-os-blueprint/09-reference-architecture.md`). The OS is stack-agnostic — your product's `STACK.md` may bind this seam to a different broker (e.g. a managed pub/sub, Pulsar, RabbitMQ) or schema format. The *patterns* here — tenant-keyed partitioning, broker-level idempotence as the primary guarantee, manual commit, DLQ/retry, backward-compatible schema evolution, replayable retention — are what transfer; Kafka + a schema registry is the example.
 
-## When to use Kafka
-Source data ingestion (`integrations.orders.v1`, …) · cross-service state propagation (`operations.workspace.changed.v1`) · trigger fan-out (`intelligence.anomaly.detected.v1` → notifications) · replay (late-data backfills, reconciliation) · CDC (Postgres WAL → Kafka).
-**NOT for:** synchronous service calls (gRPC) · simple cron jobs (EventBridge Scheduler) · in-process queues (no BullMQ — push to Kafka).
+One async backbone: **Kafka** (e.g. Amazon MSK) + a **schema registry** (Avro) + a **CDC connector** (e.g. Debezium for OLTP→Kafka). **Long/infinite retention** (tiered storage to object storage) so every downstream materialization is replayable.
+
+## When to use the event bus
+Source data ingestion (`integrations.orders.v1`, …) · cross-service state propagation (`operations.tenant.changed.v1`) · trigger fan-out (`intelligence.anomaly.detected.v1` → notifications) · replay (late-data backfills, reconciliation) · CDC (OLTP WAL → bus).
+**NOT for:** synchronous service calls (RPC) · simple cron jobs (a scheduler) · in-process queues (push to the bus instead).
 
 ## Topic naming: `<domain>.<entity>.<event_type>.v<version>`
-Producers/consumers (representative): `integrations.{orders,shipments,ads,refunds,customers}.v1` (ingestion → analytics/intelligence) · `operations.{workspace,settings,goals}.changed.v1` (core → all) · `analytics.metrics.daily_materialized.v1` + `analytics.customer_state.changed.v1` (analytics → intelligence/lifecycle) · `intelligence.{anomaly.detected,insight.generated,morning_brief.generated}.v1` (→ notifications) · `lifecycle.outreach.completed.v1` + `lifecycle.recovered_revenue.attributed.v1` · `notifications.alert.fired.v1`.
+Producers/consumers (representative): `integrations.{orders,shipments,events,refunds,customers}.v1` (ingestion → analytics/intelligence) · `operations.{tenant,settings,goals}.changed.v1` (core → all) · `analytics.metrics.daily_materialized.v1` + `analytics.subject_state.changed.v1` (analytics → downstream) · `intelligence.{anomaly.detected,insight.generated,brief.generated}.v1` (→ notifications) · `lifecycle.outreach.completed.v1` + `lifecycle.recovered_value.attributed.v1` · `notifications.alert.fired.v1`.
 
 ## Topic config
 ```yaml
-partitions: 24                  # workspace_id hash distribution
+partitions: 24                  # tenant-key hash distribution
 replicationFactor: 3
 configs: { retention.ms: -1, compression.type: zstd, cleanup.policy: delete, segment.ms: 86400000, min.insync.replicas: 2 }
 ```
-Per-domain retention: `integrations.*` infinite (replay) · `analytics.*`/`operations.*`/`notifications.*` 30d · `intelligence.*` 90d · `lifecycle.*` infinite for outreach + recovered_revenue (attribution audit).
+Per-domain retention: source `integrations.*` infinite (replay) · `analytics.*`/`operations.*`/`notifications.*` bounded (e.g. 30d) · `intelligence.*` medium (e.g. 90d) · audit-class topics (outreach + attributed-value, and the system-of-record audit log) infinite.
 
-## Partition key — workspace_id (NON-NEGOTIABLE)
+## Partition key — the tenant key (NON-NEGOTIABLE)
 ```python
-await producer.send_and_wait(topic="integrations.orders.v1", key=workspace_id.encode(), value=avro_encoded)
+await producer.send_and_wait(topic="integrations.orders.v1", key=tenant_id.encode(), value=avro_encoded)
 ```
-A workspace's events always land in the same partition → per-workspace ordering guaranteed. Cross-workspace ordering is not preserved (irrelevant for Brain).
+A tenant's events always land in the same partition → per-tenant ordering guaranteed. Cross-tenant ordering is not preserved (and is typically irrelevant).
 
-## Avro schemas + Glue Schema Registry
-Schemas in `protos/events/<domain>/<entity>.v<n>.avsc` with `workspace_id`, `source`, `source_event_id` (idempotency), `occurred_at_ms`, `ingested_at_ms`, monetary `*_minor` (long/paisa), nullable fields as `["null", T]` with defaults. Registered with Glue. **Compatibility: BACKWARD** by default (consumers older than producers still work).
+## Avro schemas + schema registry
+Schemas in `protos/events/<domain>/<entity>.v<n>.avsc` with the **tenant key**, `source`, `source_event_id` (idempotency), `occurred_at_ms`, `ingested_at_ms`, monetary `*_minor` (long, minor units) + `currency_code`, nullable fields as `["null", T]` with defaults. Registered with the schema registry. **Compatibility: BACKWARD** by default (consumers older than producers still work).
 
 ### Schema evolution
 Allowed (BACKWARD): add a field WITH a default · remove a field that always had a default · promote `int→long`, `float→double`.
 Forbidden (→ `.v2`): rename a field · remove a required field · incompatible type change.
-CI gate: `buf breaking` for protos; Glue rejects incompatible Avro.
+CI gate: `buf breaking` for contracts; the registry rejects incompatible Avro.
 
 ## Idempotency (NON-NEGOTIABLE) — broker-level is primary
-Stable `event_id` per source: Shopify `(workspace_id, order.id)` · Meta `(workspace_id, ad_account_id, campaign_id, date)` · Google `(workspace_id, customer_id, campaign_id, date)` · Shiprocket `(workspace_id, awb_code, status)` · Klaviyo `(workspace_id, event_id)` · rollups `(workspace_id, table, date, customer_type, channel)`.
+Stable `event_id` per source: e.g. `(tenant_id, order.id)` for an orders connector · `(tenant_id, account_id, campaign_id, date)` for an ads connector · `(tenant_id, shipment_id, status)` for a logistics connector · `(tenant_id, table, date, …)` for a rollup.
 
-1. **Broker-level idempotent producer — the primary guarantee:** `enable.idempotence=true` (default-on since Kafka 3.0) + **`acks=all`** dedupes producer retries at the broker so a retry never double-publishes. This is exactly-once-into-the-log, not Redis.
-2. **Transactional producer + `read_committed` consumers** for outbox / Decision-Log cross-partition writes — wrap produce(s) in `producer.transaction()` so a partial multi-partition write never becomes visible.
-3. **Redis SETNX is the app-level backstop only** (dedup across separate producer sessions / connector re-runs), NOT the primary guarantee.
+1. **Broker-level idempotent producer — the primary guarantee:** `enable.idempotence=true` (default-on since Kafka 3.0) + **`acks=all`** dedupes producer retries at the broker so a retry never double-publishes. This is exactly-once-into-the-log, not a cache.
+2. **Transactional producer + `read_committed` consumers** for outbox / audit-log cross-partition writes — wrap produce(s) in `producer.transaction()` so a partial multi-partition write never becomes visible.
+3. **A cache SETNX is the app-level backstop only** (dedup across separate producer sessions / connector re-runs), NOT the primary guarantee.
 ```typescript
 const producer = kafka.producer({ 'enable.idempotence': true, 'acks': 'all' });  // PRIMARY
-const setResult = await redis.set(`idempotency:${source}:${workspaceId}:${eventId}`, '1', 'NX', 'EX', 86400);
+const setResult = await cache.set(`idempotency:${source}:${tenantId}:${eventId}`, '1', 'NX', 'EX', 86400);
 if (!setResult) return;  // app-level backstop only
 ```
-Consumer side: ClickHouse `ReplicatedReplacingMergeTree` handles late-arriving updates.
+Consumer side: an OLAP `ReplacingMergeTree`-style engine handles late-arriving updates.
 
 ## Manual commit (no auto-commit)
 Auto-commit is at-most-once → data loss on crash. Commit manually after a successful write.
@@ -55,31 +57,31 @@ Auto-commit is at-most-once → data loss on crash. Commit manually after a succ
 consumer = AIOKafkaConsumer("integrations.orders.v1", group_id="analytics-orders",
     enable_auto_commit=False, value_deserializer=avro_deserializer)
 async for msg in consumer:
-    await write_to_clickhouse_replacing(msg.value)
+    await write_to_olap_replacing(msg.value)
     await consumer.commit({TopicPartition(msg.topic, msg.partition): msg.offset + 1})
 ```
-TS: `@confluentinc/kafka-javascript` (KafkaJS abandoned under Kafka 4.0) — `consumer.run({ autoCommit: false, eachMessage })`.
+TS: use a maintained Kafka client — `consumer.run({ autoCommit: false, eachMessage })`.
 
 ## Consumer group naming: `<service>-<purpose>`
-`analytics-orders-consumer` · `intelligence-anomaly-detector` · `notifications-alerts` · `lifecycle-rfm-refresh`. One group per logical workload; same group shares partitions, different groups each get every message. Partition count = max parallelism.
+`analytics-orders-consumer` · `intelligence-anomaly-detector` · `notifications-alerts` · `lifecycle-segment-refresh`. One group per logical workload; same group shares partitions, different groups each get every message. Partition count = max parallelism.
 
 ## DLQ + retry
 ```
 integrations.orders.v1 → (fail) → integrations.orders.retry-1.v1 (60s) → retry-2.v1 (5min) → orders.dlq.v1 (manual triage)
 ```
-A per-service wrapper / Kafka Streams re-publishes after a delay with retry count in headers. DLQ has a manual triage consumer (admin UI surfaces depth + age).
+A per-service wrapper / stream processor re-publishes after a delay with retry count in headers. The DLQ has a manual triage consumer (an admin UI surfaces depth + age).
 
-## CDC via Debezium on MSK Connect
-Postgres WAL → Debezium → `cdc.public.<table>.v1` → analytics-service mirrors recent OLTP state in CH (`audience`, `outreach`, `rfm_score`, `ai.decision_log`) without querying core-service's Postgres directly.
+## CDC via a log-based connector
+OLTP WAL → CDC connector → `cdc.public.<table>.v1` → the analytics service mirrors recent OLTP state in the OLAP store without querying the owning service's DB directly.
 
 ## Monitoring
-`MSK/KafkaConsumerLag` per group/topic (alarm > threshold) · `MSK/UnderReplicatedPartitions` (alarm if non-zero) · `MSK/KafkaBytesIn/Out`. OpenSearch monitor `kafka-consumer-lag-spike` → PagerDuty after 5 min.
+Consumer lag per group/topic (alarm > threshold) · under-replicated partitions (alarm if non-zero) · bytes in/out. A monitor `consumer-lag-spike` → page after a sustained breach.
 
-## Scale (100k req/min)
-24 partitions ≈ 4K msg/s/partition headroom · a workspace can occupy multiple consumers across services in different groups · large workspaces use per-workspace key-based throttling at ingestion to avoid head-of-line blocking.
+## Scale
+24 partitions ≈ a few K msg/s/partition headroom · a tenant can occupy multiple consumers across services in different groups · large tenants use per-tenant key-based throttling at ingestion to avoid head-of-line blocking.
 
 ## Common failure modes
-Auto-commit data loss (use manual) · non-idempotent producer (set `enable.idempotence=true` + `acks=all`; Redis SETNX is backstop only) · schema-breaking change without bump (Glue rejects; use `.v2`) · missing `workspace_id` in envelope · cross-workspace ordering assumption · rebalance loops (tune `session.timeout.ms`) · DLQ ignored (surface depth+age) · `integrations.*` finite retention (defeats replay — configure infinite).
+Auto-commit data loss (use manual) · non-idempotent producer (set `enable.idempotence=true` + `acks=all`; cache SETNX is backstop only) · schema-breaking change without a version bump (the registry rejects; use `.v2`) · missing the tenant key in the envelope · cross-tenant ordering assumption · rebalance loops (tune `session.timeout.ms`) · DLQ ignored (surface depth+age) · source topics on finite retention (defeats replay — configure long/infinite).
 
 ## References
-`canon/technical-requirements.md` §kafka + §debezium · `backend-fastify-trpc-grpc` (TS Confluent client) · `python-services` (aiokafka) · `integration-connectors` (producer side) · `clickhouse-olap` (CH Kafka engine tables) · `devops-aws` §msk · `idempotency-handling`.
+The Product Canon's `STACK.md` (the concrete broker + registry binding) + the data architecture HLD/LLD · `backend-fastify-trpc-grpc` (a TS client) · `python-services` (an async consumer) · `integration-connectors` (producer side) · `clickhouse-olap` (OLAP consumer tables) · `devops-aws` §event-bus · `idempotency-handling`.

@@ -21,7 +21,7 @@ MCPs are declared in `.mcp.json` and auto-load when env vars are present. **If n
 ```
 Workspace / Team
 └── Project / Folder: Engineering
-    └── Epic = one feature (created by Priya at /spec)
+    └── Epic = one feature (created by the Delivery Coordinator at /spec)
         └── Subtasks (2-5 min each, per writing-plans)
             status: BACKLOG → IN_BUILD → IN_REVIEW → IN_QA → READY → DEPLOYED → DONE
 ```
@@ -40,12 +40,12 @@ BACKLOG → IN_BUILD → IN_SECURITY (if auth/PII) → IN_QA → READY → DEPLO
 
 | Agent | Action | Transition |
 |---|---|---|
-| Priya | Creates Epic + subtasks | → BACKLOG |
-| Aryan | Hands off to builders | → IN_BUILD |
+| Delivery Coordinator | Creates Epic + subtasks | → BACKLOG |
+| Architect | Hands off to builders | → IN_BUILD |
 | Builders | Starts/finishes subtask | BACKLOG → IN_BUILD → IN_QA (or IN_SECURITY) |
-| Shreya | APPROVED / NEEDS FIXES | IN_SECURITY → IN_QA / → IN_BUILD |
-| Tanvi | PASS / FAIL | IN_QA → READY / → IN_BUILD |
-| Jatin | Deploy complete | READY → DEPLOYED |
+| Security Reviewer | APPROVED / NEEDS FIXES | IN_SECURITY → IN_QA / → IN_BUILD |
+| QA Engineer | PASS / FAIL | IN_QA → READY / → IN_BUILD |
+| Platform/SRE | Deploy complete | READY → DEPLOYED |
 | Any | Unresolvable | * → BLOCKED |
 
 ## Custom fields (set on every task)
@@ -54,8 +54,8 @@ BACKLOG → IN_BUILD → IN_SECURITY (if auth/PII) → IN_QA → READY → DEPLO
 |---|---|
 | `feature_slug` | Links task ↔ `memory/specs/<slug>.md` |
 | `spec_path` / `design_path` / `adr_link` | `memory/specs|designs|decisions/...` |
-| `platform` | `web` \| `mobile` \| `api-gateway` \| `core-service` \| `notifications-service` \| `ingestion-service` \| `analytics-service` \| `intelligence-service` \| `lifecycle-service` \| `infra` |
-| `owner_agent` | `priya` \| `rohan` \| `aryan` \| `vikram` \| `ananya` \| `karan` \| `maya` \| `shreya` \| `tanvi` \| `jatin` \| `learning-retro` |
+| `platform` | the seam/surface the task touches — `web` \| `mobile` \| `api-gateway` \| a backend service \| `infra` (use your product's service names from `STACK.md`) |
+| `owner_agent` | the OS agent id — `product-manager` \| `cto-advisor` \| `architect` \| `backend-developer` \| `frontend-web-developer` \| `mobile-developer` \| `intelligence-engineer` \| `security-reviewer` \| `qa-agent` \| `platform-devops` |
 | `mode` | `SPEED` \| `SCALE` |
 | `sev` | `P0` \| `P1` \| `P2` \| `P3` |
 
@@ -65,7 +65,7 @@ BACKLOG → IN_BUILD → IN_SECURITY (if auth/PII) → IN_QA → READY → DEPLO
 [<AGENT>][<platform>] <verb> <object> in <file>
 ```
 
-Examples: `[VIKRAM][api-gateway] Add 'ads.spend.adjust' tRPC mutation in apps/api-gateway/src/trpc/routers/ads.ts` · `[ANANYA][web] Wire <CohortHeatmap/> in apps/web/components/charts/cohort-heatmap.tsx` · `[MAYA][analytics-service] Add mer_daily_mv MV in apps/analytics-service/src/materializations/mer_daily_mv.sql` · `[MAYA][lifecycle-service] Add 09:00–21:00 IST calling-hours guard in apps/lifecycle-service/src/compliance/calling_hours.py`
+Examples: `[BACKEND][api-gateway] Add 'orders.adjust' mutation in apps/api-gateway/src/routers/orders.ts` · `[FRONTEND][web] Wire <CohortHeatmap/> in apps/web/components/charts/cohort-heatmap.tsx` · `[INTELLIGENCE][analytics] Add daily-rollup materialized view in apps/analytics/src/materializations/daily_rollup.sql` · `[INTELLIGENCE][workflow] Add a permitted-window guard in apps/workflow/src/compliance/window_guard.py`
 
 ## Idempotency
 
@@ -75,7 +75,7 @@ Match by `feature_slug`. If a task with the same slug exists, update fields rath
 
 If no tracker env vars are set, agents proceed without blocking; each intended call → one line in `memory/tasks-pending.log`:
 ```
-2026-05-12T10:00:00Z create_task list=specs slug=<feature-slug> title="..." owner=priya
+2026-05-12T10:00:00Z create_task list=specs slug=<feature-slug> title="..." owner=product-manager
 2026-05-12T10:02:00Z update_status task=<slug> from=BACKLOG to=IN_BUILD
 ```
 `/sync-tracker` replays the log when connectivity returns. The plugin does NOT require any tracker.

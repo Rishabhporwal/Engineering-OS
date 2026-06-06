@@ -1,9 +1,9 @@
 # Lean-vs-Full A/B — prove (or kill) the multi-agent pipeline's value
 
-> Strategic-review finding: Opus is ~68% of pipeline spend, concentrated in the *ceremony* stages (intake/architect/security×rounds/final), and we have **never proven the 11-agent pipeline beats a lean single session** on the same work. This doc is the experiment that decides it. Until it runs, the pipeline's value over a lean session is **asserted, not measured.**
+> Strategic-review finding: the top model tier dominates pipeline spend, concentrated in the *ceremony* stages (intake/architect/security×rounds/final), and we have **never proven the full multi-agent pipeline beats a lean single session** on the same work. This doc is the experiment that decides it. Until it runs, the pipeline's value over a lean session is **asserted, not measured.**
 
 ## The hypothesis
-For a **no-trigger-surface** requirement (no compliance/tenancy/metric/decision-log/money/outbound/auth), **one disciplined Sonnet session** — carrying the canon + `challenge-framework` + the negative-control DoD + memory recall, doing build *and* structured self-review against the security/QA/compliance checklists — produces **equivalent quality at a fraction of the cost** versus the full multi-agent pipeline.
+For a **no-trigger-surface** requirement (no compliance/tenancy/metric/audit-log/money/outbound/auth), **one disciplined mid-tier-model session** — carrying the Canon + `challenge-framework` + the negative-control DoD + memory recall, doing build *and* structured self-review against the security/QA/compliance checklists — produces **equivalent quality at a fraction of the cost** versus the full multi-agent pipeline.
 
 If true → flip `lean` to the default lane and demote the full pipeline to the `high_stakes` carve-out (you already have the trigger taxonomy in `pipeline.yaml`).
 
@@ -32,12 +32,11 @@ If true → flip `lean` to the default lane and demote the full pipeline to the 
 
 ## Tiering baseline (already measurable from real v1 data)
 
-Before the lean question, the *model-tiering* lever (P0-2 split + Security-off-Opus) can be projected from your real v1 telemetry NOW:
+Before the lean question, the *model-tiering* lever (cto-advisor split + running Security on a cheaper tier) can be projected from your real telemetry NOW:
 ```sh
-uv run tools/ab_project.py --usage <brain-repo>/.engineering-os/usage.jsonl
+uv run tools/ab_project.py --usage <product-repo>/.engineering-os/usage.jsonl
 ```
-On the 6 real v1 requirements (55 spawns, 68% Opus) this projects **~46% lower cost (≈$115 → $62)** from tiering alone — repricing each real spawn at its v2 model tier, token counts held constant. That validates the v2 *full-pipeline* cost fix. The lean-vs-full run below is the SEPARATE question of whether the pipeline should run at all on no-trigger work.
+Repricing each real spawn at its tuned model tier (token counts held constant) projects the cost win from tiering alone — that validates the *full-pipeline* cost fix. The lean-vs-full run below is the SEPARATE question of whether the pipeline should run at all on no-trigger work.
 
 ## Honesty note
-The static footprint cuts (−71% prompt, −74% descriptions) are **not** the cost story — against an Opus-dominated bill they're ~2–5% of dollars. The real levers are **model tier × review rounds** (now addressed by the P0-2 cto-advisor split + Security-on-Sonnet) and **whether the ceremony runs at all** (this A/B). Run the meter before claiming a number.
-</content>
+The static footprint cuts (−71% prompt, −74% descriptions) are **not** the cost story — against a top-tier-model-dominated bill they're ~2–5% of dollars. The real levers are **model tier × review rounds** (addressed by the cto-advisor split + running Security on a cheaper tier) and **whether the ceremony runs at all** (this A/B). Run the meter before claiming a number.

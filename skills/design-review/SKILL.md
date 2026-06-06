@@ -1,10 +1,10 @@
 ---
 name: design-review
-description: Visual design audit (gstack-inspired). Screenshots a page (before/after a change) with real Chromium, then scores each design dimension 0-10 with "what would a 10 look like?" and proposes concrete fixes. Use in Ananya's self-review for any visible web UI change, and to protect the Morning Brief / dashboard quality bar.
+description: Visual design audit. Screenshots a page (before/after a change) with real Chromium, then scores each design dimension 0-10 with "what would a 10 look like?" and proposes concrete fixes. Use in the Frontend/Web Engineer's self-review for any visible web UI change, to protect the product's UI quality bar.
 disable-model-invocation: true
 ---
 
-Run a visual design review of a web UI change (Ananya). Looks at the *rendered pixels*, not the code — catches what a 10/10 designer would catch.
+Run a visual design review of a web UI change (Frontend/Web Engineer). Looks at the *rendered pixels*, not the code — catches what a 10/10 designer would catch.
 
 > Engine: `${CLAUDE_PLUGIN_ROOT}/tools/browse.py` (Playwright/Chromium). First run auto-installs Chromium, once.
 
@@ -28,17 +28,17 @@ The page/URL under review (and optional "before" reference) is:
    | Spacing & rhythm (grid, padding consistency) | | | |
    | Color & contrast (WCAG AA, palette discipline) | | | |
    | Visual hierarchy (what the eye hits first) | | | |
-   | Indian rendering (₹, GST-inclusive, festival overlay where relevant) | | | |
+   | Locale rendering (currency symbol/format, numbering, date/RTL per the region seam) | | | |
    | Responsiveness (no overflow/clipping at target widths) | | | |
    | Empty / loading / error states | | | |
 
 3. **Apply the high-value fixes** (anything scoring <8 on a dimension that matters for this surface), re-screenshot `after-fixed.png`, and confirm the score moved.
 
-4. **Write `15-design-review.md`** into the run folder: the scored table, the before/after screenshots, and the fixes made. Make it an **atomic commit** separate from the feature code (gstack convention).
+4. **Write `15-design-review.md`** into the run folder: the scored table, the before/after screenshots, and the fixes made. Make it an **atomic commit** separate from the feature code.
 
 ## Where this matters most
-- The **Morning Brief** must be the highest-quality UI in Brain — design-review it every time it changes.
-- KPI cards / P&L / CM Waterfall / Cohort heatmap — verify the Indian numbering, RAG colors, and that dense data stays scannable in the 3-minute Founder scan.
+- The product's **primary, most-used surface** must be the highest-quality UI — design-review it every time it changes.
+- Dense data views (KPI cards, tables, charts) — verify the locale-correct numbering/currency, status colors, and that dense data stays scannable in a quick scan.
 
 ## Notes
 - Vision review is judgment; pair it with `/qa-browser` for the functional + console-error side.

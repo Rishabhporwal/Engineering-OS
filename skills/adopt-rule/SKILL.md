@@ -1,18 +1,18 @@
 ---
 name: adopt-rule
-description: Founder-only — adopt a proposed rule from .engineering-os/rule-proposals/ as a durable operating rule for the team. Promotes the proposal to .engineering-os/durable-rules/.
+description: Stakeholder-only — adopt a proposed rule from .engineering-os/rule-proposals/ as a durable operating rule for the team. Promotes the proposal to .engineering-os/durable-rules/.
 disable-model-invocation: true
 ---
 
 Adopt a previously-proposed rule (from `/engineering-os:propose-rule`) as a durable operating rule.
 
-**This skill is Founder-only.** Verify the operator is Founder (Rishabh) before proceeding. If invoked by an agent (not Founder), refuse with "Only Founder can adopt rules. The proposal stays in `proposed` status until Rishabh runs this skill personally."
+**This skill is Stakeholder-only.** Verify the operator is the Stakeholder before proceeding. If invoked by an agent (not the Stakeholder), refuse with "Only the Stakeholder can adopt rules. The proposal stays in `proposed` status until the Stakeholder runs this skill personally."
 
 `$ARGUMENTS` is the `proposal_id` (the filename slug under `.engineering-os/rule-proposals/`).
 
 ## Steps
 
-1. **Validate arguments + actor.** If `$ARGUMENTS` is empty, list pending proposals: `ls ${CLAUDE_PROJECT_DIR}/.engineering-os/rule-proposals/`. Ask which to adopt. Confirm the actor is Founder.
+1. **Validate arguments + actor.** If `$ARGUMENTS` is empty, list pending proposals: `ls ${CLAUDE_PROJECT_DIR}/.engineering-os/rule-proposals/`. Ask which to adopt. Confirm the actor is the Stakeholder.
 
 2. **Locate the proposal.** Read `${CLAUDE_PROJECT_DIR}/.engineering-os/rule-proposals/<proposal_id>.md`. If not found, list available proposals and ask the operator to pick.
 
@@ -28,17 +28,17 @@ Adopt a previously-proposed rule (from `/engineering-os:propose-rule`) as a dura
 5. **Update the proposal** to record the decision. APPEND a "Decision" block to the proposal's `## Decision` section:
    ```
    | decided_at | <ts> |
-   | decided_by | rishabh |
+   | decided_by | stakeholder |
    | decision | adopted |
    | durable_rule_path | .engineering-os/durable-rules/<filename> |
    ```
    Do NOT delete or modify other content. The proposal stays in `.engineering-os/rule-proposals/` as audit-trail.
 
-6. **Append decision-log events.**
+6. **Append audit-log events.**
    - `type: rule-adopted` with proposal_id, rule_id, scope.
-   - `type: founder-decision` with `decision: adopted`, `target: rule-proposal`.
+   - `type: stakeholder-decision` with `decision: adopted`, `target: rule-proposal`.
 
-7. **Remove from pending-founder-attention.** Strike through the line in `pending-founder-attention.md` that was added by `propose-rule`.
+7. **Remove from pending-stakeholder-attention.** Strike through the line in `pending-stakeholder-attention.md` that was added by `propose-rule`.
 
 8. **Notify the team.** Append to `${CLAUDE_PROJECT_DIR}/.engineering-os/durable-rules/INDEX.md` (create if missing):
    ```
@@ -54,5 +54,5 @@ Adopt a previously-proposed rule (from `/engineering-os:propose-rule`) as a dura
 ## Don't
 
 - Don't adopt a proposal that contradicts an existing active durable rule without explicit supersession. If a proposal conflicts with an active rule, refuse and ask the operator to either (a) reject the proposal, or (b) re-propose it as an explicit supersession of the prior rule.
-- Don't allow non-Founder operators (or agents) to invoke this skill. Refuse and surface the requirement to Founder via `pending-founder-attention.md`.
+- Don't allow non-Stakeholder operators (or agents) to invoke this skill. Refuse and surface the requirement to the Stakeholder via `pending-stakeholder-attention.md`.
 - Don't fabricate proposal content. Read the literal file; copy its fields.

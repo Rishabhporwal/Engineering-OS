@@ -7,7 +7,7 @@ description: Multi-agent orchestration — fan-out cap (0/1/2, never reflexively
 
 > Parallelism is a tool for *independent* work, not a reflex — and a pipeline is only autonomous if each stage *invokes* the next. Two agents on one coupled problem produce merge conflicts; a stage that writes "HANDOFF-TO-X.md" and stops produces a relay race where the baton lands on the ground.
 
-Two intertwined disciplines: **fan-out** (how many agents in parallel) and **hand-off** (how a multi-stage flow drives itself). The Brain 8-stage pipeline (Intake → Architect → Parallel Dev → Security → QA → Final Review → Founder Approval → DevOps) is the concrete implementation; this is the reusable pattern.
+Two intertwined disciplines: **fan-out** (how many agents in parallel) and **hand-off** (how a multi-stage flow drives itself). The OS's 8-stage pipeline (Intake → Architect → Parallel Dev → Security → QA → Final Review → Stakeholder Approval → Deploy) is the concrete implementation; this is the reusable pattern.
 
 ## The Iron Law
 
@@ -43,7 +43,7 @@ BEFORE spawning, answer in one line each:
 THEN spawn.
 ```
 
-CTOA records this in `02-cto-advisor-review.md` under "Persona-count decision". Other agents record it in their plan.
+The Engineering Advisor records this in `02-cto-advisor-review.md` under "Persona-count decision". Other agents record it in their plan.
 
 ### Running them in parallel
 
@@ -59,7 +59,7 @@ Each prompt must be **self-contained**: the subagent has none of your context. S
 
 ### Isolation + merging
 
-- Give each agent a **disjoint file scope** (two agents editing `packages/lib-metrics/` will collide). If the work shares files, it isn't independent — make it sequential. For risky parallel edits, consider git worktrees.
+- Give each agent a **disjoint file scope** (two agents editing the same module/package will collide). If the work shares files, it isn't independent — make it sequential. For risky parallel edits, consider git worktrees.
 - Ask each subagent for a **short report** (findings + what changed), not raw dumps. Trust-but-verify: re-run the verification commands yourself (`verification-before-completion`) before claiming combined work done. Reconcile overlaps explicitly.
 
 ## Part 2 — Hand-off: driving the stage pipeline
@@ -91,7 +91,7 @@ The handoff-file pattern is a **fallback for when the Agent tool fails**, record
 ### Stage gates + audit trail
 
 - The sender runs its verification commands and captures output **before** invoking the next stage.
-- The receiver re-runs any duty it owns (QA re-runs upstream skipped gates; CTOA spot-re-runs QA's). A gate SKIPPED upstream must be re-run downstream, not assumed.
+- The receiver re-runs any duty it owns (QA re-runs upstream skipped gates; the Engineering Advisor spot-re-runs QA's). A gate SKIPPED upstream must be re-run downstream, not assumed.
 - Each stage owns disjoint outputs. Shared state (run folder, decision log, `active.json`) is append-only or last-write-with-backup (`.bak` first). A stage isn't done until it has appended: its **journal** entry, a typed **decision-log** event, a **state** update, and its **per-feature journal** line — what lets `/status` and `/recall` reconstruct any run.
 
 ## Red flags — STOP
@@ -117,16 +117,16 @@ The handoff-file pattern is a **fallback for when the Agent tool fails**, record
 | "The next agent will figure out the context" | It has zero context. Self-contained prompt or it guesses wrong. |
 | "The subagents said they're done" | A report is a claim, not evidence. Verify. |
 
-## Brain wiring
+## OS wiring
 
 | Concern | Owner | Reference |
 |---|---|---|
-| Persona count at Stage 1 | **CTOA** | persona-count classifier in `cto-advisor.md` |
-| Splitting Stage 3 across builders | **Aryan** | handoff-depth calibration |
-| The concrete 8-stage flow | CTOA + each agent | `workflows/requirement-to-release.yaml`, `docs/workflow.md` |
+| Persona count at Stage 1 | **Engineering Advisor** | persona-count classifier in `cto-advisor.md` |
+| Splitting Stage 3 across builders | **Architect** | handoff-depth calibration |
+| The concrete 8-stage flow | the Advisor + each agent | `pipeline/pipeline.yaml`, `docs/workflow.md` |
 | The gates between stages | each receiving agent | `docs/quality-gates.md` |
 | Verifying merged / handed-off work | the dispatcher / each stage | `verification-before-completion` |
-| Commit discipline at the final stage | Jatin | `finishing-a-development-branch` |
+| Commit discipline at the final stage | Platform/SRE | `finishing-a-development-branch` |
 
 Ask "is this independent?" before "can I parallelize?". Cap at 2 unless justified; fire them in one message; merge summaries; verify yourself. Then each stage plans, executes, self-reviews, verifies, and *invokes* the next — handoff files are a logged fallback, never the default.
 

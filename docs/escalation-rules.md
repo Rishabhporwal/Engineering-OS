@@ -5,57 +5,57 @@ When a gate fails, when agents disagree, or when something unexpected happens, t
 Escalation has three flavors:
 1. **Bounce-back** — within the pipeline, normal flow. (Already defined in [quality-gates.md §Gate failure → bounce conventions](quality-gates.md#gate-failure--bounce-conventions).)
 2. **Sideways escalation** — to a peer (e.g., dev → security for an open question that isn't a gate failure).
-3. **Up-escalation** — to CTO Advisor or Founder when the matter exceeds the current agent's authority.
+3. **Up-escalation** — to the Engineering Advisor or the Stakeholder when the matter exceeds the current agent's authority.
 
 ---
 
 ## Up-escalation triggers
 
-### Escalate to CTO Advisor
+### Escalate to the Engineering Advisor
 
 Use when you need a **technical / process** decision that is above your authority bound.
 
-| Trigger | From | Evidence | CTOA expected to … |
+| Trigger | From | Evidence | Advisor expected to … |
 |---------|------|----------|--------------------|
-| Architectural ambiguity | Any builder | What's ambiguous + 2 plausible interpretations | Decide or refer to Aryan with a directive |
-| Cross-team conflict | Any agent | Both positions + their reasoning | Mediate; record the call in the decision log |
-| Cost paradigm dispute | Maya, Vikram, Aryan | Proposed paradigm + cheaper alternative considered | Decide paradigm or escalate cost to Founder |
+| Architectural ambiguity | Any builder | What's ambiguous + 2 plausible interpretations | Decide or refer to the Architect with a directive |
+| Cross-team conflict | Any agent | Both positions + their reasoning | Mediate; record the call in the audit log |
+| Effort-tier dispute (cheapest-sufficient-effort) | AI/ML Engineer, Backend Engineer, Architect | Proposed effort tier + cheaper alternative considered | Decide the tier or escalate cost to the Stakeholder |
 | Gate interpretation question | Any agent | The specific gate condition + the ambiguous evidence | Clarify the gate or update it |
 | Persistent bounce loop (>3 cycles same gate) | QA, Security | Bounce history | Either accept tech debt with a waiver, or restructure the task |
 | Plan vs. reality drift | Any builder | Where the plan diverges from what's possible | Either re-plan (Stage 2 bounce) or accept the divergence with note |
 | Adding a recommended skill | Any agent | Why current skills are insufficient | Approve / defer / reject |
 
-### Escalate to Founder (Rishabh)
+### Escalate to the Stakeholder
 
-Use when you need a **strategic / business / scope** decision that is above CTO Advisor's authority.
+Use when you need a **strategic / scope / cost** decision that is above the Engineering Advisor's authority.
 
-| Trigger | From | Evidence | Founder expected to … |
+| Trigger | From | Evidence | Stakeholder expected to … |
 |---------|------|----------|----------------------|
-| Tech-stack change (new layer) | Aryan (via CTOA) | `tech-stack-evaluation` artifact; ADR-001 draft | Approve / reject / defer |
-| Region addition | Aryan (via CTOA) | RegionAdapter plan; cost estimate | Approve / sequence later |
-| Partner commitment (new) | CTOA, Maya | Partner brief; integration cost; switching cost | Approve / defer |
-| Pricing impact (any change that affects per-brand cost > 5%) | CTOA | Cost delta + revenue impact | Approve / re-price / kill |
-| Compliance scope change (new regime) | Shreya (via CTOA) | What changes; deadline; cost | Approve / defer / scope down |
-| Cost cap breach (live) | Jatin, Maya | Token usage chart + last 30d trend | Decide: raise cap, throttle harder, kill feature |
-| Customer-visible incident | Jatin (via CTOA) | Incident report; blast radius; status | Decide: customer comms, refund, rollback strategy |
-| Stage 7 gate (always) | CTOA | `final-review.md` | Approve or reject the entire requirement |
+| Tech-stack change (new layer) | Architect (via Advisor) | `tech-stack-evaluation` artifact; ADR draft | Approve / reject / defer |
+| Region / locale addition | Architect (via Advisor) | RegionAdapter plan; cost estimate | Approve / sequence later |
+| External dependency / partner commitment (new) | Advisor, AI/ML Engineer | Brief; integration cost; switching cost | Approve / defer |
+| Cost impact (any change that materially raises per-tenant cost) | Advisor | Cost delta + impact | Approve / re-scope / kill |
+| Compliance scope change (new regime in `COMPLIANCE.md`) | Security Reviewer (via Advisor) | What changes; deadline; cost | Approve / defer / scope down |
+| Cost cap breach (live) | Platform/SRE, AI/ML Engineer | Cost-usage chart + recent trend | Decide: raise cap, throttle harder, kill feature |
+| Customer-visible incident | Platform/SRE (via Advisor) | Incident report; blast radius; status | Decide: comms, remediation, rollback strategy |
+| Deploy gate (always) | Advisor | `final-review.md` | Approve or reject the entire requirement |
 
 ---
 
 ## Page (P0) — immediate human attention
 
-These conditions **page** the on-call human (in MVP: Rishabh + Jatin) within minutes. They are not "escalations" — they are **alerts**.
+These conditions **page** the on-call human within minutes. They are not "escalations" — they are **alerts**. (Concrete surfaces + thresholds come from the product's `TRIGGER-SURFACES.md`, `COMPLIANCE.md`, and `PLAYBOOK-incident.md`.)
 
 | Condition | Detected by | Pager target |
 |-----------|-------------|--------------|
-| **DND violation** in production calling | Lifecycle compliance engine assertion | Rishabh + Shreya (immediate) |
-| **Cross-brand data leak** suspected | Audit log anomaly; cross-brand benchmark integrity check | Rishabh + Shreya |
-| **Auth bypass** / multi-tenancy break | Production assertion (`workspace_id` mismatch) | Rishabh + Shreya |
-| **Auto-execute** action with financial impact and **no rollback** | Auto-execute engine guard | Rishabh + Maya + Jatin |
-| **LLM cost** > 1.5× monthly cap / 30 in a single day | CloudWatch alarm | Rishabh + Maya + Jatin |
-| **Memory layer corruption** detected | Decision Log integrity check; Brand Fingerprint sanity check | Rishabh + Maya |
-| **Production error rate** > 1% for 5 min | CloudWatch alarm | Jatin + Rishabh |
-| **Health check** failing 2 consecutive probes (production) | EKS / ArgoCD | Jatin + Rishabh |
+| **Compliance-regime violation** in production (e.g. a channel/consent rule from `COMPLIANCE.md`) | Runtime compliance assertion | Stakeholder + Security |
+| **Cross-tenant data leak** suspected | Audit-log anomaly; isolation integrity check | Stakeholder + Security |
+| **Auth bypass** / tenant-isolation break | Production assertion (tenant-key mismatch) | Stakeholder + Security |
+| **Irreversible action** with consequential impact and **no rollback** | Action guard | Stakeholder + AI/ML Engineer + Platform/SRE |
+| **Model/LLM cost** spikes well past the daily budget | Cost alarm | Stakeholder + AI/ML Engineer + Platform/SRE |
+| **System-of-record (audit-log) corruption** detected | Audit-log integrity check | Stakeholder + AI/ML Engineer |
+| **Production error rate** > 1% for 5 min | Metrics alarm | Platform/SRE + Stakeholder |
+| **Health check** failing 2 consecutive probes (production) | Orchestrator / deploy platform | Platform/SRE + Stakeholder |
 
 ---
 
@@ -74,41 +74,41 @@ When you escalate up:
 
 3. **Don't ask the same question twice.** Read the decision log first — has this come up before?
 
-4. **Don't accept "yes, do it" without checking.** Even when the Founder says "yes, do it," if the request would push you past a hard gate (CRITICAL security, India compliance, Single-Primitive violation), respectfully challenge once more with the specific gate referenced.
+4. **Don't accept "yes, do it" without checking.** Even when the Stakeholder says "yes, do it," if the request would push you past a hard gate (CRITICAL security, a compliance violation, a Single-Primitive violation), respectfully challenge once more with the specific gate referenced.
 
 ---
 
 ## When escalation goes the other way
 
-The team can — and must — push back on the Founder. Examples:
+The team can — and must — push back on the Stakeholder. Examples:
 
-- Founder asks for "a WhatsApp-specific audience builder."
-  → **CTOA pushes back:** "That violates the Single-Primitive Rule. We have one Audience Builder; WhatsApp is a channel that consumes it. Building a parallel one means N× engineering cost as we add channels. Recommend: extend Audience Builder with WhatsApp-specific filters (a 1-day change) instead of forking it (a 3-week change). Decision needed: confirm extend, or override and accept the tech-debt with a date for refactor."
-- Founder asks for a feature that requires Sonnet, when Haiku would do.
-  → **Maya pushes back via CTOA:** "This is ~10× the cost at expected load. Haiku tested at <task> shows 92% agreement with Sonnet. Recommend: ship with Haiku; flag a periodic A/B vs Sonnet for accuracy regression detection. Decision needed: confirm Haiku, or accept the cost."
-- Founder approves a plan that has a missing dashboard.
-  → **Jatin pushes back:** "Approving as-is means we won't see the new metric in CloudWatch. Recommend: 1-hour dashboard work before merge. Decision needed: confirm 1-hour delay, or ship blind with dashboard as fast-follow."
+- Stakeholder asks for "a channel-specific audience builder" (a parallel copy of an existing primitive).
+  → **The Advisor pushes back:** "That violates the Single-Primitive Rule. We have one shared builder; the new channel is a consumer of it. Building a parallel one means N× engineering cost as we add channels. Recommend: extend the shared builder with channel-specific filters (a 1-day change) instead of forking it (a 3-week change). Decision needed: confirm extend, or override and accept the tech-debt with a date for refactor."
+- Stakeholder asks for a feature that requires a large model, when a small model would do.
+  → **The AI/ML Engineer pushes back via the Advisor:** "This is ~10× the cost at expected load. The small model tested at <task> shows 92% agreement with the large one. Recommend: ship on the small model; flag a periodic A/B vs the large model for accuracy-regression detection. Decision needed: confirm the small model, or accept the cost."
+- Stakeholder approves a plan that has a missing dashboard.
+  → **Platform/SRE pushes back:** "Approving as-is means we won't see the new metric in monitoring. Recommend: 1-hour dashboard work before merge. Decision needed: confirm 1-hour delay, or ship blind with the dashboard as a fast-follow."
 
-In every case: **constructive, evidence-based, with a path forward.** The Founder is the source of truth on intent; the team is the source of truth on implementation reality.
+In every case: **constructive, evidence-based, with a path forward.** The Stakeholder is the source of truth on intent; the team is the source of truth on implementation reality.
 
 ---
 
 ## Logging escalations
 
-Every up-escalation (and every Founder-direction push-back) produces a journal entry **plus** a decision log entry:
+Every up-escalation (and every Stakeholder-direction push-back) produces a journal entry **plus** an audit-log entry:
 
 **Per-agent journal entry:** narrative.
 
-**Decision log entry (JSONL — one line):**
+**Audit-log entry (JSONL — one line):**
 ```json
 {
   "ts": "2026-05-17T14:32:00Z",
   "actor": "cto-advisor",
   "type": "escalation",
-  "to": "founder",
-  "req_id": "feat-abandoned-cart-recovery-gcc",
-  "topic": "paradigm-change",
-  "summary": "Asked Founder to confirm Haiku over Sonnet; saves ~10x cost at expected load.",
+  "to": "stakeholder",
+  "req_id": "feat-example-slug",
+  "topic": "effort-tier-change",
+  "summary": "Asked the Stakeholder to confirm the small model over the large one; saves ~10x cost at expected load.",
   "decision": "pending",
   "decided_at": null
 }
@@ -119,17 +119,17 @@ When the decision lands:
 ```json
 {
   "ts": "2026-05-17T18:11:00Z",
-  "actor": "rishabh",
+  "actor": "stakeholder",
   "type": "decision",
-  "req_id": "feat-abandoned-cart-recovery-gcc",
-  "topic": "paradigm-change",
-  "decision": "confirmed-haiku",
-  "rationale": "Cost wins; agreed to schedule Haiku-vs-Sonnet A/B in Phase 2.",
-  "follow_up": "schedule-ab-haiku-vs-sonnet"
+  "req_id": "feat-example-slug",
+  "topic": "effort-tier-change",
+  "decision": "confirmed-small-model",
+  "rationale": "Cost wins; agreed to schedule a small-vs-large A/B as a follow-up.",
+  "follow_up": "schedule-ab-small-vs-large"
 }
 ```
 
-This makes every escalation **searchable** in the decision log. `/recall <topic>` (V2) finds prior similar decisions.
+This makes every escalation **searchable** in the audit log. `/recall <topic>` finds prior similar decisions.
 
 ---
 
@@ -139,8 +139,8 @@ This makes every escalation **searchable** in the decision log. `/recall <topic>
 |------|---------------------|
 | Bounce-back (within pipeline) | <2 h working time |
 | Sideways escalation | <4 h working time |
-| Up-escalation to CTOA | <8 h working time |
-| Up-escalation to Founder (non-page) | <24 h working time |
+| Up-escalation to the Engineering Advisor | <8 h working time |
+| Up-escalation to the Stakeholder (non-page) | <24 h working time |
 | Page (P0) | <15 min, human acknowledged |
 
 These are targets. Pipeline status (`/status`) shows time-in-stage so it's visible when escalations stall.
@@ -149,7 +149,7 @@ These are targets. Pipeline status (`/status`) shows time-in-stage so it's visib
 
 ## Related
 
-- [operating-system.md](operating-system.md) — overall philosophy.
+- [`engineering-os-blueprint/01-organization-structure.md`](../engineering-os-blueprint/01-organization-structure.md) — overall philosophy.
 - [quality-gates.md](quality-gates.md) — gate definitions + bounce-note convention.
 - [prompts/challenge-framework.md](../prompts/challenge-framework.md) — the canonical challenge structure.
 - [prompts/anti-blind-agreement.md](../prompts/anti-blind-agreement.md) — the behavioral prompt every agent inherits.

@@ -1,34 +1,36 @@
 ---
 name: claude-api
-description: Claude backend behind the gateway — pinned IDs (Sonnet 4.6/Haiku 4.5), prompt caching (biggest lever), tool use, Batch API, thinking, errors. Calls route via the gateway.
+description: Claude as the frontier-default model backend behind the gateway — pinned IDs, prompt caching (biggest lever), tool use, Batch API, thinking, errors. Calls route via the gateway.
 ---
 
 # Claude API (Anthropic Messages API)
 
-> **Note:** This is Brain's **local** `claude-api` skill (not the Claude Code bundled one). Brain-pinned model IDs, cost-router integration, per-brand monthly LLM cap. Always read this one over any generic bundled equivalent.
+> **Reference implementation.** This skill documents one concrete binding of the model-backend seam (see `engineering-os-blueprint/09-reference-architecture.md`). The OS is stack-agnostic — your product's `STACK.md` may bind the LLM seam to a different provider. The *patterns* here (pinned IDs, prompt caching as the top cost lever, typed tool use through your own tool layer, batch for non-interactive work, per-tenant budget enforcement) transfer; the Claude specifics are the worked example.
 
-> **Read first — Claude is the frontier-default BACKEND behind the LiteLLM gateway.** App code calls the **LiteLLM gateway** (OpenAI-format), **NOT the Anthropic SDK directly**. The gateway routes `@paradigm("frontier_llm")` to **Claude Sonnet 4.6 as the eval-gated default** and `small_llm` to the cheapest eval-passing model. Routing, fallback, retries, semantic cache, and per-workspace budgets all live in the gateway — see [`llm-gateway`](../llm-gateway/SKILL.md). **This skill is the authority on the Claude-backend specifics**: pinned model IDs, prompt caching, tool use, Batch API, extended thinking. The SDK snippets describe **how the Claude backend behaves**; in service code those calls go *through the gateway*, not a direct `AsyncAnthropic()`.
+> **Note:** This is the **local** `claude-api` skill (not the Claude Code bundled one). It carries pinned model IDs, cost-router integration, and the per-tenant monthly model cap shape. Always read this one over any generic bundled equivalent.
 
-## Why this matters for Brain
+> **Read first — Claude is the frontier-default BACKEND behind the model gateway.** App code calls the **model gateway** (OpenAI-format), **NOT the Anthropic SDK directly**. The gateway routes the "frontier" tier to Claude Sonnet as the eval-gated default and the "small" tier to the cheapest eval-passing model. Routing, fallback, retries, semantic cache, and per-tenant budgets all live in the gateway — see [`llm-gateway`](../llm-gateway/SKILL.md). **This skill is the authority on the Claude-backend specifics**: pinned model IDs, prompt caching, tool use, Batch API, extended thinking. The SDK snippets describe **how the Claude backend behaves**; in service code those calls go *through the gateway*, not a direct `AsyncAnthropic()`.
 
-- **GMV % pricing only works because most calls are SQL or ML, not LLM** (Iron Law #4 — [`cost-routing-paradigms`](../cost-routing-paradigms/SKILL.md)). Every Claude call must be (a) part of the human-language interface boundary (Morning Brief synthesis, AI Chat, agent narrative wrap) or (b) bounded NL routed to Haiku.
-- **Prompt caching is the single biggest cost lever.** ~90% saving on the cached portion of repeated prompts. Brand Fingerprint context (~3–10K tokens) reused across every brief synthesis = enormous savings.
-- **Per-brand monthly LLM cap:** ₹3K Launch / ₹5K Growth / ₹15K Scale / ₹50K+ Enterprise — enforced as the LiteLLM virtual-key budget in the gateway, NOT a downstream alert.
-- **Frontier-LLM creep above 1% of total calls is a tier-1 incident.** Every Sonnet call shows up in the cost-discipline dashboard.
+## Why this matters
 
-## Brain model canon (NEVER use stale IDs)
+- **Usage-based pricing only works because most calls are deterministic or ML, not LLM** (the cost doctrine — [`cost-routing-paradigms`](../cost-routing-paradigms/SKILL.md)). Every Claude call must be (a) part of the natural-language interface boundary (synthesis, chat, agent narrative wrap) or (b) bounded NL routed to the small tier.
+- **Prompt caching is the single biggest cost lever.** ~90% saving on the cached portion of repeated prompts. Reusing a stable context block (~3–10K tokens) across many calls = enormous savings.
+- **Per-tenant monthly model cap** — enforced as the gateway's per-key (virtual-key) budget, NOT a downstream alert.
+- **Frontier-LLM creep above ~1% of total calls is a tier-1 incident.** Every frontier call shows up in the cost-discipline dashboard.
+
+## Model canon (NEVER use stale IDs)
 
 | Model | Family alias | Pinned ID | When |
 |---|---|---|---|
-| **Sonnet 4.6** | `sonnet` | `claude-sonnet-4-6` | Morning Brief synthesis, AI Chat orchestration, agent narrative wrap |
-| **Haiku 4.5** | `haiku` | `claude-haiku-4-5-20251001` | Classification, extraction, short rewrites, WhatsApp template personalisation |
+| **Sonnet 4.6** | `sonnet` | `claude-sonnet-4-6` | synthesis, chat orchestration, agent narrative wrap |
+| **Haiku 4.5** | `haiku` | `claude-haiku-4-5-20251001` | classification, extraction, short rewrites, template personalisation |
 | Opus 4.7 | `opus` | `claude-opus-4-7` | Reserved (heavy reasoning slots only — special-case approval) |
 
-**Stale model IDs are bugs.** Don't write `claude-3-5-sonnet`, `claude-3-7-sonnet`, `claude-sonnet-4-5`.
+**Stale model IDs are bugs.** Don't write `claude-3-5-sonnet`, `claude-3-7-sonnet`, `claude-sonnet-4-5`. Confirm the current pinned IDs against the bundled `claude-api` reference / provider docs before shipping.
 
 ## Quick start (Claude-backend shape — routed through the gateway)
 
-> The snippets show **how the Claude backend behaves** (message shape, caching, tool use). In service code these run **through the LiteLLM gateway via the OpenAI-format client** ([`llm-gateway`](../llm-gateway/SKILL.md)), not a direct `AsyncAnthropic()`.
+> The snippets show **how the Claude backend behaves** (message shape, caching, tool use). In service code these run **through the model gateway via the OpenAI-format client** ([`llm-gateway`](../llm-gateway/SKILL.md)), not a direct `AsyncAnthropic()`.
 
 ```typescript
 import Anthropic from '@anthropic-ai/sdk';
@@ -36,7 +38,7 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const msg = await client.messages.create({
   model: 'claude-sonnet-4-6',
   max_tokens: 1024,
-  messages: [{ role: 'user', content: 'Synthesize three signals for workspace 7d…' }],
+  messages: [{ role: 'user', content: 'Synthesize three signals for the last 7d…' }],
 });
 ```
 
@@ -50,27 +52,27 @@ msg = client.messages.create(
 )
 ```
 
-## Critical rules (Brain canon)
+## Critical rules
 
-**✅ Always:** use a Brain pinned model ID · set `max_tokens` explicitly (budget guard) · enable prompt caching for any repeated context > ~1K tokens · wrap with `@paradigm(...)` · stream long responses for AI Chat · retry with exponential backoff for 429/529 · validate user input before prompt injection ([`defense-in-depth-validation`](../defense-in-depth-validation/SKILL.md)) · set a request timeout (60s synthesis / 10s Haiku) · track tokens per call to the cost registry · return `tool_result` in the follow-up message.
+**✅ Always:** use a pinned model ID · set `max_tokens` explicitly (budget guard) · enable prompt caching for any repeated context > ~1K tokens · route through the cost gate ([`cost-routing-paradigms`](../cost-routing-paradigms/SKILL.md)) · stream long responses for chat · retry with exponential backoff for 429/529 · validate user input before prompt injection ([`agentic-safety`](../agentic-safety/SKILL.md)) · set a request timeout (60s synthesis / 10s small-model) · track tokens per call to the cost registry · return `tool_result` in the follow-up message.
 
-**❌ Never:** expose API key client-side · skip `max_tokens` · use `*-latest` aliases · use a stale model ID · ignore `stop_reason` · assume single content block · skip error handling · mix message roles · store API key in logs/DB/cache · default to Sonnet (start at Haiku, escalate only when bounded NL fails).
+**❌ Never:** expose API key client-side · skip `max_tokens` · use `*-latest` aliases · use a stale model ID · ignore `stop_reason` · assume single content block · skip error handling · mix message roles · store API key in logs/DB/cache · default to the frontier model (start at the small tier, escalate only when bounded NL fails).
 
 ## Prompt caching (the single biggest cost lever)
 
-Caches are 5-minute TTL by default (or 1-hour with extended TTL). Savings compound on Brain's high-frequency synthesis (every workspace's brief at 06:55–07:15 IST shares its system prompt + tool catalogue).
+Caches are 5-minute TTL by default (or 1-hour with extended TTL). Savings compound on high-frequency synthesis (many tenants' batch jobs share a system prompt + tool catalogue).
 
 ```typescript
 const msg = await client.messages.create({
   model: 'claude-sonnet-4-6',
   max_tokens: 1024,
   system: [
-    { type: 'text', text: BRAIN_SYNTHESIS_SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } },  // ~3K tokens
+    { type: 'text', text: SYNTHESIS_SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } },  // ~3K tokens
   ],
   messages: [{
     role: 'user',
     content: [
-      { type: 'text', text: brandFingerprint(workspaceId), cache_control: { type: 'ephemeral' } },  // ~5K tokens
+      { type: 'text', text: tenantContext(tenantId), cache_control: { type: 'ephemeral' } },  // ~5K tokens
       { type: 'text', text: `Today is ${date}. Synthesize three signals from the last 24h.` },
     ],
   }],
@@ -87,28 +89,28 @@ console.log('Cache reads:', msg.usage.cache_read_input_tokens);
 | Cached block < 1024 tokens | Caching only works on blocks ≥ 1024 tokens | Pad or combine with other context |
 | `cache_control` on the wrong block | Must be on the LAST block of cached content | Move to the end of the cacheable region |
 
-Aim for **>70% cache_read rate** on Brain's high-frequency call sites.
+Aim for **>70% cache_read rate** on high-frequency call sites.
 
 ## Cost + capability features (now standard)
 
-Each is still subject to the `@paradigm` gate + per-brand cap — they make an *already-justified* LLM call cheaper/more capable, never an excuse to skip SQL/ML.
+Each is still subject to the cost gate + per-tenant cap — they make an *already-justified* LLM call cheaper/more capable, never an excuse to skip deterministic/ML.
 
 ### Batch API — 50% cheaper, non-interactive bulk work
 
-Runs Messages requests asynchronously at **50% of standard token cost** (results typically within an hour). Use for work **not** on the interactive path: the **23:55 IST outcome-attribution backfill** and **nightly insight generation**. Do **not** batch the 07:15 Morning Brief synthesis or AI Chat — latency-sensitive, stay synchronous.
+Runs Messages requests asynchronously at **50% of standard token cost** (results typically within an hour). Use for work **not** on the interactive path: nightly attribution/outcome backfills and nightly insight generation. Do **not** batch latency-sensitive synthesis or chat — keep those synchronous.
 
 ```python
 batch = client.messages.batches.create(requests=[
-    {"custom_id": f"attribution-{workspace_id}-{date}",
+    {"custom_id": f"attribution-{tenant_id}-{date}",
      "params": {"model": "claude-sonnet-4-6", "max_tokens": 1024,
-                "messages": [{"role": "user", "content": attribution_prompt(workspace_id, date)}]}}
-    for workspace_id, date in nightly_jobs
+                "messages": [{"role": "user", "content": attribution_prompt(tenant_id, date)}]}}
+    for tenant_id, date in nightly_jobs
 ])
 ```
 
 ### Extended / adaptive thinking (Sonnet 4.6)
 
-Give the model a thinking budget for harder reasoning before it answers — where the *reasoning* is the hard part, not the writing (ambiguous multi-signal agent reasoning, cross-channel budget allocation).
+Give the model a thinking budget for harder reasoning before it answers — where the *reasoning* is the hard part, not the writing (ambiguous multi-signal agent reasoning, cross-channel allocation).
 
 ```python
 msg = client.messages.create(
@@ -118,39 +120,39 @@ msg = client.messages.create(
 )
 ```
 
-Thinking tokens count toward cost + the per-brand cap — budget deliberately; don't enable on bounded Haiku-class work.
+Thinking tokens count toward cost + the per-tenant cap — budget deliberately; don't enable on bounded small-model work.
 
-### Files API (vision / creative-benchmark flows)
+### Files API (vision / benchmark flows)
 
-Upload a file once, reference by `file_id` across calls (instead of re-encoding bytes per request) — relevant to vision / creative-benchmark flows.
+Upload a file once, reference by `file_id` across calls (instead of re-encoding bytes per request) — relevant to vision / benchmark flows.
 
 ```python
 f = client.beta.files.upload(file=("creative.png", open("creative.png", "rb"), "image/png"))
 msg = client.messages.create(model="claude-sonnet-4-6", max_tokens=1024,
     messages=[{"role": "user", "content": [
         {"type": "image", "source": {"type": "file", "file_id": f.id}},
-        {"type": "text", "text": "Score this creative against the brand benchmark."}]}])
+        {"type": "text", "text": "Score this against the benchmark."}]}])
 ```
 
-## Tool use (AI Chat — MCP-mediated)
+## Tool use (chat — MCP-mediated)
 
 ```typescript
 const msg = await client.messages.create({
   model: 'claude-sonnet-4-6', max_tokens: 4096,
   tools: [{
     name: 'analytics_waterfall_compute',
-    description: 'Compute the CM2 waterfall for a workspace + date range',
+    description: 'Compute the metric waterfall for a tenant + date range',
     input_schema: { type: 'object', properties: {
-      workspace_id: { type: 'string', format: 'uuid' },
+      tenant_id: { type: 'string', format: 'uuid' },
       date_from: { type: 'string', format: 'date' }, date_to: { type: 'string', format: 'date' },
-    }, required: ['workspace_id', 'date_from', 'date_to'] },
+    }, required: ['tenant_id', 'date_from', 'date_to'] },
   }],
   messages: [/* ... */],
 });
 
 if (msg.stop_reason === 'tool_use') {
   const toolUse = msg.content.find((b) => b.type === 'tool_use');
-  // Route through Brain's MCP server, NOT a direct Anthropic Tool Use response — MCP is the contract.
+  // Route through the MCP server, NOT a direct Anthropic Tool Use response — MCP is the contract.
   const result = await mcp.invoke(toolUse.name, toolUse.input);
   const follow = await client.messages.create({
     model: 'claude-sonnet-4-6', max_tokens: 4096, tools: [/* same */],
@@ -162,9 +164,9 @@ if (msg.stop_reason === 'tool_use') {
 }
 ```
 
-Tool schemas are **generated from the same `.proto` files** as gRPC so the MCP tool catalogue and the Anthropic Tool Use schema never drift ([`mcp-protocol`](../mcp-protocol/SKILL.md), [`grpc-buf`](../grpc-buf/SKILL.md)). Routing through MCP preserves the Decision Log contract ([`decision-log`](../decision-log/SKILL.md)).
+Tool schemas are **generated from the same `.proto` files** as gRPC so the MCP tool catalogue and the Anthropic Tool Use schema never drift ([`mcp-protocol`](../mcp-protocol/SKILL.md), [`grpc-buf`](../grpc-buf/SKILL.md)). Routing through MCP preserves the audit-log contract ([`decision-log`](../decision-log/SKILL.md)).
 
-## Error handling — Brain wrapper
+## Error handling — wrapper
 
 ```typescript
 async function anthropicCall<T>(fn: () => Promise<T>, opts: { maxRetries?: number } = {}): Promise<T> {
@@ -185,49 +187,46 @@ async function anthropicCall<T>(fn: () => Promise<T>, opts: { maxRetries?: numbe
 }
 ```
 
-## Cost-cap enforcement (per-brand monthly LLM budget)
+## Cost-cap enforcement (per-tenant monthly model budget)
 
-The per-brand monthly cap is now the **LiteLLM virtual-key budget in the gateway** (the runtime mechanism; thresholds unchanged). The conceptual shape:
+The per-tenant monthly cap is the **gateway's per-key (virtual-key) budget** (the runtime mechanism). The conceptual shape:
 
 ```typescript
-async function callClaudeWithBudget(workspaceId: string, fn: () => Promise<...>) {
-  const spentInr = await costRegistry.monthToDateForWorkspace(workspaceId);
-  const cap = workspaces.budget(workspaceId);  // ₹3K Launch / ₹5K Growth / ₹15K Scale / ...
-  if (spentInr >= cap) throw new BudgetExhaustedError({ workspaceId, spentInr, cap });
-  if (spentInr >= cap * 0.8) log().warn({ workspaceId, spentInr, cap }, 'llm_budget.throttle');  // route to Haiku where bounded NL ok
+async function callWithBudget(tenantId: string, fn: () => Promise<...>) {
+  const spentMinor = await costRegistry.monthToDateForTenant(tenantId);
+  const cap = tenants.budgetMinor(tenantId);  // per-tier cap, in currency minor units
+  if (spentMinor >= cap) throw new BudgetExhaustedError({ tenantId, spentMinor, cap });
+  if (spentMinor >= cap * 0.8) log().warn({ tenantId, spentMinor, cap }, 'llm_budget.throttle');  // route to small tier where bounded NL ok
   const result = await fn();
-  await costRegistry.record(workspaceId, result.usage);
+  await costRegistry.record(tenantId, result.usage);
   return result;
 }
 ```
 
-### Phase-gate requirement (non-negotiable — architecture review 2026-05-16)
+### Phase-gate requirement (non-negotiable)
 
-**The per-brand monthly LLM cap MUST be live before AI Chat ships in W18.** AI Chat is the feature most likely to push a brand past their tier cap (5 → 50 msg/day ≈ ₹1,500/brand/month, half the Launch ₹3K cap on chat alone). Layer 3 of the four-layer cost control (Layer 1 `@paradigm`, Layer 2 token budget, **Layer 3 per-brand cap**, Layer 4 global dashboard alarm).
+**The per-tenant monthly model cap MUST be live before any high-volume chat surface ships.** Interactive chat is the feature most likely to push a tenant past their cap. It is one layer of the four-layer cost control (Layer 1 the cost gate, Layer 2 token budget, **Layer 3 per-tenant cap**, Layer 4 global dashboard alarm).
 
 **Acceptance criteria for "the cap is live":**
-- The **LiteLLM gateway is the only entry point** any Brain service uses to reach an LLM; the per-workspace **virtual-key budget** carries the cap (supersedes the `callClaudeWithBudget` wrapper above). **Direct `client.messages.create()` / `AsyncAnthropic()` calls in app code fail PR review** — they bypass routing/fallback/semantic-cache/budget. See [`llm-gateway`](../llm-gateway/SKILL.md).
-- Costs ingested per call (input/cached/output + the **resolved model**) with per-workspace partition.
-- Throttle at 70% (warn + pause non-critical; route frontier-eligible to a cheaper eval-passing tier); hard-stop at 100% (gateway serves critical-path only). CloudWatch alarm at 90% pages Maya. Brand-facing dashboard shows month-to-date spend vs cap.
+- The **model gateway is the only entry point** any service uses to reach an LLM; the per-tenant **virtual-key budget** carries the cap (supersedes the `callWithBudget` wrapper above). **Direct `client.messages.create()` / `AsyncAnthropic()` calls in app code fail PR review** — they bypass routing/fallback/semantic-cache/budget. See [`llm-gateway`](../llm-gateway/SKILL.md).
+- Costs ingested per call (input/cached/output + the **resolved model**) with per-tenant partition.
+- Throttle at ~70% (warn + pause non-critical; route frontier-eligible to a cheaper eval-passing tier); hard-stop at 100% (gateway serves critical-path only). An alarm at ~90% pages the AI/ML Engineer. A tenant-facing dashboard shows month-to-date spend vs cap.
 
-See `memory/decisions/ADR-DRAFT-2026-05-16-stack-review.md` §Recommendations #6.
+## Top errors (with context)
 
-## Top errors (with Brain context)
-
-1. **Rate limit 429** — use the backoff wrapper. Frequent 429 on Haiku usually means misrouting work that could be SQL/ML — check the paradigm audit.
+1. **Rate limit 429** — use the backoff wrapper. Frequent 429 on the small tier usually means misrouting work that could be deterministic/ML — check the cost audit.
 2. **Prompt cache not activating** — `cache_read_input_tokens: 0` on a stable prompt: cached block changed / block < 1024 tokens / `cache_control` on the wrong block.
 3. **Tool use schema invalid** — `input_schema` must be JSON Schema with `type: 'object'`; generate from proto rather than copying a Zod schema ([`grpc-buf`](../grpc-buf/SKILL.md)).
-4. **Sonnet used where Haiku would do** — caught in the paradigm audit at PR time; Aryan blocks.
+4. **Frontier model used where the small tier would do** — caught in the cost audit at PR time; the Architect blocks.
 
-## Brain wiring
+## Wiring
 
-| Concern | Owner | Reference |
+| Concern | Role | Reference |
 |---|---|---|
-| intelligence-service call sites | **Maya** | canon/technical-requirements.md |
-| Cost-cap registry + paradigm audit | **Maya** + **Aryan** | `cost-routing-paradigms` |
-| MCP tool integration | **Vikram** + **Maya** | `mcp-protocol` |
-| Prompt caching hit-rate dashboards | **Maya** + **Jatin** | `observability` |
-| Per-brand budget enforcement | **Maya** | `llm-gateway` (virtual-key budget) |
+| intelligence-service call sites | **AI/ML Engineer** | `STACK.md` |
+| Cost-cap registry + cost audit | **AI/ML Engineer** + **Architect** | `cost-routing-paradigms` |
+| MCP tool integration | **Backend Engineer** + **AI/ML Engineer** | `mcp-protocol` |
+| Prompt caching hit-rate dashboards | **AI/ML Engineer** + **Platform/SRE** | `observability` |
+| Per-tenant budget enforcement | **AI/ML Engineer** | `llm-gateway` (virtual-key budget) |
 
-Related: [`llm-gateway`](../llm-gateway/SKILL.md) · [`cost-routing-paradigms`](../cost-routing-paradigms/SKILL.md) · [`mcp-protocol`](../mcp-protocol/SKILL.md) · [`grpc-buf`](../grpc-buf/SKILL.md) · [`defense-in-depth-validation`](../defense-in-depth-validation/SKILL.md) · [`observability`](../observability/SKILL.md)
-</content>
+Related: [`llm-gateway`](../llm-gateway/SKILL.md) · [`cost-routing-paradigms`](../cost-routing-paradigms/SKILL.md) · [`mcp-protocol`](../mcp-protocol/SKILL.md) · [`grpc-buf`](../grpc-buf/SKILL.md) · [`agentic-safety`](../agentic-safety/SKILL.md) · [`observability`](../observability/SKILL.md)

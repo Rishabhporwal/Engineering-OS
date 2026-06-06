@@ -39,7 +39,7 @@ State assumptions. Surface tradeoffs. If unclear, name what's confusing — don'
 ✅ "Before writing: scope = current tenant? format = CSV? fields = public only? Defaulting to those — say otherwise."
 
 ### 7. Right-Sized Stack
-**For Brain specifically: the stack is LOCKED.** See prompts/system-prompt.md ("The Stack — NOT negotiable") and canon/technical-requirements.md. Aryan only runs `tech-stack-evaluation` when **adding a new layer** that isn't already chosen. Do NOT re-evaluate the stack per feature.
+**Once the product's stack is chosen, it is fixed** — the binding lives in the Product Canon's `STACK.md`. The Architect runs `tech-stack-evaluation` only when **adding a new layer** that isn't already chosen (or proposing a swap, via an ADR). Do NOT re-evaluate the stack per feature.
 
 ## Vertical Slices (the delivery pattern)
 
@@ -54,7 +54,7 @@ Rules:
 - Every slice ends in a passing test.
 - Hardcoded values in slice 1 are fine — generalize in slice 2.
 
-Priya structures `/spec` task lists as slices, not phases.
+The Delivery Coordinator structures `/spec` task lists as slices, not phases.
 
 ## Context Discipline (token efficiency)
 
@@ -77,7 +77,7 @@ Tactics:
 
 ## Persona Brainstorming (for design ambiguity)
 
-Used by Aryan during `/design` when scope is unclear. **Optional for Trivial/Small tier, mandatory only for Medium+.**
+Used by the Architect during `/design` when scope is unclear. **Optional for Trivial/Small tier, mandatory only for Medium+.**
 
 Each agent voices ≥1 persona from its domain:
 - Frontend → a primary end-user from `business-context.md`
@@ -86,7 +86,7 @@ Each agent voices ≥1 persona from its domain:
 
 Each persona: 3-5 NEEDS · what would FAIL them · one wildcard "what if".
 
-Aryan synthesizes: confirmed (all agree) · tensions (need decision) · hidden requirements · out-of-scope v1.
+The Architect synthesizes: confirmed (all agree) · tensions (need decision) · hidden requirements · out-of-scope v1.
 
 **Skip this protocol for trivial tasks.** Over-applying it is a process tax.
 

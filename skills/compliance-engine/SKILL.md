@@ -1,116 +1,122 @@
 ---
 name: compliance-engine
-description: Owner of the compliance regime — DPDP+Rules 2025, TCCCPR-DLT, NCPR-DND, 9am-9pm, WhatsApp, PDPL, in-region data, consent primitive, PII-not-stored. Shreya VETO.
+description: The generic compliance-enforcement machinery — enforces whatever regulatory regime the Product Canon's COMPLIANCE.md declares (data protection, residency, retention, consent, channel rules). Security Reviewer VETO.
 ---
 
-# Compliance Engine — the single owner of the regime
+# Compliance Engine — the machinery that enforces the declared regime
 
-Brain processes large volumes of customer PII and does outbound voice/messaging in a heavily regulated market. This is the single, named, **enforceable** spec (`canon/TECH/16_compliance_engine.md`). **Any breach blocks a release — a Shreya VETO surface.** Brain is a **processor**; the brand is the controller/data-fiduciary — Brain provides the tools + defaults that make the brand compliant by default. Every other security skill references THIS for the regime; don't restate it elsewhere.
+The OS carries **no specific regulatory knowledge** — regimes are domain- and jurisdiction-specific and live in the Product Canon (`COMPLIANCE.md`). This skill is the **machinery to enforce whatever regime the Canon declares**, as an engineered, gated capability. **Any breach blocks a release — a Security Reviewer VETO surface.** Where the product is a processor and a customer is the controller, the product supplies the tools + defaults that make the customer compliant by default. Every other security skill references THIS for the enforcement mechanics; the specific regime lives only in the Canon.
 
-## Applicable regimes (named, current 2026)
+> The OS makes compliance *enforceable and provable*; the Canon makes it *specific*. This split is what lets the same OS serve one regime in one jurisdiction and a different regime in another without changing the OS. (`engineering-os-blueprint/08-technical-governance.md §5`.)
 
-| Regime | Scope | Obligations |
-|---|---|---|
-| **India DPDP Act 2023 + Rules 2025** (phased → **13 Nov 2026** Consent Manager registration → **13 May 2027** substantive duties) | all Indian PII | consent-based processing, purpose limitation, minimization, retention limits, **right to erasure**, breach notification, Consent-Manager compatibility |
-| **India TCCCPR 2018 (amended 12 Feb 2025)** | A2P SMS + voice | **DLT** registration of headers + templates, **NCPR/DND** scrubbing, **9am–9pm** promotional window |
-| **UAE PDPL** (45/2021) | UAE PII | explicit revocable marketing opt-in; erasure; cross-border transfer controls |
-| **KSA PDPL** (full SDAIA enforcement since 14 Sep 2024) | KSA PII | opt-in; sensitive-data marketing prohibition; cross-border needs SDAIA-approved SCCs/BCRs; penalties to SAR 5M |
-| **Meta WhatsApp policy** | WhatsApp sends | user opt-in, approved templates, free service window (**24h customer-service reply; 72h ad-click entry-point**), quality-rating |
+## How the regime is declared (read it from the Canon)
+
+`COMPLIANCE.md` declares the obligations this product is held to. The OS treats each as an enforceable rule gated like any other standard. Generic examples of the kinds of obligation a regime may carry:
+
+| Obligation class | Example shape (the Canon supplies specifics) |
+|---|---|
+| **Data-protection law** | lawful basis / consent for processing, purpose limitation, minimization, retention limits, right to erasure, breach notification within a window |
+| **Channel / outreach rules** | registered sender identity, do-not-contact suppression lists, permitted-hours windows, per-channel opt-in + approved-template requirements |
+| **Cross-border / residency** | data of a given population stays in a named region; transfers need approved safeguards |
+| **Sector controls** | sensitive-data handling prohibitions, attestation/audit requirements (→ `compliance-attestation`) |
+
+The OS does not hardcode any of these — it provides the enforcement points below and reads the parameters from the Canon.
 
 ## The compliance engine (outbound gating — NOT feature-flaggable)
 
-Hard-coded into **every** outbound path in `lifecycle-service/compliance/engine.py`. A send/call cannot bypass it:
+Where the regime governs outbound contact, the check is hard-coded into **every** outbound path so a send/call cannot bypass it. The specific channels, windows, and suppression sources come from `COMPLIANCE.md`; the *structure* is generic:
+
 ```python
-def can_contact(self, brand_id, customer_id, channel, segment, purpose) -> ComplianceResult:
-    # 1. Consent (per channel + purpose) — re-checked before EVERY send
+def can_contact(self, tenant_id, subject_id, channel, segment, purpose) -> ComplianceResult:
+    # 1. Consent / lawful basis (per channel + purpose) — re-checked before EVERY send
     if purpose == 'marketing' and c.consent(channel) != 'opted_in':
         return ComplianceResult.blocked('consent_missing')
     if c.consent(channel) in ('opted_out','withdrawn'):
         return ComplianceResult.blocked('consent_revoked')
-    # 2. Channel-specific
-    if channel in ('call','sms') and region == 'IN':
-        if not (9 <= now.hour < 21):
-            return ComplianceResult.deferred('outside_calling_hours')   # held, flushed at 09:00
-        if c.do_not_call or self.ncpr.is_listed(c.phone):              # two-layer DND
-            return ComplianceResult.blocked('dnd_or_ncpr')
-        if not self.dlt_registered(brand_id):
-            return ComplianceResult.blocked('dlt_not_registered')
-    if channel == 'whatsapp' and not self.template_approved(brand_id, purpose):
+    # 2. Channel-specific rules (parameters from COMPLIANCE.md)
+    if channel in self.windowed_channels:
+        if not self.within_permitted_window(now, channel):
+            return ComplianceResult.deferred('outside_permitted_window')  # held, flushed when window opens
+        if c.do_not_contact or self.suppression_list.is_listed(c.address):  # two-layer suppression
+            return ComplianceResult.blocked('suppressed')
+        if not self.sender_registered(tenant_id, channel):
+            return ComplianceResult.blocked('sender_not_registered')
+    if channel in self.templated_channels and not self.template_approved(tenant_id, purpose):
         return ComplianceResult.blocked('template_not_approved')
-    # 3. Frequency cap — 48h per customer across ALL Brain flows
-    if self.last_contact_within(brand_id, customer_id, hours=48) and not vip_override:
+    # 3. Frequency cap — across ALL flows
+    if self.last_contact_within(tenant_id, subject_id, self.cap_hours) and not vip_override:
         return ComplianceResult.blocked('frequency_cap')
     return ComplianceResult.ok()
 ```
 
-### Channel rules (canonical)
-| Channel | Enforced |
+### Channel rules (generic shape; Canon fills the specifics)
+| Channel class | Enforced (parameters from COMPLIANCE.md) |
 |---|---|
-| **WhatsApp** | Meta opt-in; approved template per purpose; free service window (24h customer-service reply; 72h ad-click entry-point) for replies; frequency cap. India marketing per-message rate ≈ **₹0.86** since 1 Jan 2026. (NOT DLT.) |
-| **SMS** | DLT header + template on the **brand's** DLT entity (never commingled); NCPR/DND; 9am–9pm; cap. |
-| **Voice / AI calls** | two-layer DND (brand list + NCPR); 9am–9pm gated **at the queue, not the dialer**; automated-agent disclosure at call open; recording consent (proceed without retention if declined); human handoff; cap. |
-| **Email** | opt-in/unsubscribe honored; suppression on withdrawal; CAN-SPAM-equivalent footer. |
-| **Ad custom audiences** | consent state + suppression applied before push to Meta/Google. |
+| **Templated messaging** | opt-in; approved template per purpose; free/service window for replies; frequency cap. |
+| **SMS / registered messaging** | registered sender identity + template on the **customer's own** entity (never commingled); suppression-list scrub; permitted-hours window; cap. |
+| **Voice / automated calls** | two-layer suppression (own list + regulator list); permitted-hours gated **at the queue, not the dialer**; automated-agent disclosure at call open; recording consent (proceed without retention if declined); human handoff; cap. |
+| **Email** | opt-in/unsubscribe honored; suppression on withdrawal; lawful-footer requirement. |
+| **Ad custom audiences** | consent state + suppression applied before push to the ad platform. |
 
-**Calling-hours gating is at the queue:** out-of-window calls/SMS sit in `pending_window`, flush at 09:00 — "0 out-of-window attempts" is a structural guarantee, not a runtime hope.
+**Permitted-hours gating is at the queue:** out-of-window contacts sit in a `pending_window` queue and flush when the window opens — "0 out-of-window attempts" is a structural guarantee, not a runtime hope.
 
 ## The consent primitive (one model, all channels)
 
-Built once in `core-service` (`consent/`), consumed by every outbound path (Single-Primitive Rule). Tracked by **customer × channel × purpose × source × timestamp × region × withdrawal**, append-only:
+Built once and consumed by every outbound path (Single-Primitive Rule). Tracked by **subject × channel × purpose × source × timestamp × region × withdrawal**, append-only:
 ```sql
-lifecycle.consent_event(             -- append-only ledger
-  workspace_id, customer_id, channel,   -- email/sms/whatsapp/call/ads_custom_audience/all
-  old_status, new_status,                -- opted_in/opted_out/withdrawn/unknown
-  purpose, source, region, recorded_at)  -- purpose = marketing | transactional
-lifecycle.customer_consent_current(...)  -- materialized; PK (workspace_id, customer_id, channel, purpose)
+consent_event(                          -- append-only ledger
+  tenant_id, subject_id, channel,       -- e.g. email/sms/messaging/call/ads_custom_audience/all
+  old_status, new_status,               -- opted_in/opted_out/withdrawn/unknown
+  purpose, source, region, recorded_at) -- purpose = marketing | transactional
+subject_consent_current(...)            -- materialized; PK (tenant_id, subject_id, channel, purpose)
 ```
-**Transactional vs marketing:** support replies may continue where legally transactional even if marketing consent is withdrawn; marketing upsells cannot. **Opt-out overrides all marketing.** Forward-compatible with DPDP Consent Managers via `source = 'consent_manager'`.
+**Transactional vs marketing:** support replies may continue where legally transactional even if marketing consent is withdrawn; marketing upsells cannot. **Opt-out overrides all marketing.** Keep the `source` field forward-compatible with external consent managers (`source = 'consent_manager'`) where the regime defines them.
 
-## Data lifecycle (DPDP / PDPL)
+## Data lifecycle (per the declared regime)
 
-- **Never store:** card numbers, CVV, full UPI IDs, full bank accounts, plaintext passwords, national IDs (Aadhaar), special-category data, **full addresses** (default **pincode/city-level**), PII in logs. (PCI scope boundary: `compliance-attestation`.)
-- **PII at rest/in transit:** hash email/phone by default (`email_hash`/`phone_hash`); plaintext contact only where outreach is enabled + consent/legal basis exists, KMS-encrypted. Redaction at the logger (`pylibs/brain_logger`) AND at Fluent Bit (Lua scrub) before OpenSearch. TLS everywhere; mobile cert-pinning.
-- **Residency (default, not enterprise-only):** Indian customer data in-region (**ap-south-1**) by default — Supabase, MSK, ClickHouse, S3 all in-region. UAE/KSA (Phase 4) per PDPL transfer rules. (Structural enforcement: `data-residency-enforcement`.)
-- **Right to erasure:** brand-initiated → tombstone in Postgres (RLS-scoped) + hard-delete plaintext PII → ClickHouse `ALTER TABLE ... DELETE WHERE workspace_id=? AND customer_id=?` → purge S3 raw payloads → suppress in all audiences + consent → `withdrawn` → write `audit.audit_log` (PII-free, retained). Export = signed-S3 machine-readable bundle.
-- **Retention:** raw 5y, `*_recent` 90d, canonical/daily-metrics forever (de-identified where required), `audit_log` 7y, soft-deleted workspaces hard-deleted at 90d — enforced by scheduled jobs.
-- **Breach:** Sentry P1 → on-call → scoped impact → notify affected brand(s) within the regime's window → post-mortem.
+- **Never store** what the regime forbids — typically: card numbers, CVV, full payment-instrument identifiers, full bank accounts, plaintext passwords, national IDs, special-category data, more PII than needed (e.g. coarse-grained location rather than full address), PII in logs. (Payment-scope boundary: `compliance-attestation`.)
+- **PII at rest/in transit:** hash high-cardinality identifiers by default (`email_hash`/`phone_hash`); keep plaintext contact only where outreach is enabled + a consent/legal basis exists, encrypted via a managed KMS. Redact at the logger AND at the log-shipping layer before it reaches the log store. TLS everywhere; mobile cert-pinning.
+- **Residency (where the regime requires it):** data of a named population stays in its required region by default — every data store (OLTP, OLAP, object storage, message bus) provisioned in-region. Other regions follow that regime's transfer rules. Structural enforcement lives behind the region seam (`region-and-locale`).
+- **Right to erasure:** subject-initiated → tombstone in the OLTP store (tenant-scoped) + hard-delete plaintext PII → delete from the OLAP store (`ALTER TABLE ... DELETE WHERE tenant_id=? AND subject_id=?`) → purge raw object-storage payloads → suppress in all audiences + set consent → `withdrawn` → write the PII-free audit-log entry (retained). Export = signed machine-readable bundle.
+- **Retention:** apply the regime's retention class per dataset (raw payloads, recent windows, de-identified canonical aggregates, audit log, soft-deleted-tenant purge horizon) — enforced by scheduled jobs.
+- **Breach:** alerting fires → on-call → scoped impact → notify affected parties within the regime's window → post-mortem.
 
-## Cross-brand benchmark privacy
-Raw data never leaves a workspace partition. Benchmarks are aggregate + anonymized, **k-anonymity k≥5** enforced in schema (`ai.cross_brand_pattern.brand_count CHECK (>=5)`). Opt-in to contribute (DPA); receive patterns regardless.
+## Cross-tenant benchmark privacy (where the product aggregates across tenants)
+Raw data never leaves a tenant partition. Benchmarks are aggregate + anonymized, **k-anonymity (k≥ the Canon's threshold)** enforced in schema (`CHECK (tenant_count >= N)`). Opt-in to contribute (DPA); receive patterns regardless.
 
 ## Compliance SLOs (all = 0)
-DND/NCPR-blocked attempts that **leaked** · out-of-window send attempts · cross-brand data leaks · PII-in-logs incidents — each must be 0; non-zero is a rule violation.
+Suppression-list-blocked attempts that **leaked** · out-of-window send attempts · cross-tenant data leaks · PII-in-logs incidents — each must be 0; non-zero is a rule violation.
 
 ## PII data-catalog & lineage
-Erasure + breach-scope are only as fast as your knowledge of where PII lives. Maintain a **field-level PII catalog** (versioned in repo, asserted in CI) + a **lineage map** so a DPDP request is a lookup, not archaeology.
+Erasure + breach-scope are only as fast as your knowledge of where PII lives. Maintain a **field-level PII catalog** (versioned in repo, asserted in CI) + a **lineage map** so a data-subject request is a lookup, not archaeology.
 
 | Field | Class | Default handling |
 |---|---|---|
 | `phone` | direct | `phone_hash`; plaintext only w/ outreach consent (KMS) |
 | `email` | direct | `email_hash`; plaintext only w/ consent (KMS) |
-| `address` | direct | pincode/city-level only; full address never |
-| `order_id` / order facts | linked | retained; tombstoned on erasure |
-| name + order-total combo | quasi | never co-logged |
+| `location` | direct | coarse-grained (region/area) only; full precise address never |
+| `order_id` / record facts | linked | retained; tombstoned on erasure |
+| name + value combo | quasi | never co-logged |
 
 Lineage — every copy a PII field makes:
 ```
-connector ingest → S3 raw (KMS) → CH raw_* → CH canonical (orders, customers)
-  → pgvector embeddings (Brand Fingerprint / condition_outcome)
-  → logs (redacted at logger + Fluent Bit) → exports (signed S3 bundle)
+connector ingest → raw object storage (KMS) → OLAP raw_* → OLAP canonical
+  → derived stores (e.g. vector embeddings)
+  → logs (redacted at logger + log shipper) → exports (signed bundle)
 ```
-The lineage map drives BOTH workflows: an **erasure** walks every node (PG tombstone + plaintext hard-delete → CH `ALTER … DELETE` → S3 purge → re-embed/evict derived pgvector rows → suppress in audiences/consent → keep the PII-free audit entry); a **breach** uses the same map to compute notification scope (fields × stores × brands) within the window. A new connector or derived table is **not done** until its PII fields are in the catalog + lineage.
+The lineage map drives BOTH workflows: an **erasure** walks every node (OLTP tombstone + plaintext hard-delete → OLAP `DELETE` → object-storage purge → re-embed/evict derived rows → suppress in audiences/consent → keep the PII-free audit entry); a **breach** uses the same map to compute notification scope (fields × stores × tenants) within the window. A new connector or derived table is **not done** until its PII fields are in the catalog + lineage.
 
 ## Anti-patterns
-- A send/call that bypasses the engine, or checks consent once instead of before every send; gating calling hours at the dialer not the queue.
-- Commingling brands' DLT registrations; sending an unapproved WhatsApp template; ignoring the free-service-window distinction.
-- Marketing to `opted_out`/`withdrawn`; storing a full address/card/UPI/Aadhaar; PII reaching logs.
-- Writing Indian customer data outside ap-south-1; erasure that misses ClickHouse/S3/audiences; a cross-brand pattern below k=5.
+- A send/call that bypasses the engine, or checks consent once instead of before every send; gating permitted hours at the dialer not the queue.
+- Commingling tenants' sender registrations; sending an unapproved template; ignoring the free/service-window distinction.
+- Marketing to `opted_out`/`withdrawn`; storing a forbidden data class; PII reaching logs.
+- Writing residency-restricted data outside its required region; erasure that misses the OLAP store / object storage / audiences; a cross-tenant benchmark below the k-anonymity threshold.
 
 ## Verify
-- A pre-09:00 IST SMS/call sits in `pending_window` and flushes at 09:00; an NCPR-listed/opted-out number is blocked.
-- A marketing send to a `withdrawn` consent fails; a transactional support reply within the window proceeds.
-- An erasure removes plaintext PII across PG + CH + S3 + audiences; the audit entry remains.
-- Grep new code paths + sample OpenSearch lines for phone/email/address — none present.
+- An out-of-window send sits in `pending_window` and flushes when the window opens; a suppression-listed/opted-out address is blocked.
+- A marketing send to a `withdrawn` consent fails; a transactional reply within the service window proceeds.
+- An erasure removes plaintext PII across OLTP + OLAP + object storage + audiences; the audit entry remains.
+- Grep new code paths + sample log lines for direct identifiers — none present.
 
 ## References
-`canon/TECH/16_compliance_engine.md` (full spec + test matrix + SLOs) · `canon/technical-requirements.md` §21 · `canon/TECH/11_lifecycle_revenue_layer.md` §6 · `lifecycle-revenue-layer` · `security-baseline` · `multi-tenancy-isolation` · `region-adapter` · `data-residency-enforcement` (residency enforcement) · `compliance-attestation` (PCI scope + audit immutability + SOC2).
+`engineering-os-blueprint/08-technical-governance.md §5` (compliance as an engineered capability) · the Product Canon's `COMPLIANCE.md` (the specific regime + its parameters, SLOs, test matrix) · `security-baseline` · `multi-tenancy-isolation` · `region-and-locale` (residency enforcement) · `compliance-attestation` (payment scope + audit immutability + attestation evidence). For one concrete instantiation of a regime, see `examples/brain-instantiation/`.

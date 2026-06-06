@@ -1,12 +1,12 @@
 ---
 name: qa-browser
-description: Real-browser QA (gstack-inspired). Drives actual Chromium to walk critical user flows, capture console/network/JS errors and screenshots, and generate a Playwright regression spec from the walk. Use in Tanvi's Stage 5 for any web-touching change. Catches layout shifts, broken flows, auth issues, and runtime errors that mocks miss.
+description: Real-browser QA. Drives actual Chromium to walk critical user flows, capture console/network/JS errors and screenshots, and generate a Playwright regression spec from the walk. Use in the QA Engineer's Stage 5 for any web-touching change. Catches layout shifts, broken flows, auth issues, and runtime errors that mocks miss.
 disable-model-invocation: true
 ---
 
-Run real-browser QA against the app (Tanvi, Stage 5, web changes). This verifies *rendered* behaviour, not mocks — it complements unit/contract tests, it does not replace them.
+Run real-browser QA against the app (QA Engineer, Stage 5, web changes). This verifies *rendered* behaviour, not mocks — it complements unit/contract tests, it does not replace them.
 
-> Engine: `${CLAUDE_PLUGIN_ROOT}/tools/browse.py` (Playwright/Chromium — plugin-side dev tooling, NOT a Brain product dependency). First run auto-installs Chromium (~150MB), once.
+> Engine: `${CLAUDE_PLUGIN_ROOT}/tools/browse.py` (Playwright/Chromium — plugin-side dev tooling, NOT a product dependency). First run auto-installs Chromium (~150MB), once.
 
 ## Procedure
 
@@ -24,7 +24,7 @@ Run real-browser QA against the app (Tanvi, Stage 5, web changes). This verifies
    ```
    A failing step stops the flow and saves a `FAIL-step-N.png`. Console/network errors during the walk are captured too.
 
-4. **Generate a regression spec from the passing walk** (the gstack move). Translate the validated scenario into a **Playwright** spec (`@playwright/test`) under the app's `e2e/` (`*.spec.ts`), using `page.getByTestId(...)` + web-first assertions (`await expect(locator).toBeVisible()`). This is now **one unified engine** — the `/qa-browser` walk and the durable regression spec are both Playwright, the same engine `browse.py` already drives — which is *cleaner* for the Single-Primitive Rule (no second E2E system to maintain).
+4. **Generate a regression spec from the passing walk.** Translate the validated scenario into a **Playwright** spec (`@playwright/test`) under the app's `e2e/` (`*.spec.ts`), using `page.getByTestId(...)` + web-first assertions (`await expect(locator).toBeVisible()`). This is now **one unified engine** — the `/qa-browser` walk and the durable regression spec are both Playwright, the same engine `browse.py` already drives — which is *cleaner* for the Single-Primitive Rule (no second E2E system to maintain).
 
 5. **Record** screenshots + the JSON reports under `<run_folder>/qa/`, and fold the verdict into `10-qa-review.md`. Capture the actual command output (no paraphrasing — verification-before-completion).
 
@@ -34,5 +34,5 @@ Run real-browser QA against the app (Tanvi, Stage 5, web changes). This verifies
 - [ ] A Playwright regression spec exists for each newly-walked flow
 
 ## Notes
-- This is for **web** (Next.js dashboard). The RN/Expo mobile app isn't browser-renderable; for Morning Brief use Expo web preview if available, else fall back to Karan's Detox E2E.
+- This is for the **web** surface. A native mobile app isn't browser-renderable; use the framework's web preview if available, else fall back to the Mobile Engineer's device-level E2E (e.g. Detox/Maestro).
 - Screenshots are viewport-sized (small) and committed as QA evidence; use git LFS for any >1MB.
