@@ -1,6 +1,6 @@
 # Final Review — {{REQ_ID}}
 
-> Filled by the CTO Advisor in Stage 6. **VETO authority** — can bounce to any earlier stage.
+> Filled by the Engineering Advisor in Stage 6. **VETO authority** — can bounce to any earlier stage.
 > Validates against [schemas/final-review.schema.json](../schemas/final-review.schema.json).
 
 | Field | Value |
@@ -17,11 +17,11 @@
 | Sub-review | Verdict | Notes |
 |------------|:------:|-------|
 | **Requirement alignment** | {{REQ_ALIGN}} | Does the shipped change still solve the original requirement? |
-| **Paradigm audit** | {{PARADIGM_AUDIT}} | Every `@paradigm` decorator matches the declared plan? No `frontier_llm` call snuck in where `small_llm` (or SQL/ML) was promised? Gateway routed each LLM tier to a model that passed its eval bar? |
+| **Effort-tier audit** | {{PARADIGM_AUDIT}} | Every effort-tier declaration matches the declared plan? No large-model call snuck in where a small model (or deterministic/ML) was promised? The model gateway routed each tier to a model that passed its eval bar? |
 | **Architecture quality** | {{ARCH_QUALITY}} | Single-Primitive Rule held? No anti-pattern drift? |
 | **Code quality** | {{CODE_QUALITY}} | Sampled 3–5 files. No obvious smells. Comments only where *why* is non-obvious. |
-| **Security review pass-through** | {{SEC_PASS}} | Shreya passed. |
-| **QA review pass-through** | {{QA_PASS}} | Tanvi passed. |
+| **Security review pass-through** | {{SEC_PASS}} | Security Reviewer passed. |
+| **QA review pass-through** | {{QA_PASS}} | QA Engineer passed. |
 | **Observability complete** | {{OBS_COMPLETE}} | Metrics, logs, traces, alarms, dashboards in place. |
 | **Cost estimate held** | {{COST_HELD}} | Actual tokens/day within ±20% of plan. |
 
@@ -44,7 +44,7 @@
 | Field | Value |
 |-------|-------|
 | **Planned tokens/day** | {{PLANNED_TOKENS}} |
-| **Simulated daily-tick tokens** | {{SIMULATED_TOKENS}} |
+| **Simulated daily-run tokens** | {{SIMULATED_TOKENS}} |
 | **Variance** | {{VARIANCE_PCT}}% |
 | **Within ±20% tolerance?** | {{COST_TOLERANCE_OK}} |
 
@@ -59,13 +59,13 @@
 
 ## Production-readiness assessment
 
-> Would Jatin's pre-deploy gates pass right now?
+> Would the Platform/SRE pre-deploy gates pass right now?
 
 {{PROD_READY_ASSESSMENT}}
 
 ---
 
-## Recommendation to Founder
+## Recommendation to the Stakeholder
 
 **{{RECOMMENDATION}}**  *(APPROVE / APPROVE-WITH-CAVEATS / REJECT)*
 
@@ -73,11 +73,11 @@
 - {{CAVEAT_1}}
 - {{CAVEAT_2}}
 
-### Founder briefing (one paragraph)
+### Stakeholder briefing (one paragraph)
 
-> *What the Founder needs to know in 60 seconds before approving.*
+> *What the Stakeholder needs to know in 60 seconds before approving.*
 
-{{FOUNDER_BRIEFING}}
+{{STAKEHOLDER_BRIEFING}}
 
 ---
 

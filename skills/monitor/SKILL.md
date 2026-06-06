@@ -1,6 +1,6 @@
 ---
 name: monitor
-description: Live monitoring mode — keep a real browser on the running app, watch console/network/runtime errors, triage, and auto-open fix requirements for actionable bugs. Owner Jatin + Tanvi.
+description: Live monitoring mode — keep a real browser on the running app, watch console/network/runtime errors, triage, and auto-open fix requirements for actionable bugs. Owner Platform/SRE + QA Engineer.
 disable-model-invocation: true
 ---
 
@@ -10,11 +10,11 @@ The app URL(s) to monitor (default `http://localhost:3000` if a dev server is up
 
 > $ARGUMENTS
 
-> Engine: `${CLAUDE_PLUGIN_ROOT}/tools/browse.py monitor` (real Chromium). Plugin-side tooling, not a Brain runtime dep.
+> Engine: `${CLAUDE_PLUGIN_ROOT}/tools/browse.py monitor` (real Chromium). Plugin-side tooling, not a product runtime dep.
 
 ## Procedure
 
-1. **Resolve targets.** Base URL + key pages/flows to watch (e.g. `/`, `/dashboard`, `/p&l`, the Morning Brief web view). Confirm the app is reachable.
+1. **Resolve targets.** Base URL + key pages/flows to watch (e.g. `/`, `/dashboard`, the product's primary surfaces). Confirm the app is reachable.
 2. **Watch live.** Run (tee the stream into the activity log so `/watch` shows it too):
    ```sh
    uv run "${CLAUDE_PLUGIN_ROOT}/tools/browse.py" monitor <url> [<url2> …] --duration 120 --interval 30 \
@@ -31,16 +31,16 @@ The app URL(s) to monitor (default `http://localhost:3000` if a dev server is up
 4. **Record findings** → append each to `.engineering-os/findings/monitor.md` (ts, severity, url, error, recommended action).
 5. **Get it fixed (the team fixes it).** For each HIGH/MED actionable bug:
    `/requirement Fix: <error> on <url> — <one-line repro from the monitor capture>`
-   The orchestrator runs it through the pipeline → the right builder fixes it → **QA re-runs `browse.py check`/`monitor` on that page to confirm the error is gone** → Founder gate → deploy. Monitoring drives autonomy *up to* the human gate, not past it.
+   The orchestrator runs it through the pipeline → the right builder fixes it → **QA re-runs `browse.py check`/`monitor` on that page to confirm the error is gone** → Stakeholder gate → deploy. Monitoring drives autonomy *up to* the human gate, not past it.
 6. **Surface a summary:** issues found, severity split, findings written, requirements opened (with req_ids).
 
 ## Continuous monitoring (canary)
 
 ```
-/schedule create monitor --cron "*/15 * * * *" --args "https://app.staging.brain... /dashboard" --model haiku
+/schedule create monitor --cron "*/15 * * * *" --args "https://app.staging.example.com /dashboard" --model haiku
 ```
 
 ## Notes
 
-- Mobile (RN/Expo) isn't browser-renderable — use Expo web preview or device logs; this mode is for the Next.js web app.
-- Live stream → `.engineering-os/live.log` (watch with `/watch`); findings → `findings/monitor.md`; durable fix trail → the requirement's run folder + decision-log.
+- A native mobile surface isn't browser-renderable — use the framework's web preview or device logs; this mode is for the web app.
+- Live stream → `.engineering-os/live.log` (watch with `/watch`); findings → `findings/monitor.md`; durable fix trail → the requirement's run folder + the OS audit trail.

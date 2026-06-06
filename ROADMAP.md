@@ -1,195 +1,109 @@
-# Brain Engineering OS — Implementation Roadmap
+# Engineering OS — Roadmap
 
-> This roadmap is the *plugin's own* build history/plan (how the Engineering OS itself ships). The product it builds is **Brain** — the AI-native commerce OS for DTC brands, India-first with UAE/GCC sequenced (canon in `canon/business-requirements.md` + `canon/technical-requirements.md` + `canon/TECH/00–18`). Brain's own product roadmap (Phases 0–4) lives in `docs/business-context.md §11`; the walkthrough below uses a real Brain feature to illustrate the pipeline.
-
-> Section 8 of the build prompt. Scope by version + developer task breakdown + suggested tech stack + build sequence + risks/mitigations + rollout plan + one full end-to-end feature walkthrough.
+> This roadmap is the **framework's own evolution** — how the Engineering OS itself gets better at taking any requirement from intake to production, on any stack, for any product. It is *not* a product, business, or domain roadmap (that belongs in a consuming repo's Product Canon). Items are marked **Built** (shipped and enforced today) or **Proposed** (research-backed, not yet built). The "adopt-next" ideas are drawn from [`pipeline/pipeline.yaml`](pipeline/pipeline.yaml) `§adopt_next` and [`engineering-os-blueprint/11-runtime-and-cost-doctrine.md`](engineering-os-blueprint/11-runtime-and-cost-doctrine.md) `§7`.
 
 ---
 
-## Versions
+## Design rule for this roadmap
 
-### V1 — MVP (this checkout)
-
-**Goal:** the team works. A teammate can clone, open Claude Code, run `/requirement`, and get a feature through to Founder approval with full audit trail.
-
-**In scope:**
-- 11 agents: 10 named roles (CTO Advisor, Architect, Backend, Web, Mobile, Intelligence, Security, QA, DevOps, PM) + the runtime-spawned Dynamic Persona Generator.
-- Slash commands (`/requirement`, `/status`, `/recall`, `/handoff`, `/approve`, `/reject`, `/deploy`, `/rollback`, `/persona`, `/invoke-skill`, `/eos-init`, `/propose-rule`, `/adopt-rule`, `/reject-rule`) — implemented as command-skills.
-- The curated skill library, auto-loaded per agent's owned-skill list (domain skills) + human-triggered command-skills.
-- 8-stage pipeline (Stage 1 intake → Stage 8 deploy + 48h monitor).
-- Shared, git-committed memory in `.engineering-os/` with append-only journals + decision log.
-- 3 hooks (session-start, post-tool-use, pre-handoff) — pre-handoff is handoff-event logging; gate enforcement lives in the agents.
-- 12 JSON schemas + 12 markdown templates.
-- The full docs set (operating manual, workflow, gates, escalation, plugin architecture, etc.).
-- Conflict-resistant multi-operator sync via git + `merge=union`.
-
-**Explicitly out of MVP** (deferred to V2):
-- Auto-merge PRs after Founder approval.
-- `/digest` weekly summary slash command.
-- Per-feature graphs of stage-time and bounce-count.
-- Slack/Discord/email notifications at gate transitions.
-- Auto-archive of run folders older than 365 days.
-- Pre-commit secret-scanning hook.
-
-### V2 — Production-ready (4–8 weeks after MVP)
-
-**Goal:** the plugin operates safely at multi-operator scale without manual reconciliation.
-
-- **Hook hardening:**
-  - `pre-commit` secret-scanning hook.
-  - `on-session-start` surfaces stuck items (>2 days in same stage) with recommended action.
-- **Skill-library CI check:** fail CI if a skill folder isn't mapped in `skill-mapping-matrix.md` (catches drift between the library and the matrix).
-- **`/digest` slash command:** weekly Friday summary aggregating decision log: features shipped, gates fired (PASS/FAIL), average time-in-stage, top bounce causes.
-- **External integrations** (opt-in via env vars):
-  - GitHub: Jatin opens PRs; Tanvi attaches test output as PR comments.
-  - Slack: notification on Stage 7 awaiting-founder, rollback, daily digest.
-  - ClickUp / Linear / Jira: Priya syncs req-ids to tracker.
-- **Recommended additional skills** (4 candidates flagged for a future build):
-  - `requirement-intake`
-  - `dynamic-persona-spawning`
-  - `production-readiness-checklist`
-  - `release-notes-and-changelog`
-- **Archive policy:** runs/ older than 365 days move to `.engineering-os/archive/runs/<YYYY>/`.
-- **Founder Slack approval** as an alternate to `/approve`.
-- **Cost dashboards** showing per-feature LLM token consumption (rolling 30d).
-
-### V3 — Multi-team scale (post-Phase 2 of Brain itself)
-
-**Goal:** the plugin works for multiple parallel Brain projects, multi-team handoffs, and serves as the template for the AICMO/AICOO/AICFO agent pattern Brain uses internally.
-
-- **Team contexts:** support multiple Brain projects (e.g., main app + retail-OS spin-off) in the same plugin install, with per-project `.engineering-os/`.
-- **Cross-agent escalation routing:** structured "I need Maya's input" → automatic peer-review side thread.
-- **Incident response pipeline** (new vertical alongside the feature pipeline): `/incident <text>` → on-call → triage → mitigation → postmortem.
-- **On-call rotation** management.
-- **Founder Slack workflow** for approve/reject without CLI access.
-- **Runbook generation** from per-feature journals + ops decisions.
-- **Open-source release** of the plugin shell (without Brain-specific canon) for external D2C teams to adapt.
+The OS changes **almost never**; the Product Canon changes per product. So every item here must make the *organization* better without baking in any domain. If a proposal needs a business assumption, it belongs in a Canon, not here. We also hold ourselves to the OS's own doctrine: ship the minimum that meets the bar, prove a lever binds on real telemetry before declaring a win, and prefer the next real problem from a real run over a speculative feature.
 
 ---
 
-## Suggested tech stack for the plugin itself
+## 1. Pipeline & lanes
 
-The plugin uses what Claude Code provides; very little new tech needed.
+**Built**
+- Risk-based lanes (lean / express / standard / high-stakes) that scale rigor to risk; ambiguity routes *up* (conservative tie-break).
+- Deterministic lane classifier (`tools/classify_lane.py`) — a model miss can't strip Security off a trigger-surface change.
+- Post-build reclassification gate — re-scans the actual staged diff against the intake surfaces; a change that grows into a trigger surface mid-build is upgraded (express → high-stakes) automatically.
+- Experimental `--lean` one-session lane + the lean-vs-full A/B harness.
 
-| Concern | Tool |
-|---------|------|
-| Plugin runtime | Claude Code |
-| Agent system prompts | Markdown + YAML frontmatter |
-| State persistence | Plain JSON + JSONL in git |
-| Memory persistence | Plain Markdown in git |
-| Hooks | Bash + `jq` |
-| Templates | Markdown |
-| Schemas | JSON Schema Draft-07 |
-| Workflow definition | YAML |
-| Integrations (V2+) | `gh` (GitHub), `curl` (Slack webhook), `clickup-cli` / `linear` |
+**Proposed**
+- **Broaden lane A/B validation** — settle lean-vs-full with live runs across more requirement shapes, not just trivial ones; promote the winning default per surface class.
+- **Confidence-gated tier escalation** — run the cheap model + a confidence/verifier check, and escalate to the deep tier *only* on low confidence, so even some judgment stages skip the expensive tier per bounce (the eval-gated cascade; FrugalGPT-style savings).
+- **Batch / async stages** — run non-interactive stages (full security/QA sweeps, eval runs, nightly reports) on the Batch path; stacks with prompt-caching for a large unit-cost reduction.
 
-> **Deliberately minimal.** No database. No external service. The plugin's source of truth is the git repo. Brain's own engineering principles ("Make requirements less dumb first") apply to the plugin's own implementation.
+## 2. Hand-offs & orchestration
 
----
+**Built**
+- `HANDOFF`-block protocol — every stage plans → executes → self-reviews → verifies → returns a structured handoff; the top-level orchestrator is the sole writer of `state/active.json` (atomic `os.replace`), killing the parallel-builder lost-update race.
+- Crash-recoverable orchestrator (`tools/orchestrator_cursor.py`) — in-flight plan persisted; `/resume` rebuilds the scheduler.
+- Hook-enforced spawn telemetry + heartbeat — every spawn return recorded deterministically; `/watch` surfaces a STALE banner.
 
-## Build sequence (suggested)
+**Proposed**
+- **Typed structured hand-offs** — a bounce carries a structured delta (machine-readable) rather than re-explained prose, cutting retries and re-explanation between stages.
+- **Per-stage effort tiering** — bind the runtime effort level per role (e.g. delta-reviewer low, architect high) instead of one tier per model.
+- **Forked subagents for parallel re-review** — inherit the parent's cached prefix for cheaper fan-out re-reviews than fresh spawns.
 
-Follow this order to derisk the dependency graph.
+## 3. Quality gates & verification
 
-### Phase 0 — Hours 0–4 (scaffold + docs)
-1. Plugin manifest + README.
-2. `.engineering-os/` layout + `.gitattributes` + `.gitignore`.
-3. Section 1 docs (folder-context, business-context, technical-context).
-4. Section 2 docs (skill mapping, role empowerment).
+**Built**
+- VETO gates as deterministic tools (`tools/gate_check.py`) — fail-closed; can't advance past an open CRITICAL/HIGH or a non-PASS review, even on a Stakeholder "approve".
+- Verification-validity gate (`tools/validity_check.py`) — negative-control schema field; rejects tests that pass under security-bypass, inert probes, or tautological parity.
+- Full prior-passing suite re-run on every bounce-fix (decoupled from delta scope) so regression auto-block can actually fire.
+- CI self-gate — the OS gates itself (pipeline_doctor, secret_scan, validity_check, cache_lint, knowledge_lint, agent-frontmatter).
 
-### Phase 1 — Hours 4–8 (operating manual)
-5. Operating manual (Section 3) + workflow + quality gates + escalation rules.
-6. Plugin architecture + technical implementation + memory & git sync (Section 4).
+**Proposed**
+- **Richer engineering-KPI gates** — wire more of the engineering metrics in [`engineering-os-blueprint/06-quality-gates-and-metrics.md`](engineering-os-blueprint/06-quality-gates-and-metrics.md) (delta re-review coverage, escape rate, gate-fire ledger) into the dashboard and the self-gate.
+- **Mutation-testing as a standard high-stakes gate** across more reference-stack bindings.
 
-### Phase 2 — Hours 8–16 (templates + schemas + prompts)
-7. 12 JSON schemas + 12 Markdown templates (Section 5).
-8. Shared prompts (system-prompt, anti-blind-agreement, challenge-framework).
-9. 11 agent files (Section 6).
+## 4. Reference-stack bindings (seam adapters)
 
-### Phase 3 — Hours 16–24 (plugin scaffold)
-10. Author the curated skill library (domain skills + command-skills).
-11. 3 hooks (`hooks.json` + 3 scripts).
-12. 3 workflow YAMLs.
-13. Seed `.engineering-os/` starter content.
+**Built**
+- Stack-agnostic reference architecture ([`engineering-os-blueprint/09-reference-architecture.md`](engineering-os-blueprint/09-reference-architecture.md)) + reference-implementation skills (one concrete binding per seam: backend, data store, async backbone, frontend, mobile, model gateway, infra, region/locale).
+- `STACK.md` in the Product Canon binds each seam per adoption.
 
-### Phase 4 — Hours 24+ (operate)
-15. **Run a test requirement end-to-end** (see walkthrough below).
-16. Iterate based on what hurt.
+**Proposed**
+- **More reference-stack bindings** — additional adapters per seam (e.g. alternate languages/runtimes, message buses, datastores, model providers) so a new adoption finds a closer starting binding.
+- **Seam conformance checks** — a per-seam contract that any binding must satisfy, so swapping a binding is mechanically verifiable.
 
-### Phase 5 — V2 work (later)
-17. Hook hardening.
-18. Skill-library ↔ matrix CI check.
-19. External integrations.
+## 5. Cost & runtime doctrine
 
----
+**Built**
+- Cheapest-sufficient-effort routing (deterministic ≫ statistical/ML ≫ small model ≫ large model) applied to the OS's own operation; per-path cost-routing gate.
+- Model-tier split (standard intake / deep final review) — the headline cost lever.
+- Prompt-caching discipline (cache-stable-first spawn prefixes) + `tools/cache_lint.py`; cache-hit % surfaced in the dashboard.
 
-## Risks & mitigations
+**Proposed**
+- **Batch API + cascade compounding** — combine batch, caching, and the confidence-gated cascade for the largest unit-cost reduction on non-interactive work.
+- **Spend telemetry → automatic tier feedback** — let observed per-stage cost and pass-rate tune lane/tier defaults over time.
 
-| Risk | Likelihood | Severity | Mitigation |
-|------|:----------:|:--------:|------------|
-| Two teammates collide on same requirement | Medium | Low | Per-run folders never collide; `state/active.json` last-write-wins with surfaced conflict; agents re-read state before acting |
-| `state/active.json` corruption | Low | High | `.bak.<ts>` written on every save; plugin refuses to start if corrupt and surfaces recovery |
-| A gate failure slips through a handoff | Medium | Medium | Enforcement lives in the agents (each stage self-reviews, Tanvi re-runs skipped gates, Rohan spot-re-runs Tanvi's gates at Stage 6); the pre-handoff hook logs the event for the audit trail; a downstream gate catches what an upstream one missed |
-| Founder forgets to `/approve` or `/reject`, work stalls | Medium | Low | `/status` surfaces stuck items; V2 sends Slack reminder after 24h |
-| Memory file balloons over years | Low | Low | Plain markdown + JSONL is cheap; V2 archive at 365 days |
-| Secrets accidentally committed in journals | Medium | High | `on-post-tool-use.sh` redacts known patterns; V2 pre-commit hook scans |
-| Agent misreads canon and ships wrong assumption | Medium | High | CTOA Stage 6 review catches drift; Decision Log surfaces past similar decisions; canon primer is concise and read on every task |
-| Founder over-approves to "be helpful" | Medium | Medium | Anti-blind-agreement embedded in system prompt; CTOA still gets Stage 6 VETO even if Founder says yes; logged waivers for overrides |
-| Auto-rollback fires on benign noise | Low | Low | Thresholds tuned (5-min sustained, not transient); rollback always re-enters Stage 4 triage rather than silent revert |
+## 6. Governance & the learning loop
 
----
+**Built**
+- Rule governance — any agent `/propose-rule`; the Stakeholder `/adopt-rule` / `/reject-rule`; adopted rules indexed in `.engineering-os/durable-rules/INDEX.md` and read by every agent at session start.
+- Retro → `lessons-learned.md` → read at every intake (the compounding learning loop).
+- Knowledge-drift lint (`tools/knowledge_lint.py`) — self-enforces the single-source claim.
 
-## Rollout plan (for the plugin itself)
+**Proposed**
+- **Richer governance cadence** — a periodic, structured review of durable rules, tech-radar movement, and version/dependency policy (see [`engineering-os-blueprint/08-technical-governance.md`](engineering-os-blueprint/08-technical-governance.md)), with stale-rule retirement.
+- **Cross-adoption lesson sharing** — an opt-in mechanism to lift domain-free lessons from one adoption into the OS's own defaults.
+- **Incident pipeline** as a first-class vertical alongside the feature pipeline (`/incident` → triage → mitigate → resolve → blameless postmortem → lessons-learned).
 
-1. **Day 0:** Build the MVP (this checkout).
-2. **Day 1:** Rishabh runs ONE end-to-end requirement himself ("the walkthrough") to validate the loop.
-3. **Day 2:** Open the repo to ONE teammate. They `git pull` and run `/status` + `/recall` to confirm continuity works.
-4. **Week 1:** Run 3–5 real Brain features through the pipeline. Iterate hooks + templates based on friction.
-5. **Week 2:** Open to the rest of the team. Daily standups review `/status` output.
-6. **Week 4:** First V2 hardening (pre-commit secret-scanning hook; session-start stuck-item surfacing).
-7. **Month 2+:** Recommended additional skills + external integrations as needed.
+## 7. Integrations & DX
 
----
+**Built**
+- Tool-agnostic task-tracker integration (opt-in per env var; falls back to a pending log).
+- Live observability commands (`/watch`, `/monitor`, `/dashboard`) + the cost/risk decision card on `/approve`.
+- Real-browser + visual QA (`/qa-browser`, `/design-review`).
 
-## End-to-end feature walkthrough
-
-> One concrete feature through all 8 stages, at a glance. For the per-stage execution detail see [docs/workflow.md](docs/workflow.md); for the machine-readable definition see [workflows/requirement-to-release.yaml](workflows/requirement-to-release.yaml). This is the summary, not the source of truth — don't re-narrate the pipeline here.
-
-**Feature:** *"Add abandoned cart recovery for COD orders in GCC. Reuse the existing RFM segment. Don't break the India path."* Founder runs `/brain-engineering-os:requirement <text>`.
-
-| Stage | Owner | What happens | Key artifact(s) | Outcome |
-|---|---|---|---|---|
-| 0 intake | `/requirement` | Dedup check; mint `req_id=feat-abandoned-cart-recovery-gcc`; create run folder; write `01-requirement.md`; invoke Rohan | `01-requirement.md` | → Stage 1 |
-| 1 intake | **Rohan** | "Make it less dumb first" (UAE-first, defer KSA); persona count = **2** (compliance + regional-expansion); recommend SQL paradigm | `02-cto-advisor-review.md`, `03/04-persona-*.md` | ADVANCE |
-| 2 plan | **Aryan** | Extend lifecycle-service `region=ae` (reuse Audience Builder — Single-Primitive); new `gcc.recovery_windows` table w/ RLS; SQL paradigm; observability + tests | `06-architecture-plan.md`, `07-handoff-to-developer.md` | → Stage 3 |
-| 3 build | **Vikram** ∥ **Maya** | BE route + calling-window assertion (Vikram challenges a missing agency-JWT guard, Aryan agrees); Python RFM lookup w/ short-history fallback. Both capture real-network smoke | `08-developer-report-vikram.md`, `08-developer-report-maya.md` | READY-FOR-SECURITY |
-| 4 security | **Shreya** | Finds HIGH: UAE DLT registration not wired → **BOUNCE** to Vikram; he fixes (UAE TRA vs India TRAI); re-review PASS | `09-security-review.md` | BOUNCE → PASS |
-| 5 QA | **Tanvi** | Unit + integration + Playwright E2E + real-network smoke + metric-registry parity + ops-readiness, all green | `10-qa-review.md` | PASS |
-| 6 final | **Rohan** | Paradigm audit (no `frontier_llm` call snuck in under an SQL/ML/`small_llm` path); over-engineering audit; spot-re-run 3 of Tanvi's gates; write retro | `11-final-review.md`, `14-retro.md` | APPROVE |
-| 7 gate | **Founder** | Reads `/status` + final review; `/approve` | `12-founder-decision.json` | APPROVED |
-| 8 ship | **Jatin** | Stage product code for Founder; commit `.engineering-os/` (chore-eos); CI → ArgoCD staging → canary → prod; 48h monitor + auto-rollback armed | `13-deployment-report.md` | shipped (after push verified) |
-
-**Economics:** ~40h of agent work over ~3 working days; ~10 minutes of real Founder time (one `/requirement`, one `/approve`). ~15–18 decision-log lines — every step searchable and git-blameable. The security bounce at Stage 4 (not in production) is the system working as designed.
+**Proposed**
+- **Gate-transition notifications** (opt-in: Slack/Discord/email at awaiting-Stakeholder, rollback, digest).
+- **Stakeholder approval out-of-band** (approve/reject without CLI access).
+- **Weekly digest** aggregating the audit log: features shipped, gates fired, time-in-stage, top bounce causes.
 
 ---
 
-## Open questions for V2
+## How we decide what's next
 
-1. **Auto-merge after Founder approval?** Currently Jatin opens the PR; humans merge. Should Stage 7 also gate the merge?
-2. **How rich should `/digest` be?** Weekly stage-time, bounce-causes, decision-log search — but also probably a "what shipped, in plain English" section.
-3. **External persona inputs?** Should the dynamic-persona-generator be able to call out to a customer-success Slack channel for the `customer-success` persona's actual voice?
-4. **Per-brand context vector?** Should the plugin maintain a Brain-specific brand fingerprint that the AICMO/AICOO/AICFO agents reference at design time (e.g., "Sugandh Lok would be affected by this — how?")?
-5. **Pause/resume mid-pipeline?** Should `/pause <req-id>` exist for "we're not going to do this for 2 weeks"?
-
-Defer answers until V2 build kicks off.
-
----
+1. **Bind the cost levers live first.** Confirm the model-tier split and caching wins hold on real telemetry before adding more.
+2. **Then: run → observe → fix.** The next real problem from a real run is worth more than any speculative feature.
+3. **Domain-free or it doesn't ship here.** Anything that needs a business assumption goes in a Product Canon, never in the OS.
 
 ## Where to start
 
-- New teammate: read [README.md](README.md), then [docs/operating-system.md](docs/operating-system.md), then run `/status`.
-- New agent owner: read [agents/](agents/) for your role.
-- New skill author: copy a similar skill folder under `skills/`, then update [docs/skill-mapping-matrix.md](docs/skill-mapping-matrix.md) and the owning agent's owned-skill list. See [docs/skill-authoring-guide.md](docs/skill-authoring-guide.md).
-- Plugin developer (you): read [docs/plugin-architecture.md](docs/plugin-architecture.md), then this roadmap.
-
-Build. Operate. Iterate. Brain.
+- New teammate: read [README.md](README.md), then [`engineering-os-blueprint/`](engineering-os-blueprint/) in order, then run `/status`.
+- New role owner: read [agents/](agents/) for your role.
+- New skill author: copy a similar skill folder under `skills/`, then update [docs/skill-mapping-matrix.md](docs/skill-mapping-matrix.md) and the owning agent's owned-skill list.
+- Framework contributor: read [`engineering-os-blueprint/11-runtime-and-cost-doctrine.md`](engineering-os-blueprint/11-runtime-and-cost-doctrine.md) and [`pipeline/pipeline.yaml`](pipeline/pipeline.yaml), then this roadmap.
+</content>

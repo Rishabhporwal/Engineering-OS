@@ -1,12 +1,12 @@
 # Challenge Framework
 
-> The canonical structure for every challenge issued in the Brain Engineering OS. Inherited by every agent.
+> The canonical structure for every challenge issued in the Engineering OS. Inherited by every agent.
 
 ---
 
 ## The five fields
 
-Every challenge — issued to a Founder, a peer agent, or back through the pipeline — uses this exact structure:
+Every challenge — issued to the Stakeholder, a peer agent, or back through the pipeline — uses this exact structure:
 
 ```markdown
 > **What I understood:** <your read of the ask>
@@ -32,52 +32,52 @@ Every challenge — issued to a Founder, a peer agent, or back through the pipel
 
 ## Examples
 
-### Example 1 — Challenging a Founder requirement
+### Example 1 — Challenging a Stakeholder requirement
 
-**Founder ask:** "Add a WhatsApp-specific consent flow for the GCC region."
+**Stakeholder ask:** "Add a channel-specific consent flow for a new region."
 
 ```markdown
-> **What I understood:** We need to capture user consent for WhatsApp messaging in GCC.
-> **What I'm concerned about:** Building a "WhatsApp-specific consent flow" forks our unified consent model. We have ONE consent model with per-channel granularity. The Single-Primitive Rule rejects per-channel forks.
+> **What I understood:** We need to capture user consent for one messaging channel in a new region.
+> **What I'm concerned about:** Building a "channel-specific consent flow" forks our unified consent model. We have ONE consent model with per-channel granularity. The Single-Primitive Rule rejects per-channel forks.
 > **Risk:** Two consent models means N× engineering as we add channels (SMS, RCS, email, calling, push). Already a known anti-pattern in our codebase.
-> **Recommendation:** Extend the unified consent model with a `region=ae|sa` filter and the GCC-specific consent text. 1-day change vs ~3-week fork.
+> **Recommendation:** Extend the unified consent model with a per-region filter and the region-specific consent text. 1-day change vs ~3-week fork.
 > **Decision needed:** Confirm extend the unified model, OR override and accept the tech debt with a date for refactor.
 ```
 
-### Example 2 — Challenging an Architect's plan (from Vikram)
+### Example 2 — Challenging an Architect's plan (from the Backend Engineer)
 
-**Plan:** "Use offset pagination for the new orders list endpoint."
+**Plan:** "Use offset pagination for the new records list endpoint."
 
 ```markdown
-> **What I understood:** New endpoint `GET /v1/orders` paginated for the dashboard.
-> **What I'm concerned about:** Offset pagination is banned in prod paths (skill: api-traffic-patterns). Cursor is mandatory.
-> **Risk:** Offset performance degrades as `OFFSET` grows; we'd hit our p95 budget by month 3 at brand-level scale. Two prior incidents on this exact pattern in a prior system.
-> **Recommendation:** Cursor over (workspace_id, created_at, id). Same engineering effort. Future-proof.
+> **What I understood:** New endpoint `GET /v1/records` paginated for the dashboard.
+> **What I'm concerned about:** Offset pagination is banned in prod paths (skill: api-discipline). Cursor is mandatory.
+> **Risk:** Offset performance degrades as `OFFSET` grows; we'd hit our p95 budget at scale. Two prior incidents on this exact pattern in a prior system.
+> **Recommendation:** Cursor over (tenant_id, created_at, id). Same engineering effort. Future-proof.
 > **Decision needed:** Confirm cursor; if you disagree, surface the reason — but cursor is the discipline.
 ```
 
-### Example 3 — Challenging an internal AI cost decision (Maya → Founder via CTOA)
+### Example 3 — Challenging an internal AI cost decision (AI/ML Engineer → Stakeholder via the Engineering Advisor)
 
-**Plan:** "Use Sonnet for daily anomaly explanation."
+**Plan:** "Use a large model for daily anomaly explanation."
 
 ```markdown
 > **What I understood:** Generate a 1-paragraph human explanation when an anomaly is detected.
-> **What I'm concerned about:** This is bounded NL synthesis from a fixed-shape input — exactly Haiku's strength. Plan currently routes to Sonnet.
-> **Risk:** ~10× cost. At expected daily anomaly volume (~30/brand/day) across 100 brands, that's ~₹40K/month extra LLM cost. Per-brand cap could be breached.
-> **Recommendation:** Use Haiku. Run a weekly Sonnet sample to detect quality regression. Same UX; ~10% the cost.
-> **Decision needed:** Confirm Haiku + sampled regression check, OR accept the cost with a Founder-logged waiver tied to a re-evaluation date.
+> **What I'm concerned about:** This is bounded NL synthesis from a fixed-shape input — exactly a small model's strength. Plan currently routes to a large model (cheapest-sufficient-effort bypass).
+> **Risk:** ~10× cost. At the expected daily anomaly volume across all tenants, that's a large recurring extra model cost. The runtime cost budget could be breached.
+> **Recommendation:** Use the small model. Run a periodic large-model sample to detect quality regression. Same UX; ~10% the cost.
+> **Decision needed:** Confirm the small model + sampled regression check, OR accept the cost with a Stakeholder-logged waiver tied to a re-evaluation date.
 ```
 
-### Example 4 — QA bouncing a dev (Tanvi → Vikram)
+### Example 4 — QA bouncing a dev (QA Engineer → Backend Engineer)
 
 **Dev report:** "Tests pass. Ready for security."
 
 ```markdown
-> **What I understood:** Vikram's claiming Stage 3 done on the `/recover-cod-uae` route.
+> **What I understood:** The Backend Engineer is claiming Stage 3 done on the new route.
 > **What I'm concerned about:** Unit + integration tests pass, but no real-network smoke was run. "Tests pass" is not equivalent to "real-network smoke captured." Real-network smoke is mandatory for PASS (gate G5).
 > **Risk:** In-memory tests don't catch the kind of bugs we've hit historically (port collisions, auth-token wiring, downstream timeouts).
-> **Recommendation:** Run `pnpm tsx scripts/smoke/recover-real-network.ts --region=ae` and post the output. Then I can confirm PASS.
-> **Decision needed:** Vikram — run the smoke and re-handoff with output captured.
+> **Recommendation:** Run the real-network smoke script for this route and post the output. Then I can confirm PASS.
+> **Decision needed:** Backend Engineer — run the smoke and re-handoff with output captured.
 ```
 
 ### Example 5 — Security challenging the dynamic persona generator's output
@@ -85,11 +85,11 @@ Every challenge — issued to a Founder, a peer agent, or back through the pipel
 **Persona output:** "compliance-officer says: looks good, no concerns."
 
 ```markdown
-> **What I understood:** compliance-officer persona was asked to weigh in on the abandoned-cart recovery requirement for GCC.
+> **What I understood:** compliance-officer persona was asked to weigh in on the outbound-notification requirement for a new region.
 > **What I'm concerned about:** The persona returned zero concerns. Per the persona contract (schema: dynamic-persona), at least one concern is required. A persona that returns "looks good" failed its job.
-> **Risk:** Compliance gaps slip through. UAE has telecom rules different from India; "no concerns" missed that.
-> **Recommendation:** Re-spawn the compliance-officer persona with explicit "list at least 3 GCC-specific compliance considerations" prompt. Or substitute a regional-expansion-officer persona.
-> **Decision needed:** CTO Advisor — re-spawn or substitute.
+> **Risk:** Compliance gaps slip through. The new region has channel rules that differ from the existing region; "no concerns" missed that.
+> **Recommendation:** Re-spawn the compliance-officer persona with an explicit "list at least 3 region-specific compliance considerations" prompt. Or substitute a regional-expansion-officer persona.
+> **Decision needed:** Engineering Advisor — re-spawn or substitute.
 ```
 
 ---
@@ -127,15 +127,15 @@ Don't fabricate a risk or recommendation. Honest incompleteness is better than c
 ## Use it everywhere
 
 - In a journal entry that bounces work back to the prior stage.
-- In a Slack-style message to a peer agent (Maya → Vikram).
-- In a Founder-facing escalation.
+- In a message to a peer agent (e.g. AI/ML Engineer → Backend Engineer).
+- In a Stakeholder-facing escalation.
 - In your own internal thinking when you're about to agree too easily.
 
 ---
 
 ## How challenges are tracked
 
-- Every challenge is logged as a `decision-log` event with type `escalation`.
+- Every challenge is logged as an audit-log event with type `escalation`.
 - The decision (accept / override / defer) is logged when it lands.
 - The weekly digest (V2) shows challenge volume per agent and acceptance rate.
 

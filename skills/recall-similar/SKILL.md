@@ -8,7 +8,7 @@ Find the most semantically similar entries in the Engineering OS memory (Point A
 
 > Self-refreshing: this incrementally re-indexes inline before searching, so results are always fresh after a `git pull` — no manual `/reindex` needed.
 
-The Founder's query is:
+The Stakeholder's query is:
 
 > $ARGUMENTS
 

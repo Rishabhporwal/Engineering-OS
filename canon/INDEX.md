@@ -1,48 +1,47 @@
-# Canon Index — the pointer map (read this, open ONE target)
+# Product Canon — Index & Template
 
-> Replaces v1's 924-line `IMPLEMENTATION-BLUEPRINT.md`, which was a 4th full restatement (only 82 of its lines were pointers) and the single largest avoidable load in the pipeline. This index is **pointers only** — find your topic, open the **one** owning file, read the relevant `§`. Never load canon whole.
+> This is the **template** for a product's Canon. The Engineering OS ships it empty-but-structured; a
+> consuming product fills it in **once**, during the Foundation phase, and the filled copy lives in the
+> consuming repo at `${CLAUDE_PROJECT_DIR}/.engineering-os/knowledge-base/`. **That filled copy is the
+> single source of truth** every agent reads — not this template.
 >
-> **Single-owner rule:** every fact has exactly ONE home file (below). Primers (`docs/business-context.md`, `docs/technical-context.md`) and skills *summarize and reference* — they never re-own. When a primer and the canon disagree, the canon wins.
+> The OS itself carries **no** product, business, or domain knowledge. Everything domain-specific is
+> declared here, per adoption. See `engineering-os-blueprint/10-adoption-and-product-canon.md` for the
+> Foundation procedure, and `engineering-os-blueprint/09-reference-architecture.md` for the seam model.
+>
+> A worked, fully-populated example Canon (the "Brain" commerce-OS instantiation) lives under
+> `examples/brain-instantiation/canon/` — read it to see what a completed Canon looks like.
 
 ## Layers
-- **Daily reading:** `docs/business-context.md` (89 ln) + `docs/technical-context.md` (188 ln) — condensed primers, read at session start.
-- **Full requirements:** `canon/business-requirements.md` (BRD) · `canon/technical-requirements.md` (TRD).
-- **Deep dives (the owners):** `canon/TECH/00–18` — open targeted.
 
-## Topic → owner file
+- **Daily reading (optional primers):** `docs/business-context.md` + `docs/technical-context.md` —
+  condensed primers a product may author for session-start reading.
+- **The Canon (the owners):** the slot files below, in `.engineering-os/knowledge-base/`.
 
-| Topic | Owner |
-|---|---|
-| Tech-stack choices, phased adoption, graduation triggers | `TECH/00` |
-| Data architecture, Postgres/ClickHouse split, RLS, partitioning, CDC | `TECH/01` |
-| Connectors, ETL, Kafka ingestion, OAuth, idempotent upsert | `TECH/02` |
-| **Metrics engine, the Formula Book, CM waterfall, RAG bands, TS↔Python parity** | `TECH/03` |
-| **RegionAdapter, India-first, residency, GST/VAT slabs, locale** | `TECH/04` |
-| Intelligence layer, 15 product agents, Memory Layer (pgvector), daily tick | `TECH/05` |
-| API contracts (tRPC / gRPC / MCP), pagination, versioning | `TECH/06` |
-| Web frontend architecture, state ownership, charts | `TECH/07` |
-| Alerts, reporting, notifications, Morning Brief assembly | `TECH/08` |
-| Security & observability, traceability, secrets, RLS enforcement | `TECH/09` |
-| Mobile architecture, the Morning Brief surface, MASVS | `TECH/10` |
-| Lifecycle & revenue execution layer (lifecycle-service) | `TECH/11` |
-| **Cost-routed compute paradigm (SQL≫ML≫Haiku≫Sonnet), `@paradigm`, caps** | `TECH/12` |
-| MCP protocol, tool schemas (generated from protos) | `TECH/13` |
-| Agent roster (AICMO/AICOO/AICFO), graduation tracker | `TECH/14` |
-| **Billing & metering, realized-GMV pricing, fee clamp, tier %s, minor units** | `TECH/15` |
-| **Compliance engine — DPDP/PDPL/DLT-TCCCPR/NCPR-DND/9–9 window/WhatsApp/consent/residency** | `TECH/16` |
-| Engineering operating model (this team) | `TECH/17` |
-| Per-service operational spec, comms matrix, failure/retry contracts, E2E flows | `TECH/18` |
+## The slots — topic → owner file (each fact has exactly ONE home; cite, don't restate)
 
-## Key economic facts — owner file (do NOT restate elsewhere; cite this)
-- **COD-RTO break-even** `r* = M/(M+C)` → `TECH/04` (India economics) + BRD.
-- **CM waterfall / CM2 / CM3**, Goal RAG (Green ≥95% / Amber 80–95% / Red <80%) → `TECH/03`.
-- **GST 2.0 per-SKU slabs (0/5/18/40)** → `TECH/04`.
-- **Fee** `clamp(gmv_pct × billable_gmv, min_fee, cm2_cap_pct × CM2)`; tiers Launch ~1.0 / Growth ~0.75 / Scale ~0.5 / Enterprise custom → `TECH/15`.
-- **Cost ratio** SQL:ML:Haiku:Sonnet ≈ 1:100:1,000:10,000 → `TECH/12`.
-- **7 services** (api-gateway, core, ingestion, analytics, intelligence, notifications, lifecycle) → `TECH/18`.
+| Slot (owner file) | The OS question it answers | Template |
+|---|---|---|
+| `STACK.md` | Which technology binds each architecture seam, and why (ADRs). | [TEMPLATE-STACK.md](TEMPLATE-STACK.md) |
+| `HLD.md` / `LLD-*.md` | High/low-level design — bounded contexts, contracts, data model. | [TEMPLATE-DESIGN.md](TEMPLATE-DESIGN.md) |
+| `INVARIANTS.md` | The non-negotiables — rules that must always hold (the "never" list). | [TEMPLATE-INVARIANTS.md](TEMPLATE-INVARIANTS.md) |
+| `TRIGGER-SURFACES.md` | The product's concrete high-stakes surfaces + thresholds (drives lane = high-stakes). | [TEMPLATE-TRIGGER-SURFACES.md](TEMPLATE-TRIGGER-SURFACES.md) |
+| `COMPLIANCE.md` | The regulatory regime to enforce (jurisdictions, controls, data rules) — or "none". | [TEMPLATE-COMPLIANCE.md](TEMPLATE-COMPLIANCE.md) |
+| `METRICS.md` | The single-source metric/contract definitions (identical across runtimes). | [TEMPLATE-METRICS.md](TEMPLATE-METRICS.md) |
+| `PLAYBOOK-deploy.md` | Rollout strategy, bake window, rollback thresholds. | [TEMPLATE-PLAYBOOK-deploy.md](TEMPLATE-PLAYBOOK-deploy.md) |
+| `PLAYBOOK-incident.md` | Severity ladder, paging, kill switches. | [TEMPLATE-PLAYBOOK-incident.md](TEMPLATE-PLAYBOOK-incident.md) |
+| `ESCALATION-RUBRIC.md` | When a role must escalate to the Stakeholder. | [TEMPLATE-ESCALATION-RUBRIC.md](TEMPLATE-ESCALATION-RUBRIC.md) |
+| `THE-MOAT.md` | The asset that compounds and must be protected. | [TEMPLATE-MOAT.md](TEMPLATE-MOAT.md) |
+| `team-roster.md` | Optional human/team identities attached to the OS roles. | [TEMPLATE-team-roster.md](TEMPLATE-team-roster.md) |
 
-## How agents use this
-1. Need a fact? Find the topic above → open that ONE file → read the `§` (grep the heading).
-2. Writing an artifact? Cite the owner (`per TECH/15 §fee`), don't paste the formula.
-3. Primer and canon disagree? Canon wins — re-read the owner file and flag the primer drift.
-</content>
+## Rules of the Canon
+
+- **Single-owner rule:** every fact has exactly ONE home file above. Primers and skills *summarize and
+  reference* — they never re-own. When a primer and the Canon disagree, the Canon wins.
+- **A slot left empty is a known gap, stated as such** — never silently treated as "no constraint." An
+  empty `COMPLIANCE.md` means "no regulatory regime applies," recorded explicitly.
+- **Never load the Canon whole** — find your topic above, open the **one** owning file, read the
+  relevant section.
+- **Amendments to an invariant or a foundational decision are a Foundation amendment** — they re-enter
+  the Foundation flow and are re-approved, not edited in passing
+  (`engineering-os-blueprint/08-technical-governance.md §7`).

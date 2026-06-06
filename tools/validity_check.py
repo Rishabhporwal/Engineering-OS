@@ -30,7 +30,9 @@ import re
 import sys
 from pathlib import Path
 
-# Bypass / inert / tautology anti-patterns (the O11 failure classes).
+# Bypass / inert / tautology anti-patterns. The concrete DB/role names below
+# (postgres, RLS, service_role, …) are illustrative examples of one common stack
+# binding; a product's STACK.md may use different superuser/role names — extend these.
 ANTIPATTERNS = [
     (r"\bBYPASSRLS\b", "test runs under BYPASSRLS — RLS is never exercised"),
     (r"SET\s+ROLE\s+(postgres|rds_superuser|supabase_admin)", "test sets a superuser role — tenancy bypassed"),
@@ -44,8 +46,8 @@ NEG_CONTROL_MARKERS = [
     r"negative[_\s-]?control", r"guard\s+removed", r"protection\s+removed",
     r"expect[s]?\s+(it\s+)?to\s+fail\s+(when|without)", r"fails?\s+without\s+(the\s+)?(rls|guard|requirerole)",
 ]
-HIGH_STAKES_HINT = re.compile(r"(rls|workspace_id|requireRole|requireWorkspaceMember|tenant|auth|"
-                              r"decision_log|gmv|billing|minor_units|consent|dlt|ncpr)", re.I)
+HIGH_STAKES_HINT = re.compile(r"(rls|tenant_id|requireRole|requireTenantMember|tenant|auth|"
+                              r"audit_log|money|billing|minor_units|consent|residency|compliance)", re.I)
 
 
 def iter_files(paths: list[Path]):

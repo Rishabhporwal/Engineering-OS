@@ -1,6 +1,6 @@
 # Requirement: {{TITLE}}
 
-> Filled out by `/requirement <text>` automatically. Founder can edit afterward.
+> Filled out by `/requirement <text>` automatically. The Stakeholder can edit afterward.
 > Validates against [schemas/requirement.schema.json](../schemas/requirement.schema.json).
 
 | Field | Value |
@@ -9,24 +9,24 @@
 | **Title** | {{TITLE}} |
 | **Submitted by** | {{SUBMITTED_BY}} |
 | **Submitted at** | {{SUBMITTED_AT}} |
-| **Tier impact** | {{TIER_IMPACT}}  *(launch / growth / scale / enterprise — BRD §15.2 packaging tiers)* |
-| **Region impact** | {{REGION_IMPACT}}  *(in / ae / sa / us / eu / lat / sea / afr)* |
+| **Tier impact** | {{TIER_IMPACT}}  *(the product's packaging tier, if any — per the Product Canon)* |
+| **Region impact** | {{REGION_IMPACT}}  *(the affected region/locale via the RegionAdapter seam — per the Product Canon)* |
 
 ---
 
-## Lane *(set by Rohan at Stage 1 — leave blank at intake)*
+## Lane *(set by the Engineering Advisor at Stage 1 — leave blank at intake)*
 
-> Rohan assigns the pipeline lane before persona count, per [docs/feature-tiering.md](../docs/feature-tiering.md). Trigger surfaces force `high-stakes` mechanically; `express` requires an empty `trigger_surfaces_touched`.
+> The Engineering Advisor assigns the pipeline lane before persona count, per [docs/feature-tiering.md](../docs/feature-tiering.md). Trigger surfaces force `high-stakes` mechanically; `express` requires an empty `trigger_surfaces_touched`.
 
 | Field | Value |
 |-------|-------|
 | **feature_class** | {{FEATURE_CLASS}}  *(express / standard / high-stakes)* |
 | **feature_class_rationale** | {{FEATURE_CLASS_RATIONALE}}  *(one line: which classifier rule fired + any surfaces)* |
-| **trigger_surfaces_touched** | {{TRIGGER_SURFACES_TOUCHED}}  *(auth / multi-tenancy / mcp-tools / connectors / outbound-channels / pii / schema-proto / money / india-compliance — empty for express)* |
+| **trigger_surfaces_touched** | {{TRIGGER_SURFACES_TOUCHED}}  *(the trigger surfaces declared in the Product Canon's TRIGGER-SURFACES.md — e.g. auth / multi-tenancy / mcp-tools / connectors / outbound-channels / pii / schema-proto / money / compliance — empty for express)* |
 
 ---
 
-## Raw text (from Founder)
+## Raw text (from the Stakeholder)
 
 > {{RAW_TEXT}}
 
@@ -42,7 +42,7 @@
 
 ## Target user
 
-*Which persona + tier? (e.g., "Founder of a growth-tier beauty brand", "CFO of an enterprise multi-brand holding co".)*
+*Which persona + tier? (e.g., the role of the end user and the packaging tier they fall under, per the Product Canon.)*
 
 {{TARGET_USER}}
 
@@ -50,7 +50,7 @@
 
 ## Success metric
 
-*How will we know it worked? Quantitative if possible (e.g., "Recovered Revenue / Fee > 3× for COD orders in GCC by month 2 post-launch").*
+*How will we know it worked? Quantitative if possible (e.g., a measurable target on a business metric within a defined window post-launch).*
 
 {{SUCCESS_METRIC}}
 
@@ -85,6 +85,6 @@
 
 ## Notes
 
-*Any extra context, screenshots, links, hypotheses Rishabh wants the team to consider.*
+*Any extra context, screenshots, links, hypotheses the Stakeholder wants the team to consider.*
 
 {{NOTES}}

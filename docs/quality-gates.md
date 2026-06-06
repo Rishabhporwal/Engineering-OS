@@ -10,72 +10,72 @@ This document defines each gate's:
 
 ---
 
-## G0 — Pre-flight dependency check (new in v0.3.1)
+## G0 — Pre-flight dependency check
 
-**Owner:** CTO Advisor (Stage 1 — runs BEFORE any persona spawn or "less dumb first" pass).
+**Owner:** Engineering Advisor (Stage 1 — runs BEFORE any persona spawn or "less dumb first" pass).
 
 **Condition:**
 - [ ] If this requirement is a child of a meta-tracker, its `blocks` field has been read from the parent's `proposed_children[]`.
-- [ ] Every blocker in `blocks` has `status == "shipped"` OR `status == "founder-override-of-dependency-rule"` in `state/active.json`.
-- [ ] If any blocker is unshipped: CTOA REFUSES to proceed past G0 and surfaces to Founder.
+- [ ] Every blocker in `blocks` has `status == "shipped"` OR `status == "stakeholder-override-of-dependency-rule"` in `state/active.json`.
+- [ ] If any blocker is unshipped: the Advisor REFUSES to proceed past G0 and surfaces to the Stakeholder.
 
 **Evidence:**
-- Decision-log event: `{"actor":"cto-advisor","type":"dependency-precheck","req_id":"...","blockers":[...],"all_blockers_shipped":<bool>}`.
-- On violation: a `pending-founder-attention.md` artifact in the run folder explaining the unshipped blocker(s).
+- Audit-log event: `{"actor":"cto-advisor","type":"dependency-precheck","req_id":"...","blockers":[...],"all_blockers_shipped":<bool>}`.
+- On violation: a `pending-stakeholder-attention.md` artifact in the run folder explaining the unshipped blocker(s).
 
-**Bounce target on fail:** No bounce — work is REFUSED, not bounced. State becomes `blocked-on-dependency` with `current_owner=founder`. Founder either waits for blocker to ship or invokes `/brain-engineering-os:override-dependency-rule` with a written rationale (which becomes a logged audit-trail entry).
+**Bounce target on fail:** No bounce — work is REFUSED, not bounced. State becomes `blocked-on-dependency` with `current_owner=stakeholder`. The Stakeholder either waits for the blocker to ship or invokes `/engineering-os:override-dependency-rule` with a written rationale (which becomes a logged audit-trail entry).
 
-**Why this exists:** observed process violation in monitor — child #4 (`turborepo-monorepo`) shipped while child #3 (`metric-registry-ts`, its declared blocker) was orphaned at Stage 1. The CTOA approved it on Founder's behalf without flagging the violation. G0 makes the check mechanical.
+**Why this exists:** a child requirement can ship while a declared blocker is still orphaned at Stage 1, and the Advisor can approve it on the Stakeholder's behalf without flagging the violation. G0 makes the check mechanical.
 
 ---
 
-## Stage 4 skip exception (new in v0.3.1)
+## Stage 4 skip exception
 
-**Default:** Stage 4 (Security / Shreya) runs on every requirement.
+**Default:** Stage 4 (Security) runs on every requirement.
 
 **Exception — "Stage 4 fast-pass":** Skipping Stage 4 is permitted IF AND ONLY IF **all** of these are true:
 
 - [ ] The staged file set contains ONLY files with these extensions: `.md`, `.txt`, `.json`, `.yaml`, `.yml`.
-- [ ] NO file under `apps/`, `backend/src/`, `frontend/src/`, `services/`, `packages/`, `pylibs/`, `protos/`, `prisma/`, `mobile/` is touched.
-- [ ] NO `.env`, `.env.example`, lockfile (`package-lock.json`, `pnpm-lock.yaml`, `yarn.lock`, `uv.lock`), or root manifest (`package.json`, `pyproject.toml`, `tsconfig.json`) is touched.
+- [ ] NO file under a source/service/package directory (e.g. `apps/`, `src/`, `services/`, `packages/`, `protos/`, migrations dir, mobile app dir) is touched.
+- [ ] NO `.env`, `.env.example`, dependency lockfile, or root manifest is touched.
 - [ ] NO file in the auth/secret-relevant set is touched (any file matching the regex `secret|password|token|key|credential|auth` in path).
 - [ ] An explicit `stage_4_skip_rationale` field is filled in `06-architecture-plan.md` § "Security considerations".
 
 **On qualified skip:**
 - Architect (Stage 2) writes the `stage_4_skip_rationale` and routes the handoff to dev with `next_after_dev = qa-agent` (not `security-reviewer`).
-- Security agent, when invoked anyway, may emit `type: stage-4-fast-pass` decision-log event with a one-line confirmation and advance immediately.
-- QA agent (Stage 5) MUST re-run a minimal version of the skipped Stage 4 verification herself (per the W13 protocol below).
+- The Security agent, when invoked anyway, may emit a `type: stage-4-fast-pass` audit-log event with a one-line confirmation and advance immediately.
+- QA agent (Stage 5) MUST re-run a minimal version of the skipped Stage 4 verification itself (per the W13 protocol below).
 
 **On unqualified skip attempt:** Stage 4 runs full review. The mere presence of a `.env`, lockfile, code file, or auth-relevant file in the staged set is enough to disqualify fast-pass — no human judgment needed.
 
-**Why this exists:** observed in monitor — Aryan skipped Stage 4 on child #1 (pure docs) with judgment but no codified rule. The pattern would have rotted into "skip whenever convenient." This rule lets the skip happen safely AND mechanically.
+**Why this exists:** an agent skipping Stage 4 on a pure-docs change by judgment alone would rot into "skip whenever convenient." This rule lets the skip happen safely AND mechanically.
 
 ---
 
-## W13 — Mandatory upstream-skip re-run (new in v0.3.1, codifies field-notes W13)
+## W13 — Mandatory upstream-skip re-run
 
-**Owner:** QA Agent (Tanvi) at Stage 5.
+**Owner:** QA Agent at Stage 5.
 
 **Condition:**
-- [ ] If Stage 4 was marked SKIPPED or FAST-PASS, QA agent MUST re-run a minimal version of the Stage 4 verification herself.
+- [ ] If Stage 4 was marked SKIPPED or FAST-PASS, the QA agent MUST re-run a minimal version of the Stage 4 verification itself.
 - [ ] At minimum: `git diff --cached | grep -iE 'password|secret|api[_-]?key|bearer|aws_|sk-[a-zA-Z0-9]+|ghp_'` on the staged diff. Capture output.
 - [ ] Result is recorded in `10-qa-review.md` under a new "Stage 4 skip acknowledgment" section.
 
-**Why this exists:** anti-blind-agreement applied across stage boundaries. The QA agent doesn't trust upstream skips blindly; she re-verifies. Observed in monitor — Tanvi did this herself on child #1 without prompting (W13). Now codified as required protocol.
+**Why this exists:** anti-blind-agreement applied across stage boundaries. The QA agent doesn't trust upstream skips blindly; it re-verifies.
 
 ---
 
-## W14 — Mandatory Stage-5 gate re-run at final review (new in v0.3.1, codifies field-notes W14)
+## W14 — Mandatory Stage-5 gate re-run at final review
 
-**Owner:** CTO Advisor at Stage 6.
+**Owner:** Engineering Advisor at Stage 6.
 
 **Condition:**
-- [ ] CTOA spot-re-runs at least 3 of Tanvi's Stage 5 verification gates with captured output.
+- [ ] The Advisor spot-re-runs at least 3 of the QA agent's Stage 5 verification gates with captured output.
 - [ ] Common picks: G1 app-code-diff sentinel, G3 provenance/discipline gate, G4 parity round-trip.
 - [ ] Result is recorded in `11-final-review.md` under "Re-verified Stage 5 gates" section, with the exact command + actual output.
-- [ ] If CTOA cannot replicate Tanvi's PASS: BOUNCE to Stage 5 with the finding.
+- [ ] If the Advisor cannot replicate the QA agent's PASS: BOUNCE to Stage 5 with the finding.
 
-**Why this exists:** Stage 6 must not rubber-stamp. Observed in monitor — Rohan independently re-ran G1, G3, G4 on child #1 without prompting (W14). Now codified.
+**Why this exists:** Stage 6 must not rubber-stamp. The final reviewer independently re-runs a sample of the prior stage's gates.
 
 ---
 
@@ -83,49 +83,49 @@ This document defines each gate's:
 
 ## G1 — Intake → Architecture
 
-**Owner:** CTO Advisor.
+**Owner:** Engineering Advisor.
 
 **Condition:**
 - [ ] Requirement has a clear **problem statement** (what is broken / missing).
 - [ ] Requirement has a clear **target user** (persona + tier).
 - [ ] Requirement has a **success metric** (how do we know it worked).
 - [ ] Requirement has at least one stated **constraint** (cost, time, regulatory, technical).
-- [ ] G0 (pre-flight dependency check) PASSED — if this is a child req, all declared blockers are `shipped` or `founder-override-of-dependency-rule`.
-- [ ] Persona count (0, 1, or 2) recorded with rationale per the complexity classifier in `agents/cto-advisor.md`. If 1 or 2 personas spawned, each surfaced at least one concern. If 0 personas, CTOA's own analysis stands as the synthesis.
-- [ ] CTO Advisor decision is one of: ADVANCE, CHALLENGE-BACK, KILL.
+- [ ] G0 (pre-flight dependency check) PASSED — if this is a child req, all declared blockers are `shipped` or `stakeholder-override-of-dependency-rule`.
+- [ ] Persona count (0, 1, or 2) recorded with rationale per the complexity classifier in `agents/cto-advisor.md`. If 1 or 2 personas spawned, each surfaced at least one concern. If 0 personas, the Advisor's own analysis stands as the synthesis.
+- [ ] Engineering Advisor decision is one of: ADVANCE, CHALLENGE-BACK, KILL.
 
 **Evidence:**
 - `cto-advisor-review.md` artifact in the run folder.
 - 0-2 `dynamic-persona-review.md` artifacts (one per spawned persona).
-- Decision log entry.
+- Audit-log entry.
 
-**Bounce target on fail:** Back to Founder (`challenged-back` status) with structured challenge.
+**Bounce target on fail:** Back to the Stakeholder (`challenged-back` status) with structured challenge.
 
 ---
 
 ## G2 — Architecture → Development
 
-**Owner:** Architect (with CTO Advisor sign-off on paradigm).
+**Owner:** Architect (with Engineering Advisor sign-off on the effort tier).
 
 **Condition:**
 - [ ] `architecture-plan.md` has **every section filled** (no `TBD`).
-- [ ] **`@paradigm`** declared and justified (SQL / ML / Haiku / Sonnet).
-- [ ] **Cost estimate** in tokens-per-day (or rupees-per-month) at expected load.
-- [ ] **Single-Primitive sweep** done — no duplicated audience builder / consent flow / decision log / notification / attribution / identity.
-- [ ] **DB schema additions** have a migration plan + RLS policy + index plan.
-- [ ] **Event topics** named per convention `<domain>.<entity>.<event_type>.v<version>`; partition key is `workspace_id`.
-- [ ] **API surfaces** (gRPC / tRPC / MCP) have proto sketches; breaking-change implications considered (`api-discipline`).
+- [ ] **Effort tier** declared and justified (deterministic logic / statistical-ML / small model / large model — cheapest sufficient).
+- [ ] **Cost estimate** (tokens-per-day, or monthly cost) at expected load.
+- [ ] **Single-Primitive sweep** done — no duplicated cross-cutting concern (shared builder / consent flow / audit log / notification / attribution / identity).
+- [ ] **Data-store schema additions** have a migration plan + isolation policy + index plan.
+- [ ] **Event topics** named per the product's convention; partition key is the tenant-isolation key.
+- [ ] **API/contract surfaces** have contract sketches; breaking-change implications considered (`api-discipline`).
 - [ ] **Observability plan** lists metrics, logs, traces, alarms, dashboards.
 - [ ] **Test strategy** lists unit + integration + contract + (E2E / load if applicable) + real-network smoke.
-- [ ] **4 multi-tenancy layers** addressed (JWT, service, DB, Kafka).
+- [ ] **All tenant-isolation layers** addressed (identity → service → data store → async backbone).
 - [ ] **Risks + alternatives** listed; alternatives that were rejected include the reason.
-- [ ] Track lists tagged per builder (`@vikram`, `@ananya`, `@karan`, `@maya`).
+- [ ] Track lists tagged per builder role (backend / frontend-web / mobile / ai-ml).
 
 **Evidence:**
 - `architecture-plan.md`.
-- CTO Advisor's one-line paradigm sign-off in the architect's journal.
+- The Engineering Advisor's one-line effort-tier sign-off in the architect's journal.
 
-**Bounce target on fail:** Back to Stage 2 (Architect re-works) or Stage 1 (back to CTOA if requirement is now unworkable).
+**Bounce target on fail:** Back to Stage 2 (Architect re-works) or Stage 1 (back to the Advisor if requirement is now unworkable).
 
 ---
 
@@ -135,15 +135,15 @@ This document defines each gate's:
 
 **Condition (per builder):**
 
-**Code & paradigm**
-- [ ] `@paradigm` decorator on every new code path.
-- [ ] Per-feature LLM token budget set.
+**Code & effort tier**
+- [ ] Effort-tier declaration on every new code path (cheapest sufficient).
+- [ ] Per-feature model/LLM token budget set.
 - [ ] Idempotency keys cached for all write operations.
-- [ ] Zod schemas on every API input; server-side re-validation.
-- [ ] All timestamps UTC or `Asia/Kolkata` — never ambiguous.
-- [ ] `workspace_id` assertion in every gRPC handler.
-- [ ] `requireRole(...)` on every mutation endpoint.
-- [ ] CloudWatch custom metrics + Sentry instrumentation present.
+- [ ] Schema validation on every API input; server-side re-validation.
+- [ ] All timestamps UTC (or an explicit, unambiguous zone) — never ambiguous.
+- [ ] Tenant-isolation-key assertion in every service handler.
+- [ ] Role check (`requireRole(...)`-equivalent) on every mutation endpoint.
+- [ ] Custom metrics + error-tracking instrumentation present.
 
 **Tests (in-lane)**
 - [ ] Unit tests for new functions.
@@ -152,10 +152,10 @@ This document defines each gate's:
 - [ ] Coverage ≥70% on new code in this lane.
 
 **Specifics per lane**
-- **BE (Vikram):** Cursor pagination on any new list endpoint. No offset. No sequential DB queries in a layout (use `Promise.all`).
-- **FE-W (Ananya):** Server Component by default. Lighthouse run; Core Web Vitals targets met.
-- **FE-M (Karan):** Morning Brief three-signal rule honored. `expo-secure-store` for tokens. Offline behavior tested.
-- **AI (Maya):** Prompt caching applied where possible. `@mcp_tool` + Decision Log middleware on any new MCP tool. Daily-tick simulation passes locally.
+- **Backend:** Keyset/cursor pagination on any new list endpoint. No offset. No sequential queries where a batch/parallel fetch is correct.
+- **Frontend (web):** Server-rendered by default where the stack supports it. Performance budget (e.g. Core Web Vitals) checked.
+- **Mobile:** Platform UX invariants honored. Secure storage for tokens. Offline behavior tested.
+- **AI/ML:** Prompt/result caching applied where possible. Audit-log middleware on any new write tool. A representative run passes locally.
 
 **Evidence:**
 - `developer-report.md` per builder.
@@ -168,24 +168,24 @@ This document defines each gate's:
 
 ## G4 — Security Review → QA
 
-**Owner:** Shreya — **VETO** authority.
+**Owner:** Security Reviewer — **VETO** authority.
 
 **Condition:**
 - [ ] **Zero CRITICAL findings.** No exceptions.
 - [ ] **Zero HIGH findings.** No exceptions.
-- [ ] **Zero India compliance violations** — DLT, NCPR, DND, calling hours, recording consent, 48h cap.
-- [ ] Every mutation endpoint: `requireRole` + `requireWorkspaceMember` + Zod input + `workspace_id` assertion present and tested.
-- [ ] Every new MCP tool: auth scope + tenant check + Decision Log middleware.
-- [ ] Every new connector: OAuth AES-256-GCM + webhook signature + per-brand KMS key.
-- [ ] Vulnerability scans run: pnpm audit, Snyk, Bandit, safety, pip-audit, Trivy, OWASP Dep-Check. No CRITICAL/HIGH.
+- [ ] **Zero violations of the product's compliance regime** (whatever `COMPLIANCE.md` declares — consent, channel/contact rules, retention, residency, etc.).
+- [ ] Every mutation endpoint: role check + tenant-membership check + input validation + tenant-isolation-key assertion present and tested.
+- [ ] Every new agent/service tool: auth scope + tenant check + audit-log middleware.
+- [ ] Every new connector: encrypted-at-rest credentials + webhook signature verification + per-tenant key.
+- [ ] Vulnerability scans run (dependency audit, SAST, container scan, etc.). No CRITICAL/HIGH.
 - [ ] No PII in logs (sample log lines reviewed).
-- [ ] No plaintext OAuth tokens anywhere.
+- [ ] No plaintext credentials/tokens anywhere.
 
 **Evidence:**
 - `security-review.md` with gate-by-gate PASS/FAIL + finding evidence.
 - Scan output captured in journal.
 
-**Bounce target on fail:** Responsible developer (the finding's owner). Shreya tags `@vikram`, `@ananya`, `@karan`, or `@maya` in the bounce note.
+**Bounce target on fail:** Responsible developer (the finding's owner). The Security Reviewer tags the owning builder role in the bounce note.
 
 **MED / LOW findings:** logged but do not block. Tracked as tech debt in journal.
 
@@ -193,18 +193,18 @@ This document defines each gate's:
 
 ## G5 — QA → Final Review
 
-**Owner:** Tanvi — **VETO** on missing verification.
+**Owner:** QA Engineer — **VETO** on missing verification.
 
 **Condition:**
-- [ ] All unit tests green (`pnpm vitest`, `pytest`).
+- [ ] All unit tests green.
 - [ ] All integration tests green.
-- [ ] All contract tests green (`buf breaking`, Pact, tRPC schema diff, MCP schema diff).
-- [ ] All E2E green (Playwright for web, Detox for mobile).
-- [ ] Load tests pass (Phase 3+ at 5K RPS target).
+- [ ] All contract tests green (breaking-change check, consumer contracts, schema diff).
+- [ ] All E2E green (web + mobile, where applicable).
+- [ ] Load tests pass (where in scope).
 - [ ] **Real-network smoke output captured**. No "should work" — actual output.
-- [ ] **Metric registry parity** confirmed (TS ↔ Python).
+- [ ] **Cross-runtime metric parity** confirmed against the single-source metric registry (`METRICS.md`).
 - [ ] **Operational-readiness checklist** all green: root handler, health endpoint, port selection, env var validation, native-dep gotchas.
-- [ ] Mutation tests pass on **high-stakes paths**: metric registry, India compliance engine, Decision Log.
+- [ ] Mutation tests pass on **high-stakes paths**: the metric registry, the compliance enforcement code, the system-of-record audit log.
 - [ ] Coverage ≥70% on the change set (composite — re-validated post-builder claim).
 - [ ] No flaky tests introduced (re-run 3× confirms).
 
@@ -216,53 +216,53 @@ This document defines each gate's:
 
 ---
 
-## G6 — Final Review → Founder
+## G6 — Final Review → Stakeholder
 
-**Owner:** CTO Advisor — **VETO** authority.
+**Owner:** Engineering Advisor — **VETO** authority.
 
 **Condition:**
 - [ ] **Requirement alignment** — does the shipped change still solve the original requirement? (Drift check.)
-- [ ] **Paradigm audit** — every `@paradigm` decorator matches the declared plan; no Sonnet snuck in where Haiku was promised.
+- [ ] **Effort-tier audit** — every effort-tier declaration matches the declared plan; no expensive tier snuck in where a cheaper one was promised.
 - [ ] **Architecture quality** — Single-Primitive Rule held; no anti-pattern drift.
 - [ ] **Code quality** — sampled 3–5 files; no obvious smells; comments only where the *why* is non-obvious.
-- [ ] **Security review** — Shreya PASS.
-- [ ] **QA review** — Tanvi PASS.
+- [ ] **Security review** — Security Reviewer PASS.
+- [ ] **QA review** — QA Engineer PASS.
 - [ ] **Observability complete** — metrics emitted, dashboards updated, alarms wired.
-- [ ] **Cost estimate held** — actual tokens/day from a simulated daily tick within ±20% of plan.
+- [ ] **Cost estimate held** — actual tokens/day from a representative run within ±20% of plan.
 - [ ] **Risks acknowledged** — `final-review.md` lists any remaining risks.
-- [ ] **Production-readiness assessment** — Jatin's pre-deploy checks would pass.
-- [ ] **Recommendation to Founder** — explicit APPROVE / APPROVE-WITH-CAVEATS / REJECT.
+- [ ] **Production-readiness assessment** — Platform/SRE pre-deploy checks would pass.
+- [ ] **Recommendation to the Stakeholder** — explicit APPROVE / APPROVE-WITH-CAVEATS / REJECT.
 
 **Evidence:**
 - `final-review.md`.
-- CTOA paradigm audit notes in `cto-advisor.journal.md`.
+- The Advisor's effort-tier audit notes in `cto-advisor.journal.md`.
 
-**Bounce target on fail:** Specific earlier stage (CTOA chooses based on the failure's root cause — often Stage 2 or Stage 3).
+**Bounce target on fail:** Specific earlier stage (the Advisor chooses based on the failure's root cause — often Stage 2 or Stage 3).
 
 ---
 
-## G7 — Founder → Deploy
+## G7 — Stakeholder → Deploy
 
-**Owner:** Rishabh — **HUMAN GATE**.
+**Owner:** Stakeholder — **HUMAN GATE**.
 
 **Condition:**
-- [ ] Founder ran `/approve <req-id>`.
+- [ ] Stakeholder ran `/approve <req-id>`.
 
 **Evidence:**
-- Decision log entry: `{"actor": "rishabh", "decision": "approved", "req_id": "...", "timestamp": "..."}`.
+- Audit-log entry: `{"actor": "stakeholder", "decision": "approved", "req_id": "...", "timestamp": "..."}`.
 
-**Bounce target on rejection:** CTOA reads the rejection reason and re-routes to the appropriate stage.
+**Bounce target on rejection:** the Advisor reads the rejection reason and re-routes to the appropriate stage.
 
 ---
 
 ## G8 — Staging → Production
 
-**Owner:** Jatin.
+**Owner:** Platform/SRE.
 
 **Condition:**
-- [ ] CI green: lint → typecheck → test → build → ECR push.
-- [ ] ArgoCD staging sync succeeded.
-- [ ] Staging real-network smoke passed (Tanvi's test scripts re-run on staging).
+- [ ] CI green: lint → typecheck → test → build → artifact push.
+- [ ] Staging sync succeeded.
+- [ ] Staging real-network smoke passed (the QA test scripts re-run on staging).
 - [ ] Staging metric parity verified.
 - [ ] Dashboard panels render with non-zero data on staging.
 - [ ] Alarms wired and verified (synthetic trigger fires the alarm).
@@ -271,23 +271,23 @@ This document defines each gate's:
 **Evidence:**
 - `deployment-report.md` Section "Staging verification".
 
-**Bounce target on fail:** Stage 4 triage (Shreya/Tanvi/Jatin decide whether it's a code defect, test gap, or infra issue).
+**Bounce target on fail:** Stage 4 triage (Security/QA/Platform-SRE decide whether it's a code defect, test gap, or infra issue).
 
 ---
 
-## G9 — Post-Deploy 48h Monitor
+## G9 — Post-Deploy Monitor (bake window)
 
-**Owner:** Jatin (with auto-rollback automation).
+**Owner:** Platform/SRE (with auto-rollback automation). Bake-window length comes from the product's `PLAYBOOK-deploy.md`.
 
-**Condition (over 48h):**
-- [ ] p95 latency stays <2 s.
+**Condition (over the bake window):**
+- [ ] p95 latency stays within target.
 - [ ] Error rate stays <1%.
 - [ ] Health check probes pass.
 - [ ] No alarms fired.
 - [ ] No auto-rollback triggered.
 
 **Evidence:**
-- CloudWatch dashboard snapshot at +24h and +48h.
+- Monitoring dashboard snapshots across the bake window.
 - `deployment-report.md` Section "Post-deploy monitor".
 
 **Bounce target on fail:** Auto-rollback fires → status → `rolled-back` → back to Stage 4 for triage.
@@ -299,10 +299,10 @@ This document defines each gate's:
 1. **Static check (precondition):** Before declaring "ready," the responsible agent reads this file and self-checks the gate it's about to hand off across.
 2. **Reviewer check (postcondition):** The next-stage owner reads this file and verifies each condition against the evidence.
 3. **CI check (mechanical, non-LLM — fails the merge before any agent gate runs):**
-   - **The OS itself** is gated by `.github/workflows/eos-self-gate.yml` — `pipeline_doctor` (graph consistency), `secret_scan` (O1), `validity_check` (O11 anti-patterns), agent-frontmatter + JSON validity, tools-compile. This runs on every plugin PR.
-   - **The Brain PRODUCT repo** instantiates its own gate from that template + `paradigm_check.py` (the `@paradigm` decorator is present and honest), a test-coverage threshold, the security-scanner suite exit codes, and `buf breaking` (contract diff). A red gate fails the merge — even before any agent gate runs. *(If the product CI is not yet wired, that is itself a gap to close — do not rely on the agent gates alone for the mechanical checks.)*
+   - **The OS itself** is gated by `.github/workflows/eos-self-gate.yml` — `pipeline_doctor` (graph consistency), `secret_scan`, `validity_check` (verification-validity anti-patterns), agent-frontmatter + JSON validity, tools-compile. This runs on every plugin PR.
+   - **The consuming PRODUCT repo** instantiates its own gate from that template + an effort-tier check (the cheapest-sufficient-effort declaration is present and honest), a test-coverage threshold, the security-scanner suite exit codes, and a contract-diff check. A red gate fails the merge — even before any agent gate runs. *(If the product CI is not yet wired, that is itself a gap to close — do not rely on the agent gates alone for the mechanical checks.)*
 
-> **No gate can be "waived" silently.** If the team needs to ship despite a gate failure, the CTO Advisor must escalate to Founder for an explicit, logged waiver — which becomes a tech-debt item with an owner and a date.
+> **No gate can be "waived" silently.** If the team needs to ship despite a gate failure, the Engineering Advisor must escalate to the Stakeholder for an explicit, logged waiver — which becomes a tech-debt item with an owner and a date.
 
 ---
 
@@ -328,17 +328,17 @@ The bounce-note is appended to both the per-agent journal and the per-feature jo
 
 ## Tracking gate health
 
-A weekly digest (run by `/digest` slash command, V2) aggregates from the decision log:
+A weekly digest (run by the `/team-digest` slash command) aggregates from the audit log:
 - How often each gate fired (PASS / FAIL ratio).
 - Average time spent in each stage.
 - Top 5 root causes of bounce-backs.
 
-This data feeds back into making the operating system itself smarter: e.g., if Stage 4 bounces on `requireRole` 5+ times in a month, the architect's Stage 2 checklist gets an explicit "verify `requireRole` on every mutation" item.
+This data feeds back into making the operating system itself smarter: e.g., if Stage 4 bounces on a missing role check 5+ times in a month, the Architect's Stage 2 checklist gets an explicit "verify the role check on every mutation" item.
 
 ---
 
 ## Related
 
-- [operating-system.md](operating-system.md) — overall philosophy & RACI.
+- [`engineering-os-blueprint/06-quality-gates-and-metrics.md`](../engineering-os-blueprint/06-quality-gates-and-metrics.md) — overall philosophy & RACI.
 - [workflow.md](workflow.md) — stage-by-stage detail.
 - [escalation-rules.md](escalation-rules.md) — what to do when a gate fail can't be resolved at this layer.

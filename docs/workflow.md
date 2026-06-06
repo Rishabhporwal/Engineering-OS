@@ -26,14 +26,14 @@ The owning agent re-reads its own output and walks the in-lane Definition of Don
 
 When the stage is genuinely complete and self-reviewed, the agent:
 
-- **Persists everything first:** writes its stage artifact(s); appends per-agent + per-feature journals + a decision-log line; and **updates `state/active.json`** (status / stage / owner → next, using the EXACT status values from [`state-machine.yaml`](../workflows/state-machine.yaml)).
+- **Persists everything first:** writes its stage artifact(s); appends per-agent + per-feature journals + an audit-log line; and **updates `state/active.json`** (status / stage / owner → next, using the EXACT status values from [`state-machine.yaml`](../workflows/state-machine.yaml)).
 - **Ends its response with a machine-readable HANDOFF block:**
 
 ```
 HANDOFF:
   decision: ADVANCE | BOUNCE | CHALLENGE-BACK | KILL | PASS | FAIL
-  next_stage: <stage number/name, or "founder">
-  next_agent: <agent-id | founder | none>
+  next_stage: <stage number/name, or "stakeholder">
+  next_agent: <agent-id | stakeholder | none>
   bounce_target: <agent-id | none>      # only when decision is BOUNCE/FAIL
   needs_personas: [<persona-type>, ...]  # Stage 1 only; else []
   reason: <one line>
@@ -41,30 +41,30 @@ HANDOFF:
 
 Do **NOT** call the `Agent` tool (you don't have it). Do **NOT** write `HANDOFF-TO-*.md` files (that legacy fallback is retired — it required a human to run the next command, defeating autonomy). The top-level orchestrator reads the `state/active.json` update + the HANDOFF block and spawns the next stage; it also does the special spawns agents can't (personas in parallel at Stage 1, Security ∥ QA at Stage 4∥5, multiple builders in parallel at Stage 3).
 
-These three responsibilities together = **smooth autonomous flow**. The orchestrator moves the pipeline stage-to-stage without Founder prompting between stages. Founder gates remain only at requirement submission and Stage 7 (approval, unless delegated).
+These three responsibilities together = **smooth autonomous flow**. The orchestrator moves the pipeline stage-to-stage without Stakeholder prompting between stages. Stakeholder gates remain only at requirement submission and Stage 7 (approval, unless delegated).
 
 ---
 
-## Stage 1 — CTO Advisor (intake & brainstorm)
+## Stage 1 — Engineering Advisor (intake & brainstorm)
 
-**Owner:** Rohan (CTO Advisor).
+**Owner:** Engineering Advisor (`cto-advisor`).
 **Dynamic personas spawned:** 0–2, by complexity (chosen from the catalog in [role-empowerment-model.md §Dynamic Persona Generator](role-empowerment-model.md#2-dynamic-persona-generator--dynamic-persona-generator)).
 
 ### Inputs
-- Founder's `/requirement <text>` invocation.
-- Optional Founder-attached context (links, prior artifacts, anything in [.engineering-os/](../.engineering-os/)).
+- The Stakeholder's `/requirement <text>` invocation.
+- Optional Stakeholder-attached context (links, prior artifacts, anything in [.engineering-os/](../.engineering-os/)).
 
 ### What happens
 1. Generate `req-<slug>` ID — kebab-cased from a short summary of the requirement.
 2. Create the run folder: `.engineering-os/runs/<ISO-timestamp>__req-<slug>__<operator>/`.
-3. Load `docs/business-context.md` + `docs/technical-context.md` + the CTO Advisor's owned skills.
+3. Load `docs/business-context.md` + `docs/technical-context.md` (if present) + the Canon section + the Advisor's owned skills.
 4. Read the raw requirement.
 5. **Run "Make requirements less dumb first"** (from `engineering-discipline`): Can we delete? Simplify? Defer?
-6. Decide the persona count (0/1/2 by complexity) — but do NOT spawn them (Rohan is a subagent with no `Agent` tool). Record the chosen persona type(s) and RETURN them in the HANDOFF `needs_personas` list; the **top-level orchestrator** spawns that many in parallel (each writing a [`templates/dynamic-persona-review.md`](../templates/dynamic-persona-review.md) artifact) and then re-invokes Rohan to synthesize. For count=0, skip the persona round-trip.
+6. Decide the persona count (0/1/2 by complexity) — but do NOT spawn them (the Advisor is a subagent with no `Agent` tool). Record the chosen persona type(s) and RETURN them in the HANDOFF `needs_personas` list; the **top-level orchestrator** spawns that many in parallel (each writing a [`templates/dynamic-persona-review.md`](../templates/dynamic-persona-review.md) artifact) and then re-invokes the Advisor to synthesize. For count=0, skip the persona round-trip.
 7. Synthesize persona inputs + own analysis into a [`templates/cto-advisor-review.md`](../templates/cto-advisor-review.md) artifact (on the synthesis pass, after the orchestrator has produced the persona artifacts).
-8. Decide: **ADVANCE** (Stage 2), **CHALLENGE-BACK** (to Founder with structured challenge), or **KILL** (archive with reason).
+8. Decide: **ADVANCE** (Stage 2), **CHALLENGE-BACK** (to the Stakeholder with a structured challenge), or **KILL** (archive with reason).
 9. Append entry to:
-   - `.engineering-os/decision-log/<YYYY>/<MM>/<YYYY-MM-DD>.jsonl`
+   - the audit log (`.engineering-os/decision-log/<YYYY>/<MM>/<YYYY-MM-DD>.jsonl`)
    - `.engineering-os/memory/agents/cto-advisor.journal.md`
    - `.engineering-os/memory/features/feat-<slug>.md`
 10. Update `.engineering-os/state/active.json` with the new `req-<slug>` and its current status.
@@ -80,47 +80,47 @@ These three responsibilities together = **smooth autonomous flow**. The orchestr
 ### Typical bounce triggers (challenge-back)
 - Requirement lacks a problem statement, target user, success metric, or constraint.
 - Requirement violates the Single-Primitive Rule.
-- Requirement assumes Sonnet when SQL/ML/Haiku would do.
-- Requirement skips a region adapter step for non-India work.
+- Requirement assumes a large model when deterministic logic / ML / a small model would do.
+- Requirement skips a region/locale adapter step for new-region work.
 
 ### Exit gate (G1)
 - All 5 sections of `cto-advisor-review.md` are filled.
 - The persona-count decision (0/1/2) is recorded, and every spawned persona review includes at least one concern (a "looks good, no concerns" persona is rejected).
-- Decision is recorded in the decision log.
+- Decision is recorded in the audit log.
 
 ---
 
-## Stage 2 — Architect (Aryan)
+## Stage 2 — Architect
 
-**Owner:** Aryan.
+**Owner:** Architect.
 
 ### Inputs
 - `cto-advisor-review.md` + 0-2 `dynamic-persona-review.md` (one per spawned persona).
 - The raw requirement (for original-context reference).
-- Relevant skill files (auto-loaded from his owned-skill list).
-- Prior architecture decisions in `.engineering-os/memory/agents/architect.journal.md` (Aryan reads his own prior journal for continuity).
+- Relevant skill files (auto-loaded from the owned-skill list).
+- Prior architecture decisions in `.engineering-os/memory/agents/architect.journal.md` (the Architect reads its own prior journal for continuity).
 
 ### What happens
-1. Re-read the canon primers + `architecture-patterns` + `database-design` + `api-versioning-strategy` + domain-relevant skills.
+1. Re-read the Canon primers + `architecture-patterns` + `data-layer` + `api-discipline` + domain-relevant skills.
 2. Identify all *affected* services, schemas, topics, and primitives.
 3. Run a Single-Primitive sweep: *does this duplicate anything?*
-4. Declare the **paradigm** (SQL / ML / Haiku / Sonnet) and **justify** it.
+4. Declare the **effort tier** (deterministic / ML / small model / large model) and **justify** it.
 5. Produce [`templates/architecture-plan.md`](../templates/architecture-plan.md), covering:
    - Context, problem, proposed solution
    - Architecture diagram (mermaid)
-   - API design — gRPC proto sketch + tRPC procedure shape + MCP tool shape (if external)
-   - DB schema additions/changes + migration plan + RLS policies
-   - Event model — which topics, partition key `workspace_id` always
-   - Paradigm declaration + justification
+   - API/contract design — internal contract sketch + external surface shape (if any)
+   - Data-store schema additions/changes + migration plan + isolation policies
+   - Event model — which topics, partition key the tenant-isolation key always
+   - Effort-tier declaration + justification
    - Data flow (mermaid)
    - Edge cases + failure modes
-   - Security considerations (forwarded to Shreya)
+   - Security considerations (forwarded to the Security Reviewer)
    - Observability plan (metrics, logs, traces, alarms, dashboards)
    - Test strategy (unit / integration / contract / E2E / load / real-network smoke)
    - Impacted systems
    - Risks + tradeoffs + alternatives considered + why rejected
-   - Cost estimate (LLM tokens/day at expected load)
-6. Decompose the plan into per-builder track lists. Tag each track with `@vikram`, `@ananya`, `@karan`, `@maya` (multiple per task is fine).
+   - Cost estimate (model tokens/day at expected load)
+6. Decompose the plan into per-builder track lists. Tag each track with the owning builder role (backend / frontend-web / mobile / ai-ml) — multiple per task is fine.
 7. Append journal.
 
 ### Outputs
@@ -130,25 +130,25 @@ These three responsibilities together = **smooth autonomous flow**. The orchestr
 ### Expected duration
 - 30–90 minutes of agent work.
 
-### Typical bounce triggers (back to CTOA)
+### Typical bounce triggers (back to the Advisor)
 - Requirement is ambiguous after attempting the plan.
 - Requirement implies a new tech-stack layer (escalate via `tech-stack-evaluation`).
 - Requirement would force a Single-Primitive violation no matter how creative the design.
 
 ### Exit gate (G2)
 - All sections of `architecture-plan.md` filled.
-- `@paradigm` declared and justified.
+- Effort tier declared and justified.
 - Observability plan present.
 - Test strategy present.
 - Risks + alternatives documented.
-- All 4 multi-tenancy enforcement layers addressed (JWT, service, DB, Kafka).
-- CTO Advisor signs off on the paradigm choice (one-line note in the journal).
+- All tenant-isolation enforcement layers addressed (identity → service → data store → async backbone).
+- The Engineering Advisor signs off on the effort-tier choice (one-line note in the journal).
 
 ---
 
 ## Stage 3 — Parallel Development
 
-**Owners:** Vikram (BE), Ananya (FE-W), Karan (FE-M), Maya (AI) — only those tagged in the track list.
+**Owners:** Backend Engineer, Frontend/Web Engineer, Mobile Engineer, AI/ML Engineer — only those tagged in the track list.
 
 ### Inputs
 - `architecture-plan.md` + the builder's per-track list.
@@ -165,7 +165,7 @@ These three responsibilities together = **smooth autonomous flow**. The orchestr
    - Run real-network smoke locally.
    - Run verification command and capture output.
    - Commit (small, focused).
-5. When all in-lane Definition-of-Done items are green, post `READY-FOR-SECURITY` (or `READY-FOR-QA` if Shreya wasn't pre-consulted) in [`templates/developer-report.md`](../templates/developer-report.md).
+5. When all in-lane Definition-of-Done items are green, post `READY-FOR-SECURITY` (or `READY-FOR-QA` if the Security Reviewer wasn't pre-consulted) in [`templates/developer-report.md`](../templates/developer-report.md).
 6. Append journal entry per task and a final entry summarizing the track.
 
 ### Outputs
@@ -176,7 +176,7 @@ These three responsibilities together = **smooth autonomous flow**. The orchestr
 - Highly variable — a few hours to a few days for a meaningful feature.
 
 ### Typical bounce triggers (back to Architect)
-- Architecture plan implies an anti-pattern (offset pagination, plaintext OAuth, missing `requireRole`, etc.).
+- Architecture plan implies an anti-pattern (offset pagination, plaintext credential storage, a missing role check, etc.).
 - Plan doesn't account for a real-world edge case discovered in implementation.
 - Plan misses a downstream consumer.
 
@@ -189,20 +189,20 @@ These three responsibilities together = **smooth autonomous flow**. The orchestr
 
 ---
 
-## Stage 4 — Security Review (Shreya)
+## Stage 4 — Security Review
 
-**Owner:** Shreya — **VETO** authority.
+**Owner:** Security Reviewer — **VETO** authority.
 
 ### Inputs
-- All Stage 3 artifacts + code diffs + proto changes + schema changes + new MCP tools (if any) + new outbound channels (if any).
+- All Stage 3 artifacts + code diffs + contract changes + schema changes + new tools (if any) + new outbound channels (if any).
 
 ### What happens
-1. Load `security-baseline`, `auth-and-access`, `defense-in-depth-validation` (incl. XSS), `vulnerability-scanning`, `oauth-implementation`, `india-commerce-economics` (compliance side).
-2. For every mutation endpoint: verify `requireRole` + `requireWorkspaceMember` + Zod input + `workspace_id` assertion.
-3. For every new MCP tool: verify auth scope + tenant check + Decision Log middleware.
-4. For every new connector: verify OAuth AES-256-GCM + webhook signature + per-brand KMS key.
-5. For every new outbound channel: verify DLT / NCPR / DND / calling hours / recording consent / 48h cap.
-6. Run vulnerability scans (pnpm audit, Snyk, Bandit, safety, Trivy, OWASP DC).
+1. Load `security-baseline`, `auth-and-access`, `agentic-safety`, `oauth-implementation`, `compliance-engine` (compliance side).
+2. For every mutation endpoint: verify the role check + tenant-membership check + input validation + tenant-isolation-key assertion.
+3. For every new tool: verify auth scope + tenant check + audit-log middleware.
+4. For every new connector: verify encrypted-at-rest credentials + webhook signature + per-tenant key.
+5. For every new outbound channel: verify the channel/consent rules the product's `COMPLIANCE.md` declares.
+6. Run vulnerability scans (dependency audit, SAST, container scan).
 7. Produce [`templates/security-review.md`](../templates/security-review.md) with:
    - Each gate, PASS/FAIL with evidence.
    - List of CRITICAL/HIGH/MED/LOW findings.
@@ -218,39 +218,39 @@ These three responsibilities together = **smooth autonomous flow**. The orchestr
 
 ### Typical bounce triggers (back to responsible dev)
 - Any CRITICAL or HIGH finding.
-- Any India compliance gap.
-- Missing standard guard on a mutation endpoint.
-- Plaintext OAuth in storage.
-- New code path with PII in logs.
+- Any compliance-regime gap.
+- A missing standard guard on a mutation endpoint.
+- Plaintext credentials in storage.
+- A new code path with PII in logs.
 
 ### Exit gate (G4)
 - Zero CRITICAL / HIGH findings.
-- Zero India compliance violations.
+- Zero compliance-regime violations.
 - All standard guards present and tested.
-- All MCP tools tenant-checked.
-- All connectors token-encrypted.
+- All tools tenant-checked.
+- All connector credentials encrypted.
 
 ---
 
-## Stage 5 — QA (Tanvi)
+## Stage 5 — QA
 
-**Owner:** Tanvi — **VETO** on missing verification.
+**Owner:** QA Engineer — **VETO** on missing verification.
 
 ### Inputs
 - Stage 3 + Stage 4 artifacts + all code diffs.
 
 ### What happens
-1. Load `testing-tdd` (incl. mutation testing), `api-contract-testing`, `operational-readiness`, `verification-before-completion`.
+1. Load `testing-tdd` (incl. mutation testing), `api-discipline`, `operational-readiness`, `verification-before-completion`.
 2. Run:
-   - Unit tests (`pnpm vitest`, `pytest`).
+   - Unit tests.
    - Integration tests (services + connectors with synthetic + live credentials).
-   - Contract tests (`buf breaking`, Pact, tRPC schema diff, MCP schema diff).
-   - E2E (Playwright for web, Detox for mobile).
-   - Load (k6 — Phase 3+).
+   - Contract tests (breaking-change check, consumer contracts, schema diff).
+   - E2E (web + mobile, where applicable).
+   - Load tests (where in scope).
    - **Real-network smoke tests (mandatory for PASS).**
-3. Verify **metric registry parity** (TS ↔ Python).
+3. Verify **cross-runtime metric-registry parity** (`METRICS.md`).
 4. Run **operational-readiness checklist**: root handler, health, port, env vars, native deps.
-5. Run mutation tests on high-stakes paths (metric registry, India compliance engine, Decision Log).
+5. Run mutation tests on high-stakes paths (the metric registry, the compliance enforcement code, the system-of-record audit log).
 6. Capture *actual* command output for every claim.
 7. Produce [`templates/qa-review.md`](../templates/qa-review.md) with PASS/FAIL + evidence.
 
@@ -264,9 +264,9 @@ These three responsibilities together = **smooth autonomous flow**. The orchestr
 ### Typical bounce triggers (back to responsible dev)
 - <70% coverage on new code.
 - Missing real-network smoke.
-- Contract test missing on contract change.
-- Mutation test missing on high-stakes path.
-- Metric registry parity failure.
+- Contract test missing on a contract change.
+- Mutation test missing on a high-stakes path.
+- Metric-registry parity failure.
 - Operational-readiness checklist red.
 
 ### Exit gate (G5)
@@ -278,19 +278,19 @@ These three responsibilities together = **smooth autonomous flow**. The orchestr
 
 ---
 
-## Stage 6 — CTO Advisor Final Review
+## Stage 6 — Engineering Advisor Final Review
 
-**Owner:** CTO Advisor — **VETO** authority.
+**Owner:** Engineering Advisor — **VETO** authority.
 
 ### Inputs
-- Every artifact from this run: CTOA intake, the 0–2 persona reviews, architecture plan, developer reports, security review, QA review.
+- Every artifact from this run: the Advisor's intake, the 0–2 persona reviews, architecture plan, developer reports, security review, QA review.
 
 ### What happens
 1. Re-read the original requirement (verify alignment).
 2. Re-read the architecture plan (verify it still maps to the requirement after dev pivots).
-3. Verify cost paradigm choice held through implementation (audit `@paradigm` decorators).
-4. Verify all 4 multi-tenancy layers are present.
-5. Verify observability plan was actually implemented.
+3. Verify the effort-tier choice held through implementation (audit the effort-tier declarations).
+4. Verify all tenant-isolation layers are present.
+5. Verify the observability plan was actually implemented.
 6. Spot-check the code (sample 3–5 files).
 7. Synthesize into [`templates/final-review.md`](../templates/final-review.md):
    - Requirement alignment (PASS/FAIL).
@@ -300,72 +300,72 @@ These three responsibilities together = **smooth autonomous flow**. The orchestr
    - QA review summary.
    - Risks remaining.
    - Production-readiness assessment.
-   - Recommendation to Founder.
+   - Recommendation to the Stakeholder.
 
 ### Outputs
 - `final-review.md`.
-- Status: `final-review` → `awaiting-founder` (PASS) | `final-bounced` (FAIL).
+- Status: `final-review` → `awaiting-stakeholder` (PASS) | `final-bounced` (FAIL).
 
 ### Expected duration
 - 20–60 minutes.
 
 ### Typical bounce triggers (back to specific earlier stage)
-- Paradigm audit failed → back to Stage 3 (or Stage 2 if the plan was wrong).
+- Effort-tier audit failed → back to Stage 3 (or Stage 2 if the plan was wrong).
 - Observability incomplete → back to Stage 3 (dev) or Stage 2 (plan).
 - Requirement misalignment → back to Stage 2 (Architect) for re-plan.
-- Cost estimate breached → back to Stage 2 (re-plan with cheaper paradigm).
+- Cost estimate breached → back to Stage 2 (re-plan with a cheaper effort tier).
 
 ### Exit gate (G6)
 - All sub-reviews PASS.
-- Paradigm audit clean.
+- Effort-tier audit clean.
 - Observability complete.
 - Risks acknowledged.
 
 ---
 
-## Stage 7 — Founder Approval (Rishabh)
+## Stage 7 — Stakeholder Approval
 
-**Owner:** Rishabh — **HUMAN GATE**.
+**Owner:** Stakeholder — **HUMAN GATE**.
 
 ### Inputs
 - `final-review.md` + every prior artifact (read on demand).
-- The decision log's last 30 days for trend context.
+- The audit log's recent history for trend context.
 
 ### What happens
 1. Read final review.
-2. Apply strategic judgment (does this advance Brain's roadmap? does the cost make sense? is the risk acceptable now?).
+2. Apply strategic judgment (does this advance the roadmap? does the cost make sense? is the risk acceptable now?).
 3. Run `/approve <req-id>` or `/reject <req-id> <reason>`.
 
 ### Outputs
-- Approval or rejection in `.engineering-os/decision-log/`.
-- Status: `awaiting-founder` → `approved` (Stage 8) | `rejected` (terminal).
+- Approval or rejection in the audit log (`.engineering-os/decision-log/`).
+- Status: `awaiting-stakeholder` → `approved` (Stage 8) | `rejected` (terminal).
 
 ### Expected duration
-- Up to Rishabh. Pipeline waits.
+- Up to the Stakeholder. Pipeline waits.
 
 ### Bounce behavior
-- Rejection includes a reason. CTOA reads the reason and decides where to bounce (typically back to Stage 2 with a re-scoping note).
+- Rejection includes a reason. The Advisor reads the reason and decides where to bounce (typically back to Stage 2 with a re-scoping note).
 
 ### Exit gate (G7)
-- Founder's recorded decision is in the decision log.
+- The Stakeholder's recorded decision is in the audit log.
 
 ---
 
-## Stage 8 — Platform / DevOps (Jatin)
+## Stage 8 — Platform/SRE
 
-**Owner:** Jatin.
+**Owner:** Platform/SRE.
 
 ### Inputs
 - Approved Stage 7 artifacts.
 
 ### What happens
-1. Run CI: lint → typecheck → test → build → push to ECR.
-2. ArgoCD syncs staging.
+1. Run CI: lint → typecheck → test → build → push the artifact.
+2. Sync to staging.
 3. Run staging verification: real-network smoke, metric parity, dashboard sanity, alarm wiring sanity.
-4. If staging fails: bounce to Stage 4 (could be code OR infra issue — let Shreya/Tanvi/Jatin triage).
-5. If staging passes: deploy to production via ArgoCD (canary if applicable).
-6. Watch for 48 hours. Auto-rollback if:
-   - p95 latency >2 s for 5 min
+4. If staging fails: bounce to Stage 4 (could be a code OR infra issue — let Security/QA/Platform-SRE triage).
+5. If staging passes: deploy to production (canary if applicable).
+6. Watch over the bake window (length from `PLAYBOOK-deploy.md`). Auto-rollback if:
+   - p95 latency exceeds target for 5 min
    - Error rate >1% for 5 min
    - Health check failing 2 consecutive probes
 7. Produce [`templates/deployment-report.md`](../templates/deployment-report.md).
@@ -373,10 +373,10 @@ These three responsibilities together = **smooth autonomous flow**. The orchestr
 
 ### Outputs
 - Deployment report.
-- Status: `deploying-staging` → `awaiting-prod-deploy` → `deploying-prod` → `monitoring` → `shipped` (48h clean) | `rolled-back` (auto-rollback fired).
+- Status: `deploying-staging` → `awaiting-prod-deploy` → `deploying-prod` → `monitoring` → `shipped` (clean bake) | `rolled-back` (auto-rollback fired).
 
 ### Expected duration
-- 30 min to 2 hours for CI + staging + production push. 48h monitor afterwards.
+- 30 min to 2 hours for CI + staging + production push. The bake-window monitor runs afterwards.
 
 ### Typical bounce triggers
 - Staging verification failure → Stage 4 triage.
@@ -385,7 +385,7 @@ These three responsibilities together = **smooth autonomous flow**. The orchestr
 ### Exit gate (G8 + G9)
 - Staging smoke passed.
 - Production deploy completed.
-- 48h post-deploy monitoring clean.
+- Post-deploy monitoring clean across the bake window.
 
 ---
 
@@ -397,7 +397,7 @@ When a teammate runs `git pull` then re-opens Claude Code:
 2. Each agent, on first invocation, **reads its own journal** (`.engineering-os/memory/agents/<role>.journal.md`) for continuity. Last-N entries are surfaced into context.
 3. For any specific feature work, the agent **reads the per-feature journal** (`.engineering-os/memory/features/feat-<slug>.md`) before doing anything.
 
-This is how "agents never forget." See [memory-and-git-sync.md](memory-and-git-sync.md) for the full mechanism.
+This is how "agents never forget." See [`engineering-os-blueprint/01-organization-structure.md`](../engineering-os-blueprint/01-organization-structure.md) for the memory-and-git-sync mechanism.
 
 ---
 
@@ -405,7 +405,7 @@ This is how "agents never forget." See [memory-and-git-sync.md](memory-and-git-s
 
 Slash commands let a human operator override the pipeline when needed:
 
-- `/handoff <req-id> <stage>` — manually move a requirement to a stage (e.g., when an emergency requires skipping Stage 4 — but Shreya's veto still applies on the next normal review).
+- `/handoff <req-id> <stage>` — manually move a requirement to a stage (e.g., when an emergency requires skipping Stage 4 — but the Security Reviewer's veto still applies on the next normal review).
 - `/recall <feature-slug>` — print the full per-feature journal so a teammate gets caught up instantly.
 - `/invoke-skill <skill-name>` — manually invoke a skill outside the pipeline.
 - `/persona <topic>` — spawn an extra persona for an open question.

@@ -1,12 +1,12 @@
 # gitleaks config for the Engineering OS repo itself (O1 fix: scan the team's
 # OWN audit-trail commits, not just the product). Use alongside tools/secret_scan.py
 # (the portable, no-deps gate). Run: gitleaks protect --staged  (or via pre-commit).
-title = "Brain Engineering OS secret gate"
+title = "Engineering OS secret gate"
 
 [extend]
 useDefault = true   # inherit gitleaks' built-in rules (AWS, GitHub, Stripe, JWT, private keys, …)
 
-# Extra rules for the exact O1 classes (DTC-connector tokens gitleaks defaults miss).
+# Extra rules for the exact O1 classes (common third-party API tokens gitleaks defaults miss).
 [[rules]]
 id = "shopify-secret"
 description = "Shopify app secret / access token"

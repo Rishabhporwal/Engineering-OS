@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://brain.pipadacapital.com/schemas/active-state.schema.json",
+  "$id": "https://engineering-os.dev/schemas/active-state.schema.json",
   "title": "active.json — in-flight requirements (v2 hot-path file)",
   "description": "Validates the hottest, most-mutated state file (unvalidated in v1). Holds ONLY in-flight requirements; terminal reqs are pruned to registry.json by prune_state.py.",
   "type": "object",

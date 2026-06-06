@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://brain.pipadacapital.com/engineering-os/schemas/qa-review.schema.json",
+  "$id": "https://engineering-os.dev/engineering-os/schemas/qa-review.schema.json",
   "title": "QA Review (Stage 5)",
   "type": "object",
   "required": ["schema_version", "req_id", "actor", "ts", "verdict", "gates", "test_runs"],
@@ -8,7 +8,7 @@
     "schema_version": { "type": "integer", "const": 1 },
     "req_id": { "type": "string" },
     "actor": { "type": "string", "const": "qa-agent" },
-    "actor_persona": { "type": "string", "const": "tanvi" },
+    "actor_persona": { "type": "string", "const": "qa-agent" },
     "ts": { "type": "string", "format": "date-time" },
     "verdict": { "enum": ["PASS", "FAIL", "NEEDS-MORE-INFO"] },
     "gates": {
@@ -33,7 +33,7 @@
       }
     },
     "negative_control": {
-      "description": "O11 — the #1 recurring bounce. For every security/tenancy/auth/money path, prove the test can FAIL: remove the protection, run, capture the red output. An empty array on a high-stakes path is a Tanvi VETO (validated by tools/validity_check.py). A green test under BYPASSRLS / an inert probe / a tautological parity assert is FAIL.",
+      "description": "O11 — the #1 recurring bounce. For every security/tenancy/auth/money path, prove the test can FAIL: remove the protection, run, capture the red output. An empty array on a high-stakes path is a QA Engineer VETO (validated by tools/validity_check.py). A green test under a bypassed security context / an inert probe / a tautological parity assert is FAIL.",
       "type": "array",
       "items": {
         "type": "object",
@@ -82,7 +82,7 @@
           "severity": { "enum": ["block", "high", "medium", "low"] },
           "title": { "type": "string" },
           "evidence": { "type": "string" },
-          "responsible_persona": { "enum": ["vikram", "ananya", "karan", "maya"] }
+          "responsible_persona": { "enum": ["backend-developer", "frontend-web-developer", "mobile-developer", "intelligence-engineer"] }
         }
       }
     }

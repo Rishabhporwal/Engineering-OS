@@ -5,7 +5,7 @@ description: Production-readiness checklist for every shippable service — root
 
 # Operational Readiness — the "won't look broken in production" checklist
 
-Every shippable service must clear this before Vikram hands off and before Tanvi issues PASS. These rules exist because the team hit each in production-like tests. Cheap to satisfy, expensive to skip.
+Every shippable service must clear this before the Backend Engineer hands off and before the QA Engineer issues PASS. These rules exist because the team hit each in production-like tests. Cheap to satisfy, expensive to skip.
 
 ## 1. Root handler (`GET /`) is required, even for API-only services
 
@@ -13,16 +13,16 @@ A service that 404s on `GET /` looks "broken" to a human hitting the URL. `GET /
 
 ## 2. Health checks — four probe types (non-negotiable)
 
-EKS / ALB / CloudFront all need health endpoints. Without working liveness + readiness probes the service can't deploy.
+The orchestrator / load balancer / edge all need health endpoints. Without working liveness + readiness probes the service can't deploy.
 
-| Probe | Question | EKS action on failure | What to check |
+| Probe | Question | Orchestrator action on failure | What to check |
 |---|---|---|---|
 | **Liveness** (`/health/live`) | Process responsive? | Restart pod | Process up, event loop unblocked, <100ms — **no external deps** |
-| **Readiness** (`/health/ready`) | Can serve traffic? | Remove from Service endpoints | Postgres pool warm, ClickHouse reachable, ElastiCache connected, Kafka producer connected |
-| **Startup** (`/health/live`) | Finished booting? | Delay liveness/readiness | First Prisma migration applied; proto codegen loaded; first ClickHouse query succeeds |
-| **Deep** (`/health/deep`) | Upstream deps healthy? | Page on-call (alerting only) | Vendor APIs (Shopify, Meta, Google) + Anthropic reachable. Never gates traffic. |
+| **Readiness** (`/health/ready`) | Can serve traffic? | Remove from Service endpoints | Postgres pool warm, OLAP store reachable, cache connected, Kafka producer connected |
+| **Startup** (`/health/live`) | Finished booting? | Delay liveness/readiness | First migration applied; proto codegen loaded; first OLAP query succeeds |
+| **Deep** (`/health/deep`) | Upstream deps healthy? | Page on-call (alerting only) | Vendor APIs + the LLM provider reachable. Never gates traffic. |
 
-### Fastify (Node — Vikram)
+### HTTP framework (typed runtime, e.g. Fastify)
 
 ```typescript
 class HealthChecker {
@@ -54,7 +54,7 @@ export const healthPlugin: FastifyPluginAsync = async (app) => {
 };
 ```
 
-### FastAPI (Python — Maya)
+### FastAPI (Python)
 
 ```python
 async def check(coro):
@@ -75,7 +75,7 @@ async def ready(response: Response):
     return {"healthy": healthy, "checks": checks}
 ```
 
-### EKS probe config (Jatin's CDK)
+### Orchestrator probe config (IaC)
 
 ```yaml
 livenessProbe:  { httpGet: { path: /health/live,  port: 3000 }, initialDelaySeconds: 15, periodSeconds: 10, failureThreshold: 3 }   # 30s → restart
@@ -87,15 +87,15 @@ startupProbe:   { httpGet: { path: /health/live,  port: 3000 }, failureThreshold
 
 - **Liveness MUST NOT depend on external services.** Postgres down ≠ container broken — liveness failing on Postgres restart-loops every container and makes the outage worse.
 - **Readiness MUST check what the pod needs to serve.**
-- **Return 200 healthy / 503 unhealthy** — anything else confuses K8s and the ALB.
+- **Return 200 healthy / 503 unhealthy** — anything else confuses the orchestrator and the load balancer.
 - **Timeouts < probe period.**
 - **`/health/*` is exempt from rate limiting and auth.**
 - **Log readiness transitions** — every flap is a signal.
 - **`/health/deep` is for humans, never the LB or autoscaler.**
 
-### Composite alarm + auto-rollback (Jatin)
+### Composite alarm + auto-rollback (Platform/SRE)
 
-ArgoCD watches a CloudWatch composite alarm: readiness failure rate > 10% over 2 minutes → automatic rollback to the previous deployment.
+The deploy controller watches a composite alarm: readiness failure rate > 10% over 2 minutes → automatic rollback to the previous deployment.
 
 ```typescript
 const compositeAlarm = new cloudwatch.CompositeAlarm(this, 'pod-readiness-composite', {
@@ -109,11 +109,11 @@ Read `PORT` from env (`Number(process.env.PORT ?? 0)` lets the OS pick a free po
 
 ## 4. Smoke test against a REAL listening server
 
-In-process mocks (`app.request()`, FastAPI `TestClient`) skip the network stack — they miss port binding, TLS, HTTP/2, reverse-proxy quirks, timeouts, DNS. **Two layers:** (1) integration (fast, in-process, hot loop on every save); (2) smoke (slow, real network) — `spawn` the server on a real port, wait for "listening", then `curl GET /health` (200 + `status:ok`) and `GET /` (200, not 404). Run before PASS and in CI post-deploy. Templates in `testing-tdd` + canon/technical-requirements.md.
+In-process mocks (`app.request()`, FastAPI `TestClient`) skip the network stack — they miss port binding, TLS, HTTP/2, reverse-proxy quirks, timeouts, DNS. **Two layers:** (1) integration (fast, in-process, hot loop on every save); (2) smoke (slow, real network) — `spawn` the server on a real port, wait for "listening", then `curl GET /health` (200 + `status:ok`) and `GET /` (200, not 404). Run before PASS and in CI post-deploy. Templates in `testing-tdd` + the Product Canon.
 
 ## 5. Native dependencies — declare the build trust list
 
-For Node projects using `better-sqlite3`, `node-gyp` packages, `esbuild`, `sharp`, declare them in `package.json` → `pnpm.onlyBuiltDependencies` (an array). **pnpm 11 gotcha:** even with it declared, pre-flight `runDepsStatusCheck` may block with `[ERR_PNPM_IGNORED_BUILDS]` AND leave native binaries unbuilt while `pnpm install` reports success — **don't trust the install exit code.** Wire a `predev`/`pretest`/CI check that loops `onlyBuiltDependencies` and runs `node -e "require('$pkg')"`, failing with `pnpm rebuild $pkg`. Workarounds (Brain is pnpm-locked, do NOT adopt bun): `pnpm rebuild <pkg>` → run binary directly → `pnpm approve-builds` → `CI=true` → pin. Document in README.
+For Node projects using `better-sqlite3`, `node-gyp` packages, `esbuild`, `sharp`, declare them in `package.json` → `pnpm.onlyBuiltDependencies` (an array). **pnpm 11 gotcha:** even with it declared, pre-flight `runDepsStatusCheck` may block with `[ERR_PNPM_IGNORED_BUILDS]` AND leave native binaries unbuilt while `pnpm install` reports success — **don't trust the install exit code.** Wire a `predev`/`pretest`/CI check that loops `onlyBuiltDependencies` and runs `node -e "require('$pkg')"`, failing with `pnpm rebuild $pkg`. Workarounds (when the product's `STACK.md` pins pnpm — don't silently switch package managers): `pnpm rebuild <pkg>` → run binary directly → `pnpm approve-builds` → `CI=true` → pin. Document in README. (The same class of gotcha exists for any package manager that defers native builds — apply the equivalent check for yours.)
 
 ## 5b. Don't rely on transitive dependencies you import directly
 
@@ -147,9 +147,9 @@ One-line description, how to run locally, required env vars (example values, nev
 
 Three to five lines: what service, what version, where, what's enabled. Not a dump, not silence.
 
-## The Vikram/Tanvi handoff checklist
+## The build→QA handoff checklist
 
-Before Vikram says "done":
+Before the Backend Engineer says "done":
 - [ ] `GET /` returns a real response (not 404); `GET /health` returns 200 with status JSON
 - [ ] `PORT` env var works, default documented; crashes loudly on `EADDRINUSE`
 - [ ] Required env vars validated at startup; optional vars log a single-line degradation notice
@@ -157,11 +157,11 @@ Before Vikram says "done":
 - [ ] Every package imported in `src/` appears in `dependencies` (no transitive borrowing)
 - [ ] Non-TS runtime files declared in the build's asset config and verified present in `dist/`
 - [ ] Test config and production tsconfig don't share ESM/CommonJS settings unless the app is one end-to-end
-- [ ] Time-bucketed queries are tenant-timezone aware, not server-UTC (see `database-design` → Time + Timezones)
+- [ ] Time-bucketed queries are tenant-timezone aware, not server-UTC (see `data-layer` → Time + Timezones)
 - [ ] Smoke test file runs the server on a real port; README has run + test + verify instructions
-- [ ] **The service's own CI/CD pipeline exists** — `turbo --affected` GitHub Actions workflow + Dockerfile + its own ECR image + its own ArgoCD Application (base + staging/production overlays) + canary + auto-rollback — built WITH the service from day one. Retrofitting CI/CD later is forbidden.
+- [ ] **The service's own CI/CD pipeline exists** — an affected-only CI workflow + Dockerfile + its own image + its own deploy manifest (base + staging/production overlays) + canary + auto-rollback — built WITH the service from day one. Retrofitting CI/CD later is forbidden.
 
-Before Tanvi says PASS:
+Before the QA Engineer says PASS:
 - [ ] All unit + integration tests pass
 - [ ] **Smoke test against a real running server passes** (not just `app.request()`)
 - [ ] `curl localhost:<PORT>/` returns something (not 404); `curl localhost:<PORT>/health` returns 200
@@ -176,19 +176,19 @@ If any is unchecked, the verdict is FAIL with the specific gap named.
 - ❌ Silent skip on missing optional env vars; or shipping a service whose `GET /` 404s with no body
 - ❌ `pnpm install` succeeding but native binaries unbuilt (treat the warning as a real error)
 - ❌ "We'll add the smoke test later" — later is never
-- ❌ Liveness depending on Postgres/Redis/Kafka — cascading restart loops turn outages into 4-hour pages
+- ❌ Liveness depending on Postgres/cache/Kafka — cascading restart loops turn outages into 4-hour pages
 - ❌ Returning 200 while a critical dependency is unreachable
-- ❌ Skipping readiness "because the service is simple" — every Brain service has at least one dep
+- ❌ Skipping readiness "because the service is simple" — nearly every service has at least one dep
 - ❌ Making `/health/deep` part of the LB or autoscaler decision
 
-## Brain wiring
+## Wiring
 
 | Concern | Owner | Reference |
 |---|---|---|
-| Fastify probes | **Vikram** | |
-| FastAPI probes | **Maya** | |
-| EKS probe config + composite alarm | **Jatin** | canon/technical-requirements.md (SLOs + auto-rollback) |
-| Probe failure → page-or-rollback tree | **Jatin** | canon/technical-requirements.md (incident playbook) |
-| Pre-ship readiness sign-off | **Vikram** → **Tanvi** | this skill |
+| HTTP-framework probes | **Backend Engineer** | |
+| FastAPI probes | **AI/ML Engineer** | |
+| Orchestrator probe config + composite alarm | **Platform/SRE** | Product Canon (SLOs + auto-rollback) |
+| Probe failure → page-or-rollback tree | **Platform/SRE** | Product Canon (incident playbook) |
+| Pre-ship readiness sign-off | **Backend Engineer** → **QA Engineer** | this skill |
 
 Related: `observability`, `devops-aws`, `testing-tdd`, `verification-before-completion`.

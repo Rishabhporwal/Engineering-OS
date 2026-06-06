@@ -1,6 +1,6 @@
 # Section 2.1 — Skill Mapping Matrix
 
-This document is the **authoritative skill-to-role binding** for the Brain Engineering OS. It maps every one of the **59 domain skills** in [`skills/`](../skills/). (The **29 command-skills** carrying `disable-model-invocation: true` — requirement, status, recall, handoff, approve, reject, deploy, rollback, persona, invoke-skill, eos-init, propose-rule, adopt-rule, reject-rule, plus recall-similar, reindex, qa-browser, design-review, worker-test-gap, worker-canon-drift, worker-compliance-drift, test-pipeline, resume, new-skill, team-digest, watch, monitor, dashboard — are human/schedule-triggered and not mapped here. 59 + 29 = 88 skill folders.) Each domain skill is mapped to:
+This document is the **authoritative skill-to-role binding** for the Engineering OS. It maps every **domain skill** in [`skills/`](../skills/). (The **command-skills** carrying `disable-model-invocation: true` — requirement, status, recall, handoff, approve, reject, deploy, rollback, persona, invoke-skill, eos-init, propose-rule, adopt-rule, reject-rule, plus recall-similar, reindex, qa-browser, design-review, worker-test-gap, worker-canon-drift, worker-compliance-drift, test-pipeline, resume, new-skill, team-digest, watch, monitor, dashboard, decide — are human/schedule-triggered and not mapped here.) Each domain skill is mapped to:
 
 - A **domain category** (one of 14).
 - One or more **primary role owners** (which agent must auto-load it).
@@ -16,122 +16,99 @@ This document is the **authoritative skill-to-role binding** for the Brain Engin
 | Domain | Description |
 |--------|------------|
 | **ARCH** | Architecture & system design |
-| **BE** | Backend (Node + Python services, APIs, OLTP) |
-| **FE-W** | Frontend (web — Next.js) |
-| **FE-M** | Frontend (mobile — RN + Expo) |
+| **BE** | Backend services, APIs, OLTP |
+| **FE-W** | Frontend (web) |
+| **FE-M** | Frontend (mobile) |
 | **DATA** | Data layer (OLTP, OLAP, schema, query optimization) |
-| **AI** | AI/LLM/agents (intelligence-service) |
+| **AI** | AI / LLM / agents |
 | **SEC** | Security & compliance |
 | **OBS** | Observability (logs, metrics, traces, errors, dashboards) |
 | **TEST** | Testing & verification |
-| **PERF** | Performance (web + SQL) |
+| **PERF** | Performance (web + data) |
 | **OPS** | DevOps / infra / deployment |
 | **INTG** | Integrations / connectors |
 | **DISC** | Engineering discipline / process |
-| **PROD** | Product / business domain knowledge |
+
+> A skill tagged to a vendor-specific domain (e.g. a Next.js or ClickHouse skill) is a **reference implementation** of a seam — the *patterns* transfer, the vendor does not. See `engineering-os-blueprint/09-reference-architecture.md`. The product's `STACK.md` declares which technology actually binds each seam.
 
 ## Role key
 
-| Code | Persona | Title |
-|------|---------|-------|
-| **CTOA** | Rohan | CTO Advisor |
-| **ARC** | Aryan | Architect |
-| **BE** | Vikram | Backend Developer |
-| **FEW** | Ananya | Frontend Web Developer |
-| **FEM** | Karan | Mobile Developer |
-| **AIE** | Maya | Intelligence Engineer |
-| **SEC** | Shreya | Security Reviewer |
-| **QA** | Tanvi | QA Agent |
-| **OPS** | Jatin | Platform / DevOps |
-| **PM** | Priya | Product Manager |
-| **DYN** | (runtime) | Dynamic Persona |
+| Code | Role | Agent file |
+|------|------|------------|
+| **CTOA** | Engineering Advisor | `cto-advisor` / `final-reviewer` |
+| **ARC** | Architect | `architect` |
+| **BE** | Backend Engineer | `backend-developer` |
+| **FEW** | Frontend/Web Engineer | `frontend-web-developer` |
+| **FEM** | Mobile Engineer | `mobile-developer` |
+| **AIE** | AI/ML Engineer | `intelligence-engineer` |
+| **SEC** | Security Reviewer | `security-reviewer` |
+| **QA** | QA Engineer | `qa-agent` |
+| **OPS** | Platform/SRE | `platform-devops` |
+| **PM** | Delivery Coordinator | `product-manager` |
+| **DYN** | Dynamic Persona (runtime) | `dynamic-persona-generator` |
 
 ---
 
-## The matrix (71 domain skills)
+## The matrix (domain skills)
 
 | # | Skill | Domain | Primary | Shared with | Exposed as command |
 |---|-------|--------|---------|-------------|---------------------|
 | 1 | [`agentic-safety`](../skills/agentic-safety/SKILL.md) | SEC + AI | SEC | AIE, ARC | yes |
-| 2 | [`agentic-design`](../skills/agentic-design/SKILL.md) | AI | AIE | ARC, CTOA | yes |
-| 3 | [`api-discipline`](../skills/api-discipline/SKILL.md) | TEST | QA | BE, AIE, ARC | yes |
-| 4 | [`api-discipline`](../skills/api-discipline/SKILL.md) (pagination + rate-limiting) | BE | BE | AIE, FEW, FEM, OPS, SEC | yes |
-| 5 | [`api-discipline`](../skills/api-discipline/SKILL.md) | ARCH | ARC | BE, AIE, CTOA | yes |
-| 6 | [`app-store-deployment`](../skills/app-store-deployment/SKILL.md) | OPS | OPS | FEM | yes |
-| 7 | [`architecture-patterns`](../skills/architecture-patterns/SKILL.md) | ARCH | ARC | CTOA, BE, AIE | yes |
-| 8 | [`auth-and-access`](../skills/auth-and-access/SKILL.md) (sessions + RBAC) | SEC | SEC | BE, FEW, FEM, AIE, ARC | yes |
-| 9 | [`backend-fastify-trpc-grpc`](../skills/backend-fastify-trpc-grpc/SKILL.md) | BE | BE | ARC | yes |
-| 10 | [`claude-api`](../skills/claude-api/SKILL.md) | AI | AIE | ARC, OPS (cost monitoring) | yes |
-| 11 | [`clickhouse-olap`](../skills/clickhouse-olap/SKILL.md) | DATA | AIE | BE, ARC | yes |
-| 12 | [`code-review`](../skills/code-review/SKILL.md) | DISC | CTOA | QA, ARC, all devs | yes |
+| 2 | [`api-discipline`](../skills/api-discipline/SKILL.md) (contracts, versioning, pagination, rate-limiting) | BE + ARCH + TEST | BE | AIE, FEW, FEM, OPS, SEC, QA, ARC, CTOA | yes |
+| 3 | [`app-store-deployment`](../skills/app-store-deployment/SKILL.md) | OPS | OPS | FEM | yes |
+| 4 | [`architecture-patterns`](../skills/architecture-patterns/SKILL.md) | ARCH | ARC | CTOA, BE, AIE | yes |
+| 5 | [`auth-and-access`](../skills/auth-and-access/SKILL.md) (sessions + RBAC) | SEC | SEC | BE, FEW, FEM, AIE, ARC | yes |
+| 6 | [`backend-fastify-trpc-grpc`](../skills/backend-fastify-trpc-grpc/SKILL.md) (reference impl) | BE | BE | ARC | yes |
+| 7 | [`caching-strategy`](../skills/caching-strategy/SKILL.md) | DATA + PERF | BE | AIE, OPS, SEC | yes |
+| 8 | [`claude-api`](../skills/claude-api/SKILL.md) | AI | AIE | ARC, OPS (cost monitoring) | yes |
+| 9 | [`clickhouse-olap`](../skills/clickhouse-olap/SKILL.md) (reference impl) | DATA | AIE | BE, ARC | yes |
+| 10 | [`code-review`](../skills/code-review/SKILL.md) | DISC | CTOA | QA, ARC, all devs | yes |
+| 11 | [`compliance-attestation`](../skills/compliance-attestation/SKILL.md) | SEC + DATA + DISC | SEC | BE, AIE, ARC, OPS, CTOA | yes |
+| 12 | [`compliance-engine`](../skills/compliance-engine/SKILL.md) | SEC | SEC | AIE, **ALL** | yes |
 | 13 | [`cost-routing-paradigms`](../skills/cost-routing-paradigms/SKILL.md) | DISC + AI | CTOA, AIE | all devs, QA, OPS | yes |
-| 14 | [`data-layer`](../skills/data-layer/SKILL.md) (incl. Supabase/Postgres patterns) | DATA | ARC | BE, AIE, SEC | yes |
-| 15 | [`security-baseline`](../skills/security-baseline/SKILL.md) (incl. XSS prevention) | SEC | SEC | BE, AIE, QA, FEW, FEM | yes |
-| 16 | [`devops-aws`](../skills/devops-aws/SKILL.md) | OPS | OPS | ARC | yes |
-| 17 | [`domain-driven-design`](../skills/domain-driven-design/SKILL.md) | ARCH | ARC | **ALL** builders | yes |
-| 18 | [`engineering-discipline`](../skills/engineering-discipline/SKILL.md) | DISC | CTOA | **ALL** roles | yes |
-| 19 | [`event-driven-kafka`](../skills/event-driven-kafka/SKILL.md) | DATA + BE | BE | AIE, ARC, OPS | yes |
-| 20 | [`finishing-a-development-branch`](../skills/finishing-a-development-branch/SKILL.md) | OPS + DISC | OPS | **ALL** (commit discipline) | yes |
-| 21 | [`forecasting-prophet`](../skills/forecasting-prophet/SKILL.md) | AI | AIE | — | yes |
-| 22 | [`mobile-surface`](../skills/mobile-surface/SKILL.md) | FE-M | FEM | ARC, QA | yes |
-| 23 | [`frontend-web`](../skills/frontend-web/SKILL.md) | FE-W | FEW | ARC, QA | yes |
-| 24 | [`grpc-buf`](../skills/grpc-buf/SKILL.md) | BE | BE | AIE, ARC | yes |
+| 14 | [`data-layer`](../skills/data-layer/SKILL.md) (reference impl; OLTP + query optimization) | DATA + PERF | ARC | BE, AIE, SEC | yes |
+| 15 | [`data-quality`](../skills/data-quality/SKILL.md) | DATA + AI | AIE | BE, QA | yes |
+| 16 | [`decision-log`](../skills/decision-log/SKILL.md) | AI + DATA | AIE | BE, ARC, SEC, **ALL** | yes |
+| 17 | [`devops-aws`](../skills/devops-aws/SKILL.md) (reference impl) | OPS | OPS | ARC | yes |
+| 18 | [`domain-driven-design`](../skills/domain-driven-design/SKILL.md) | ARCH | ARC | **ALL** builders | yes |
+| 19 | [`engineering-discipline`](../skills/engineering-discipline/SKILL.md) | DISC | CTOA | **ALL** roles | yes |
+| 20 | [`event-driven-kafka`](../skills/event-driven-kafka/SKILL.md) (reference impl) | DATA + BE | BE | AIE, ARC, OPS | yes |
+| 21 | [`experimentation-holdouts`](../skills/experimentation-holdouts/SKILL.md) | AI + TEST | AIE, PM | CTOA | yes |
+| 22 | [`finishing-a-development-branch`](../skills/finishing-a-development-branch/SKILL.md) | OPS + DISC | OPS | **ALL** (commit discipline) | yes |
+| 23 | [`frontend-web`](../skills/frontend-web/SKILL.md) (reference impl) | FE-W | FEW | ARC, QA | yes |
+| 24 | [`grpc-buf`](../skills/grpc-buf/SKILL.md) (reference impl) | BE | BE | AIE, ARC | yes |
 | 25 | [`idempotency-handling`](../skills/idempotency-handling/SKILL.md) | BE | BE | AIE, QA | yes |
-| 26 | [`india-commerce-economics`](../skills/india-commerce-economics/SKILL.md) | PROD | CTOA | **ALL** roles (the moat) | yes |
+| 26 | [`incident-response`](../skills/incident-response/SKILL.md) | OPS | OPS | CTOA, SEC | yes |
 | 27 | [`integration-connectors`](../skills/integration-connectors/SKILL.md) | INTG | AIE | BE, ARC | yes |
-| 28 | [`kpi-dashboard-design`](../skills/kpi-dashboard-design/SKILL.md) | FE-W + PROD | FEW | FEM, PM | yes |
-| 29 | [`lifecycle-revenue-layer`](../skills/lifecycle-revenue-layer/SKILL.md) | AI + PROD | AIE | BE, SEC | yes |
-| 30 | [`mcp-protocol`](../skills/mcp-protocol/SKILL.md) (incl. building an MCP server) | AI + ARCH | AIE | ARC, BE | yes |
-| 31 | [`mobile-surface`](../skills/mobile-surface/SKILL.md) | FE-M | FEM | — | yes |
-| 32 | [`morning-brief-mobile`](../skills/morning-brief-mobile/SKILL.md) | FE-M + AI + PROD | FEM | AIE, FEW, PM | yes |
-| 33 | [`oauth-implementation`](../skills/oauth-implementation/SKILL.md) | SEC + INTG | AIE | BE, SEC | yes |
-| 34 | [`observability`](../skills/observability/SKILL.md) (incl. structured logging) | OBS | OPS | **ALL** roles | yes |
-| 35 | [`operational-readiness`](../skills/operational-readiness/SKILL.md) (incl. health-check endpoints) | OPS + OBS | OPS, QA | all devs, CTOA, BE, AIE | yes |
-| 36 | [`mobile-surface`](../skills/mobile-surface/SKILL.md) | FE-M | FEM | BE (notifications-service) | yes |
-| 37 | [`python-services`](../skills/python-services/SKILL.md) | BE | AIE | BE (parity), ARC | yes |
-| 38 | [`security-baseline`](../skills/security-baseline/SKILL.md) | SEC | SEC | **ALL** roles | yes |
-| 39 | [`data-layer`](../skills/data-layer/SKILL.md) | PERF + DATA | BE, AIE | ARC | yes |
-| 40 | [`subagent-orchestration`](../skills/subagent-orchestration/SKILL.md) (fan-out + pipeline dispatch) | DISC | CTOA | ARC | yes |
-| 41 | [`systematic-debugging`](../skills/systematic-debugging/SKILL.md) (incl. root-cause tracing) | DISC | all devs, QA | CTOA, SEC | yes |
-| 42 | [`task-tracker-integration`](../skills/task-tracker-integration/SKILL.md) | DISC + OPS | PM | OPS, CTOA | yes |
-| 43 | [`tech-stack-evaluation`](../skills/tech-stack-evaluation/SKILL.md) | ARCH | ARC | CTOA | yes (rare) |
-| 44 | [`testing-tdd`](../skills/testing-tdd/SKILL.md) (incl. mutation testing) | TEST | QA | all devs, AIE | yes |
-| 45 | [`turborepo`](../skills/turborepo/SKILL.md) | OPS | OPS | BE, FEW, FEM | yes |
-| 46 | [`verification-before-completion`](../skills/verification-before-completion/SKILL.md) | DISC | **ALL** roles | — | yes |
-| 47 | [`security-baseline`](../skills/security-baseline/SKILL.md) | SEC | SEC | OPS | yes |
-| 48 | [`web-performance`](../skills/web-performance/SKILL.md) (audit + optimization) | PERF + FE-W | FEW | QA, OPS, ARC | yes |
-| 49 | [`writing-plans`](../skills/writing-plans/SKILL.md) | DISC | PM, ARC | **ALL** plan-emitting agents | yes |
-| 50 | [`caching-strategy`](../skills/caching-strategy/SKILL.md) | DATA + PERF | BE | AIE, OPS, SEC | yes |
-| 51 | [`metric-engine`](../skills/metric-engine/SKILL.md) | DATA + AI + PROD | AIE | BE, QA, FEW | yes |
-| 52 | [`region-and-locale`](../skills/region-and-locale/SKILL.md) | ARCH | ARC | CTOA, **ALL** builders | yes |
-| 53 | [`multi-tenancy-isolation`](../skills/multi-tenancy-isolation/SKILL.md) | SEC + DATA | SEC | ARC, BE, AIE, **ALL** | yes |
-| 54 | [`memory-layer-pgvector`](../skills/memory-layer-pgvector/SKILL.md) | AI + DATA | AIE | ARC | yes |
-| 55 | [`compliance-engine`](../skills/compliance-engine/SKILL.md) | SEC + PROD | SEC | AIE, **ALL** | yes |
-| 56 | [`decision-log`](../skills/decision-log/SKILL.md) | AI + DATA + PROD | AIE | BE, ARC, SEC, **ALL** | yes |
-| 57 | [`billing-metering`](../skills/billing-metering/SKILL.md) | BE + PROD | BE | AIE, ARC, OPS | yes |
+| 28 | [`kpi-dashboard-design`](../skills/kpi-dashboard-design/SKILL.md) | FE-W | FEW | FEM, PM | yes |
+| 29 | [`llm-evals`](../skills/llm-evals/SKILL.md) | AI + TEST | AIE, QA | ARC | yes |
+| 30 | [`llm-gateway`](../skills/llm-gateway/SKILL.md) (reference impl) | AI | AIE | ARC, CTOA, OPS | yes |
+| 31 | [`mcp-protocol`](../skills/mcp-protocol/SKILL.md) (incl. building an MCP server) | AI + ARCH | AIE | ARC, BE | yes |
+| 32 | [`metric-engine`](../skills/metric-engine/SKILL.md) (single-source metric registry, cross-runtime parity) | DATA + AI | AIE | BE, QA, FEW | yes |
+| 33 | [`mobile-surface`](../skills/mobile-surface/SKILL.md) (reference impl) | FE-M | FEM | ARC, QA, BE | yes |
+| 34 | [`multi-tenancy-isolation`](../skills/multi-tenancy-isolation/SKILL.md) | SEC + DATA | SEC | ARC, BE, AIE, **ALL** | yes |
+| 35 | [`oauth-implementation`](../skills/oauth-implementation/SKILL.md) (reference impl) | SEC + INTG | AIE | BE, SEC | yes |
+| 36 | [`observability`](../skills/observability/SKILL.md) (incl. structured logging) | OBS | OPS | **ALL** roles | yes |
+| 37 | [`operational-readiness`](../skills/operational-readiness/SKILL.md) (incl. health-check endpoints) | OPS + OBS | OPS, QA | all devs, CTOA, BE, AIE | yes |
+| 38 | [`progressive-delivery`](../skills/progressive-delivery/SKILL.md) | OPS | OPS | ARC | yes |
+| 39 | [`python-services`](../skills/python-services/SKILL.md) (reference impl) | BE | AIE | BE (parity), ARC | yes |
+| 40 | [`region-and-locale`](../skills/region-and-locale/SKILL.md) | ARCH + FE-W + FE-M + OPS | ARC | FEW, FEM, OPS, SEC, PM, CTOA, **ALL** builders | yes |
+| 41 | [`security-baseline`](../skills/security-baseline/SKILL.md) (incl. XSS prevention) | SEC | SEC | BE, AIE, QA, FEW, FEM, OPS, **ALL** roles | yes |
+| 42 | [`subagent-orchestration`](../skills/subagent-orchestration/SKILL.md) (fan-out + pipeline dispatch) | DISC | CTOA | ARC | yes |
+| 43 | [`systematic-debugging`](../skills/systematic-debugging/SKILL.md) (incl. root-cause tracing) | DISC | all devs, QA | CTOA, SEC | yes |
+| 44 | [`task-tracker-integration`](../skills/task-tracker-integration/SKILL.md) | DISC + OPS | PM | OPS, CTOA | yes |
+| 45 | [`tech-stack-evaluation`](../skills/tech-stack-evaluation/SKILL.md) | ARCH | ARC | CTOA | yes (rare) |
+| 46 | [`testing-tdd`](../skills/testing-tdd/SKILL.md) (incl. mutation testing) | TEST | QA | all devs, AIE | yes |
+| 47 | [`turborepo`](../skills/turborepo/SKILL.md) (reference impl) | OPS | OPS | BE, FEW, FEM | yes |
+| 48 | [`verification-before-completion`](../skills/verification-before-completion/SKILL.md) | DISC | **ALL** roles | — | yes |
+| 49 | [`version-upgrade-policy`](../skills/version-upgrade-policy/SKILL.md) | OPS + ARCH | OPS, ARC | BE | yes |
+| 50 | [`web-performance`](../skills/web-performance/SKILL.md) (audit + optimization) | PERF + FE-W | FEW | QA, OPS, ARC | yes |
+| 51 | [`writing-plans`](../skills/writing-plans/SKILL.md) | DISC | PM, ARC | **ALL** plan-emitting agents | yes |
+| 52 | [`accessibility`](../skills/accessibility/SKILL.md) | FE-W + FE-M | FEW, FEM | QA | yes |
 
-### New group — operational / compliance / AI-quality skills (rows 58–70)
+> `decision-log` covers the system-of-record audit log where the product's Canon requires one (condition → recommendation → approval/edit → execution → reversal → outcome). `metric-engine` covers the single-source metric registry (`METRICS.md`) with cross-runtime parity. Vendor-named skills (`backend-fastify-trpc-grpc`, `clickhouse-olap`, `data-layer`, `devops-aws`, `event-driven-kafka`, `frontend-web`, `grpc-buf`, `llm-gateway`, `mobile-surface`, `oauth-implementation`, `python-services`, `turborepo`) are **reference implementations** of a seam — the patterns transfer; the product's `STACK.md` may bind the seam to different technology.
 
-| # | Skill | Domain | Primary | Shared with | Exposed as command |
-|---|-------|--------|---------|-------------|---------------------|
-| 58 | [`version-upgrade-policy`](../skills/version-upgrade-policy/SKILL.md) | OPS + ARCH | OPS, ARC | BE | yes |
-| 59 | [`llm-evals`](../skills/llm-evals/SKILL.md) | AI + TEST | AIE, QA | ARC | yes |
-| 60 | [`incident-response`](../skills/incident-response/SKILL.md) | OPS | OPS | CTOA, SEC | yes |
-| 61 | [`experimentation-holdouts`](../skills/experimentation-holdouts/SKILL.md) | AI + PROD | AIE, PM | CTOA | yes |
-| 62 | [`agentic-safety`](../skills/agentic-safety/SKILL.md) | SEC + AI | SEC, AIE | ARC | yes |
-| 63 | [`data-quality`](../skills/data-quality/SKILL.md) | DATA + AI | AIE | BE, QA | yes |
-| 64 | [`progressive-delivery`](../skills/progressive-delivery/SKILL.md) | OPS | OPS | ARC | yes |
-| 65 | [`accessibility`](../skills/accessibility/SKILL.md) | FE-W + FE-M | FEW, FEM | QA | yes |
-| 66 | [`region-and-locale`](../skills/region-and-locale/SKILL.md) | FE-W + FE-M | FEW, FEM | ARC, PM | yes |
-| 67 | [`compliance-attestation`](../skills/compliance-attestation/SKILL.md) | SEC | SEC | BE, ARC | yes |
-| 68 | [`compliance-attestation`](../skills/compliance-attestation/SKILL.md) | SEC + DATA | SEC, BE | AIE, ARC | yes |
-| 69 | [`region-and-locale`](../skills/region-and-locale/SKILL.md) | SEC + OPS | OPS, SEC | ARC | yes |
-| 70 | [`compliance-attestation`](../skills/compliance-attestation/SKILL.md) | SEC + DISC | SEC | OPS, CTOA | yes |
-| 71 | [`llm-gateway`](../skills/llm-gateway/SKILL.md) | AI | AIE | ARC, CTOA, OPS | yes |
-
-> **New (being added in parallel):** rows 56–57. `decision-log` covers the moat — the append-only `ai.decision_log` (condition → recommendation → approval/edit → execution → reversal → 7d/30d outcome; no Brain action exists unless it is logged). `billing-metering` covers realized-GMV %-pricing — `billing.gmv_meter` (placed/realized/billable GMV), billing on the **realized/delivered** number only (never placed GMV), tier rates, and the CM2 affordability guardrail.
-
-> v1.0.0 clean-room rebuild: 99 skills → 88 (59 domain + 29 command). Merge groups folded the API trio → api-discipline, the region trio → region-and-locale, the mobile trio → mobile-surface, db+sql → data-layer, the security/compliance clusters → security-baseline/agentic-safety/compliance-engine/compliance-attestation. The skill list below is generated from `skills/` — keep it in sync (CI: knowledge_lint.py).
+> The skill list above is generated from `skills/` — keep it in sync (CI: `knowledge_lint.py`). When a skill folder is added or removed from `skills/`, update this matrix.
 
 ---
 
@@ -139,149 +116,138 @@ This document is the **authoritative skill-to-role binding** for the Brain Engin
 
 > Each agent's prompt embeds this exact list as its "auto-loaded skills." This is the source of truth — when you edit the matrix above, regenerate this section.
 
-### CTO Advisor (`cto-advisor`)
+### Engineering Advisor (`cto-advisor` / `final-reviewer`)
 - `engineering-discipline` (universal meta-rules)
 - `code-review` (final review gate)
-- `cost-routing-paradigms` (final cost-routing audit)
-- `india-commerce-economics` (the moat — challenges any requirement that misses it)
+- `cost-routing-paradigms` (final effort-tier audit)
 - `architecture-patterns` (architectural review)
 - `tech-stack-evaluation` (rare; only when a new layer is proposed)
 - `task-tracker-integration` (cross-team coordination)
-- `agentic-design` (when reviewing AI surfaces)
 - `subagent-orchestration` (persona-count + fan-out + stage-pipeline dispatch)
 - `verification-before-completion` (always)
 
 ### Dynamic Persona Generator (`dynamic-persona-generator`)
 *No fixed skills — selects 0–2 personas at runtime based on the requirement's complexity. May invoke any of the domain skills indirectly via the spawned persona.*
 
-### Architect — Aryan (`architect`)
+### Architect (`architect`)
 - `architecture-patterns` (primary)
-- `region-and-locale` (multi-region from day one)
+- `region-and-locale` (multi-region/locale from day one)
 - `domain-driven-design` (mandatory — every backend service is bounded-context structured)
 - `tech-stack-evaluation` (rare)
 - `data-layer`
 - `api-discipline`
 - `engineering-discipline`
-- `agentic-design` (when designing AI surfaces)
 - `mcp-protocol` (external surfaces + building an MCP server)
 - `subagent-orchestration` (splitting Stage 3 across builders + stage handoff)
-- `cost-routing-paradigms` (paradigm decision at design time)
-- `india-commerce-economics`
+- `cost-routing-paradigms` (effort-tier decision at design time)
 - `writing-plans`
 - `verification-before-completion`
 
-### Backend Developer — Vikram (`backend-developer`)
-- `backend-fastify-trpc-grpc` (primary)
-- `domain-driven-design` (every service he builds is DDD-structured)
+### Backend Engineer (`backend-developer`)
+- `backend-fastify-trpc-grpc` (primary — reference impl of the backend seam)
+- `domain-driven-design` (every service is DDD-structured)
 - `grpc-buf`
-- `data-layer` (shared with ARC; incl. Supabase/Postgres patterns)
+- `data-layer` (shared with ARC)
 - `event-driven-kafka`
 - `api-discipline` (pagination + rate-limiting)
 - `idempotency-handling`
-- `caching-strategy` (ElastiCache/Redis)
-- `billing-metering` (realized-GMV %-pricing; `billing.*` schemas)
+- `caching-strategy`
 - `oauth-implementation` (shared with AIE)
-- `data-layer` (shared with AIE)
 - `operational-readiness` (incl. health-check endpoints; shared with OPS)
 - `security-baseline` (shared with SEC)
 - `engineering-discipline`
-- `india-commerce-economics`
 - `cost-routing-paradigms`
 - `systematic-debugging` (incl. root-cause tracing)
 - `verification-before-completion`
 
-### Frontend Web Developer — Ananya (`frontend-web-developer`)
-- `frontend-web` (primary)
+### Frontend/Web Engineer (`frontend-web-developer`)
+- `frontend-web` (primary — reference impl of the web seam)
 - `kpi-dashboard-design`
 - `web-performance` (audit + optimization)
+- `accessibility`
 - `security-baseline` (incl. XSS prevention; shared with SEC)
 - `auth-and-access` (sessions + RBAC; shared with SEC)
 - `api-discipline` (consumer side)
+- `region-and-locale` (locale-aware rendering)
 - `engineering-discipline`
-- `india-commerce-economics`
 - `cost-routing-paradigms`
 - `systematic-debugging`
 - `verification-before-completion`
 
-### Mobile Developer — Karan (`mobile-developer`)
-- `mobile-surface` (primary)
-- `morning-brief-mobile` (primary — this is *the* product surface)
-- `mobile-surface`
-- `mobile-surface`
+### Mobile Engineer (`mobile-developer`)
+- `mobile-surface` (primary — reference impl of the mobile seam)
 - `app-store-deployment` (shared with OPS)
-- `security-baseline` (incl. XSS, RN context; shared with SEC)
+- `accessibility`
+- `security-baseline` (incl. mobile context; shared with SEC)
 - `auth-and-access` (sessions + RBAC, mobile context; shared with SEC)
 - `engineering-discipline`
-- `india-commerce-economics`
 - `cost-routing-paradigms`
-- `kpi-dashboard-design` (Morning Brief design)
+- `kpi-dashboard-design`
 - `systematic-debugging`
 - `verification-before-completion`
 
-### Intelligence Engineer — Maya (`intelligence-engineer`)
-- `agentic-design` (primary)
+### AI/ML Engineer (`intelligence-engineer`)
 - `claude-api` (primary)
-- `python-services` (primary — intelligence-service is Python)
-- `domain-driven-design` (her Python services are DDD-structured too)
+- `python-services` (primary — reference impl of the data/ML service seam)
+- `llm-gateway`
+- `llm-evals`
+- `domain-driven-design`
 - `mcp-protocol` (incl. building a new MCP server / tool surface)
 - `clickhouse-olap`
-- `metric-engine` (Formula Book + TS↔Python parity)
-- `memory-layer-pgvector` (Brand Fingerprint)
-- `decision-log` (the moat — every agent recommendation/action writes `ai.decision_log`)
-- `forecasting-prophet`
-- `lifecycle-revenue-layer` (when the agent affects revenue)
-- `integration-connectors` (ingestion-service is Python; Maya owns Python connectors)
+- `metric-engine` (single-source metric registry + cross-runtime parity)
+- `decision-log` (the system-of-record audit log — every recommendation/action is logged where the Canon requires it)
+- `data-quality`
+- `experimentation-holdouts`
+- `integration-connectors`
 - `oauth-implementation` (shared with BE)
 - `data-layer` (shared with BE)
-- `cost-routing-paradigms` (this is **her primary discipline**)
+- `cost-routing-paradigms` (this is **the primary discipline** of this role)
 - `engineering-discipline`
-- `india-commerce-economics`
 - `systematic-debugging`
 - `verification-before-completion`
 
-### Security Reviewer — Shreya (`security-reviewer`)
-- `security-baseline` (primary — Shreya VETO authority)
+### Security Reviewer (`security-reviewer`)
+- `security-baseline` (primary — VETO authority)
 - `auth-and-access` (sessions + RBAC)
-- `security-baseline` (incl. XSS prevention)
-- `security-baseline`
 - `agentic-safety` (audit agent-emitted actions before ship)
 - `oauth-implementation` (security review side)
-- `india-commerce-economics` (DLT/NCPR/DND compliance is hers)
-- `multi-tenancy-isolation` (the 4-layer workspace_id contract — top VETO surface)
-- `compliance-engine` (India DPDP Act + PII lifecycle)
+- `multi-tenancy-isolation` (the tenant-isolation contract enforced at every layer — top VETO surface)
+- `compliance-engine` (the product's compliance regime + PII lifecycle)
+- `compliance-attestation`
 - `engineering-discipline`
 - `code-review` (security pass)
 - `verification-before-completion`
 
-### QA Agent — Tanvi (`qa-agent`)
+### QA Engineer (`qa-agent`)
 - `testing-tdd` (primary; incl. mutation testing)
 - `api-discipline`
 - `operational-readiness` (PASS verdict gate; incl. health checks)
-- `verification-before-completion` (her core discipline)
+- `verification-before-completion` (the core discipline of this role)
 - `code-review`
 - `engineering-discipline`
-- `india-commerce-economics`
 - `systematic-debugging` (incl. root-cause tracing)
 
-### Platform / DevOps — Jatin (`platform-devops`)
-- `devops-aws` (primary)
+### Platform/SRE (`platform-devops`)
+- `devops-aws` (primary — reference impl of the infra seam)
 - `observability` (primary; incl. structured logging)
 - `turborepo`
+- `progressive-delivery`
+- `incident-response`
 - `api-discipline` (gateway-level rate-limiting)
 - `app-store-deployment` (shared with FEM)
 - `security-baseline` (CI gates)
 - `operational-readiness`
+- `version-upgrade-policy`
 - `finishing-a-development-branch` (Stage 8 commit/push discipline)
 - `engineering-discipline`
 - `verification-before-completion`
 
-### Product Manager — Priya (`product-manager`)
+### Delivery Coordinator (`product-manager`)
 - `task-tracker-integration` (primary)
+- `writing-plans`
 - `engineering-discipline`
-- `india-commerce-economics`
-- `kpi-dashboard-design` (PM perspective)
-- `morning-brief-mobile` (PM perspective on the product surface)
-- `lifecycle-revenue-layer` (PM perspective)
+- `kpi-dashboard-design` (coordination perspective)
+- `experimentation-holdouts` (coordination perspective)
 
 ---
 
@@ -289,41 +255,39 @@ This document is the **authoritative skill-to-role binding** for the Brain Engin
 
 Some skills are so foundational that **every role auto-loads them**. These are loaded once at the start of every task by every agent:
 
-1. `engineering-discipline` — the 7 universal meta-rules.
-2. `india-commerce-economics` — the moat; even non-India work needs context.
-3. `verification-before-completion` — Iron Law #5.
-4. `cost-routing-paradigms` — for any role that touches code, this is mandatory.
-5. `observability` — every code path emits metrics/logs/traces.
-6. `security-baseline` — security gate applies to everyone.
+1. `engineering-discipline` — the universal meta-rules.
+2. `verification-before-completion` — the "valid verification" iron law.
+3. `cost-routing-paradigms` — for any role that touches code, this is mandatory.
+4. `observability` — every code path emits metrics/logs/traces.
+5. `security-baseline` — the security gate applies to everyone.
 
-> Loading discipline: at session start, the agent reads these 6 first, then its role-specific list, then any skills implied by the requirement (looked up via the domain key + free-text matching against skill descriptions).
+> Loading discipline: at session start, the agent reads these first, then its role-specific list, then any skills implied by the requirement (looked up via the domain key + free-text matching against skill descriptions).
 
 ---
 
 ## Recommended additional skills (not yet implemented)
 
-Four candidate skills are flagged but not implemented in this build:
+Candidate skills flagged but not implemented in this build:
 
 | Suggested skill | Primary | Why |
 |-----------------|---------|-----|
-| `requirement-intake` | CTOA, PM | Standard for converting a Founder ask into a structured requirement. |
+| `requirement-intake` | CTOA, PM | Standard for converting a Stakeholder ask into a structured requirement. |
 | `dynamic-persona-spawning` | DYN | Discipline for choosing the 0–2 personas to spawn and how to weight inputs. |
 | `production-readiness-checklist` | CTOA, OPS | Composed Stage 6 gate aggregating `operational-readiness` (incl. health checks) + `observability` + `security-baseline`. |
 | `release-notes-and-changelog` | OPS, PM | Human-readable release notes derived from per-run journals at Stage 8. |
 
-Founder may approve creating these in V2.
+The Stakeholder may approve creating these later.
 
 ---
 
 ## Notes on ambiguous mappings
 
-A few mappings deserve explicit explanation:
+A few mappings deserve explicit explanation (the exact ownership depends on the product's `STACK.md` — the notes below describe the reference instantiation):
 
-- **`integration-connectors`** is **AIE-owned**, not BE-owned, because `ingestion-service` is Python (per `technical-requirements.md` §4) and Maya owns the Python service. Vikram (BE) consumes the canonicalized output via Kafka but doesn't author the connector itself. Vikram is in *shared with* so he can debug downstream issues.
-- **`clickhouse-olap`** is primarily **AIE** because `analytics-service` is Python. Vikram still pairs on schema decisions during architecture phase (shared with).
-- **`oauth-implementation`** is primarily **AIE** (Phase 0–1 connectors live in `ingestion-service`, Python). **SEC** reviews the implementation; **BE** is shared when Node-side OAuth flows are needed (rare in current scope).
-- **`india-commerce-economics`** appears as *shared with **ALL** roles* deliberately. Even a frontend chart needs to render ₹ with Indian numbering, RAG indicators for festival multipliers, and RTO-adjusted CM. Even a CI test needs to assert IST timezone discipline. It is not optional for anyone working on Brain.
-- **`engineering-discipline`** and **`verification-before-completion`** are similarly **universal**. They are baked into the system prompt itself (see [prompts/system-prompt.md](../prompts/system-prompt.md)).
+- **`integration-connectors`** is **AIE-owned** when the connector/ingestion layer is implemented in the AI/ML Engineer's runtime; the Backend Engineer consumes the canonicalized output and is in *shared with* so they can debug downstream issues.
+- **`clickhouse-olap`** (a reference impl of the OLAP seam) is primarily **AIE** when the analytics layer lives in that role's runtime. The Backend Engineer still pairs on schema decisions during the architecture phase (shared with).
+- **`oauth-implementation`** is primarily **AIE** when the connectors live in that runtime; **SEC** reviews the implementation; **BE** is shared when backend-side OAuth flows are needed.
+- **`engineering-discipline`** and **`verification-before-completion`** are **universal**. They are baked into the system prompt itself (see [prompts/system-prompt.md](../prompts/system-prompt.md)).
 
 ---
 
@@ -331,11 +295,11 @@ A few mappings deserve explicit explanation:
 
 1. **Static (build time):** Each agent prompt in [`agents/`](../agents/) embeds its owned-skill list from the table above.
 2. **Dynamic (runtime):**
-   - When a requirement is intaken (Stage 1), the CTO Advisor uses the **Domain key** to identify which roles must be involved.
+   - When a requirement is intaken (Stage 1), the Engineering Advisor uses the **Domain key** to identify which roles must be involved.
    - When a developer agent picks up a task, it auto-loads its owned skills + any skills whose **description** matches keywords in the requirement.
    - The **Shared with** column tells an agent when to request peer review even if no failing gate triggers.
 
-Update this matrix whenever a domain skill is added to or removed from `skills/`. (A CI check that fails when a skill folder isn't mapped here is planned for V2 — see ROADMAP.)
+Update this matrix whenever a domain skill is added to or removed from `skills/`. (A CI check that fails when a skill folder isn't mapped here is planned — see ROADMAP.)
 
 ---
 

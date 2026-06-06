@@ -1,6 +1,6 @@
 # Retro — {{REQ_ID}}
 
-> Filled by CTO Advisor at the close of Stage 6 (final review). Append-only — never edited after write.
+> Filled by the Engineering Advisor at the close of Stage 6 (final review). Append-only — never edited after write.
 > Validates against [schemas/retro.schema.json](../schemas/retro.schema.json).
 > Feeds the lessons-learned registry at `.engineering-os/lessons-learned.md`.
 
@@ -9,7 +9,7 @@
 | **req_id** | `{{REQ_ID}}` |
 | **Parent req_id** | `{{PARENT_REQ_ID}}` *(or "—" if standalone)* |
 | **Shipped at** | {{SHIPPED_AT}} |
-| **Author** | cto-advisor *(typically Rohan, on Founder's behalf under delegation)* |
+| **Author** | cto-advisor *(the Engineering Advisor, on the Stakeholder's behalf under delegation)* |
 
 ---
 
@@ -50,7 +50,7 @@
 | 1 | {{LESSON_1}} | {{APPLIES_TO_1}} | {{EVIDENCE_1}} |
 | 2 | {{LESSON_2}} | {{APPLIES_TO_2}} | {{EVIDENCE_2}} |
 
-**Applies-to tags** (pick all that apply): `process`, `code`, `security`, `india-compliance`, `numeric-parity`, `cost-routing`, `single-primitive`, `migration`, `agent-discipline`, `pipeline-mechanics`, `infra`.
+**Applies-to tags** (pick all that apply): `process`, `code`, `security`, `compliance`, `numeric-parity`, `cost-routing`, `single-primitive`, `migration`, `agent-discipline`, `pipeline-mechanics`, `infra`.
 
 ---
 
@@ -63,14 +63,14 @@
 
 ---
 
-## Cost + paradigm reality vs plan
+## Cost + effort-tier reality vs plan
 
 | Metric | Planned | Actual | Variance |
 |---|---|---|---|
 | Monthly $ cost | {{PLAN_COST}} | {{ACTUAL_COST}} | {{COST_VARIANCE}} |
 | LLM tokens / day | {{PLAN_TOKENS}} | {{ACTUAL_TOKENS}} | {{TOKEN_VARIANCE}} |
 | Wall-clock duration | {{PLAN_DURATION}} | {{ACTUAL_DURATION}} | {{DURATION_VARIANCE}} |
-| Paradigm declared | {{PLAN_PARADIGM}} | {{ACTUAL_PARADIGM}} | {{PARADIGM_MATCH}} |
+| Effort tier declared | {{PLAN_PARADIGM}} | {{ACTUAL_PARADIGM}} | {{PARADIGM_MATCH}} |
 | Persona count | {{PLAN_PERSONAS}} | {{ACTUAL_PERSONAS}} | {{PERSONA_MATCH}} |
 
 **Calibration note for next time:** {{CALIBRATION_NOTE}}

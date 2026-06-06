@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Engineering OS — post-tool-use hook
 # Best-effort journal-append. Reads the tool input from stdin (JSON) and, if
-# the call looks "meaningful" (Edit / Write / Bash with side effect on Brain
+# the call looks "meaningful" (Edit / Write / Bash with side effect on product
 # files), appends a one-liner to the appropriate agent journal.
 #
 # This is a safety net for forgetful agents. Agents are still expected to
@@ -63,7 +63,7 @@ if [ -z "$AGENT" ]; then
 fi
 # v0.9.1: when the agent name can't be resolved, do NOT write. The unattributed
 # safety-net append produced ~1,439 noise entries (unknown/auto.journal.md) in
-# the Brain repo and polluted semantic recall. Agents author their own
+# a prior adoption and polluted semantic recall. Agents author their own
 # structured journals by design; this net re-enables itself automatically once
 # Claude Code provides the agent name (CLAUDE_AGENT_NAME / subagent_type).
 case "$AGENT" in
@@ -72,9 +72,9 @@ esac
 
 # IMPORTANT: this is a safety-net file. Real agents author their own structured
 # journal entries in their named file (architect.journal.md, etc.). The file
-# produced here is gitignored per .gitignore in the consuming Brain repo
-# (see Brain repo's commit ba8b7f41). If AGENT resolves to "auto" repeatedly,
-# investigate Claude Code's subagent env-var convention for the current version.
+# produced here is gitignored per .gitignore in the consuming product repo.
+# If AGENT resolves to "auto" repeatedly, investigate Claude Code's subagent
+# env-var convention for the current version.
 JOURNAL_FILE="$EOS_DIR/memory/agents/${AGENT}.journal.md"
 [ -d "$EOS_DIR/memory/agents" ] || mkdir -p "$EOS_DIR/memory/agents"
 

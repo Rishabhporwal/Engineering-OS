@@ -1,14 +1,14 @@
-# Background Workers (Point C)
+# Background Workers
 
-> ruflo runs ~12 auto-triggered workers that proactively hunt problems. Your pipeline is **reactive** — gates only fire when a requirement flows through. These three workers close that gap: they scan the Brain product repo **between** requirements, out-of-band, on a schedule, on Haiku — so they cost little and never slow the critical path.
+> The pipeline is **reactive** — gates only fire when a requirement flows through. These three workers close that gap: they scan the consuming product repo **between** requirements, out-of-band, on a schedule, on a small model — so they cost little and never slow the critical path.
 
-We build **3**, not 12 — each mapped to an existing VETO owner. Adding more is easy later, but discipline beats count.
+We build **3** — each mapped to an existing VETO owner. Adding more is easy later, but discipline beats count.
 
 | Worker | Skill | Maps to | Cadence (suggested) |
 |---|---|---|---|
-| Test-gap | `/worker-test-gap` | Tanvi (QA) | daily |
-| Canon-drift | `/worker-canon-drift` | Architect / CTO Advisor | every 2–3 days |
-| Compliance-drift | `/worker-compliance-drift` | Shreya (Security) — **P0** | twice daily |
+| Test-gap | `/worker-test-gap` | QA Engineer | daily |
+| Canon-drift | `/worker-canon-drift` | Architect / Engineering Advisor | every 2–3 days |
+| Compliance-drift | `/worker-compliance-drift` | Security Reviewer — **P0** | twice daily |
 
 ---
 
@@ -16,7 +16,7 @@ We build **3**, not 12 — each mapped to an existing VETO owner. Adding more is
 
 1. **Read-only on product code.** Workers write *findings*, never edit the repo.
 2. **Out-of-band.** They never touch `state/active.json` or advance a requirement. They raise findings for humans + the relevant VETO owner.
-3. **Cheap.** Bounded scans with a deterministic git/grep pre-filter + a Haiku judgment pass. Schedule them on Haiku.
+3. **Cheap.** Bounded scans with a deterministic git/grep pre-filter + a small-model judgment pass. Schedule them on the cheapest sufficient model tier.
 4. **Conservative.** Only flag clear issues with file:line evidence. Noise erodes trust; a "maybe" is not a finding.
 5. **De-duped.** An identical open finding is not repeated.
 
@@ -36,13 +36,13 @@ Workers append to `.engineering-os/findings/<worker>.md` (committed — part of 
 **Status:** open
 ```
 
-Severe findings also append a line to `.engineering-os/pending-founder-attention.md` and may suggest a remediation `/requirement`. A compliance gap is at least HIGH; a production DND/NCPR risk is P0 and surfaced loudly.
+Severe findings also append a line to `.engineering-os/pending-stakeholder-attention.md` and may suggest a remediation `/requirement`. A compliance gap (against whatever regime `COMPLIANCE.md` declares) is at least HIGH; a production regulatory risk is P0 and surfaced loudly.
 
 ---
 
 ## Scheduling
 
-Use the `/schedule` skill (Claude Code routines / cron) to run each worker, ideally on Haiku:
+Use the `/schedule` skill (Claude Code routines / cron) to run each worker, ideally on the cheapest sufficient model:
 
 ```
 /schedule create worker-test-gap        --cron "0 6 * * *"   --model haiku
@@ -58,12 +58,12 @@ Use the `/schedule` skill (Claude Code routines / cron) to run each worker, idea
 
 Each worker maps to a place the pipeline already has a VETO:
 
-- **Test-gap → Tanvi.** Her G5 gate already blocks on missing tests *during* a requirement; this finds gaps that accumulated *outside* one (e.g., a hot-fix that skipped tests, a coverage regression from a refactor).
-- **Canon-drift → Architect/CTOA.** Stage 2 + Stage 6 enforce canon *per requirement*; this catches slow architectural erosion across many requirements.
-- **Compliance-drift → Shreya.** Her G4 gate is P0 per requirement; this re-verifies the *whole live surface* regularly, because a compliance regression anywhere is a regulatory incident.
+- **Test-gap → QA Engineer.** The QA gate already blocks on missing tests *during* a requirement; this finds gaps that accumulated *outside* one (e.g., a hot-fix that skipped tests, a coverage regression from a refactor).
+- **Canon-drift → Architect / Engineering Advisor.** The architecture and final-review stages enforce the Canon *per requirement*; this catches slow architectural erosion across many requirements.
+- **Compliance-drift → Security Reviewer.** The security gate is P0 per requirement; this re-verifies the *whole live surface* regularly, because a regression against the product's compliance regime anywhere is a regulatory incident.
 
 ---
 
 ## Verification boundary
 
-These workers operate on the **consuming Brain product repo's source**, not on this plugin repo. They can only be exercised against real Brain code. Before relying on them: run each once manually in a Brain repo, confirm the pre-filter returns sensible candidates, and tune the cadence + the grep patterns to the actual directory layout.
+These workers operate on the **consuming product repo's source**, not on this plugin repo. They can only be exercised against real product code. Before relying on them: run each once manually in a product repo, confirm the pre-filter returns sensible candidates, and tune the cadence + the grep patterns to the actual directory layout.

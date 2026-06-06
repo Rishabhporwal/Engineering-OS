@@ -1,16 +1,16 @@
 # Durable Rule — {{RULE_ID}}
 
-> An ADOPTED operating rule for the team. Lives at `.engineering-os/durable-rules/<ISO-adopted-ts>__<slug>.md` in the Brain product repo.
-> Read by every agent at session start (CTOA step 3b in `agents/cto-advisor.md`; other agents via system prompt instruction).
+> An ADOPTED operating rule for the team. Lives at `.engineering-os/durable-rules/<ISO-adopted-ts>__<slug>.md` in the consuming product repo.
+> Read by every agent at session start (Engineering Advisor step 3b in `agents/cto-advisor.md`; other agents via system prompt instruction).
 > Mutation rule: append-only by date — a new rule can supersede an old one, but old rules are NEVER edited or deleted. Audit trail is permanent.
 
 | Field | Value |
 |---|---|
 | **rule_id** | `{{RULE_ID}}` *(kebab-case slug)* |
 | **adopted_at** | {{ADOPTED_AT}} |
-| **adopted_by** | rishabh *(Founder)* |
+| **adopted_by** | {{ADOPTED_BY}} *(the Stakeholder)* |
 | **sourced_from_proposal** | {{PROPOSAL_PATH}} *(path to the rule-proposal that became this rule)* |
-| **scope** | {{SCOPE}} *(e.g., "all-agents", "stage-3-developer", "stage-7-founder-gate")* |
+| **scope** | {{SCOPE}} *(e.g., "all-agents", "stage-3-developer", "stage-7-stakeholder-gate")* |
 | **status** | active *(transitions to "superseded-by-<rule-id>" if a later rule replaces this one)* |
 
 ---
@@ -54,8 +54,8 @@
 
 | Check | When |
 |---|---|
-| Has this rule fired (bounced something) in the last N children? | Reviewed at every CTOA Stage 1 dependency check |
+| Has this rule fired (bounced something) in the last N children? | Reviewed at every Engineering Advisor Stage 1 dependency check |
 | Has the rule become redundant with a newer rule or with codified workflow? | Surfaced if same lesson appears in N consecutive retros |
-| Has the rule's evidence (Brain stack / canon / regulatory regime) materially changed? | Surfaced when an agent or the Founder reviews durable-rules against the current canon; file a `/brain-engineering-os:propose-rule` supersession if it has |
+| Has the rule's evidence (the product's stack / Canon / compliance regime) materially changed? | Surfaced when an agent or the Stakeholder reviews durable-rules against the current Canon; file a `/engineering-os:propose-rule` supersession if it has |
 
 Rules that fail decay checks should be PROPOSED for supersession via the rule-proposal mechanism, not silently ignored.

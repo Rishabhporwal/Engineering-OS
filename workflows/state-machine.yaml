@@ -1,4 +1,4 @@
-# Brain Engineering OS — status state machine.
+# Engineering OS — status state machine.
 # Defines every status a requirement can have and the legal transitions.
 # Mirrored in docs/operating-system.md §Status Lifecycle.
 
@@ -7,20 +7,20 @@ schema_version: 1
 
 states:
   intake:
-    description: Founder submitted; not yet picked up.
+    description: Stakeholder submitted; not yet picked up.
     transitions_to: [cto-review, killed]
 
   cto-review:
-    description: CTOA + 0-2 personas active (by complexity).
+    description: Engineering Advisor + 0-2 personas active (by complexity).
     transitions_to: [architect, dev-parallel, challenged-back, killed]  # dev-parallel = EXPRESS lane (skips Architect)
 
   challenged-back:
-    description: CTOA pushed back to Founder.
+    description: The Engineering Advisor pushed back to the Stakeholder.
     transitions_to: [cto-review, killed]
 
   architect:
-    description: Aryan designing.
-    transitions_to: [dev-parallel, cto-review]  # back to CTOA if requirement unworkable
+    description: The Architect is designing.
+    transitions_to: [dev-parallel, cto-review]  # back to the Engineering Advisor if requirement unworkable
 
   dev-parallel:
     description: Builders active.
@@ -31,52 +31,52 @@ states:
     transitions_to: [dev-parallel, architect, cto-review]
 
   parallel-review:
-    description: STANDARD/HIGH-STAKES lane — Shreya (Security, Stage 4) ∥ Tanvi (QA, Stage 5) reviewing CONCURRENTLY; the top-level orchestrator spawns both in one message and reconciles the two verdicts (both PASS → final-review; either fails → the matching *-bounced).
+    description: STANDARD/HIGH-STAKES lane — Security Reviewer (Stage 4) ∥ QA Engineer (Stage 5) reviewing CONCURRENTLY; the top-level orchestrator spawns both in one message and reconciles the two verdicts (both PASS → final-review; either fails → the matching *-bounced).
     transitions_to: [final-review, security-bounced, qa-bounced]
 
   security-review:
-    description: Shreya reviewing (sequential path / express edge cases; standard & high-stakes use parallel-review).
+    description: Security Reviewer reviewing (sequential path / express edge cases; standard & high-stakes use parallel-review).
     transitions_to: [qa-review, parallel-review, security-bounced]
 
   security-bounced:
-    description: Shreya found CRITICAL/HIGH or compliance gap; back to dev.
+    description: Security Reviewer found CRITICAL/HIGH or compliance gap; back to dev.
     transitions_to: [dev-parallel]
 
   qa-review:
-    description: Tanvi running tests + verification.
-    transitions_to: [final-review, awaiting-founder, qa-bounced]  # awaiting-founder = EXPRESS lane (skips Final-review)
+    description: QA Engineer running tests + verification.
+    transitions_to: [final-review, awaiting-stakeholder, qa-bounced]  # awaiting-stakeholder = EXPRESS lane (skips Final-review)
 
   qa-bounced:
     description: Coverage gap, smoke failed, parity broken; back to dev.
     transitions_to: [dev-parallel]
 
   final-review:
-    description: CTOA final pass.
-    transitions_to: [awaiting-founder, final-bounced]
+    description: Engineering Advisor final pass.
+    transitions_to: [awaiting-stakeholder, final-bounced]
 
   final-bounced:
-    description: CTOA bouncing to specific earlier stage.
+    description: The Engineering Advisor is bouncing to a specific earlier stage.
     transitions_to: [architect, dev-parallel, security-review, qa-review]
 
-  awaiting-founder:
-    description: Founder gate.
+  awaiting-stakeholder:
+    description: Stakeholder gate.
     transitions_to: [approved, rejected]
 
   rejected:
-    description: Founder rejected; archived with reason. (Terminal until CTOA re-routes.)
-    transitions_to: [cto-review, architect, dev-parallel]  # CTOA picks based on reason
+    description: Stakeholder rejected; archived with reason. (Terminal until the Engineering Advisor re-routes.)
+    transitions_to: [cto-review, architect, dev-parallel]  # the Engineering Advisor picks based on reason
 
   approved:
-    description: Founder approved; DevOps (Jatin) takes over for Stage 8.
-    transitions_to: [awaiting-founder-commit, deploying-staging]  # awaiting-founder-commit if Jatin stages product code for the Founder to commit; deploying-staging if product code is already committed (e.g. Founder committed at the Stage-7 gate)
+    description: Stakeholder approved; Platform/SRE takes over for Stage 8.
+    transitions_to: [awaiting-stakeholder-commit, deploying-staging]  # awaiting-stakeholder-commit if Platform/SRE stages product code for the Stakeholder to commit; deploying-staging if product code is already committed (e.g. the Stakeholder committed at the Stage-7 gate)
 
-  awaiting-founder-commit:
-    description: Stage 8 — Jatin staged the product code + committed the `.engineering-os/` audit trail (chore(eos)); the Founder commits + pushes the PRODUCT code (governance gate — agents never commit product code). The Founder retains commit authority.
+  awaiting-stakeholder-commit:
+    description: Stage 8 — Platform/SRE staged the product code + committed the `.engineering-os/` audit trail (chore(eos)); the Stakeholder commits + pushes the PRODUCT code (governance gate — agents never commit product code). The Stakeholder retains commit authority.
     transitions_to: [deploying-staging, awaiting-push-fix]
 
   awaiting-push-fix:
-    description: The push-success gate failed (e.g. 403 / remote ahead); the Founder resolves remote/auth, then re-pushes. Jatin re-verifies with `git push --dry-run`.
-    transitions_to: [deploying-staging, awaiting-founder-commit]
+    description: The push-success gate failed (e.g. 403 / remote ahead); the Stakeholder resolves remote/auth, then re-pushes. Platform/SRE re-verifies with `git push --dry-run`.
+    transitions_to: [deploying-staging, awaiting-stakeholder-commit]
 
   deploying-staging:
     description: CI passed; staging deploy in flight.
@@ -107,7 +107,7 @@ states:
     transitions_to: []
 
   paused:
-    description: Manually paused by operator. Tracked in /status but no agent acts.
+    description: Manually paused by the operator. Tracked in /status but no agent acts.
     transitions_to: [intake, cto-review, architect, dev-parallel, security-review, qa-review, final-review]
 
   killed:

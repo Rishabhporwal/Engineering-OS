@@ -1,45 +1,43 @@
 ---
 name: kpi-dashboard-design
-description: Brain's profit-quality dashboard design — Command Center/CM waterfall/cohort heatmap, Goal RAG, drill-to-source, Decision ROI; KPIs ONLY from the registry.
+description: Dashboard design driven by the metric registry — visual hierarchy, drill-to-source, goal/RAG status, realized-vs-placed honesty, locale-aware money; KPIs ONLY from the registry, numbers never from a model.
 ---
 
-# KPI / Dashboard Design — profit-quality surfaces
+# KPI / Dashboard Design — surfaces driven by the metric registry
 
-Brain's web UI is the wedge against incumbent dashboards: **Notion-level polish, Linear-level speed.** Every surface privileges **profit quality (CM2/CM3, recovered/protected revenue, RTO/COD truth)** over vanity ROAS. The job: answer *"are we making high-quality money today, and what should I do before the day gets away?"* — not dump charts.
+A good dashboard answers a decision question — *"is the thing we care about on track today, and what should I do about it?"* — not "here are all the charts we could draw." Every surface privileges the **decision-relevant truth** over vanity metrics, and every number is a deterministic registry value.
 
-**Canon:** `canon/business-requirements.md` §6/§8/§10 · `canon/TECH/03` (registry) · `canon/TECH/07` (web) · `canon/TECH/08` (RAG + digests).
+**Canon:** the Product Canon's `METRICS.md` (the registry) + `TRIGGER-SURFACES.md` (which surfaces matter) + the web design section of `STACK.md`. See `engineering-os-blueprint/06-quality-gates-and-metrics.md`.
 
 ## The five non-negotiable rules
 
-1. **KPIs come ONLY from the metric registry** (`packages/lib-metrics`) — never invent/inline a metric in a component. The card renders `METRICS[name]`'s value, unit, direction ([`metric-engine`]).
-2. **LLMs never produce numbers** — every figure is a deterministic SQL/ML result; the AI panel narrates, the registry computes.
-3. **Every metric drills to source rows** — click any cell → drawer of underlying orders/campaigns/shipments/refunds (`trpc.drillDown.byMetric`).
-4. **Privilege CM2/CM3 over ROAS** — ROAS is display-only, never the headline. Lead with contribution margin + realized revenue.
-5. **Currency-aware rendering** — `formatMoney(amount, currency, format)`: INR → `₹4,82,000` / `₹4.8 L` / `₹3.2 Cr`, other currencies via locale. Never hardcode ₹ ([`region-and-locale`]).
+1. **KPIs come ONLY from the metric registry** — never invent/inline a metric in a component. The card renders the registry entry's value, unit, and direction ([`metric-engine`]).
+2. **Models never produce numbers** — every figure is a deterministic computation; a narration panel may describe the numbers, the registry computes them.
+3. **Every metric drills to source rows** — click any cell → a drawer of the underlying records (orders/events/shipments/etc.).
+4. **Privilege the honest metric over the vanity one** — a flattering ratio is display-only, never the headline. Lead with the decision-relevant truth.
+5. **Locale-aware rendering** — `formatMoney(amount_minor, currency_code, locale)`; never hardcode a currency symbol or grouping ([`region-and-locale`]).
 
-## Visual hierarchy for the 3-minute scan
+## Visual hierarchy for the quick scan
 
-Most decision-relevant number first; progressive disclosure for depth. **Home / Command Center** strip (business §7): live revenue + profit, a revenue-quality panel (CM2%, RTO risk, COD share), **Top-3 actions**, queues, **Decision ROI**, integration health. Mobile shows the few signals that matter ([`morning-brief-mobile`]); dense analytical views are desktop-first.
+Most decision-relevant number first; progressive disclosure for depth. A **home / command surface** typically carries: the headline status, a small set of **top ranked actions**, work queues, an ROI/impact signal, and integration/data health. A mobile surface shows the few signals that matter ([`mobile-surface`]); dense analytical views are desktop-first.
 
-## The profit-quality surfaces (what to build)
+## Common dashboard surfaces (patterns that transfer)
 
 | Surface | Shows | Chart |
 |---|---|---|
-| **Home / Command Center** | live revenue+profit, revenue-quality, Top-3 actions, Decision ROI, integration health | KPI cards + sparklines |
-| **Store Analytics** | revenue/orders/AOV by customer-type/channel, WoW | Recharts line/bar |
-| **P&L** | the CM waterfall as a statement | Visx |
-| **CM Waterfall** | Net Revenue → CM1 → CM2 → CM3, each step a bar (green=revenue/profit, red=deduction) | **Visx** |
-| **Cohort heatmap** | acquisition month × age, CM2 retention (864 cells, virtualized) | **Visx** — desktop only |
-| **Acquisition** | MER/aMER/CAC/payback vs goal | KPI cards + RAG |
-| **Regional (IN)** | RTO, COD economics, pincode reliability, NDR queue | tables + heatmap |
-| **Calendar Report** | one row/day, all metrics vs goal, marketing-action overlays | CSS-grid (2,250 cells) |
-| **Customer Lifecycle (NAC)** | new/returning/at-risk/churned movement | stacked area |
+| **Home / command** | headline status, top actions, impact, data health | KPI cards + sparklines |
+| **Trend analytics** | a metric by dimension over time, WoW | line/bar (Recharts) |
+| **A statement / ladder** | a derived-metric ladder as a step-down | waterfall (Visx) |
+| **Cohort / retention** | acquisition period × age, a retention metric (virtualized) | heatmap (Visx) — desktop only |
+| **Efficiency** | a ratio metric vs goal | KPI cards + RAG |
+| **A dense grid** | one row per period, all metrics vs goal, action overlays | CSS-grid / virtualized table |
+| **Movement** | state transitions over time | stacked area |
 
-Charts: **Recharts** for line/bar/area/sparkline; **Visx** for waterfall/cohort heatmap/funnel; TanStack Table for sortable/virtualized tables. (On mobile it's `victory-native`.)
+Charts: **Recharts** for line/bar/area/sparkline; **Visx** for waterfall/heatmap/funnel; a virtualized table component for large sortable grids. (Mobile uses a mobile-native chart lib.)
 
-## Goal RAG (the at-a-glance status)
+## Goal / RAG status (the at-a-glance signal)
 
-Every goal-bearing metric carries a direction + renders a RAG cell with an explanation + recommended action (business §6, TECH/08):
+Every goal-bearing metric carries a direction + renders a RAG status with an explanation + recommended action:
 
 | Direction | Green | Amber | Red |
 |---|---|---|---|
@@ -57,17 +55,17 @@ function RagCell({ value, goal, currency }) {
   );
 }
 ```
-A bare colour is never enough — pair it with the why + the next action (a11y: non-colour signal, [`accessibility`]).
+A bare colour is never enough — pair it with the why + the next action (a11y: never colour-only, [`accessibility`]).
 
-## Realized vs placed + Decision ROI
+## Realized vs placed + impact
 
-- Always surface **realized/delivered revenue alongside placed** — the honest number is the headline, placed is context (business §8/§11.5). RTO/COD lag means placed flatters reality.
-- **Decision ROI** card = recovered revenue ÷ Brain fee (the value-proof metric; target >3× by month 3). CM2 recovered ÷ fee and operator-time-saved are companions.
-- **Integration health** is part of the surface — a connector is "unhealthy" if data is stale even when auth works (P0 freshness <1h). Label stale/estimated explicitly; never render a confident number over stale inputs.
+- Always surface the **realized/settled value alongside the placed/exposed one** — the honest number is the headline, the optimistic one is context. Settlement lag means the placed number flatters reality.
+- An **impact / ROI** card ties an action's effect to its cost — measured incrementally where possible ([`experimentation-holdouts`]), never from raw attributed volume.
+- **Data/integration health** is part of the surface — a connector is "unhealthy" if data is stale even when auth works. Label stale/estimated explicitly; never render a confident number over stale inputs ([`data-quality`]).
 
-## India-specific rendering
+## Locale-aware rendering
 
-₹ Indian grouping + lakh/crore; GST-inclusive correction done upstream (per-SKU); festival periods shaded on the Calendar Report with learned-lift tooltips; the Regional sidebar group (Pincodes/RTO/NDR/COD) only renders for `home_region = IN` ([`india-commerce-economics`]).
+Currency grouping, symbol, and large-number abbreviation come from the locale via the region adapter; tax-inclusive corrections are done upstream (per line-item class, not in the chart layer); region-specific dimensions only render when the tenant's region calls for them ([`region-and-locale`]).
 
 ## Accessibility + performance
 
@@ -75,16 +73,16 @@ WCAG AA contrast (RAG verified at 4.5:1); chart `<table>` fallback + ARIA on ico
 
 ## Anti-patterns
 
-- Inventing/inlining a metric instead of reading the registry; ROAS as headline / hiding realized behind placed; a metric that doesn't drill to source; hardcoding ₹/GST/Indian grouping in the chart layer (use `formatMoney` + adapter); a confident number over stale data with no freshness/estimated label; a bare RAG colour with no explanation/action; Recharts/Visx on mobile.
+- Inventing/inlining a metric instead of reading the registry; a vanity ratio as headline / hiding the realized number behind the placed one; a metric that doesn't drill to source; hardcoding a currency symbol/grouping in the chart layer (use `formatMoney` + the adapter); a confident number over stale data with no freshness/estimated label; a bare RAG colour with no explanation/action; a desktop chart lib on mobile.
 
 ## Verify
 
-- Each KPI card's value/unit/direction matches its registry entry; web == analytics-service == Morning Brief.
+- Each KPI card's value/unit/direction matches its registry entry; every consumer of the metric agrees.
 - Clicking any numeric cell opens a drill-down drawer with the underlying rows.
-- INR renders Indian grouping + lakh/crore; a non-INR workspace renders its locale.
+- Money renders per the tenant's locale.
 - RAG thresholds match green ≥95% / amber 80–95% / red <80% (higher-better).
 
 ## References
 
-- canon/business-requirements.md §6/§8/§10 · canon/TECH/07 (routes, charts, formatMoney, drill-down, Calendar) · canon/TECH/08 (RAG, digests, integration health)
-- [`metric-engine`] · [`frontend-web`] · [`morning-brief-mobile`] · [`region-and-locale`] · [`accessibility`] · [`web-performance`]
+- Product Canon `METRICS.md` (the registry) · `TRIGGER-SURFACES.md` · the web design section of `STACK.md`
+- [`metric-engine`] · [`frontend-web`] · [`mobile-surface`] · [`region-and-locale`] · [`accessibility`] · [`web-performance`] · [`experimentation-holdouts`] · [`data-quality`]

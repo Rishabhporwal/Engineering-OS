@@ -1,15 +1,15 @@
 # Developer Report — {{TRACK_ID}}
 
-> Filled by Vikram / Ananya / Karan / Maya in Stage 3 when their in-lane Definition of Done is green.
+> Filled by the Backend / Frontend-Web / Mobile / AI-ML Engineer in Stage 3 when their in-lane Definition of Done is green.
 > Validates against [schemas/development-report.schema.json](../schemas/development-report.schema.json).
 
 | Field | Value |
 |-------|-------|
 | **req_id** | `{{REQ_ID}}` |
 | **Track** | `{{TRACK_ID}}` |
-| **Actor** | {{ACTOR_PERSONA}}  *(vikram / ananya / karan / maya)* |
+| **Actor** | {{ACTOR_PERSONA}}  *(backend-developer / frontend-web-developer / mobile-developer / intelligence-engineer)* |
 | **Timestamp** | {{TS}} |
-| **Paradigm** | `{{PARADIGM}}`  *(sql / ml / small_llm / frontier_llm — must match plan or justify deviation)* |
+| **Effort tier** | `{{PARADIGM}}`  *(deterministic / statistical-ml / small-model / large-model — must match plan or justify deviation)* |
 | **Handoff signal** | **{{HANDOFF_SIGNAL}}**  *(READY-FOR-SECURITY / READY-FOR-QA / BLOCKED / BOUNCE-TO-ARCHITECT)* |
 
 ---
@@ -55,39 +55,38 @@
 > Each builder ticks the items relevant to their lane. Composite DoD (whole change) is gate-checked by QA in Stage 5.
 
 ### Universal
-- [ ] `@paradigm` decorator on every new code path
-- [ ] Per-feature LLM token budget set (if any LLM involved)
+- [ ] Effort-tier declaration on every new code path
+- [ ] Per-feature model token budget set (if any model involved)
 - [ ] Idempotency keys cached for all write operations
-- [ ] Zod schemas on every API input; server-side re-validation
-- [ ] Timestamps explicit (UTC or `Asia/Kolkata`)
-- [ ] `workspace_id` assertion in every gRPC handler
+- [ ] Input-validation schemas on every API input; server-side re-validation
+- [ ] Timestamps explicit (UTC, or the product's declared timezone)
+- [ ] `tenant_id` assertion in every service handler
 - [ ] `requireRole(...)` on every mutation endpoint
-- [ ] CloudWatch custom metrics + Sentry instrumentation present
+- [ ] Custom metrics + error-monitoring instrumentation present
 
 ### Lane-specific (check the ones that apply)
 
-**Vikram (BE):**
+**Backend Engineer:**
 - [ ] Cursor pagination on any new list endpoint (no offset)
-- [ ] No sequential DB queries in a layout (`Promise.all`)
-- [ ] PgBouncer-safe connection patterns
+- [ ] No sequential DB queries in a layout (batch/parallelize)
+- [ ] Connection-pooler-safe patterns
 
-**Ananya (FE-W):**
-- [ ] Server Component by default
-- [ ] Lighthouse run + Core Web Vitals targets met (LCP < 2.0s, INP < 200ms, CLS < 0.1 — per the canon perf budget)
-- [ ] Indian numbering format applied where relevant
-- [ ] `dangerouslySetInnerHTML` only via DOMPurify
+**Frontend/Web Engineer:**
+- [ ] Server-rendered by default where the framework supports it
+- [ ] Perf run + Core Web Vitals targets met (LCP < 2.0s, INP < 200ms, CLS < 0.1 — per the Product Canon perf budget)
+- [ ] Locale-aware number/format applied where relevant (per the RegionAdapter seam)
+- [ ] Raw HTML injection only via a sanitizer
 
-**Karan (FE-M):**
-- [ ] Morning Brief THREE-signal rule honored (if touched)
-- [ ] `expo-secure-store` for tokens
+**Mobile Engineer:**
+- [ ] Secure on-device token storage
 - [ ] Offline path tested
 - [ ] OTA vs native bump decision documented
 
-**Maya (AI):**
+**AI/ML Engineer:**
 - [ ] Prompt caching applied where possible
-- [ ] `@mcp_tool` + Decision Log middleware on any new MCP tool
-- [ ] Daily-tick simulation passes locally
-- [ ] Per-brand token cap honored (soft 80% / hard 100%)
+- [ ] Tool-decorator + audit-log middleware on any new agent/tool surface
+- [ ] Tick/scheduled-run simulation passes locally (if applicable)
+- [ ] Per-tenant token cap honored (soft 80% / hard 100%)
 
 ---
 

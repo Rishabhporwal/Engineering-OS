@@ -4,16 +4,16 @@
 # ///
 """gate_check — make the VETO a state-machine invariant, not a model's good behavior.
 
-Security-F3: the Shreya/Tanvi/Rohan VETO is just an agent RETURNING a BOUNCE that the
-orchestrator (also a model) is trusted to honor. Nothing in code stops a Stage-7/8
-transition while an unresolved CRITICAL/HIGH sits in the run folder. This tool is that
-stop: before advancing to the Founder gate or deploy, it reads the review artifacts and
-REFUSES (exit 2) if any review isn't PASS or any unresolved CRITICAL/HIGH finding exists —
-regardless of what the model decided.
+A VETO (Security Reviewer / QA Engineer / Engineering Advisor) is otherwise just an agent
+RETURNING a BOUNCE that the orchestrator (also a model) is trusted to honor. Nothing in
+code stops a Stage-7/8 transition while an unresolved CRITICAL/HIGH sits in the run folder.
+This tool is that stop: before advancing to the Stakeholder gate or deploy, it reads the
+review artifacts and REFUSES (exit 2) if any review isn't PASS or any unresolved
+CRITICAL/HIGH finding exists — regardless of what the model decided.
 
 Usage:
-  uv run gate_check.py --run-dir <run folder> --to founder_gate   # before Stage 7
-  uv run gate_check.py --run-dir <run folder> --to deploy          # before Stage 8 (/approve)
+  uv run gate_check.py --run-dir <run folder> --to stakeholder_gate   # before Stage 7
+  uv run gate_check.py --run-dir <run folder> --to deploy             # before Stage 8 (/approve)
 
 Exit 0 = clear to advance. Exit 2 = BLOCKED (prints the blocking findings).
 Reads JSON artifacts structurally; falls back to scanning the .md.
@@ -26,25 +26,28 @@ import re
 import sys
 from pathlib import Path
 
-# which review artifacts gate which transition
+# which review artifacts gate which transition.
 GATES = {
-    "founder_gate": ["security-review", "qa-review"],
-    "deploy":       ["security-review", "qa-review", "final-review"],
+    "stakeholder_gate": ["security-review", "qa-review"],
+    "deploy":           ["security-review", "qa-review", "final-review"],
 }
 PASS_RE = re.compile(r"\b(verdict|recommendation|decision)\b[:\s*]*\**\s*(PASS|APPROVE)\b", re.I)
 FAIL_RE = re.compile(r"\b(verdict|recommendation|decision)\b[:\s*]*\**\s*(FAIL|BOUNCE|REJECT|VETO)\b", re.I)
 SEV_RE = re.compile(r"\b(severity[:\s*]*\**\s*)?(critical|high)\b", re.I)
 # ONLY an explicit resolution clears a CRITICAL/HIGH. "mitigated"/"deferred"/"accepted"
-# do NOT clear it (war-game: a CRITICAL tagged 'mitigated' without being mitigated walked
-# through). You cannot ship past a CRITICAL by deferring it — only a Founder-logged waiver can.
-RESOLVED_RE = re.compile(r"\b(resolved|fixed in [0-9a-f]{6,}|founder.?waiver|waiver.?logged)\b", re.I)
+# do NOT clear it (a CRITICAL tagged 'mitigated' without being mitigated would otherwise walk
+# through). You cannot ship past a CRITICAL by deferring it — only a Stakeholder-logged waiver can.
+RESOLVED_RE = re.compile(r"\b(resolved|fixed in [0-9a-f]{6,}|stakeholder.?waiver|waiver.?logged)\b", re.I)
 # Deferring security/compliance work to a follow-up is the evasion that has NO severity keyword
-# ("window enforcement deferred to a follow-up"). If defer-language sits near a security/compliance
+# ("enforcement deferred to a follow-up"). If defer-language sits near a security/compliance
 # keyword, BLOCK regardless of whether 'critical/high' was written.
 DEFER_RE = re.compile(r"\b(deferred?|follow.?up|next.?sprint|tech.?debt|backlog|TODO|later|punt(ed)?)\b", re.I)
-SECKW_RE = re.compile(r"\b(window|9.?am|9.?pm|ncpr|dnd|consent|rls|requirerole|requireworkspacemember|"
-                      r"secret|pii|cross.?tenant|workspace_id|bypassrls|plaintext|encrypt|kms|"
-                      r"compliance|dpdp|pdpl|dlt|traceab|tenant)\b", re.I)
+# GENERIC security/compliance keyword set — the compliance terms (consent, retention,
+# residency, contact-window, …) are regime-agnostic markers; a product can extend them
+# from its COMPLIANCE.md regime.
+SECKW_RE = re.compile(r"\b(window|contact.?hours|consent|retention|residency|rls|requirerole|requiretenantmember|"
+                      r"secret|pii|cross.?tenant|tenant_id|bypassrls|plaintext|encrypt|kms|"
+                      r"compliance|data.?protection|privacy|traceab|tenant)\b", re.I)
 
 
 def find_artifact(run_dir: Path, stem: str) -> Path | None:
@@ -123,7 +126,7 @@ def main() -> int:
         print(f"BLOCKED: cannot advance to {args.to} — VETO is a state-machine invariant, not a suggestion:", file=sys.stderr)
         for b in blocking:
             print(f"  ✗ {b}", file=sys.stderr)
-        print("\nResolve the finding(s) / re-run the review to PASS, or get a Founder-logged waiver via Rohan.", file=sys.stderr)
+        print("\nResolve the finding(s) / re-run the review to PASS, or get a Stakeholder-logged waiver via the Engineering Advisor.", file=sys.stderr)
         return 2
     print(f"gate_check: clear to advance to {args.to} (all reviews PASS, no unresolved CRITICAL/HIGH)")
     return 0

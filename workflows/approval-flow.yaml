@@ -1,48 +1,48 @@
-# Brain Engineering OS — Founder approval flow.
+# Engineering OS — Stakeholder approval flow.
 # Mechanics for the Stage 7 human gate.
 
-name: founder-approval-flow
+name: stakeholder-approval-flow
 schema_version: 1
 
 trigger:
   event: status-transition
   from: final-review
-  to: awaiting-founder
+  to: awaiting-stakeholder
 
-inputs_to_founder:
+inputs_to_stakeholder:
   - artifact: 11-final-review.md
-    purpose: CTO Advisor's recommendation + sub-reviews
+    purpose: The Engineering Advisor's recommendation + sub-reviews
   - artifact: 02-cto-advisor-review.md
     purpose: Original intake analysis (drift check)
   - artifact: 06-architecture-plan.md
     purpose: What was promised
   - artifact: 09-security-review.md
-    purpose: Shreya's PASS evidence
+    purpose: Security Reviewer's PASS evidence
   - artifact: 10-qa-review.md
-    purpose: Tanvi's PASS evidence
-  - reference: decision-log
-    purpose: Last 30 days of decisions for trend context
+    purpose: QA Engineer's PASS evidence
+  - reference: audit-log
+    purpose: Recent decisions for trend context (the system-of-record audit log, where the Canon requires one)
 
-actions_available_to_founder:
+actions_available_to_stakeholder:
   - command: /approve <req-id> [note]
-    effect: status → approved → Jatin runs Stage 8
+    effect: status → approved → Platform/SRE runs Stage 8
   - command: /reject <req-id> <reason>
-    effect: status → rejected → CTOA re-routes based on reason
+    effect: status → rejected → the Engineering Advisor re-routes based on reason
 
-founder_required_fields:
+stakeholder_required_fields:
   approve:
-    - actor: rishabh
+    - actor: stakeholder
     - decision: approved
     - ts: now
     - note: optional
   reject:
-    - actor: rishabh
+    - actor: stakeholder
     - decision: rejected
     - ts: now
     - reason: required  # rejection without rationale is forbidden
 
 notifications:
-  on_awaiting_founder:
+  on_awaiting_stakeholder:
     channels:
       - in-cli  # always
       - slack   # if SLACK_WEBHOOK_URL env var set
@@ -57,27 +57,27 @@ notifications:
     channels: [in-cli, slack]
     template: |
       [engineering-os] {{req_id}} approved by {{actor}} at {{ts}}.
-      Jatin starting Stage 8 (deploy).
+      Platform/SRE starting Stage 8 (deploy).
 
   on_rejected:
     channels: [in-cli, slack]
     template: |
       [engineering-os] {{req_id}} rejected by {{actor}} at {{ts}}.
       Reason: {{reason}}
-      CTOA re-routing.
+      The Engineering Advisor is re-routing.
 
 audit:
   every_action_writes:
-    - decision_log_entry: { type: decision, actor: rishabh }
+    - audit_log_entry: { type: decision, actor: stakeholder }   # the system-of-record audit log, where the Canon requires one
     - state_active_json_update: { status, stage }
-    - artifact: 12-founder-decision.json
+    - artifact: 12-stakeholder-decision.json
 
-# When the Founder is "wrong"
-founder_wrong_protocol: |
-  The team can push back on the Founder (anti-blind-agreement rule).
-  When the team challenges and the Founder still says "approve":
-    1. Founder's approval lands.
-    2. Team logs the challenge AND the Founder's override in the decision log.
+# When the Stakeholder is "wrong"
+stakeholder_wrong_protocol: |
+  The team can push back on the Stakeholder (anti-blind-agreement rule).
+  When the team challenges and the Stakeholder still says "approve":
+    1. The Stakeholder's approval lands.
+    2. Team logs the challenge AND the Stakeholder's override in the audit log.
     3. Override creates a tech-debt item with owner + date.
     4. Stage 8 proceeds.
-  This preserves accountability while honoring Founder authority.
+  This preserves accountability while honoring Stakeholder authority.

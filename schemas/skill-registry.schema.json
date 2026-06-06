@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://brain.pipadacapital.com/engineering-os/schemas/skill-registry.schema.json",
+  "$id": "https://engineering-os.dev/engineering-os/schemas/skill-registry.schema.json",
   "title": "Skill Registry",
   "description": "Index of every curated skill known to the Engineering OS, with role mapping.",
   "type": "object",

@@ -1,20 +1,18 @@
 {
-  "name": "brain-engineering-os",
+  "name": "engineering-os",
   "owner": {
-    "name": "Brain (Pipada Capital)",
-    "email": "founder@brain.pipadacapital.com",
-    "url": "https://brain.pipadacapital.com"
+    "name": "Engineering OS"
   },
   "metadata": {
-    "description": "Private marketplace for the Brain Engineering OS plugin. Distributes the AI engineering team that builds the Brain commerce OS.",
-    "version": "1.1.0"
+    "description": "Marketplace for the Engineering OS plugin — a universal, domain-agnostic AI engineering organization for any software product, on any stack.",
+    "version": "2.0.0"
   },
   "plugins": [
     {
-      "name": "brain-engineering-os",
+      "name": "engineering-os",
       "source": "./",
-      "description": "An AI engineering team delivered as a Claude Code plugin. Orchestrates Rohan (CTO Advisor), Architect, Backend/Frontend/Mobile devs, Security, QA, and DevOps agents through an 8-stage requirement-to-release pipeline grounded in the Brain canon.",
-      "version": "1.1.0"
+      "description": "A universal AI engineering organization delivered as a Claude Code plugin. A fixed roster of engineering roles (Engineering Advisor, Architect, Backend/Frontend/Mobile/AI-ML engineers, Security, QA, Platform/SRE, Delivery Coordinator) drives any requirement from intake to release through a staged, lane-scaled, VETO-gated pipeline, grounded in a per-adoption Product Canon. Stack- and domain-agnostic.",
+      "version": "2.0.0"
     }
   ]
 }

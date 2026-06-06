@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://brain.pipadacapital.com/engineering-os/schemas/development-report.schema.json",
+  "$id": "https://engineering-os.dev/engineering-os/schemas/development-report.schema.json",
   "title": "Development Report (Stage 3 — per builder)",
   "type": "object",
   "required": [
@@ -19,7 +19,7 @@
   "properties": {
     "schema_version": { "type": "integer", "const": 1 },
     "req_id": { "type": "string" },
-    "actor_persona": { "enum": ["vikram", "ananya", "karan", "maya"] },
+    "actor_persona": { "enum": ["backend-developer", "frontend-web-developer", "mobile-developer", "intelligence-engineer"] },
     "track_id": { "type": "string" },
     "ts": { "type": "string", "format": "date-time" },
     "skills_loaded": { "type": "array", "minItems": 1, "items": { "type": "string" } },

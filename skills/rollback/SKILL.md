@@ -10,10 +10,10 @@ Steps:
 
 1. Parse `$ARGUMENTS` into `req_id` and `reason`.
 2. **Confirm intent** — rollback reverts the deployed change. Surface what's being reverted (commit SHA, image tag, services affected).
-3. **Invoke the `platform-devops` subagent** with directive `manual-rollback`. Jatin uses ArgoCD to revert to the previous synced revision.
+3. **Invoke the `platform-devops` subagent** with directive `manual-rollback`. The Platform/SRE engineer reverts to the previous known-good revision per the Canon's `PLAYBOOK-deploy.md` (e.g. a GitOps controller syncing back to the prior revision).
 4. Append a decision-log entry: type `rollback`, actor `<operator>`, reason, blast radius.
 5. Update `state/active.json`: status → `rolled-back`, stage → 4 (re-triage).
 6. **Invoke the `security-reviewer` and `qa-agent` subagents** to triage what went wrong.
-7. Print: "Rollback initiated. State → rolled-back. Shreya + Tanvi triaging."
+7. Print: "Rollback initiated. State → rolled-back. Security Reviewer + QA Engineer triaging."
 
-For P0 (auth bypass, data leak, DND violation): also page the Founder via the configured alerting channel.
+For P0 (auth bypass, data leak, or a compliance-regime violation declared in the Canon): also page the Stakeholder via the configured alerting channel.

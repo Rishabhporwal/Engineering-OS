@@ -6,9 +6,10 @@
 # stage transitions are observable.
 #
 # It deliberately does NOT block writes. Gate ENFORCEMENT is the agents' job —
-# each stage self-reviews, QA (Tanvi) re-runs skipped gates, and CTOA (Rohan)
-# spot-re-runs QA's gates at Stage 6. Those agents have the context to judge a
-# gate; a stdin heuristic does not, and a false block would stall the pipeline.
+# each stage self-reviews, the QA Engineer re-runs skipped gates, and the
+# Engineering Advisor spot-re-runs QA's gates at the final review stage. Those
+# agents have the context to judge a gate; a stdin heuristic does not, and a
+# false block would stall the pipeline.
 # Keep enforcement in the agents; keep this hook for the audit trail only.
 
 set -euo pipefail

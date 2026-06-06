@@ -1,12 +1,12 @@
 # QA Review — {{REQ_ID}}
 
-> Filled by Tanvi in Stage 5. **VETO** on missing real-network smoke or metric registry parity.
+> Filled by the QA Engineer in Stage 5. **VETO** on missing real-network smoke or metric registry parity.
 > Validates against [schemas/qa-review.schema.json](../schemas/qa-review.schema.json).
 
 | Field | Value |
 |-------|-------|
 | **req_id** | `{{REQ_ID}}` |
-| **Actor** | qa-agent (Tanvi) |
+| **Actor** | qa-agent |
 | **Timestamp** | {{TS}} |
 | **Verdict** | **{{VERDICT}}**  *(PASS / FAIL / NEEDS-MORE-INFO)* |
 
@@ -19,9 +19,9 @@
 | Coverage ≥70% on new code | {{COVERAGE_OK}} |
 | **Real-network smoke** output captured | {{SMOKE_OK}} |
 | Contract tests present where contracts changed | {{CONTRACT_OK}} |
-| Metric registry parity (TS ↔ Python) | {{PARITY_OK}} |
+| Cross-runtime metric parity (single-source registry, every runtime) | {{PARITY_OK}} |
 | Operational-readiness checklist green | {{OPS_READINESS_OK}} |
-| Mutation tests on high-stakes paths (metric registry, India compliance engine, Decision Log) | {{MUTATION_OK}} |
+| Mutation tests on high-stakes paths (metric registry, compliance engine, audit log) | {{MUTATION_OK}} |
 | No flaky tests introduced (3× re-run confirms) | {{FLAKY_OK}} |
 
 ---
@@ -68,15 +68,17 @@
 - **Passed:** {{PARITY_PASSED}}
 
 ### Contract tests
-- **Command:** `buf breaking proto/ --against '.git#branch=main'`
+> Use the contract-testing tools bound per seam in STACK.md (examples below).
+- **Command:** `{{CONTRACT_BREAKING_CMD}}` *(RPC-schema breaking check, e.g. `buf breaking`)*
 - **Output:** {{BUF_OUTPUT}}
-- **Pact (service-to-service):** {{PACT_OUTPUT}}
-- **tRPC schema diff:** {{TRPC_DIFF}}
-- **MCP schema diff:** {{MCP_DIFF}}
+- **Consumer-driven contract (service-to-service):** {{PACT_OUTPUT}}
+- **Typed-procedure schema diff:** {{TRPC_DIFF}}
+- **Tool-surface schema diff:** {{MCP_DIFF}}
 
 ### Mutation tests
-- **TS (Stryker):** {{STRYKER_OUTPUT}}
-- **Python (mutmut):** {{MUTMUT_OUTPUT}}
+> Per the mutation-testing tool bound per runtime in STACK.md (examples below).
+- **Primary runtime:** {{STRYKER_OUTPUT}}
+- **Secondary runtime:** {{MUTMUT_OUTPUT}}
 
 ---
 
@@ -86,9 +88,9 @@
 |------|:------:|----------|
 | Root handler responds | {{ROOT_HANDLER}} | `GET /` returns valid response |
 | Health endpoint responds | {{HEALTH}} | `GET /health` + `GET /health/ready` |
-| Port selection correct (no 3000 collision) | {{PORT}} | |
+| Port selection correct (no default-port collision) | {{PORT}} | |
 | Env var validation present (fails fast on missing) | {{ENV_VARS}} | |
-| Native deps build cleanly (pnpm 11 gotchas) | {{NATIVE_DEPS}} | |
+| Native deps build cleanly (package-manager gotchas) | {{NATIVE_DEPS}} | |
 
 *(From [`operational-readiness`](../skills/operational-readiness/SKILL.md).)*
 

@@ -20,7 +20,7 @@ Resume an interrupted pipeline. Target requirement (a `req_id`; if empty, list a
 2. **Reconstruct context** (don't trust memory — read it): the requirement's run folder, its per-feature journal (`memory/features/feat-<slug>.md`), and the recent decision-log lines. Establish what's DONE and what's PENDING (cross-check against the cursor's `outstanding`).
 3. **Determine the resume point** from `status` + the last journal entry + which numbered artifacts already exist in the run folder.
 4. **Re-invoke the responsible agent** via the Agent tool with a `RESUME` prompt that states: the stage, the run folder, what was already completed (artifact list), and what remains. The agent re-reads its journal + canon + runs `/recall-similar`, then continues — it MUST NOT redo completed work.
-5. **Guard against duplicate work:** if `status` is mid-parallel-review, check whether `09-security-review.md` / `10-qa-review.md` already exist before re-spawning Shreya / Tanvi. If express lane, resume at the single builder or Tanvi as appropriate.
+5. **Guard against duplicate work:** if `status` is mid-parallel-review, check whether `09-security-review.md` / `10-qa-review.md` already exist before re-spawning the Security Reviewer / QA Engineer. If express lane, resume at the single builder or the QA Engineer as appropriate.
 6. **Append a decision-log entry** `type="resume"` noting the resume point.
 
-If the requirement is already in a terminal state, report that and do nothing. If `active.json` is missing/corrupt, point the operator at the `.bak.<ts>` recovery (see memory-and-git-sync).
+If the requirement is already in a terminal state, report that and do nothing. If `active.json` is missing/corrupt, point the operator at the most recent `.bak.<ts>` snapshot in `.engineering-os/state/` to restore from.

@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://brain.pipadacapital.com/engineering-os/schemas/cto-advisor-review.schema.json",
+  "$id": "https://engineering-os.dev/engineering-os/schemas/cto-advisor-review.schema.json",
   "title": "CTO Advisor Review (Stage 1 or Stage 6)",
   "type": "object",
   "required": ["schema_version", "req_id", "stage", "actor", "ts", "decision"],
@@ -33,16 +33,14 @@
       "enum": ["sql", "ml", "small_llm", "frontier_llm"],
       "description": "Stage 1 first-pass paradigm read; Architect may refine."
     },
-    "india_check": {
+    "region_context_check": {
       "type": "object",
-      "description": "Did this requirement consider India context?",
+      "description": "Did this requirement consider the product's region/locale and compliance context (per the Product Canon's COMPLIANCE.md and the RegionAdapter seam)?",
       "properties": {
-        "rto_impact": { "type": "string" },
-        "cod_impact": { "type": "string" },
-        "gst_impact": { "type": "string" },
-        "festival_impact": { "type": "string" },
-        "pincode_impact": { "type": "string" },
-        "telecom_compliance_impact": { "type": "string" }
+        "region_economics_impact": { "type": "string", "description": "Region-varying economics that change the design (via the RegionAdapter seam)." },
+        "compliance_regime_impact": { "type": "string", "description": "Impact on the product's compliance regime (data-protection, residency, retention, consent, channel rules)." },
+        "money_metric_impact": { "type": "string", "description": "Impact on financial metrics or money handling (minor units + currency_code)." },
+        "locale_impact": { "type": "string", "description": "Locale/format/i18n/RTL impact." }
       }
     },
     "challenge": {
