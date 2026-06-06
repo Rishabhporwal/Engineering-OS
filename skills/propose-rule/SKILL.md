@@ -1,12 +1,12 @@
 ---
 name: propose-rule
-description: Propose a new durable operating rule for the engineering team. Writes a rule-proposal artifact for Founder to review and adopt via /brain-engineering-os:adopt-rule.
+description: Propose a new durable operating rule for the engineering team. Writes a rule-proposal artifact for Founder to review and adopt via /engineering-os:adopt-rule.
 disable-model-invocation: true
 ---
 
 Propose a new operating rule for the engineering team.
 
-Any agent or operator may invoke this skill to propose a rule. **Agents cannot adopt their own proposals** — only the Founder can run `/brain-engineering-os:adopt-rule` to promote a proposal to a durable rule.
+Any agent or operator may invoke this skill to propose a rule. **Agents cannot adopt their own proposals** — only the Founder can run `/engineering-os:adopt-rule` to promote a proposal to a durable rule.
 
 `$ARGUMENTS` is a short kebab-case slug describing the rule (e.g., `no-auto-commit-of-code`, `qa-must-rerun-skipped-gates`, `persona-count-capped-at-2`).
 
@@ -16,7 +16,7 @@ Any agent or operator may invoke this skill to propose a rule. **Agents cannot a
 
 2. **Generate proposal_id.** Format: `<ISO-UTC-no-colons>__<slug>` from `date -u +%Y-%m-%dT%H-%M-%SZ` + `$ARGUMENTS` slug. Example: `2026-05-19T14-30-00Z__qa-must-rerun-skipped-gates`.
 
-3. **Detect the Brain project root.** Use `${CLAUDE_PROJECT_DIR}`. If `.engineering-os/` does not exist, refuse with "This skill requires a Brain project initialized with `/brain-engineering-os:eos-init`."
+3. **Detect the Brain project root.** Use `${CLAUDE_PROJECT_DIR}`. If `.engineering-os/` does not exist, refuse with "This skill requires a Brain project initialized with `/engineering-os:eos-init`."
 
 4. **Ensure the rule-proposals directory exists.**
    ```bash
@@ -44,13 +44,13 @@ Any agent or operator may invoke this skill to propose a rule. **Agents cannot a
 
 7. **Surface to Founder.** Append a line to `${CLAUDE_PROJECT_DIR}/.engineering-os/pending-founder-attention.md` (create if missing):
    ```
-   - rule-proposal `<proposal_id>` — review at `.engineering-os/rule-proposals/<proposal_id>.md`. Adopt with `/brain-engineering-os:adopt-rule <proposal_id>` or `/brain-engineering-os:reject-rule <proposal_id> <reason>`.
+   - rule-proposal `<proposal_id>` — review at `.engineering-os/rule-proposals/<proposal_id>.md`. Adopt with `/engineering-os:adopt-rule <proposal_id>` or `/engineering-os:reject-rule <proposal_id> <reason>`.
    ```
 
 8. **Print to operator:**
    - Proposal path.
    - One-line summary.
-   - "Awaiting Founder. Run `/brain-engineering-os:adopt-rule <proposal_id>` to adopt, or `/reject-rule <proposal_id> <reason>` to reject."
+   - "Awaiting Founder. Run `/engineering-os:adopt-rule <proposal_id>` to adopt, or `/reject-rule <proposal_id> <reason>` to reject."
 
 ## Don't
 

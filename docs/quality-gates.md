@@ -23,7 +23,7 @@ This document defines each gate's:
 - Decision-log event: `{"actor":"cto-advisor","type":"dependency-precheck","req_id":"...","blockers":[...],"all_blockers_shipped":<bool>}`.
 - On violation: a `pending-founder-attention.md` artifact in the run folder explaining the unshipped blocker(s).
 
-**Bounce target on fail:** No bounce — work is REFUSED, not bounced. State becomes `blocked-on-dependency` with `current_owner=founder`. Founder either waits for blocker to ship or invokes `/brain-engineering-os:override-dependency-rule` with a written rationale (which becomes a logged audit-trail entry).
+**Bounce target on fail:** No bounce — work is REFUSED, not bounced. State becomes `blocked-on-dependency` with `current_owner=founder`. Founder either waits for blocker to ship or invokes `/engineering-os:override-dependency-rule` with a written rationale (which becomes a logged audit-trail entry).
 
 **Why this exists:** observed process violation in monitor — child #4 (`turborepo-monorepo`) shipped while child #3 (`metric-registry-ts`, its declared blocker) was orphaned at Stage 1. The CTOA approved it on Founder's behalf without flagging the violation. G0 makes the check mechanical.
 

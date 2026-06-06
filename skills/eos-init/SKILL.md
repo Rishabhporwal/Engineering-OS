@@ -6,7 +6,7 @@ disable-model-invocation: true
 
 Initialize the Brain Engineering OS shared memory in the current project.
 
-This command writes `.engineering-os/` + `.gitattributes` into `${CLAUDE_PROJECT_DIR}`. Run it once per Brain product repo. Subsequent teammates who clone the repo will already have the scaffold — they only need to install the plugin (`/plugin install brain-engineering-os`).
+This command writes `.engineering-os/` + `.gitattributes` into `${CLAUDE_PROJECT_DIR}`. Run it once per Brain product repo. Subsequent teammates who clone the repo will already have the scaffold — they only need to install the plugin (`/plugin install engineering-os`).
 
 ## What this command does
 

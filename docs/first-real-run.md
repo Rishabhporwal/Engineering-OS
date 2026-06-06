@@ -8,7 +8,7 @@
 ```
 git push origin master        # if not already
 # in the Brain repo session:
-/plugin update brain-engineering-os
+/plugin update engineering-os
 # >>> RESTART the Claude Code session <<<  (plugin loads only on restart)
 /status                        # confirms version 1.1.0 is loaded
 ```

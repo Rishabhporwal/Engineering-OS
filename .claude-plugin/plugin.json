@@ -1,12 +1,10 @@
 {
-  "name": "brain-engineering-os",
-  "version": "1.1.0",
-  "description": "v2 (clean-room rebuild). AI engineering team delivered as a Claude Code plugin that builds Brain \u2014 the AI-native commerce OS for DTC brands (India-first; UAE/GCC sequenced). 11 agents through an 8-stage requirement-to-release pipeline, grounded in the Brain canon. v2 leans the runtime: control-flow in pipeline/ (not the Opus prompt), delta re-review, model tiering, lazy skill loading, single-sourced canon, enforced telemetry. Shared memory lives in the consuming repo's .engineering-os/ (committed to git).",
+  "name": "engineering-os",
+  "version": "2.0.0",
+  "description": "A universal, domain-agnostic AI engineering organization delivered as a Claude Code plugin. A fixed roster of engineering roles (Engineering Advisor, Architect, Backend/Frontend/Mobile/AI-ML engineers, Security, QA, Platform/SRE, Delivery Coordinator) drives any requirement from intake to release through a staged, lane-scaled, VETO-gated pipeline. Stack- and domain-agnostic: the product, stack, compliance regime, and invariants are supplied once per adoption via a Foundation phase that produces the Product Canon (knowledge-base/). Shared memory lives in the consuming repo's .engineering-os/ (committed to git). See engineering-os-blueprint/ for the full framework.",
   "author": {
-    "name": "Brain (Pipada Capital)",
-    "email": "founder@brain.pipadacapital.com"
+    "name": "Engineering OS"
   },
-  "homepage": "https://brain.pipadacapital.com",
   "license": "UNLICENSED",
   "components": {
     "agents": "./agents",
@@ -16,8 +14,9 @@
   "keywords": [
     "engineering-os",
     "agentic",
-    "brain",
-    "d2c-commerce",
-    "ai-team"
+    "ai-team",
+    "software-delivery",
+    "sdlc",
+    "platform-engineering"
   ]
 }

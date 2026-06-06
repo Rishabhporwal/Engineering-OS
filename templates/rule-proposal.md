@@ -1,7 +1,7 @@
 # Rule Proposal — {{PROPOSAL_ID}}
 
 > A proposed change to the team's operating rules. Lives at `.engineering-os/rule-proposals/<ISO-ts>__<slug>.md` in the Brain product repo.
-> Proposed by an agent or operator; ADOPTED only when Founder runs `/brain-engineering-os:adopt-rule <proposal-path>`.
+> Proposed by an agent or operator; ADOPTED only when Founder runs `/engineering-os:adopt-rule <proposal-path>`.
 > Agents CANNOT self-promote a proposal to a durable rule.
 
 | Field | Value |
@@ -74,7 +74,7 @@
 
 | Field | Value |
 |---|---|
-| **decided_at** | {{DECIDED_AT}} *(filled by /brain-engineering-os:adopt-rule or /reject-rule)* |
+| **decided_at** | {{DECIDED_AT}} *(filled by /engineering-os:adopt-rule or /reject-rule)* |
 | **decided_by** | rishabh *(Founder; agents cannot decide their own rules)* |
 | **decision** | {{DECISION}} *(adopted / rejected / deferred)* |
 | **rationale** | {{DECISION_RATIONALE}} |

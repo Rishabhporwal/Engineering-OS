@@ -6,13 +6,13 @@ disable-model-invocation: true
 
 Reject a previously-proposed rule.
 
-**Founder-only.** Same actor check as `/brain-engineering-os:adopt-rule`.
+**Founder-only.** Same actor check as `/engineering-os:adopt-rule`.
 
 `$ARGUMENTS` is `<proposal_id> <reason>` (the reason is required — silent rejection is forbidden).
 
 ## Steps
 
-1. **Validate arguments.** If `$ARGUMENTS` is empty or missing the reason, refuse: "Rejection requires a reason. Run: `/brain-engineering-os:reject-rule <proposal_id> <one-sentence reason>`."
+1. **Validate arguments.** If `$ARGUMENTS` is empty or missing the reason, refuse: "Rejection requires a reason. Run: `/engineering-os:reject-rule <proposal_id> <one-sentence reason>`."
 
 2. **Locate the proposal.** Read `${CLAUDE_PROJECT_DIR}/.engineering-os/rule-proposals/<proposal_id>.md`.
 

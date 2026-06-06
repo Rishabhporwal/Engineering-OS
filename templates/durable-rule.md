@@ -56,6 +56,6 @@
 |---|---|
 | Has this rule fired (bounced something) in the last N children? | Reviewed at every CTOA Stage 1 dependency check |
 | Has the rule become redundant with a newer rule or with codified workflow? | Surfaced if same lesson appears in N consecutive retros |
-| Has the rule's evidence (Brain stack / canon / regulatory regime) materially changed? | Surfaced when an agent or the Founder reviews durable-rules against the current canon; file a `/brain-engineering-os:propose-rule` supersession if it has |
+| Has the rule's evidence (Brain stack / canon / regulatory regime) materially changed? | Surfaced when an agent or the Founder reviews durable-rules against the current canon; file a `/engineering-os:propose-rule` supersession if it has |
 
 Rules that fail decay checks should be PROPOSED for supersession via the rule-proposal mechanism, not silently ignored.

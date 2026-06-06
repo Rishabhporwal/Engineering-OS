@@ -4,7 +4,7 @@ description: Founder-only — adopt a proposed rule from .engineering-os/rule-pr
 disable-model-invocation: true
 ---
 
-Adopt a previously-proposed rule (from `/brain-engineering-os:propose-rule`) as a durable operating rule.
+Adopt a previously-proposed rule (from `/engineering-os:propose-rule`) as a durable operating rule.
 
 **This skill is Founder-only.** Verify the operator is Founder (Rishabh) before proceeding. If invoked by an agent (not Founder), refuse with "Only Founder can adopt rules. The proposal stays in `proposed` status until Rishabh runs this skill personally."
 
