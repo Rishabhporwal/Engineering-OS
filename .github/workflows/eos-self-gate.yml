@@ -1,7 +1,7 @@
 # Engineering OS — self-gate CI (fixes QA-F2: quality-gates.md claimed "CI fails the
 # merge" but no CI existed). This gates the PLUGIN repo itself on every PR with the
 # same mechanical checks the team is supposed to enforce — so the OS practices its
-# own discipline. (The Brain PRODUCT repo instantiates its own gate from this template
+# own discipline. (The product repo instantiates its own gate from this template
 # + paradigm_check.py + coverage + the scanner suite — see docs/quality-gates.md.)
 name: eos-self-gate
 

@@ -1,20 +1,86 @@
-# Brain Engineering Operating System
+# Engineering OS
 
-An **AI engineering team** delivered as a Claude Code plugin. Orchestrates an 11-agent pipeline that takes a requirement from intake to production for **Brain** — the AI-native commerce operating system for DTC brands (India-first; UAE/GCC sequenced).
+A **universal, domain-agnostic AI engineering organization**, delivered as a Claude Code plugin. You
+give it a requirement; a fixed roster of engineering roles takes it from intake to production —
+designed, built, security-reviewed, QA'd, deployed, and monitored — producing audited, journaled work
+every time, **on any stack, for any product**.
 
-Every agent is grounded in the **Brain canon** — the BRD (`canon/business-requirements.md`), the TRD (`canon/technical-requirements.md` + `canon/TECH/00–18`), and a curated skill library, all shipped inside the plugin. These Brain-docs *are* Brain's approved Phase-0 foundation. When you install the plugin in your Brain product repo, the agents come with you.
+The OS itself carries **no** product, business, or domain knowledge. Everything domain-specific (what
+you're building, the stack, the compliance regime, the invariants, the metrics that matter) is supplied
+**once per adoption** through a **Foundation phase** that produces the **Product Canon**. After that,
+you just file requirements.
+
+> **The full framework is documented in [`engineering-os-blueprint/`](engineering-os-blueprint/)** —
+> first principles, org structure, roles, the delivery lifecycle, standards, quality gates, operations,
+> governance, the stack-agnostic reference architecture, the adoption guide, and the runtime/cost
+> doctrine. Read that to understand the OS as an organization; read this to install and run it.
 
 ---
 
-## Distribution model
+## The two layers (why it's reusable)
 
-| What | Where |
-|---|---|
-| The plugin itself (agents, skills, hooks, canon, prompts, workflows) | Lives in `~/.claude/plugins/brain-engineering-os/` after `/plugin install`. **Not in your Brain product repo.** |
-| Your Brain product repo | You clone it from wherever Brain's source lives. Contains Brain's code + a `.engineering-os/` directory (shared agent memory). |
-| Shared agent memory (`.engineering-os/`) | Committed to your **Brain product repo**, not the plugin. Every teammate who runs `git pull` receives the full memory of every prior run. |
+| Layer | What it is | Where it lives |
+|---|---|---|
+| **The Engineering OS** (this plugin) | The organization that *builds* software — roles, pipeline, standards, gates, governance. Stable, reusable, domain-free. | the plugin (`~/.claude/plugins/.../engineering-os/`) |
+| **The Product Canon** (per adoption) | The *thing being built* — requirements, chosen stack, architecture, compliance regime, invariants, the asset that compounds. | your repo's `.engineering-os/knowledge-base/` |
 
-The plugin is repo-decoupled. You install it once; you use it across any Brain product repo.
+A fully-worked example instantiation lives under [`examples/`](examples/) — a complete Product Canon
+and product-specific skill set for one real, demanding product — so you can see what "filled in" looks
+like.
+
+---
+
+## Distribution & memory model
+
+- **Installed, not cloned.** The plugin lives in `~/.claude/plugins/.../engineering-os/`. You install
+  it; you don't clone its source into your project. Everything it ships (agents, skills, canon
+  templates, docs, prompts, templates, schemas, workflows, hooks) resolves via `${CLAUDE_PLUGIN_ROOT}`.
+- **Shared memory lives in YOUR repo.** `/engineering-os:eos-init` scaffolds `.engineering-os/` into
+  your product repo (committed to git, resolved via `${CLAUDE_PROJECT_DIR}`). Journals, the audit log,
+  state, and per-run artifacts accrue there; every teammate inherits the full history on `git pull`.
+  **Memory is the moat.**
+
+---
+
+## The team — 11 roles
+
+10 roles + a runtime stress-test persona generator. Human/team names are optional and assigned per
+adoption in `team-roster.md`. **VETO = can block the pipeline.** Full specs in
+[`engineering-os-blueprint/02-engineering-roles.md`](engineering-os-blueprint/02-engineering-roles.md).
+
+| Role | Agent file | Tier | Stage(s) | Authority |
+|---|---|---|---|---|
+| **Engineering Advisor** | `cto-advisor` / `final-reviewer` | standard (intake) / deep (final) | 1 + 6 | **VETO** at final review; sole `/escalate` |
+| Stress-test Persona | `dynamic-persona-generator` | mechanical/standard | 1 | spawns **0–2** stress-test personas |
+| **Architect** | `architect` | deep | 2 | the binding plan; contract/boundary decisions |
+| **Backend Engineer** | `backend-developer` | standard | 3 | services, data, integration, idempotency |
+| **Frontend/Web Engineer** | `frontend-web-developer` | standard | 3 | web UI, a11y, web perf |
+| **Mobile Engineer** | `mobile-developer` | standard | 3 | mobile app, offline, store delivery |
+| **AI/ML Engineer** | `intelligence-engineer` | standard | 3 | model integration, evals, agentic systems, data |
+| **Security Reviewer** | `security-reviewer` | standard/deep | 4 | **VETO** on critical/high + compliance + traceability |
+| **QA Engineer** | `qa-agent` | standard | 5 | **VETO** on missing/invalid verification |
+| **Platform/SRE** | `platform-devops` | standard | 8 | deploy, monitor, auto-rollback |
+| **Delivery Coordinator** | `product-manager` | mechanical/standard | cross-cuts | release notes, tracker sync, escalation queue |
+| **Stakeholder** (human) | — | — | 7 | the only approval gate |
+
+---
+
+## The pipeline
+
+```
+Requirement ─▶ ① Intake ─▶ ② Architecture ─▶ ③ Build ─▶ ④ Security ║ ⑤ QA ─▶ ⑥ Final review
+                                              (vertical    (VETO)     (VETO)        (VETO)
+                                               slices)                                 │
+   Stakeholder gate ◀── ⑦ Approve/Reject ◀─────────────────────────────────────────────┘
+        │
+        ▼
+   ⑧ Deploy ─▶ monitor (bake window) ─▶ auto-rollback on breach ─▶ release notes
+```
+
+**Lanes scale rigor to risk** — a copy change and a change to an auth boundary do not travel the same
+path (lean / express / standard / high-stakes). A **post-build reclassification gate** re-scans the
+actual diff so a change that grows into a trigger surface mid-build is upgraded automatically. See
+[`engineering-os-blueprint/03-delivery-lifecycle.md`](engineering-os-blueprint/03-delivery-lifecycle.md).
 
 ---
 
@@ -22,180 +88,69 @@ The plugin is repo-decoupled. You install it once; you use it across any Brain p
 
 ### 1. Add the marketplace and install the plugin
 
-In Claude Code:
-
 ```
 /plugin marketplace add Rishabhporwal/Engineering-OS
-/plugin install brain-engineering-os
+/plugin install engineering-os
 ```
 
-The plugin lands in `~/.claude/plugins/brain-engineering-os/`. You will not need to look at it.
+### 2. Open your product repo in Claude Code
 
-### 2. Open your Brain product repo in Claude Code
-
-```sh
-git clone <your-brain-product-repo>
-code <your-brain-product-repo>  # or however you open it
-```
-
-### 3. (First-time setup of a Brain repo) Run `/brain-engineering-os:eos-init`
-
-If this is the **first time** the Engineering OS is being used in this particular Brain repo, run:
+### 3. (First time per repo) Run the Foundation
 
 ```
-/brain-engineering-os:eos-init
+/engineering-os:eos-init          # scaffolds .engineering-os/ + the Product Canon template
 ```
 
-This scaffolds `.engineering-os/` and `.gitattributes` into the repo. Commit them. Push. Now every teammate who pulls this repo gets the shared memory baseline.
+Then run the **Foundation phase** (supply requirements + technical constraints; the OS produces and
+you approve the Product Canon). Details:
+[`engineering-os-blueprint/10-adoption-and-product-canon.md`](engineering-os-blueprint/10-adoption-and-product-canon.md).
+Commit `.engineering-os/` and push — every teammate who pulls inherits the shared memory baseline.
 
-If you cloned an existing Brain repo that already has `.engineering-os/`, **skip this step** — it's already wired up.
+If you cloned a repo that already has `.engineering-os/`, **skip init** — it's already wired up.
 
 ---
 
 ## Daily use
 
-All plugin-provided commands are invokable via Claude Code's plugin namespace:
+All commands are invokable via the plugin namespace:
 
 ```
-/brain-engineering-os:requirement Add abandoned cart recovery for COD orders in GCC
-/brain-engineering-os:status                              # what's in flight
-/brain-engineering-os:recall feat-abandoned-cart-recovery-gcc   # full history of one feature
-/brain-engineering-os:recall-similar re-engage customers who didn't check out   # semantic search across all memory
-/brain-engineering-os:reindex                             # refresh the semantic memory index
-/brain-engineering-os:watch                               # live stream: what every agent is thinking/doing right now
-/brain-engineering-os:monitor http://localhost:3000       # live-watch the running app; auto-open fixes for browser errors
-/brain-engineering-os:dashboard                           # visual HTML board of all work by stage (progress tracking)
-/brain-engineering-os:qa-browser                          # real-Chromium QA: walk flows, capture errors, gen regression test
-/brain-engineering-os:design-review http://localhost:3000/dashboard   # screenshot + 0–10 scored visual audit
-/brain-engineering-os:approve feat-abandoned-cart-recovery-gcc  # Founder gate (Stage 7)
-/brain-engineering-os:reject feat-... <reason>            # Founder rejection
-/brain-engineering-os:deploy feat-...                     # Stage 8 deploy
-/brain-engineering-os:rollback feat-... <reason>          # manual rollback
-/brain-engineering-os:invoke-skill <skill-name>           # invoke a curated skill ad-hoc
-/brain-engineering-os:persona <persona-type> <question>   # spawn one persona for a quick check
-/brain-engineering-os:handoff <req-id> <stage>            # manual stage move (escape hatch)
-/brain-engineering-os:eos-init                            # one-time per Brain project scaffolder
+/engineering-os:requirement Add password reset via email magic link
+/engineering-os:status                          # what's in flight
+/engineering-os:recall feat-password-reset      # full history of one feature
+/engineering-os:recall-similar re-engage idle users   # semantic search across all memory
+/engineering-os:watch                           # live stream of what every agent is doing
+/engineering-os:monitor http://localhost:3000   # live-watch the running app; auto-open fixes for errors
+/engineering-os:dashboard                       # visual board of all work by stage
+/engineering-os:qa-browser                      # real-Chromium QA: walk flows, capture errors, gen regression test
+/engineering-os:design-review http://localhost:3000   # screenshot + scored visual audit
+/engineering-os:approve feat-password-reset     # Stakeholder gate (Stage 7)
 ```
-
-> **Tip:** type `/` in Claude Code and start typing `brain` — autocomplete will surface every available command. You don't have to remember the exact names.
-
-You never see the agent prompts, the Brain canon skills' internals, the workflow YAMLs, or the hook scripts. You see invokable skills, status, and rendered artifacts.
 
 ---
 
-## The team (11 agents: 10 named roles + the dynamic-persona-generator)
+## What makes it an *operating system*, not a process doc
 
-| Role | Persona | Pipeline stage(s) |
-|------|---------|-------------------|
-| CTO Advisor (shadow CTO) | **Rohan** | 1, 6 |
-| Dynamic Persona Generator | *Runtime-spawned 0–2 in Stage 1* | 1 |
-| Architect | **Aryan** | 2 |
-| Backend Developer | **Vikram** | 3 |
-| Frontend (Web) Developer | **Ananya** | 3 |
-| Mobile Developer | **Karan** | 3 |
-| Intelligence Engineer (AI/ML/Agents) | **Maya** | 3 |
-| Security Reviewer (VETO) | **Shreya** | 4 |
-| QA Agent (VETO) | **Tanvi** | 5 |
-| Platform/DevOps | **Jatin** | 8 |
-| Product Manager | **Priya** | cross-cuts |
-| Founder/CTO (you) | **Rishabh** | 7 |
-
-Names are continuous across runs and across teammates. Vikram is always Vikram, with the same memory, no matter who is operating the plugin.
+1. **Roles are agents, not titles** — each has a scope, decision rights, inputs, outputs, and a gate.
+2. **The pipeline is deterministic control-flow** — declared in [`pipeline/pipeline.yaml`](pipeline/pipeline.yaml), not re-improvised per task.
+3. **Gates carry VETO, and a VETO routes back** — never silently overridden.
+4. **Memory compounds** — every decision, review, and outcome is recorded in your repo.
+5. **The OS applies its own discipline to itself** — cost, verification, and observability doctrine bind its own operation ([`engineering-os-blueprint/11-runtime-and-cost-doctrine.md`](engineering-os-blueprint/11-runtime-and-cost-doctrine.md)).
 
 ---
 
-## The 8-stage pipeline
+## Repository layout
 
-```
-1. Rohan (CTO Advisor, intake) + 0–2 dynamic personas (by complexity)
-2. Architect (Aryan)
-3. Parallel Development — Vikram (BE) ∥ Ananya (FE) ∥ Karan (Mobile) ∥ Maya (AI)
-4. Security (Shreya) — VETO on CRITICAL/HIGH + compliance (DPDP/PDPL/DLT/NCPR) + missing traceability
-5. QA (Tanvi) — VETO on missing verification
-6. CTO Advisor (final review)
-7. Founder Approval (you) — HUMAN GATE
-8. Platform/DevOps (Jatin) — CI → staging → prod → 48h auto-rollback
-```
-
-Bounces between stages happen automatically when gate conditions fail. Anti-blind-agreement is enforced — every agent must push back on weak requirements.
-
-### Lanes (risk-based tiering)
-
-Not every requirement runs all 8 stages. At Stage 1, Rohan assigns a **lane** by risk:
-
-| Lane | When | Runs | Skips |
-|------|------|------|-------|
-| **Express** | trivial + zero trigger-surface (copy, docs, config, dep bump) | 1 → 3 → 5 → 7 → 8 | Architect, Security, Final-review |
-| **Standard** | normal feature, no trigger-surface | full 8, lean | — |
-| **High-stakes** | touches auth / money / multi-tenancy / PII / connectors / schema / compliance (DPDP/PDPL/DLT) / outbound channels / Decision Log / auto-execute | full 8 + mutation tests + 2 personas + mandatory Shreya VETO | — |
-
-Express skips the three Opus-heavy stages, cutting most of the time and token cost for the long tail of small work. The Founder gate and 48h monitor run in **every** lane. Full rules: [docs/feature-tiering.md](docs/feature-tiering.md).
-
----
-
-## Shared, git-synced memory (the "agents never forget" guarantee)
-
-When a teammate finishes a feature and pushes, the next teammate who pulls receives the full state: decisions, reviews, artifacts, journal entries — everything. This is delivered by three primitives in your Brain product repo:
-
-```
-<your-brain-product-repo>/
-├── (your Brain source code)
-├── .engineering-os/                    # committed to git
-│   ├── memory/
-│   │   ├── agents/                     # per-agent append-only journals
-│   │   └── features/                   # per-feature append-only journals
-│   ├── state/
-│   │   ├── active.json                 # currently in-flight requirements
-│   │   └── registry.json               # canonical list of every req_id
-│   ├── decision-log/                   # YYYY/MM/YYYY-MM-DD.jsonl
-│   ├── artifacts/                      # optional per-req cross-links
-│   └── runs/                           # per-run timestamped artifact bundles
-└── .gitattributes                      # merge=union rules for append-only files
-```
-
-**Conflict-resistant by design.** Append-only files use `merge=union`, so simultaneous appends auto-merge. Per-run folders carry a timestamp + operator suffix → no two teammates ever collide on the same path. The only file with last-write-wins is `state/active.json`, which agents always re-read before acting.
-
----
-
-## What's inside the plugin (you don't need to look)
-
-If you're curious: `~/.claude/plugins/brain-engineering-os/` contains agents, skills, commands, hooks, the Brain canon, workflows, schemas, templates, and the operating manual. It's all plain markdown. Plugins distributed via Claude Code are not cryptographically protected — they're out of your daily workflow, but technically readable if you go looking.
-
-For implementation details, see [REBUILD-SPEC.md](REBUILD-SPEC.md) (v2 design + rationale) and [pipeline/orchestrator.md](pipeline/orchestrator.md) (how the team runs).
-
----
-
-## Principles (non-negotiable)
-
-1. **No blind agreement.** Every agent challenges weak requirements.
-2. **Memory is the moat.** Decision Log and per-feature journals are append-only forever.
-3. **Cost-routed paradigms.** SQL > ML > small_llm > frontier_llm (paradigms 3 & 4 are model-agnostic, gateway-routed policy tiers; the LiteLLM gateway resolves the cheapest model that passes each tier's eval bar — Claude default, not Claude-only).
-4. **Single-Primitive Rule.** Every cross-cutting concern (Audience, Consent, Decision Log, Identity, Attribution, Integration Health, Notifications, Audit) is built once, consumed N times.
-5. **Multi-tenant `workspace_id` discipline.** Enforced at 4 layers (JWT → service assertion → Postgres RLS + ClickHouse gateway → Kafka envelope).
-6. **Compliance is P0.** DPDP / PDPL / TCCCPR-DLT / NCPR-DND / 9am–9pm calling hours / WhatsApp opt-in; India data in-region by default. Zero violations (Shreya VETO).
-7. **Truth + memory.** LLMs never invent numbers (deterministic metric registry); money is integer minor units; the Decision Log is the moat; one correlation ID end-to-end.
-8. **Goal-driven verification.** Every "done" claim runs a real command and captures real output.
-
----
-
-## Versioning & updates
-
-When the plugin updates, teammates run:
-
-```
-/plugin update brain-engineering-os
-```
-
-⚠️ **Then RESTART your Claude Code session.** Plugin changes only load on restart — the running session holds the old plugin in memory, so an update without a restart silently keeps running the old pipeline (the #1 gotcha, O5). After restarting, `/status` shows the loaded version.
-
-No code changes in their Brain product repo. The plugin in `~/.claude/plugins/` refreshes; the agents have new capabilities; their memory in `.engineering-os/` carries forward.
-
----
-
-## Support
-
-For the Founder: see [ROADMAP.md](ROADMAP.md) for V1/V2/V3 scope and the end-to-end walkthrough.
-For maintainers: see [docs/](docs/) for the full operating manual.
-For teammates: there is no support to ask for. Submit a `/requirement` and the team takes over.
-
-*This plugin is the engineering team. Use it like one.*
+| Path | What |
+|---|---|
+| `engineering-os-blueprint/` | The framework, as readable docs (start here). |
+| `agents/` | The 12 role agent files. |
+| `skills/` | The engineering-discipline + command skill library. |
+| `canon/` | The **Product Canon template** (filled per adoption into `.engineering-os/knowledge-base/`). |
+| `pipeline/` | The deterministic control-flow (lanes, stages, routing, delta-review, caching, telemetry). |
+| `workflows/` | State machine + requirement-to-release + approval flow. |
+| `prompts/` | The shared system prompt + challenge framework. |
+| `hooks/` | Session/secret/handoff/usage hooks. |
+| `tools/` | Pipeline doctor, lane classifier, gate check, validity check, memory search, dashboard, etc. |
+| `schemas/` · `templates/` | Artifact schemas and the per-stage report templates. |
+| `examples/` | A fully-worked example instantiation (one product's Canon + product skills). |

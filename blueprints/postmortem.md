@@ -1,6 +1,6 @@
 # Postmortem — {{INCIDENT_TITLE}}
 
-> **Blameless** postmortem. Filled by Jatin + the builder(s) per the `incident-response` skill, after any SEV-1/SEV-2 (and any compliance or auto-execute incident regardless of severity). Blameless = we fix systems, not people. Save to `${CLAUDE_PROJECT_DIR}/.engineering-os/memory/incidents/<date>-<slug>.md` and feed every action item into the lessons-learned registry.
+> **Blameless** postmortem. Filled by Platform-SRE + the builder(s) per the `incident-response` skill, after any SEV-1/SEV-2 (and any compliance or auto-execute incident regardless of severity). Blameless = we fix systems, not people. Save to `${CLAUDE_PROJECT_DIR}/.engineering-os/memory/incidents/<date>-<slug>.md` and feed every action item into the lessons-learned registry.
 
 | Field | Value |
 |---|---|
@@ -14,7 +14,7 @@
 | **Affected** | {{services / workspaces / customers — quantify}} |
 
 ## 1. Impact (in business terms, not just technical)
-{{What broke for whom. Revenue/CM2 impact, Decision-Log writes lost, Morning Briefs missed, compliance exposure (DND/out-of-window sends?), data exposed? Quantify against the SLOs — e.g. "Morning Brief missed for N workspaces vs the 07:20 IST / 99.5% SLO".}}
+{{What broke for whom. Financial impact, audit-log writes lost, scheduled jobs missed, compliance exposure, data exposed? Quantify against the SLOs — e.g. "feature X unavailable for N tenants vs the stated SLO".}}
 
 ## 2. Timeline (UTC, factual)
 - `{{TS}}` — {{event}}
@@ -34,7 +34,7 @@
 ## 5. Action items (each: owner + due date + tracked; the point of the postmortem)
 | Action | Type (prevent / detect / mitigate) | Owner | Due | Tracking |
 |---|---|---|---|---|
-| {{e.g. add burn-rate alert at 2× error budget}} | detect | Jatin | {{date}} | {{decision-log / tracker id}} |
+| {{e.g. add burn-rate alert at 2× error budget}} | detect | Platform-SRE | {{date}} | {{decision-log / tracker id}} |
 
 ## 6. Lessons → registry
 - If this root cause has now appeared in ≥3 runs/incidents, propose a durable rule (`/propose-rule`) per the self-learning loop. Otherwise log the lesson in `lessons-learned.md`.

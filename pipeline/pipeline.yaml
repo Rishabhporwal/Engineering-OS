@@ -191,7 +191,7 @@ caching:
   measure: "log cache_read_tokens via usage_logger; target >60% hit rate on the long-context stages before declaring a caching win (dashboard surfaces cache-hit %)"
 
 # ---------------------------------------------------------------------------
-# ADOPT-NEXT (research-backed, not yet built — ranked). See REBUILD-SPEC §13.
+# ADOPT-NEXT (research-backed, not yet built — ranked). See engineering-os-blueprint/11 §7.
 # ---------------------------------------------------------------------------
 adopt_next:
   - "Batch API (50% off) for non-interactive stages — full security/QA sweeps, eval runs, nightly reports; stacks with caching → ~5% of original price"
