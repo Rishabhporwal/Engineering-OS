@@ -28,6 +28,13 @@ This document is the **authoritative skill-to-role binding** for the Engineering
 | **OPS** | DevOps / infra / deployment |
 | **INTG** | Integrations / connectors |
 | **DISC** | Engineering discipline / process |
+| **STREAM** | Stream processing (real-time compute) |
+| **BATCH** | Batch processing (large-scale offline compute) |
+| **LAKE** | Lakehouse / open table format (raw + historical store) |
+| **GRAPH** | Graph / identity resolution |
+| **SEARCH** | Search / retrieval (lexical + vector) |
+| **MLOPS** | ML platform & model lifecycle (features, registry, serving) |
+| **WF** | Durable workflow / orchestration |
 
 > A skill tagged to a vendor-specific domain (e.g. a Next.js or ClickHouse skill) is a **reference implementation** of a seam — the *patterns* transfer, the vendor does not. See `engineering-os-blueprint/09-reference-architecture.md`. The product's `STACK.md` declares which technology actually binds each seam.
 
@@ -41,6 +48,8 @@ This document is the **authoritative skill-to-role binding** for the Engineering
 | **FEW** | Frontend/Web Engineer | `frontend-web-developer` |
 | **FEM** | Mobile Engineer | `mobile-developer` |
 | **AIE** | AI/ML Engineer | `intelligence-engineer` |
+| **DE** | Data Engineer | `data-engineer` |
+| **MLP** | ML Platform Engineer | `ml-platform-engineer` |
 | **SEC** | Security Reviewer | `security-reviewer` |
 | **QA** | QA Engineer | `qa-agent` |
 | **OPS** | Platform/SRE | `platform-devops` |
@@ -106,7 +115,24 @@ This document is the **authoritative skill-to-role binding** for the Engineering
 | 51 | [`writing-plans`](../skills/writing-plans/SKILL.md) | DISC | PM, ARC | **ALL** plan-emitting agents | yes |
 | 52 | [`accessibility`](../skills/accessibility/SKILL.md) | FE-W + FE-M | FEW, FEM | QA | yes |
 
-> `decision-log` covers the system-of-record audit log where the product's Canon requires one (condition → recommendation → approval/edit → execution → reversal → outcome). `metric-engine` covers the single-source metric registry (`METRICS.md`) with cross-runtime parity. Vendor-named skills (`backend-fastify-trpc-grpc`, `clickhouse-olap`, `data-layer`, `devops-aws`, `event-driven-kafka`, `frontend-web`, `grpc-buf`, `llm-gateway`, `mobile-surface`, `oauth-implementation`, `python-services`, `turborepo`) are **reference implementations** of a seam — the patterns transfer; the product's `STACK.md` may bind the seam to different technology.
+### Data-plane + ML-platform seams (Phase 2 expansion)
+
+> These 10 reference-implementation skills bind the data-infra and ML-platform seams a high-scale, AI-native product needs. They are owned primarily by the two roles added in this expansion — **Data Engineer (DE)** and **ML Platform Engineer (MLP)**. Numbering continues the table above; they are listed alphabetically within this block. Like every vendor-named skill, they are **reference impls** — the product's `STACK.md` binds the seam to the actual technology.
+
+| # | Skill | Domain | Primary | Shared with | Exposed as command |
+|---|-------|--------|---------|-------------|---------------------|
+| 53 | [`agent-orchestration-langgraph`](../skills/agent-orchestration-langgraph/SKILL.md) (reference impl) | AI + MLOPS | AIE | MLP, SEC, ARC | yes |
+| 54 | [`batch-processing-spark`](../skills/batch-processing-spark/SKILL.md) (reference impl) | BATCH + DATA | DE | AIE, MLP, ARC | yes |
+| 55 | [`feature-store-feast`](../skills/feature-store-feast/SKILL.md) (reference impl) | MLOPS + DATA + AI | MLP | DE, AIE, QA | yes |
+| 56 | [`graph-identity-neo4j`](../skills/graph-identity-neo4j/SKILL.md) (reference impl) | GRAPH + DATA | DE | AIE, BE, SEC, ARC | yes |
+| 57 | [`lakehouse-iceberg`](../skills/lakehouse-iceberg/SKILL.md) (reference impl) | LAKE + DATA | DE | AIE, MLP, ARC, OPS | yes |
+| 58 | [`ml-lifecycle`](../skills/ml-lifecycle/SKILL.md) (reference impl; MLflow registry + serving) | MLOPS + AI | MLP | AIE, QA, OPS | yes |
+| 59 | [`search-opensearch`](../skills/search-opensearch/SKILL.md) (reference impl) | SEARCH + DATA + BE | BE | DE, OPS, SEC | yes |
+| 60 | [`stream-processing-flink`](../skills/stream-processing-flink/SKILL.md) (reference impl) | STREAM + DATA | DE | AIE, MLP, BE, ARC, OPS | yes |
+| 61 | [`vector-search-pgvector`](../skills/vector-search-pgvector/SKILL.md) (reference impl) | SEARCH + AI + MLOPS | MLP | AIE, DE, SEC | yes |
+| 62 | [`workflow-engine-temporal`](../skills/workflow-engine-temporal/SKILL.md) (reference impl) | WF + BE + OPS | BE | AIE, MLP, OPS, ARC | yes |
+
+> `decision-log` covers the system-of-record audit log where the product's Canon requires one (condition → recommendation → approval/edit → execution → reversal → outcome). `metric-engine` covers the single-source metric registry (`METRICS.md`) with cross-runtime parity. Vendor-named skills (`backend-fastify-trpc-grpc`, `clickhouse-olap`, `data-layer`, `devops-aws`, `event-driven-kafka`, `frontend-web`, `grpc-buf`, `llm-gateway`, `mobile-surface`, `oauth-implementation`, `python-services`, `turborepo`, and the Phase 2 data/ML seams `stream-processing-flink`, `batch-processing-spark`, `lakehouse-iceberg`, `graph-identity-neo4j`, `search-opensearch`, `feature-store-feast`, `vector-search-pgvector`, `workflow-engine-temporal`, `agent-orchestration-langgraph`, `ml-lifecycle`) are **reference implementations** of a seam — the patterns transfer; the product's `STACK.md` may bind the seam to different technology.
 
 > The skill list above is generated from `skills/` — keep it in sync (CI: `knowledge_lint.py`). When a skill folder is added or removed from `skills/`, update this matrix.
 
@@ -187,21 +213,64 @@ This document is the **authoritative skill-to-role binding** for the Engineering
 - `verification-before-completion`
 
 ### AI/ML Engineer (`intelligence-engineer`)
+*Scope narrowed in the Phase 2 expansion: the data plane moved to the Data Engineer and the ML platform to the ML Platform Engineer. This role now owns the **model/agent layer + the analytics math** on top of those platforms, and remains the cost-routing champion.*
 - `claude-api` (primary)
 - `python-services` (primary — reference impl of the data/ML service seam)
-- `llm-gateway`
-- `llm-evals`
+- `llm-gateway` (shared with MLP)
+- `llm-evals` (shared with QA, MLP)
+- `agent-orchestration-langgraph` (builds agents on the MLP-owned runtime)
+- `ml-lifecycle` (consumes — trains/promotes models on the MLP platform)
+- `vector-search-pgvector` (consumes — RAG retrieval)
+- `feature-store-feast` (consumes — training/serving features)
 - `domain-driven-design`
 - `mcp-protocol` (incl. building a new MCP server / tool surface)
-- `clickhouse-olap`
+- `clickhouse-olap` (analytics math; DE owns the pipelines that feed it)
 - `metric-engine` (single-source metric registry + cross-runtime parity)
 - `decision-log` (the system-of-record audit log — every recommendation/action is logged where the Canon requires it)
-- `data-quality`
+- `data-quality` (shared with DE)
 - `experimentation-holdouts`
 - `integration-connectors`
 - `oauth-implementation` (shared with BE)
-- `data-layer` (shared with BE)
 - `cost-routing-paradigms` (this is **the primary discipline** of this role)
+- `engineering-discipline`
+- `systematic-debugging`
+- `verification-before-completion`
+
+### Data Engineer (`data-engineer`)
+*Phase 2 expansion role. Owns the **data plane** — every dataset the other layers read. Two laws: tenant-keyed everywhere; every dataset replayable (live + backfill share one code path).*
+- `stream-processing-flink` (primary — reference impl of the stream seam)
+- `batch-processing-spark` (primary — reference impl of the batch seam)
+- `lakehouse-iceberg` (primary — reference impl of the lakehouse seam)
+- `graph-identity-neo4j` (primary — identity resolution)
+- `event-driven-kafka` (shared with BE — consumes/produces the backbone)
+- `clickhouse-olap` (builds the materializations AIE reads)
+- `data-layer` (shared with ARC, BE)
+- `search-opensearch` (indexing pipeline; shared with BE)
+- `metric-engine` (stream/batch parity vs the single-source registry)
+- `data-quality` (primary — freshness SLAs, assertions, reconciliation)
+- `integration-connectors` (shared with AIE)
+- `region-and-locale` (residency-pinned storage)
+- `multi-tenancy-isolation` (tenant key on every pipeline/store)
+- `cost-routing-paradigms`
+- `engineering-discipline`
+- `systematic-debugging`
+- `verification-before-completion`
+
+### ML Platform Engineer (`ml-platform-engineer`)
+*Phase 2 expansion role. Owns the **ML platform** the AI/ML Engineer and Data Engineer self-serve on. Two laws: online/offline parity; gated promotion (ship only ≥ baseline).*
+- `feature-store-feast` (primary — reference impl of the feature-store seam)
+- `ml-lifecycle` (primary — registry + serving + gated promotion)
+- `vector-search-pgvector` (primary — semantic retrieval store)
+- `agent-orchestration-langgraph` (owns the runtime; AIE builds agents on it)
+- `llm-gateway` (shared with AIE)
+- `llm-evals` (the ship gate; shared with AIE, QA)
+- `mcp-protocol` (tool surfaces for agents)
+- `agentic-safety` (shared with SEC — tool blast-radius)
+- `metric-engine` (the ML analogue: one feature definition, parity-checked)
+- `data-quality` (drift monitoring; shared with DE)
+- `multi-tenancy-isolation`
+- `operational-readiness` (serving health probes)
+- `cost-routing-paradigms` (co-champion with AIE — a trained model beats a frontier LLM for structured prediction)
 - `engineering-discipline`
 - `systematic-debugging`
 - `verification-before-completion`

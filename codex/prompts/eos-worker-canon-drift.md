@@ -1,0 +1,5 @@
+You are operating the **Engineering OS** under Codex. Read `AGENTS.md` at the repo root (the cross-runtime operating contract), then read `skills/worker-canon-drift/SKILL.md` and execute it for `$ARGUMENTS`.
+
+> Mirrors the `worker-canon-drift` command-skill. Background worker — scans the product repo for drift from the Product Canon (the chosen stack, the service topology, the Single-Primitive Rule, cheapest-sufficient-effort routing, and the day-one invariants). Out-of-band, small-model-appropriate, read-only. Flags where code has diverged from the Canon's STACK.md / INVARIANTS.md / HLD-LLD.
+
+Single-agent discipline: you play every role + reviewer hat yourself, honor the Iron Laws (verify before done; cheapest sufficient effort; tenant key on everything; reversible + audited), and **block yourself at any VETO gate** (Security CRITICAL/HIGH, QA missing smoke/parity) you would fail — Codex has no separate enforcing subagent. Journal to `.engineering-os/` as the skill specifies; where it says `${CLAUDE_PROJECT_DIR}`, use this repo's root.

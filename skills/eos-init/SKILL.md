@@ -19,7 +19,7 @@ This scaffolds the OS's **shared memory** only. The product itself is defined se
    - `${CLAUDE_PROJECT_DIR}/.engineering-os/README.md`
    - `${CLAUDE_PROJECT_DIR}/.engineering-os/state/active.json`
    - `${CLAUDE_PROJECT_DIR}/.engineering-os/state/registry.json`
-   - `${CLAUDE_PROJECT_DIR}/.engineering-os/memory/agents/{cto-advisor,architect,backend,frontend-web,frontend-mobile,intelligence,security,qa,platform,product}.journal.md` (10 starter journals)
+   - `${CLAUDE_PROJECT_DIR}/.engineering-os/memory/agents/{cto-advisor,architect,backend,frontend-web,frontend-mobile,intelligence,data-engineer,ml-platform,security,qa,platform,product}.journal.md` (12 starter journals)
    - `${CLAUDE_PROJECT_DIR}/.engineering-os/memory/features/.gitkeep`
    - `${CLAUDE_PROJECT_DIR}/.engineering-os/decision-log/.gitkeep`
    - `${CLAUDE_PROJECT_DIR}/.engineering-os/runs/.gitkeep`

@@ -1,7 +1,7 @@
 {
   "name": "engineering-os",
-  "version": "2.0.0",
-  "description": "A universal, domain-agnostic AI engineering organization delivered as a Claude Code plugin. A fixed roster of engineering roles (Engineering Advisor, Architect, Backend/Frontend/Mobile/AI-ML engineers, Security, QA, Platform/SRE, Delivery Coordinator) drives any requirement from intake to release through a staged, lane-scaled, VETO-gated pipeline. Stack- and domain-agnostic: the product, stack, compliance regime, and invariants are supplied once per adoption via a Foundation phase that produces the Product Canon (knowledge-base/). Shared memory lives in the consuming repo's .engineering-os/ (committed to git). See engineering-os-blueprint/ for the full framework.",
+  "version": "2.1.0",
+  "description": "A universal, domain-agnostic AI engineering organization delivered as a Claude Code plugin (and Codex-compatible via AGENTS.md). A fixed roster of engineering roles (Engineering Advisor, Architect, Backend/Frontend/Mobile/AI-ML engineers, Data Engineer, ML Platform Engineer, Security, QA, Platform/SRE, Delivery Coordinator) drives any requirement from intake to release through a staged, lane-scaled, VETO-gated pipeline. Stack- and domain-agnostic: the product, stack, compliance regime, and invariants are supplied once per adoption via a Foundation phase that produces the Product Canon (knowledge-base/). Shared memory lives in the consuming repo's .engineering-os/ (committed to git). See engineering-os-blueprint/ for the full framework, AGENTS.md for the cross-runtime contract, and docs/engineering-skills-matrix.md for the competency model.",
   "author": {
     "name": "Engineering OS"
   },

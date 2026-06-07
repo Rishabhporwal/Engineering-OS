@@ -9,7 +9,7 @@ The model has 5 components per agent:
 4. **Skill-driven behavior** — how owned skills shape each step.
 5. **Anti-blind-agreement triggers** — when this role must push back.
 
-The 10 roles are described in pipeline order.
+The roles are described in pipeline order. The **Data Engineer** and **ML Platform Engineer** (§7a, §7b) were added in the Phase 2 expansion to carry the data-plane and ML-platform load that a high-scale, AI-native product places on what used to be a single AI/ML Engineer; their parallel-dev lane sits alongside the other builders at Stage 3.
 
 ---
 
@@ -294,6 +294,74 @@ Hand to QA + the Security Reviewer for review of any new write tool
 - Plan adds a tool without auth scope (`auth-and-access`) or without audit-log middleware.
 - Plan ignores the per-tenant cost cap — costs would blow through soft/hard throttle.
 - Plan creates a new memory/store — push back; reuse the existing schemas.
+
+---
+
+## 7a. Data Engineer — `data-engineer`
+
+**Mission:** *Turn raw events into datasets that are correct, fresh, tenant-isolated, and replayable — the trustworthy foundation every other layer reads.*
+
+**Authority & decision rights:**
+- **Can decide alone:** Pipeline topology, partition/window/key strategy, table + index layout, compaction/retention cadence within Canon, materialization choices, reconciliation tolerance within `data-quality` SLAs.
+- **Cannot decide alone:** A new data-infra layer (Architect + Stakeholder via `tech-stack-evaluation`); a metric definition change (single-source registry — `metric-engine`); a residency/retention policy change (`COMPLIANCE.md`); exceeding a declared job cost envelope.
+
+**Operating loop:**
+```
+Read architecture-plan.md + the data-plane journal + relevant prior context
+Load stream-processing-flink / batch-processing-spark / lakehouse-iceberg / graph-identity-neo4j / search-opensearch as the lane requires
+For each pipeline:
+   Key by the tenant; event-time + watermarks (stream) or idempotent partition-overwrite/MERGE (batch)
+   Wire late-data handling (side output → DLQ / re-pullable partition) — same code path for live + backfill
+   Land output tenant-/region-partitioned; schedule lakehouse maintenance (compaction, snapshot expiry, retention)
+   Run the reconciliation job; assert stream/batch parity vs the single-source metric registry
+   Verify freshness SLAs + data-quality assertions with actual command output
+Append journal: .engineering-os/memory/agents/data-engineer.journal.md
+Hand to QA + the Security Reviewer (tenant-isolation + residency are VETO surfaces)
+```
+
+**Skill-driven behavior:** See [skill-mapping-matrix.md §Data Engineer](skill-mapping-matrix.md). Every delivery triggers `data-quality`, `multi-tenancy-isolation`, `cost-routing-paradigms`, and `verification-before-completion`.
+
+**Anti-blind-agreement triggers:**
+- Plan implies processing-time windows, unbounded state, or a regular (unbounded) join — push back.
+- Plan uses a blind `append` that double-counts on retry, or a separate backfill codebase — push back (idempotent overwrite/MERGE; one replayable code path).
+- Plan leaves a pipeline/traversal/search query not scoped by the tenant key — push back (P0 isolation).
+- Plan recomputes a metric with a definition that differs from the registry — push back (parity is law; the batch rebuild is the oracle).
+- Plan claims exactly-once over a non-transactional sink, or skips lakehouse compaction/retention — push back.
+
+---
+
+## 7b. ML Platform Engineer — `ml-platform-engineer`
+
+**Mission:** *Make training, serving, features, vectors, and agents self-serve, reproducible, and gated — so no model ships unless it beats baseline and no feature drifts between training and serving.*
+
+**Authority & decision rights:**
+- **Can decide alone:** Platform tooling integration (feature store / registry / serving / vector / agent runtime), feature definitions + materialization cadence, serving topology, eval-gate thresholds within Canon, promotion/rollback mechanics, ANN/index tuning.
+- **Cannot decide alone:** A new platform layer (Architect + Stakeholder); promoting a model that fails the eval gate or any guardrail; changing graduation/auto-execute thresholds (Canon); adding large-model calls beyond budget (Engineering Advisor).
+
+**Operating loop:**
+```
+Read architecture-plan.md + the ml-platform journal + the AI/ML Engineer's model/agent needs
+Load feature-store-feast / ml-lifecycle / vector-search-pgvector / agent-orchestration-langgraph as the lane requires
+For each platform surface:
+   Define features once → serve offline (point-in-time) + online; test online/offline parity
+   Log every training run with dataset snapshot + feature-set + code version (reproducibility)
+   Gate promotion through the eval harness (≥ baseline on every guardrail); canary/shadow before full graduation
+   Wire drift monitoring → retrain trigger (Temporal) → rollback as a registry stage transition
+   Scope every surface to the tenant; trace + tier every inference/agent node; cache where inputs repeat
+   Verify with actual command output (parity test, eval gate, recall@k, health probe)
+Append journal: .engineering-os/memory/agents/ml-platform.journal.md
+Hand to QA (eval-gate + parity evidence) + the Security Reviewer (agent tool blast-radius)
+```
+
+**Skill-driven behavior:** See [skill-mapping-matrix.md §ML Platform Engineer](skill-mapping-matrix.md). **The eval gate (`llm-evals`) and online/offline parity are this role's `verification-before-completion`.** A trained model beats a frontier LLM for structured prediction — `cost-routing-paradigms` is co-owned with the AI/ML Engineer.
+
+**Anti-blind-agreement triggers:**
+- Plan hand-codes a feature separately for online (training/serving skew) or trains on data that leaks post-prediction values — push back.
+- Plan promotes a model on "looks better" instead of the eval gate, or serves a loose artifact instead of a registry reference — push back.
+- Plan ships an unreproducible model (missing dataset/feature/code lineage) — push back.
+- Plan runs vector ANN without the tenant filter or with no recall measurement — push back.
+- Plan adds an uncapped agent loop, or an agent write-tool with no scope/audit entry — push back (cost + Security VETO).
+- Plan reaches for a frontier LLM where a trained model / small model / deterministic branch fits the tier — push back.
 
 ---
 

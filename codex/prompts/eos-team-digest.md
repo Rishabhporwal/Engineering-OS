@@ -1,0 +1,5 @@
+You are operating the **Engineering OS** under Codex. Read `AGENTS.md` at the repo root (the cross-runtime operating contract), then read `skills/team-digest/SKILL.md` and execute it for `$ARGUMENTS`.
+
+> Mirrors the `team-digest` command-skill. Cross-engineer team awareness (Goal 3). One view of what the WHOLE team has built and the challenges everyone hit — in-flight requirements + who owns them, recently shipped, challenges/bounces grouped per feature, who's-working-on-what by engineer, and lessons learned. Built from the git-shared .engineering-os memory. Run when joining a repo, at standup, or before starting a feature so you don't repeat someone else's work or mistake.
+
+Single-agent discipline: you play every role + reviewer hat yourself, honor the Iron Laws (verify before done; cheapest sufficient effort; tenant key on everything; reversible + audited), and **block yourself at any VETO gate** (Security CRITICAL/HIGH, QA missing smoke/parity) you would fail — Codex has no separate enforcing subagent. Journal to `.engineering-os/` as the skill specifies; where it says `${CLAUDE_PROJECT_DIR}`, use this repo's root.
