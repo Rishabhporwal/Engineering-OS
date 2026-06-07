@@ -89,6 +89,15 @@ Migration is an **evidence-gated ADR**, coordinated with [`version-upgrade-polic
 4. **Rollback plan** — keep the old model pinned and one flag-flip away until the new one beats baseline on the live sample for a defined window.
 5. **Audit log + ADR** — record the migration decision and its eval evidence.
 
+## Tooling + eval-driven development (2026)
+
+Eval-driven development is now standard practice, not optional — a CI quality gate **plus** a platform for human annotation + regression dashboards:
+
+- **The trace store is the substrate.** Online sampling (point 3) and the golden set both read from the **OpenTelemetry GenAI** spans captured by [`ai-observability-tracing`](../ai-observability-tracing/SKILL.md) — a failing eval links straight to the offending trace. Instrument once (OTel `gen_ai.*`), swap the backend freely.
+- **Named reference tooling** (bind in `STACK.md`): **DeepEval / Ragas / promptfoo** for the CI scorers (pytest-integrated, RAG metrics, red-teaming); **Langfuse / Arize Phoenix** as the OTLP eval/annotation backend. All are examples of the seam — the patterns here transfer.
+- **Multi-step agents → `agent-evaluation`.** This skill's "agent-step eval" family is the entry point; deep **trajectory / tool-call / multi-turn** evaluation of durable agents lives in [`agent-evaluation`](../agent-evaluation/SKILL.md). RAG recall@k tuning lives in [`rag-retrieval`](../rag-retrieval/SKILL.md). This skill remains the gate for prompt/model/single-shot RAG changes.
+- **Every production failure becomes a golden case** — the suite grows from real incidents, not only curated examples.
+
 ## Anti-patterns (code-review / Stage-5 blockers)
 
 - Prompt or model change merged with **no eval run** or a score **below baseline** → blocker.

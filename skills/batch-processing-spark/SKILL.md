@@ -9,6 +9,8 @@ description: Reference implementation — large-scale batch on Apache Spark: ide
 
 Spark does the heavy, latency-tolerant work the stream path can't: **model-training feature builds, nightly reconciliation, historical rebuilds, backfills, large aggregations** over the lakehouse (`lakehouse-iceberg`). **Owner:** Data Engineer; ML feature/training jobs co-owned with the ML Platform Engineer. Canon: `STACK.md`.
 
+> **Right-size the engine (2026) — Spark is no longer the automatic default.** Single-node engines now handle small-to-medium (and even hundreds-of-GB) workloads faster and cheaper: **Polars** (Rust dataframes), **DuckDB** (in-process, over Parquet/Iceberg/Delta — see `embedded-analytics-duckdb` if bound), and **Daft** (distributed Rust). Reach for Spark when the data is genuinely large or a Spark platform already exists; otherwise prefer the lighter engine. **Apache Arrow** is the shared memory layer; **Ray** for distributed Python/ML. The hybrid (Polars/DuckDB for light, Spark/Daft for heavy) is the emerging norm — the *patterns* in this skill (idempotent partition-overwrite, tenant-leading partitioning, reconciliation-as-oracle, point-in-time training data) transfer to whichever engine `STACK.md` binds.
+
 ## Invariants (NON-NEGOTIABLE)
 1. **Every job is idempotent and re-runnable.** A re-run for the same logical date produces the same output. Use **dynamic partition overwrite** (`INSERT OVERWRITE` of `dt=YYYY-MM-DD` partitions) or an Iceberg `MERGE`/snapshot — never blind `append` (which double-counts on retry). A failed job is just re-run; no manual cleanup.
 2. **Tenant-leading partitioning.** Output partitioned by `tenant_id`/region first, then date. Reads prune by tenant. (Mirrors `data-layer` / `clickhouse-olap` ORDER BY.)

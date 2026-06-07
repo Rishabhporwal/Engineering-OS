@@ -120,3 +120,8 @@ The lineage map drives BOTH workflows: an **erasure** walks every node (OLTP tom
 
 ## References
 `engineering-os-blueprint/08-technical-governance.md §5` (compliance as an engineered capability) · the Product Canon's `COMPLIANCE.md` (the specific regime + its parameters, SLOs, test matrix) · `security-baseline` · `multi-tenancy-isolation` · `region-and-locale` (residency enforcement) · `compliance-attestation` (payment scope + audit immutability + attestation evidence). For one concrete instantiation of a regime, see `examples/brain-instantiation/`.
+
+## 2026 market update
+
+- **Enforce the declared regime with `policy-as-code`** (OPA/Kyverno admission + IaC gates) so residency/retention/consent/no-privileged rules are *rejected* when violated, not just documented.
+- **Provenance/attestation** (`supply-chain-security`) supplies tamper-evident evidence for the audit trail (`compliance-attestation`).

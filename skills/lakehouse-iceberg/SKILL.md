@@ -56,3 +56,7 @@ Object storage + an open format is the **cheapest durable tier** — keep raw/hi
 
 ## Anti-patterns
 Raw Parquet with no table format (no ACID, no evolution) · exposing `dt=` partition columns to app queries · in-place file edits · never compacting (small-files death) · unbounded snapshot retention (cost + compliance breach) · cross-region reads of residency-pinned data · training off a moving table instead of a pinned snapshot.
+
+## 2026 market update
+
+- **Iceberg has decisively won the table-format war (2026):** S3 Tables, Snowflake Polaris, BigQuery managed Iceberg, Confluent Tableflow, and even Databricks Managed Iceberg all back it — it's the interoperability lingua franca across engines. **Delta** has the largest installed base but is Databricks-bound; **Hudi** holds the CDC/record-level niche. Betting the lakehouse seam on Iceberg is the low-regret choice.

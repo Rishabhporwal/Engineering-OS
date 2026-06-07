@@ -105,3 +105,10 @@ The OLAP store has its own tz-aware date functions; always pass the IANA string,
 Schema+migrations → Backend Engineer · RLS review → Security Reviewer + Architect · pooler config + slow-query alerting → Platform/SRE · OLAP MVs / vector indexes → AI/ML Engineer · pg_cron inventory → Platform/SRE.
 
 Related: `clickhouse-olap`, `security-baseline`, `idempotency-handling`, `auth-and-access`, `api-discipline` (cursor pagination), `data-quality`.
+
+## 2026 market update
+
+- **"Just use Postgres" hardened into consensus (2026):** pgvector is default-installed on RDS/Cloud SQL/Supabase/Neon — one store for OLTP + JSON + vector + queue. Reach out to a specialized store only when Postgres demonstrably can't serve the need.
+- **RLS gotcha:** enable row-level security **per-partition**, not just on the parent table — a partitioned table silently bypasses parent-only RLS.
+- **Access layer + migrations** (Drizzle / Prisma 7 / Kysely; Atlas / sqlc declarative-vs-versioned, expand-contract) bind via `STACK.md`.
+- **Database branching** (Neon / Supabase copy-on-write forks per PR / per agent) is now an expected dev primitive — see `database-branching-dev-data` if bound.

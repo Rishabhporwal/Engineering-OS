@@ -198,3 +198,9 @@ expect(isAllowed(new Date('2026-05-13T21:00:01Z'))).toBe(false);
 - The Canon's `METRICS.md` (registry + parity) and `COMPLIANCE.md` (the regime) — Definition of Done per layer + scaffolds
 - `engineering-os-blueprint/06-quality-gates-and-metrics.md`
 - Related skills: `cost-routing-paradigms`, `compliance-engine`, `metric-engine`, `multi-tenancy-isolation`, `operational-readiness`, `verification-before-completion`, `code-review`
+
+## 2026 market update
+
+- **Playwright is the E2E + component-test standard** (overtook Cypress); **Vitest** is the Jest successor for unit/integration. **Pact** is the contract-testing standard.
+- **Now-standard practices to include:** chaos engineering (LitmusChaos / Gremlin) and **per-PR ephemeral preview environments** (`platform-engineering-idp`, `database-branching-dev-data`). Mutation testing (Stryker/PIT/cargo-mutants) already core here.
+- For LLM/agent surfaces the "test" is the eval gate — `llm-evals` / `agent-evaluation`.

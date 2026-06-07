@@ -138,3 +138,9 @@ Track infra spend by layer; set **per-layer cost triggers** the Platform/SRE rol
 - The Product Canon's `STACK.md` + deploy playbook — the concrete binding (cloud, IaC tool, orchestrator, log spine, IAM, MSK topology, build/cert pinning, cost-discipline thresholds)
 - `engineering-os-blueprint/09-reference-architecture.md` — the seam this skill binds
 - Related: `observability`, `event-driven-kafka`, `operational-readiness`, `app-store-deployment`, `clickhouse-olap`
+
+## 2026 market update
+
+- **IaC pluralism (the 2024–26 shift):** **OpenTofu** (Linux Foundation fork of Terraform; native **state encryption** + provider-defined functions) is the open alternative after HashiCorp's BSL relicense + IBM acquisition — a live de-risking decision (`version-upgrade-policy`). Pulumi / SST / Crossplane are peers. CDK stays this reference's binding.
+- **EKS Auto Mode** (managed Karpenter + Bottlerocket + bundled add-ons) is AWS's new easy-default, alongside the explicit Karpenter + ArgoCD pattern.
+- **Argo CD won GitOps** (~50% vs Flux ~11%); Istio **ambient mode** + **Cilium/eBPF** are ending the sidecar era. Wire signing/provenance per `supply-chain-security` and admission rules per `policy-as-code`.

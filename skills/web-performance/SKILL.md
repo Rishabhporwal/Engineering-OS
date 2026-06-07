@@ -121,3 +121,8 @@ Look for: the **LCP element** (image→`priority`? chart on slow tRPC→`sql-que
 | Analytical query speed (often the LCP bottleneck) | **AI/ML Engineer** |
 
 Related: [`observability`] (alerts + RUM), [`frontend-web`] (broader playbook), [`sql-query-optimization`] (slow backend = slow LCP).
+
+## 2026 market update
+
+- **Partial Prerendering (PPR) + streaming Suspense** is a first-class lever — static shell delivered instantly, dynamic content streamed in (verify GA status in your Next version before treating as default-on).
+- **Rust bundlers** (Vite/Rolldown, Turbopack default in Next) for build-time budgets; the **React Compiler** removes most manual memoization. INP-not-FID already covered here.

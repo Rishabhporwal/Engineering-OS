@@ -117,3 +117,8 @@ Maps to SOC 2 CC7.x, PI1.x, C1.x and ISO A.8.15/A.8.16.
 
 ## References
 `engineering-os-blueprint/08-technical-governance.md` (compliance machinery + audit immutability) · `COMPLIANCE.md` (the product's regime) · `compliance-engine` (the privacy/channel regime) · `security-baseline` (CC-mapped posture, scanners, SBOM) · `decision-log` (append-then-update lifecycle) · `incident-response`.
+
+## 2026 market update
+
+- **Policy-as-code is the enforcement mechanism:** controls become tested, admission-enforced rules (OPA/Gatekeeper, Kyverno) — see `policy-as-code`. "The policy says X" is now "the cluster *rejects* not-X".
+- **Provenance + signing = auditor-grade attestation evidence:** SLSA provenance and Sigstore signatures (`supply-chain-security`) literally satisfy "prove what produced this artifact" — feed them as control evidence.

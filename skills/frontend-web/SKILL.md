@@ -150,3 +150,11 @@ apps/frontend/app/(dashboard)/[tenant]/<route>/page.tsx
 
 - Product Canon design-system + edge-API + KPI/RAG section
 - [`region-and-locale`] §currency-format · [`testing-tdd`] · [`kpi-dashboard-design`] · [`web-performance`] · [`accessibility`]
+
+## 2026 market update
+
+- **Styling:** Tailwind **v4** (CSS-first config, no `tailwind.config.js`, Oxide engine) + **shadcn/ui** (own-the-code on Radix) is the de-facto standard; runtime CSS-in-JS (styled-components/Emotion) is in decline (RSC-incompatible).
+- **Validation:** **Zod v4** + **Standard Schema** (Zod/Valibot/ArkType interop into React Hook Form / TanStack Form / tRPC). State: **TanStack Query** (server-state) + **Zustand** (the lighter client-state default many teams now pick over Redux Toolkit).
+- **React Compiler 1.0** auto-memoizes — manual `useMemo`/`useCallback` is opt-in for profiler-confirmed hot paths.
+- **Alternatives callout:** RSC is **Next-standard, not React-standard** — Vite + **TanStack Start** / **React Router v7** / **Astro** are valid non-Next bindings via `STACK.md`. Build tooling went Rust (Vite→Rolldown, Turbopack).
+- **AI surfaces** → `ai-streaming-ui` (Vercel AI SDK + assistant-ui).

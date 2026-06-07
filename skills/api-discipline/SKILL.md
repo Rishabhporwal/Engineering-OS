@@ -140,3 +140,9 @@ Always emit `X-RateLimit-*` so clients back off · 429+`Retry-After`, never 503 
 tRPC versioning/lists/quotas → Backend Engineer · gRPC `buf breaking`/packages → Architect + Backend Engineer · MCP versioning → Backend Engineer + AI/ML Engineer · v1↔v2 reconciliation → QA Engineer + AI/ML Engineer · OLAP drill-down pagination + outbound/model throttling → AI/ML Engineer · migration guides → owner + Delivery Coordinator.
 
 Related: `grpc-buf`, `mcp-protocol`, `data-layer` (index for cursors), `cost-routing-paradigms`, `integration-connectors`, `observability` (429 rate as SLO).
+
+## 2026 market update
+
+- **OpenAPI 3.2** (Sep 2025; adds SSE / JSON-Lines streaming + a native QUERY method) is current; **3.1** (full JSON-Schema 2020-12) is the floor.
+- **Contract-testing tooling:** Pact (now with gRPC/AsyncAPI plugins) · **Schemathesis** (property-based OpenAPI fuzzing) · `buf breaking` for proto. **AsyncAPI** is the event-contract standard (pairs with `event-driven-kafka`).
+- **GraphQL narrowed to federation-only** (WunderGraph Cosmo over Apollo); monolithic GraphQL is considered not-worth-the-complexity. Keyset (not OFFSET) pagination + token-bucket limits unchanged.

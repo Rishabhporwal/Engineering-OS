@@ -208,3 +208,10 @@ An SLO without an error budget is a wish. Budget = `(1 − target) × window`.
 | PII redaction policy | **Security Reviewer** | Product Canon (`COMPLIANCE.md`) |
 
 Related: `devops-aws` (log-store/shipper deploy + chaos drills), `security-baseline` (PII posture), `operational-readiness` (probes), `systematic-debugging` (logs are the trail).
+
+## 2026 market update
+
+- **OpenTelemetry graduated CNCF (May 2026)** — OTLP-everywhere is the assumed transport; vendor-locked SDKs are a liability.
+- **Continuous profiling is now a first-class signal** (Pyroscope 2.0 / Parca; OTel profiling signal) — add it to the readiness set.
+- **eBPF auto-instrumentation** (Beyla / Pixie / Coroot) reduces manual span wiring (`ebpf-observability` if bound).
+- **LLM/agent spans** use the `gen_ai.*` semantic conventions — that layer is `ai-observability-tracing`. **Cloud cost** is its own signal — `finops-cost`.

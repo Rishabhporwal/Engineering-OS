@@ -170,3 +170,9 @@ Most calls should land at the deterministic/ML tiers, a minority at small-model,
 - `llm-gateway` — the gateway that runs tiers 3/4 (routed tiers + virtual-key budgets)
 - `claude-api` — prompt caching + batch mechanics for a justified model call
 - The Product Canon's `METRICS.md` / `THE-MOAT.md` — whether (and how hard) cost is a first-order constraint for this product
+
+## 2026 market update
+
+- **Concrete model-cost mechanisms (verified 40–85% levers):** preference routing (**RouteLLM**) · **semantic caching** (GPTCache) · provider **prompt caching** · **Batch APIs** for non-latency-critical work. The gateway implements these (`llm-gateway`).
+- **Infra cost is the peer discipline:** `finops-cost` (FOCUS / OpenCost) covers compute/storage/egress. Total unit economics = **model + infra** — quote both.
+- **The effort ladder extends to post-training:** Prompt → RAG → **Fine-tune (LoRA/QLoRA)** → Distill. Fine-tune (a `model-fine-tuning` skill, if bound) only when routing + RAG can't clear the bar at cost.

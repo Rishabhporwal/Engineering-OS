@@ -135,3 +135,9 @@ Stage 4 on any PR adding/changing a write tool, outbound channel, autonomous loo
 | Rendering model text safely (output side) | Frontend/Web Engineer → `security-baseline` (XSS) |
 
 Related: `mcp-protocol` (scopes + audit log), `security-baseline` (the gate + XSS), `idempotency-handling`, `cost-routing-paradigms` (keep the preprocessor cheap), `compliance-engine` (the regime a poisoned action would violate). For an end-to-end agentic-loop instantiation, see `examples/brain-instantiation/`.
+
+## 2026 market update
+
+- **Framework anchor:** map this skill's controls to the **OWASP Top 10 for LLM Apps (2025)** + **Agentic Top 10** via `ai-llm-security` — that skill is the *threat framework*, this one is the *action-control mechanism* (blast radius, scoped + audited tools, input hardening, human-in-the-loop gates).
+- **MCP server auth hardening:** the #1 deployed-MCP failure is shipping a write-capable server with no auth — enforce OAuth/OIDC (`mcp-protocol` Part 3). Treat third-party MCP servers as untrusted code.
+- **Red-team as a CI gate:** promptfoo-style injection/jailbreak suites; surface results as `agent-evaluation` guardrail metrics.

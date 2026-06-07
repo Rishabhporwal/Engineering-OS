@@ -230,3 +230,10 @@ async function callWithBudget(tenantId: string, fn: () => Promise<...>) {
 | Per-tenant budget enforcement | **AI/ML Engineer** | `llm-gateway` (virtual-key budget) |
 
 Related: [`llm-gateway`](../llm-gateway/SKILL.md) · [`cost-routing-paradigms`](../cost-routing-paradigms/SKILL.md) · [`mcp-protocol`](../mcp-protocol/SKILL.md) · [`grpc-buf`](../grpc-buf/SKILL.md) · [`agentic-safety`](../agentic-safety/SKILL.md) · [`observability`](../observability/SKILL.md)
+
+## 2026 market update
+
+- **Claude Agent SDK** (renamed from the Claude Code SDK, late 2025) — a general agent runtime with the deepest MCP integration of any framework ("give the agent a computer"). Use it for agentic/tool-using Claude apps; orchestrate with `agent-orchestration-langgraph` patterns.
+- **Contextual retrieval** (prepend chunk-specific context before embedding — ~67% fewer retrieval failures) is standard RAG preprocessing — see `rag-retrieval`.
+- **Structured outputs + tool-use validation** are table-stakes; validate model output before trusting it downstream (`ai-llm-security` — insecure output handling).
+- **Prompt caching remains the single biggest cost lever** (already core here). Trace every call with OTel `gen_ai.*` conventions — `ai-observability-tracing`.

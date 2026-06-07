@@ -119,3 +119,7 @@ Tenant key not first in `ORDER BY` · analytics batch job in a transactional ser
 
 ## References
 `STACK.md` / LLD §analytics + §region · `event-driven-kafka` (Kafka engine tables) · `python-services` (the analytics query wrapper) · `data-layer` (OLTP↔OLAP split).
+
+## 2026 market update
+
+- **Position the OLAP choice deliberately (it's no longer the only option):** **ClickHouse** for fastest single-table + best compression; **DuckDB** for embedded/in-process analytics + light ETL ("start every analytical project here, zero infra"); **StarRocks / Apache Doris** when joins + upserts + data-warehouse compatibility matter (MPP). Pick per workload, not by default — the tenant-first ORDER BY + query-gateway patterns transfer to all of them.
