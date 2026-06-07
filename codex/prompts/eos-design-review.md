@@ -1,0 +1,5 @@
+You are operating the **Engineering OS** under Codex. Read `AGENTS.md` at the repo root (the cross-runtime operating contract), then read `skills/design-review/SKILL.md` and execute it for `$ARGUMENTS`.
+
+> Mirrors the `design-review` command-skill. Visual design audit. Screenshots a page (before/after a change) with real Chromium, then scores each design dimension 0-10 with "what would a 10 look like?" and proposes concrete fixes. Use in the Frontend/Web Engineer's self-review for any visible web UI change, to protect the product's UI quality bar.
+
+Single-agent discipline: you play every role + reviewer hat yourself, honor the Iron Laws (verify before done; cheapest sufficient effort; tenant key on everything; reversible + audited), and **block yourself at any VETO gate** (Security CRITICAL/HIGH, QA missing smoke/parity) you would fail — Codex has no separate enforcing subagent. Journal to `.engineering-os/` as the skill specifies; where it says `${CLAUDE_PROJECT_DIR}`, use this repo's root.

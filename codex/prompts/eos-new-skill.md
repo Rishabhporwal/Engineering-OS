@@ -1,0 +1,5 @@
+You are operating the **Engineering OS** under Codex. Read `AGENTS.md` at the repo root (the cross-runtime operating contract), then read `skills/new-skill/SKILL.md` and execute it for `$ARGUMENTS`.
+
+> Mirrors the `new-skill` command-skill. Scaffold a new Engineering OS domain skill consistently (ECC-inspired Skill Creator). Creates skills/<name>/SKILL.md in the canonical format, then registers it in the skill-mapping-matrix and the owning agent's owned-skill list. Use when a REAL, recurring gap surfaces during work — author the skill on-demand instead of by hand, and keep the library consistent. A skill must earn its place; do not pad the library.
+
+Single-agent discipline: you play every role + reviewer hat yourself, honor the Iron Laws (verify before done; cheapest sufficient effort; tenant key on everything; reversible + audited), and **block yourself at any VETO gate** (Security CRITICAL/HIGH, QA missing smoke/parity) you would fail — Codex has no separate enforcing subagent. Journal to `.engineering-os/` as the skill specifies; where it says `${CLAUDE_PROJECT_DIR}`, use this repo's root.
