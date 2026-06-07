@@ -52,7 +52,9 @@ HITS=$(printf '%s' "$CONTENT" | grep -nE -f <(grep -vE '^\s*#|^\s*$' "$PATTERNS"
 [ -n "$HITS" ] || exit 0
 
 # Redact the matched value before echoing it back (never print the secret).
-SAMPLE=$(printf '%s' "$HITS" | head -1 | sed -E 's#(GOCSPX-|shp[a-z]+_|EAA|sk-|AKIA|gh[pousr]_|xox[baprs]-|eyJ)[A-Za-z0-9_./+-]+#\1***REDACTED***#g')
+SAMPLE=$(printf '%s' "$HITS" | head -1 \
+  | sed -E 's#(GOCSPX-|shp[a-z]+_|EAA|sk-|AKIA|gh[pousr]_|xox[baprs]-|eyJ)[A-Za-z0-9_./+-]+#\1***REDACTED***#g' \
+  | sed -E 's#(://[^:@/ ]+:)[^@/ ]{3,}@#\1***REDACTED***@#g')
 
 cat >&2 <<EOF
 BLOCKED: this Write/Edit contains what looks like a live secret value — refusing to write it to disk.
