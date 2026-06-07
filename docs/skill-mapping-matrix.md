@@ -132,6 +132,23 @@ This document is the **authoritative skill-to-role binding** for the Engineering
 | 61 | [`vector-search-pgvector`](../skills/vector-search-pgvector/SKILL.md) (reference impl) | SEARCH + AI + MLOPS | MLP | AIE, DE, SEC | yes |
 | 62 | [`workflow-engine-temporal`](../skills/workflow-engine-temporal/SKILL.md) (reference impl) | WF + BE + OPS | BE | AIE, MLP, OPS, ARC | yes |
 
+### Skill modernization (Phase 4 — 2026 standards)
+
+> Ten net-new skills closing the gaps a GitHub-grounded market scan surfaced (supply-chain integrity, AI/LLM security + observability + retrieval + agent-eval, the dbt transformation layer, AI-native frontend, policy-as-code, the IDP, and cloud FinOps). Numbering continues the table; listed alphabetically within this block.
+
+| # | Skill | Domain | Primary | Shared with | Exposed as command |
+|---|-------|--------|---------|-------------|---------------------|
+| 63 | [`agent-evaluation`](../skills/agent-evaluation/SKILL.md) | AI + TEST + MLOPS | AIE | MLP, QA | yes |
+| 64 | [`ai-llm-security`](../skills/ai-llm-security/SKILL.md) | SEC + AI | SEC | AIE, MLP, ARC | yes |
+| 65 | [`ai-observability-tracing`](../skills/ai-observability-tracing/SKILL.md) | OBS + AI | AIE | MLP, OPS | yes |
+| 66 | [`ai-streaming-ui`](../skills/ai-streaming-ui/SKILL.md) (reference impl) | FE-W + AI | FEW | AIE, FEM | yes |
+| 67 | [`data-transformation-dbt`](../skills/data-transformation-dbt/SKILL.md) (reference impl) | DATA + BATCH | DE | AIE, QA | yes |
+| 68 | [`finops-cost`](../skills/finops-cost/SKILL.md) | OPS + DISC | OPS | CTOA, AIE, ARC | yes |
+| 69 | [`platform-engineering-idp`](../skills/platform-engineering-idp/SKILL.md) | OPS | OPS | ARC, PM, all builders | yes |
+| 70 | [`policy-as-code`](../skills/policy-as-code/SKILL.md) | SEC + OPS | SEC | OPS, ARC | yes |
+| 71 | [`rag-retrieval`](../skills/rag-retrieval/SKILL.md) | SEARCH + AI | MLP | AIE, DE | yes |
+| 72 | [`supply-chain-security`](../skills/supply-chain-security/SKILL.md) | SEC + OPS | OPS | SEC, ARC, all builders | yes |
+
 > `decision-log` covers the system-of-record audit log where the product's Canon requires one (condition → recommendation → approval/edit → execution → reversal → outcome). `metric-engine` covers the single-source metric registry (`METRICS.md`) with cross-runtime parity. Vendor-named skills (`backend-fastify-trpc-grpc`, `clickhouse-olap`, `data-layer`, `devops-aws`, `event-driven-kafka`, `frontend-web`, `grpc-buf`, `llm-gateway`, `mobile-surface`, `oauth-implementation`, `python-services`, `turborepo`, and the Phase 2 data/ML seams `stream-processing-flink`, `batch-processing-spark`, `lakehouse-iceberg`, `graph-identity-neo4j`, `search-opensearch`, `feature-store-feast`, `vector-search-pgvector`, `workflow-engine-temporal`, `agent-orchestration-langgraph`, `ml-lifecycle`) are **reference implementations** of a seam — the patterns transfer; the product's `STACK.md` may bind the seam to different technology.
 
 > The skill list above is generated from `skills/` — keep it in sync (CI: `knowledge_lint.py`). When a skill folder is added or removed from `skills/`, update this matrix.
