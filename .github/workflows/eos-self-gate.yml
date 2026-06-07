@@ -27,6 +27,9 @@ jobs:
       - name: Orchestration graph is consistent (pipeline_doctor)
         run: python3 tools/pipeline_doctor.py
 
+      - name: Secret-pattern self-test (guards the O1 patterns against silent regressions)
+        run: python3 tools/secret_scan.py --selftest
+
       - name: No secrets in the tree (O1 gate)
         run: python3 tools/secret_scan.py agents skills prompts pipeline docs canon tools hooks templates schemas
 
