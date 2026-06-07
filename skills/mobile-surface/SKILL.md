@@ -148,3 +148,8 @@ MASVS L1 + key L2: refresh token in secure-store / access token in memory; magic
 - the Canon's screen specs — screen UX, contracts, delivery SLO, offline-render pattern
 - [`app-store-deployment`] — EAS Build/Update, profiles, OTA-vs-store, store hazards
 - [`idempotency-handling`] — server dedup for queued mutations · [`security-baseline`] §MASVS · [`region-and-locale`] — RN RTL + locale formatting
+
+## 2026 market update
+
+- **Styling:** **NativeWind** (Tailwind-for-RN) and **Unistyles** are now mainstream picks alongside Tamagui — match `STACK.md`.
+- **KMP / Compose Multiplatform** (stable May 2025) is the rising "share logic, optionally share UI, native rendering" alternative for regulated/native-heavy products (mirrors the existing Flutter mention). New Architecture (Fabric/TurboModules, Hermes) + Expo Router are already the assumed defaults here.

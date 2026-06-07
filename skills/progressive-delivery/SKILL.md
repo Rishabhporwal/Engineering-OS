@@ -126,3 +126,8 @@ The graduation tracker (a nightly job) IS automated canary analysis: watches out
 | Incident retreat (flip flag) | Platform/SRE + on-call | `incident-response` |
 
 Make deploys boring and releases reversible. Ship dark behind a typed tenant-scoped flag; widen by canary with automated SLO analysis and auto-rollback; arm a kill switch on anything autonomous; treat auto-execute graduation as a per-tenant, per-tool rollout that auto-retreats. Then delete the flag when done.
+
+## 2026 market update
+
+- **Argo Rollouts** is the reference for canary / blue-green (Argo CD won GitOps vs Flux); analysis-driven promotion + auto-rollback on SLO breach unchanged.
+- Pair flags/canary with **per-PR ephemeral preview environments** (`platform-engineering-idp`) so a change is exercised in a prod-like env before it canaries.

@@ -9,6 +9,8 @@ description: A Node backend stack (Fastify + tRPC + Prisma + grpc-js + Kafka + Z
 
 Node-side stack for the **api-gateway and the Node-side services** (e.g. core, notifications, lifecycle orchestration). Owned by the Backend Engineer. The choices below are locked by `STACK.md` in this binding — no NestJS, no Apollo, no GraphQL.
 
+> **The seam vs this binding (2026 alternatives).** Fastify + tRPC is one apt binding of the Node-backend seam; `STACK.md` may bind it differently, and the patterns below transfer regardless. The live alternatives a product may choose: **Hono** (Web-Standards, runs on Node/Bun/Deno/Workers/Lambda — the default when **edge / multi-runtime** is a requirement); **Elysia** (Bun-only, high throughput); **NestJS** (DI-heavy enterprise); **oRPC** (v1) or **Connect-RPC** (CNCF) when you need a **REST/OpenAPI surface alongside type-safe RPC** — tRPC's clients are TS-only and single-repo. On data access, **Drizzle** and **Kysely** are the main alternatives to Prisma 7 (Drizzle overtook Prisma in weekly downloads in 2025; both are edge-viable now). Pick once, lock it in `STACK.md`, then apply the discipline below.
+
 ## Stack invariants (this binding)
 | Layer | Choice | Why |
 |---|---|---|

@@ -88,3 +88,7 @@ No deadline (hangs callers) · field-number reuse (wire breakage) · breaking ch
 
 ## References
 Product Canon API/contract section · `backend-fastify-trpc-grpc` (Node) · `python-services` (Python grpcio) · `mcp-protocol` (tool registration) · `api-discipline` (versioning + breaking gate).
+
+## 2026 market update
+
+- **Connect-RPC** (joined CNCF) is the browser/HTTP-friendly gRPC variant — production at Bluesky, Dropbox, PlanetScale, Redpanda — using the **same buf proto toolchain** as the single source of truth. Prefer it when a service needs both native gRPC and browser/HTTP clients without a separate gateway. `buf breaking` remains the contract-evolution CI gate.

@@ -159,3 +159,7 @@ turbo prune <pkg-name>                   # subset the monorepo for a Docker imag
 | E2E / load (uncached) tasks | **QA Engineer** | `testing-tdd` |
 
 Related: `grpc-buf`, `python-services` (other-runtime counterpart), `operational-readiness`, `devops-aws`.
+
+## 2026 market update
+
+- **Nx** is the main monorepo alternative — richer plugin/generator/codegen ecosystem and a broader task graph, where Turborepo is lighter and config-light. The Nx-vs-Turborepo choice is the live build-orchestration decision; bind in `STACK.md`. The `--affected`-drives-CI pattern transfers to both.

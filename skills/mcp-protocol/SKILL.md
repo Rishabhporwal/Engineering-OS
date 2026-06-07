@@ -121,5 +121,17 @@ Every call emits `tool_calls_total{tool,status,paradigm}`, `tool_duration_second
 ## Common failure modes
 Missing `scope` on the tool def (Security blocks) · bypassing the audit-write middleware · no `requireTenant` (cross-tenant pull) · hand-written schema drift · streaming without backpressure.
 
+---
+
+# Part 3 — the 2026 MCP spec (what changed since launch)
+
+MCP matured from a late-2024 proposal into the standard tool-integration protocol, with a registry and a real auth story. Bind to the current spec, not the original:
+
+- **Stateless streamable-HTTP is the core transport** (the old long-lived SSE connection is legacy). A server should be horizontally scalable and not hold per-connection state — same discipline as any stateless service behind the LB.
+- **Authorization is OAuth 2.1 / OIDC-aligned.** A remote (HTTP) MCP server is an OAuth resource server: validate the token's audience, honor **RFC 9207** (`iss` authorization-server identification), and support **Dynamic Client Registration** (OIDC `application_type`). The four-layer gate in Part 2 is the *enforcement*; OAuth/OIDC is the *standard* it now implements. **The #1 deployed-MCP failure mode is shipping a server with no auth** — never expose a write-capable server unauthenticated.
+- **A registry makes servers discoverable + publishable** (`modelcontextprotocol/registry`). If you publish a server, publish its metadata + auth requirements; if you consume third-party servers, treat them as untrusted code (`ai-llm-security`, `agentic-safety`) — a malicious server is a supply-chain + injection vector.
+- **Extensions worth knowing:** **Tasks** (long-running tool work with progress/resumption — pair with `workflow-engine-temporal` for durable execution) and **MCP Apps / server-rendered UI** (a tool returns interactive UI — render it per `ai-streaming-ui`).
+- **Auth hardening + tool blast-radius** for any server you expose: `ai-llm-security` (OWASP LLM/Agentic) + `agentic-safety`.
+
 ## References
-Product Canon API/contract section · `grpc-buf` (contract codegen) · `agentic-safety` (audit + harden write tools) · `idempotency-handling` · `security-baseline` · `auth-and-access`.
+Product Canon API/contract section · `grpc-buf` (contract codegen) · `agentic-safety` (audit + harden write tools) · `ai-llm-security` (OWASP LLM/Agentic; untrusted servers) · `idempotency-handling` · `security-baseline` · `auth-and-access` · `oauth-implementation` (OAuth/OIDC) · `workflow-engine-temporal` (Tasks / long-running) · `ai-streaming-ui` (MCP Apps UI).

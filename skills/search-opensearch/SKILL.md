@@ -57,3 +57,7 @@ Lexical/filtered search is **deterministic** — the cheapest tier. Don't reach 
 
 ## Anti-patterns
 Treating the index as source of truth · a query missing the tenant filter · dynamic mapping in prod · scoring on fields that should be filters · deep `from`/`size` pagination · per-request synchronous indexing · non-idempotent indexing (dupes on replay) · thousands of tiny per-tenant shards · changing analyzers without re-validating relevance.
+
+## 2026 market update
+
+- **Hybrid lexical + vector with RRF fusion is the standard pattern now** (the retrieval discipline + recall@k gate live in `rag-retrieval`; reranking before the model step is standard). OpenSearch/Elasticsearch ship native hybrid; **Qdrant** is the vector-native alternative with first-class hybrid; **pgvector** absorbs simpler cases into Postgres. **Typesense / Meilisearch** for lightweight instant-search.

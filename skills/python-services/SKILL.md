@@ -119,3 +119,7 @@ Every LLM/ML function carries an effort-tier decorator (e.g. `@paradigm(kind, mo
 
 - Product Canon (`STACK.md`, `INVARIANTS.md`) — service bootstrap scaffolds, log spine + trace + Sentry wiring, Postgres + OLAP usage
 - Related: `grpc-buf`, `cost-routing-paradigms`, `clickhouse-olap`, `event-driven-kafka`, `operational-readiness`, `domain-driven-design`
+
+## 2026 market update
+
+- **Polars** (Rust dataframes) is the default over pandas for new dataframe work; **DuckDB** for in-process analytics (`embedded-analytics-duckdb` if bound). **DBOS-Python** offers in-process durable execution on Postgres (a `workflow-engine-temporal` alternative). FastAPI + uv remains the current stack.

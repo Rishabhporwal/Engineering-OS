@@ -56,3 +56,8 @@ Retrieval is the cheap, deterministic-ish front half of RAG; the model call is t
 
 ## Anti-patterns
 ANN without the tenant filter (leak) or post-filtering that guts recall · index opclass ≠ training metric · mixing embedding-model versions in one index · no recall measurement · re-embedding on every query instead of caching · using vectors where a keyword filter suffices (wrong tier) · ignoring chunking changes that invalidate stored vectors.
+
+## 2026 market update
+
+- **Vanilla single-vector search is no longer the standard retrieval pattern** — hybrid (BM25 + dense) + RRF + reranking + contextual retrieval is. This skill owns the **store**; the retrieval **pattern** (and its recall@k gate) lives in `rag-retrieval`.
+- **Alternatives:** Qdrant is the vector-native option with first-class hybrid; pgvector's win is collapsing simpler cases into Postgres (one store, one transaction, RLS for free). Match the index opclass to the embedding metric (unchanged).

@@ -59,3 +59,9 @@ A trained model is cheaper than a frontier LLM and often the right tier for rank
 
 ## Anti-patterns
 An unreproducible model (no dataset/feature/version lineage) · serving a loose artifact instead of a registry reference · promoting on "looks better" instead of the eval gate · re-implementing preprocessing in serving (training/serving skew) · no drift monitoring · rollback that requires a rebuild · using an LLM for structured prediction a trained model handles cheaper · an inference path with no dashboard/alarm.
+
+## 2026 market update
+
+- **MLflow 3 is GenAI-first:** repositioned as an "AI engineering platform for agents, LLMs, and ML" — prompt tracing, LLM-judge evals, and GenAI/agent artifacts join the model registry. The registry now spans models **and** prompts/agents.
+- **Tracking/serving alternatives (bind in `STACK.md`):** W&B / Neptune for tracking; Vertex AI / SageMaker / KServe / Seldon for serving; Tecton↔Databricks consolidation in the feature/registry market.
+- Trace serving with `ai-observability-tracing`; gate promotion with `llm-evals` (models) / `agent-evaluation` (agents).

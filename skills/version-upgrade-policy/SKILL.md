@@ -66,3 +66,7 @@ Output: a short `version-review-<quarter>.md` in `.engineering-os/memory/` listi
 - The pinned baseline (§1) matches the Canon's `STACK.md` + `docs/technical-context.md` — run `worker-canon-drift` if unsure.
 - The latest `version-review-<quarter>.md` exists, zero EOL-risk / abandoned deps in prod.
 - No skill or canon doc references a version this policy retired.
+
+## 2026 market update
+
+- **License posture is now part of dependency triage**, not just version/EOL. Worked example: HashiCorp's **BSL relicense** + **IBM acquisition (Dec 2024)** triggered the **OpenTofu** fork — a deliberate, ADR-grade migration decision, not a reactive swap (`devops-aws`, `tech-stack-evaluation`). Watch for relicensing as a first-class upgrade trigger.

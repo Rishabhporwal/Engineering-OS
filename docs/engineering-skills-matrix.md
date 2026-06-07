@@ -195,6 +195,20 @@ Every skill in [`skills/`](../skills/), its **primary owner**, **backup owner(s)
 
 ---
 
+### Modernization skills (Phase 4 — 2026 standards)
+| Skill | Primary (target) | Backup |
+|-------|------------------|--------|
+| `supply-chain-security` | OPS (Advanced) | SEC, ARC, all builders |
+| `policy-as-code` | SEC (Advanced) | OPS, ARC |
+| `platform-engineering-idp` | OPS (Advanced) | ARC, PM |
+| `finops-cost` | OPS (Advanced) | CTOA, AIE |
+| `ai-llm-security` | SEC (Expert) | AIE, MLP, ARC |
+| `ai-observability-tracing` | AIE (Advanced) | MLP, OPS |
+| `rag-retrieval` | MLP (Advanced) | AIE, DE |
+| `agent-evaluation` | AIE (Advanced) | MLP, QA |
+| `data-transformation-dbt` | DE (Advanced) | AIE, QA |
+| `ai-streaming-ui` | FEW (Advanced) | AIE, FEM |
+
 ## 5. Gap analysis (ownership · coverage · bus-factor)
 
 ### 5.1 Ownership gaps — **CLOSED by this expansion**
@@ -212,6 +226,24 @@ Before Phase 2, six seams the product's stack depends on had **no owning skill a
 | Workflow engine (Temporal) | no skill | `workflow-engine-temporal` → **BE** |
 | Agent orchestration (LangGraph) | partial (concepts only) | `agent-orchestration-langgraph` → **AIE** |
 | Model lifecycle (MLflow/BentoML) | partial | `ml-lifecycle` → **MLP** |
+
+### 5.1b Market-currency gaps — CLOSED by the Phase 4 modernization
+A GitHub-grounded 2026 market scan surfaced ten capabilities that are now industry-standard but had **no owning skill**. All ten were added (see the modernization table in §4):
+
+| Capability | Now |
+|-----------|-----|
+| Software supply-chain integrity (SBOM/SLSA/Sigstore) | `supply-chain-security` → **OPS** |
+| Policy-as-code enforcement (OPA/Kyverno) | `policy-as-code` → **SEC** |
+| Internal Developer Platform (Backstage/Score) | `platform-engineering-idp` → **OPS** |
+| Cloud FinOps (FOCUS/OpenCost) | `finops-cost` → **OPS** |
+| LLM/agent security (OWASP LLM/Agentic Top 10) | `ai-llm-security` → **SEC** |
+| LLM/agent observability (OTel GenAI) | `ai-observability-tracing` → **AIE** |
+| RAG retrieval pattern (hybrid/rerank/contextual) | `rag-retrieval` → **MLP** |
+| Agent trajectory evaluation | `agent-evaluation` → **AIE** |
+| The dbt/SQLMesh transformation layer | `data-transformation-dbt` → **DE** |
+| AI-native streaming UI (Vercel AI SDK) | `ai-streaming-ui` → **FEW** |
+
+A further 34 existing skills were refreshed to current tooling/practice (premise-exposed rewrites + additive "2026 market update" notes) — the OS stays stack-agnostic; refreshes add alternatives + decision rubrics, they don't swap the reference vendor.
 
 ### 5.2 Remaining bus-factor risk (the "red zone")
 Skills where **only one role** is at target proficiency and the named backup is thin. These need a Backup‑A + Backup‑B, a ≤1‑page playbook, and a real rotation (the backup does the task, the expert only reviews):

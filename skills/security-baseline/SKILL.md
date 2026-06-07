@@ -28,6 +28,12 @@ The Security Reviewer's review gate + the app-sec playbook. Multi-tenant isolati
 | A09 | Logging/Alerting Failures | auth events → the log aggregator with correlation IDs; PII/secret redaction at the logger + shipping layer; never log tokens |
 | A10 | Mishandling Exceptional Conditions | fail-closed on compliance/auth errors (a thrown check blocks, never falls through to allow); strip tokens from error paths; no stack traces to clients |
 
+> **Two framework anchors beyond the classic Top 10 (2026):**
+> - **LLM / agent app security** → [`ai-llm-security`](../ai-llm-security/SKILL.md) maps the **OWASP Top 10 for LLM Apps (2025)** + **Agentic Top 10** (prompt injection, excessive agency, insecure output handling, system-prompt leakage). Any surface that calls a model gates against it; the action-control mechanism is [`agentic-safety`](../agentic-safety/SKILL.md). Note A05/A03 above now have an LLM dimension: **model output is untrusted input** (encode before SQL/shell/DOM), and **RAG/model data has a supply chain**.
+> - **Software supply-chain integrity** (A03/A08) → [`supply-chain-security`](../supply-chain-security/SKILL.md) owns SBOM + SLSA provenance + Sigstore signing + OIDC-keyless CI in depth; this baseline gates that it's present. Enforcement of these (and tenant/residency/no-privileged rules) at admission/CI is [`policy-as-code`](../policy-as-code/SKILL.md).
+>
+> **Scanner suite (name the tools; 2026 consolidation):** secrets — **gitleaks / TruffleHog**; SAST — **Semgrep**; SCA + container + IaC + secrets — **Trivy** (now absorbs the former `tfsec`; `Terrascan` is archived); CVE on the SBOM — **Grype**; malicious-package feed — **OSV-Scanner**; deep IaC policy — **Checkov**. CI blocks on CRITICAL/HIGH; an accepted finding needs an allowlist entry **with expiry**, never a blanket ignore.
+
 ## Four-layer input validation (make the bug structurally impossible)
 
 The lesson: a single check is bypassed by new code paths, refactors, mocks, or a write tool wired up six months later. Validate at EVERY layer. A cross-tenant "id-from-request-body" class of bug is killed by four layers, not one.

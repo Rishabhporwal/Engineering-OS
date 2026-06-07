@@ -42,3 +42,9 @@ The graph is the cheap, deterministic skeleton; the expensive part is the model 
 
 ## Anti-patterns
 An opaque uncapped agent loop · unbounded recursion / cost · cross-tenant memory · a write tool with no scope or audit entry · no human gate on a consequential action · trusting tool/document text as instructions (injection) · shipping an agent change without the eval gate · a frontier model where a conditional edge or small model routes · putting durable multi-day waits in the graph instead of Temporal.
+
+## 2026 market update
+
+- **LangGraph reached v1.0 (Sept 2025):** durable, checkpointed graphs with Postgres/Redis/SQLite backends + time-travel debugging are first-class now.
+- **Alternatives matrix (bind in `STACK.md`):** OpenAI Agents SDK (handoffs + built-in tracing/guardrails) · Pydantic-AI (type-safe Python) · Mastra (the TypeScript standard) · CrewAI (role-play multi-agent, fast prototyping) · Google ADK (Gemini-aligned) · Claude Agent SDK (computer + deepest MCP). Decision rule: **durable-graph** (LangGraph) vs **handoff** (Agents SDK/CrewAI) vs **typed-Python** (Pydantic-AI) vs **TypeScript** (Mastra).
+- Ship every agent change through `agent-evaluation` (trajectory/tool-call); trace via `ai-observability-tracing`.

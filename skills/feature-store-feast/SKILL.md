@@ -56,3 +56,8 @@ The feature store serves **deterministic/statistical features cheaply** so model
 
 ## Anti-patterns
 Separately hand-coding the online feature (skew) · training retrieval that leaks post-prediction data · entity keys without the tenant · no online/offline parity test · unmonitored freshness · recomputing a shared feature per model instead of reusing it · putting the feature transformation logic inside the model service instead of the store.
+
+## 2026 market update
+
+- **Embeddings are increasingly first-class features** — store + serve vectors as features alongside scalars (ties to `vector-search-pgvector`).
+- **Alternatives (bind in `STACK.md`):** Tecton (managed, now Databricks-integrated) · Hopsworks · lakehouse-native stores (Databricks / Vertex / SageMaker Feature Store). Feast remains the OSS baseline; the online/offline-parity law is what matters, not the vendor.

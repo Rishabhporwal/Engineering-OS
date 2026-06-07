@@ -5,7 +5,7 @@
   },
   "metadata": {
     "description": "Marketplace for the Engineering OS plugin — a universal, domain-agnostic AI engineering organization for any software product, on any stack.",
-    "version": "2.1.0"
+    "version": "2.2.0"
   },
   "plugins": [
     {

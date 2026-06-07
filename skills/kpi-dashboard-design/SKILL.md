@@ -86,3 +86,7 @@ WCAG AA contrast (RAG verified at 4.5:1); chart `<table>` fallback + ARIA on ico
 
 - Product Canon `METRICS.md` (the registry) · `TRIGGER-SURFACES.md` · the web design section of `STACK.md`
 - [`metric-engine`] · [`frontend-web`] · [`mobile-surface`] · [`region-and-locale`] · [`accessibility`] · [`web-performance`] · [`experimentation-holdouts`] · [`data-quality`]
+
+## 2026 market update
+
+- **Chart stack, by data shape:** **Recharts v3** (+ shadcn charts) as the practical default; **ECharts** for large/dense (100k-point, Canvas) dashboards; **Visx** for bespoke low-level viz; **Tremor** as a dashboard kit. The metric-registry-driven, drill-to-source, locale-money doctrine is unchanged and timeless.

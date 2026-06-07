@@ -127,6 +127,12 @@ A self-hosted gateway has real failure modes:
 - **Graduation trigger:** if sustained RPS/latency outgrows the self-hosted proxy, evaluate a managed gateway — a [`tech-stack-evaluation`](../tech-stack-evaluation/SKILL.md) ADR, not a reactive swap.
 - **Ops:** the gateway's database (keys/spend) + cache need the same backup/rotation/alerting as any service; rotate provider keys regularly; trace via OTel.
 
+## 2026 standard alignment
+
+- **Emit OpenTelemetry GenAI semantic conventions** (`gen_ai.*`) from the gateway, not a bespoke metric shape — so the trace backend (Langfuse/Phoenix/any OTLP store) is swappable. The gateway is the natural place to standardize this for every call; see [`ai-observability-tracing`](../ai-observability-tracing/SKILL.md).
+- **Structured outputs / constrained decoding** (JSON-schema-constrained responses + tool-call validation) are table-stakes — pass them through the gateway rather than re-implementing per call site; validate the result before it's trusted downstream (`ai-llm-security` — insecure output handling).
+- **LiteLLM** is the de-facto OSS reference for this self-hosted-proxy pattern (already the assumption above); managed peers (OpenRouter, Cloudflare AI Gateway, Kong AI Gateway, Portkey) are valid `STACK.md` bindings of the same seam.
+
 ## Anti-patterns (code-review blockers)
 
 - **App code instantiates a provider SDK directly** → bypasses routing/fallback/budget/cache/cost-ledger.
