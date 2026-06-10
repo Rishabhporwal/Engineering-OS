@@ -1,8 +1,29 @@
 # Engineering-OS improvement observations (from live monitoring)
 
-> A running log of observations gathered by monitoring real pipeline runs (scaffold → legacy-migration epic). Source of future improvement requirements for the Engineering OS itself. Not yet actioned unless noted. This is an illustrative log — the *patterns* and the resulting OS fixes are what transfer; the specific examples came from one early adoption.
+> A running log of observations gathered by monitoring real pipeline runs (scaffold → legacy-migration epic). Source of future improvement requirements for the Engineering OS itself. This is an illustrative log — the *patterns* and the resulting OS fixes are what transfer; the specific examples came from one early adoption.
+>
+> **⚠️ Read the STATUS ledger below before acting on table A.** The table preserves each observation as originally written (the evidence), but most have since SHIPPED — an audit that reads only the table will wrongly conclude the gaps are open (this exact mis-read happened in a review).
 
-## A. Improvement candidates (fix in the OS)
+## STATUS ledger (the closed-loop record — update when a fix ships)
+
+| # | Status | Shipped mechanism |
+|---|--------|-------------------|
+| O1 | ✅ **SHIPPED** (two layers + regression guard) | `hooks/on-secret-guard.sh` (PreToolUse write-block) + `tools/secret_scan.py --staged` (commit gate) sharing `hooks/secret-patterns.txt`; CI runs the tree scan + `--selftest`. *2026-06:* the DSN/credentialed-URL pattern was found broken (POSIX-class bug — matched nothing) and fixed, with a selftest so it can't silently regress. |
+| O2 | ✅ **SHIPPED** | `/eos-init` scaffold gitignores `.env` / `.env.*` (− `.env.example`) + `state/*.bak*` (skill §5b). |
+| O3 | ✅ **SHIPPED** | `/decide` command-skill records the Stakeholder ruling + clears `build_gated_on`. |
+| O4 | ✅ **SHIPPED** | Orchestrator logs usage synchronously after each Agent result (`pipeline/orchestrator.md` §telemetry). |
+| O5 | ⚠️ open (doc-mitigated) | "Restart to apply" documented in ONBOARDING; a session-start plugin-version line remains a candidate. |
+| O6 | ℹ️ architectural note | Unchanged — revisit at codebase-substance trigger. |
+| O7 | ✅ **SHIPPED** | `docs/finding-severity-rubric.md` + architect folds must-fix into builder DoD (§B). |
+| O8 | ✅ **SHIPPED** | System-prompt "full contract re-run on bounce-fix" + builder DoD (§B). |
+| O9 | ✅ partially SHIPPED | `tools/prune_state.py` (hot/cold pruning) + `.bak`/dashboard gitignore; runs/ cold-tiering at the >50MB/>100-req trigger remains open. |
+| O10 | ⚠️ open (harness-bound) | Split logged when the harness surfaces it; A/B proxy documented. Re-check per harness release. |
+| O11 | ✅ **SHIPPED** (mechanical) | `pipeline.yaml §verification_validity` + `tools/validity_check.py` (BYPASSRLS/inert/tautology scan + `--require-negative-control`), forced even on express lane. |
+| O12 | ✅ **SHIPPED** | v2 delta re-review (`pipeline.yaml §delta_review`): delta-scoped reasoning + FULL prior-passing suite always re-run; cheaper `delta_reverify` tier; `--review-scope` logged. |
+| O13 | ✅ **SHIPPED** | `tools/heartbeat_check.py` + `/watch` lag warning (live.log mtime vs active.json/usage.jsonl). |
+| O14 | ✅ **SHIPPED** (enforced) | `usage_logger.py assert` after every spawn — a missing row is a DEFECT (exit 3); orchestrator may not route past it. |
+
+## A. Improvement candidates (the original observations — see STATUS ledger above)
 
 | # | Sev | Observation | Proposed improvement |
 |---|---|---|---|
