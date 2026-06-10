@@ -1,6 +1,6 @@
 # Section 2.1 — Skill Mapping Matrix
 
-This document is the **authoritative skill-to-role binding** for the Engineering OS. It maps every **domain skill** in [`skills/`](../skills/). (The **command-skills** carrying `disable-model-invocation: true` — requirement, status, recall, handoff, approve, reject, deploy, rollback, persona, invoke-skill, eos-init, propose-rule, adopt-rule, reject-rule, plus recall-similar, reindex, qa-browser, design-review, worker-test-gap, worker-canon-drift, worker-compliance-drift, test-pipeline, resume, new-skill, team-digest, watch, monitor, dashboard, decide — are human/schedule-triggered and not mapped here.) Each domain skill is mapped to:
+This document is the **authoritative skill-to-role binding** for the Engineering OS. It maps every **domain skill** in [`skills/`](../skills/). (The **command-skills** carrying `disable-model-invocation: true` — requirement, status, recall, handoff, approve, reject, deploy, rollback, persona, invoke-skill, eos-init, **foundation**, propose-rule, adopt-rule, reject-rule, plus recall-similar, reindex, qa-browser, design-review, worker-test-gap, worker-canon-drift, worker-compliance-drift, test-pipeline, resume, new-skill, team-digest, watch, monitor, dashboard, decide — are human/schedule-triggered and not mapped here.) Each domain skill is mapped to:
 
 - A **domain category** (one of 14).
 - One or more **primary role owners** (which agent must auto-load it).
@@ -149,6 +149,17 @@ This document is the **authoritative skill-to-role binding** for the Engineering
 | 71 | [`rag-retrieval`](../skills/rag-retrieval/SKILL.md) | SEARCH + AI | MLP | AIE, DE | yes |
 | 72 | [`supply-chain-security`](../skills/supply-chain-security/SKILL.md) | SEC + OPS | OPS | SEC, ARC, all builders | yes |
 
+### Process-discipline completions (Phase 5)
+
+> The four skills this matrix itself had flagged as "recommended but not implemented," now implemented, plus the persona discipline wired into the persona agent.
+
+| # | Skill | Domain | Primary | Shared with | Exposed as command |
+|---|-------|--------|---------|-------------|---------------------|
+| 73 | [`requirement-intake`](../skills/requirement-intake/SKILL.md) | DISC | CTOA, PM | ARC | yes |
+| 74 | [`dynamic-persona-spawning`](../skills/dynamic-persona-spawning/SKILL.md) | DISC | DYN | CTOA | yes |
+| 75 | [`production-readiness-checklist`](../skills/production-readiness-checklist/SKILL.md) | OPS + DISC | CTOA, OPS | QA, all builders | yes |
+| 76 | [`release-notes-and-changelog`](../skills/release-notes-and-changelog/SKILL.md) | OPS + DISC | OPS, PM | CTOA | yes |
+
 > `decision-log` covers the system-of-record audit log where the product's Canon requires one (condition → recommendation → approval/edit → execution → reversal → outcome). `metric-engine` covers the single-source metric registry (`METRICS.md`) with cross-runtime parity. Vendor-named skills (`backend-fastify-trpc-grpc`, `clickhouse-olap`, `data-layer`, `devops-aws`, `event-driven-kafka`, `frontend-web`, `grpc-buf`, `llm-gateway`, `mobile-surface`, `oauth-implementation`, `python-services`, `turborepo`, and the Phase 2 data/ML seams `stream-processing-flink`, `batch-processing-spark`, `lakehouse-iceberg`, `graph-identity-neo4j`, `search-opensearch`, `feature-store-feast`, `vector-search-pgvector`, `workflow-engine-temporal`, `agent-orchestration-langgraph`, `ml-lifecycle`) are **reference implementations** of a seam — the patterns transfer; the product's `STACK.md` may bind the seam to different technology.
 
 > The skill list above is generated from `skills/` — keep it in sync (CI: `knowledge_lint.py`). When a skill folder is added or removed from `skills/`, update this matrix.
@@ -167,10 +178,13 @@ This document is the **authoritative skill-to-role binding** for the Engineering
 - `tech-stack-evaluation` (rare; only when a new layer is proposed)
 - `task-tracker-integration` (cross-team coordination)
 - `subagent-orchestration` (persona-count + fan-out + stage-pipeline dispatch)
+- `requirement-intake` (the Stage-1 conversion standard)
+- `production-readiness-checklist` (the composed Stage-6 walk, via `final-reviewer`)
 - `verification-before-completion` (always)
 
 ### Dynamic Persona Generator (`dynamic-persona-generator`)
-*No fixed skills — selects 0–2 personas at runtime based on the requirement's complexity. May invoke any of the domain skills indirectly via the spawned persona.*
+- `dynamic-persona-spawning` (auto-loaded — the count rule, type selection, ≥1-concern contract)
+*Plus: reads exactly the ONE domain skill matching its assigned persona lens at runtime (e.g. `compliance-officer` → `compliance-engine`).*
 
 ### Architect (`architect`)
 - `architecture-patterns` (primary)
@@ -195,6 +209,8 @@ This document is the **authoritative skill-to-role binding** for the Engineering
 - `api-discipline` (pagination + rate-limiting)
 - `idempotency-handling`
 - `caching-strategy`
+- `workflow-engine-temporal` (primary — durable workflows/sagas; shared with AIE, MLP, OPS)
+- `search-opensearch` (primary — query + mapping; DE owns the indexing pipeline)
 - `oauth-implementation` (shared with AIE)
 - `operational-readiness` (incl. health-check endpoints; shared with OPS)
 - `security-baseline` (shared with SEC)
@@ -325,12 +341,16 @@ This document is the **authoritative skill-to-role binding** for the Engineering
 - `operational-readiness`
 - `version-upgrade-policy`
 - `finishing-a-development-branch` (Stage 8 commit/push discipline)
+- `production-readiness-checklist` (re-confirmed at Stage 8; shared with CTOA)
+- `release-notes-and-changelog` (Stage-8 output; shared with PM)
 - `engineering-discipline`
 - `verification-before-completion`
 
 ### Delivery Coordinator (`product-manager`)
 - `task-tracker-integration` (primary)
 - `writing-plans`
+- `requirement-intake` (shared with CTOA — the intake standard when mirroring scope)
+- `release-notes-and-changelog` (audience-split notes; shared with OPS)
 - `engineering-discipline`
 - `kpi-dashboard-design` (coordination perspective)
 - `experimentation-holdouts` (coordination perspective)
@@ -351,18 +371,9 @@ Some skills are so foundational that **every role auto-loads them**. These are l
 
 ---
 
-## Recommended additional skills (not yet implemented)
+## Recommended additional skills — ALL IMPLEMENTED (Phase 5)
 
-Candidate skills flagged but not implemented in this build:
-
-| Suggested skill | Primary | Why |
-|-----------------|---------|-----|
-| `requirement-intake` | CTOA, PM | Standard for converting a Stakeholder ask into a structured requirement. |
-| `dynamic-persona-spawning` | DYN | Discipline for choosing the 0–2 personas to spawn and how to weight inputs. |
-| `production-readiness-checklist` | CTOA, OPS | Composed Stage 6 gate aggregating `operational-readiness` (incl. health checks) + `observability` + `security-baseline`. |
-| `release-notes-and-changelog` | OPS, PM | Human-readable release notes derived from per-run journals at Stage 8. |
-
-The Stakeholder may approve creating these later.
+The four skills this section used to flag are now implemented and mapped (rows 73–76 above): `requirement-intake` (CTOA/PM), `dynamic-persona-spawning` (DYN — auto-loaded by the persona agent), `production-readiness-checklist` (CTOA/OPS — the composed Stage-6 walk), `release-notes-and-changelog` (OPS/PM — Stage-8 output). The agentic **Foundation** phase also shipped as the `/foundation` command-skill (drafts the whole Product Canon from a brief + repo scan; Stakeholder approves per file).
 
 ---
 

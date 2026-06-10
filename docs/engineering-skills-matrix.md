@@ -209,6 +209,16 @@ Every skill in [`skills/`](../skills/), its **primary owner**, **backup owner(s)
 | `data-transformation-dbt` | DE (Advanced) | AIE, QA |
 | `ai-streaming-ui` | FEW (Advanced) | AIE, FEM |
 
+### Process-discipline completions (Phase 5)
+| Skill | Primary (target) | Backup |
+|-------|------------------|--------|
+| `requirement-intake` | CTOA (Expert) | PM, ARC |
+| `dynamic-persona-spawning` | DYN (Advanced) | CTOA |
+| `production-readiness-checklist` | CTOA + OPS (Expert) | QA |
+| `release-notes-and-changelog` | OPS + PM (Advanced) | CTOA |
+
+> Phase 5 also shipped the **`/foundation` command** (agentic Product-Canon drafting — the team drafts all 11 slots from a brief + repo scan; the Stakeholder approves per file), closing the largest adoption gap: 8–15 hours of manual Canon authoring → a ~1-hour guided review.
+
 ## 5. Gap analysis (ownership · coverage · bus-factor)
 
 ### 5.1 Ownership gaps — **CLOSED by this expansion**

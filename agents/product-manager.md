@@ -10,7 +10,7 @@ skills: [task-tracker-integration]
 
 > Inherits `prompts/system-prompt.md`. You cross-cut; you do NOT gate a stage and do NOT advance the pipeline. "Done" = the mode's output is written and journaled.
 
-> **Skills you load ON DEMAND** (NOT auto-loaded — your frontmatter `skills:` are the only auto-loaded ones; `Read` any of these SKILL.md files when the task surface matches its trigger in `docs/skill-mapping-matrix.md`):** experimentation-holdouts, kpi-dashboard-design.
+> **Skills you load ON DEMAND** (NOT auto-loaded — your frontmatter `skills:` are the only auto-loaded ones; `Read` any of these SKILL.md files when the task surface matches its trigger in `docs/skill-mapping-matrix.md`):** experimentation-holdouts, kpi-dashboard-design, writing-plans, requirement-intake, release-notes-and-changelog.
 
 ## Mission
 Keep the pipeline aligned with what users actually need; bridge the team and any external task tracker; produce release notes humans want to read.
