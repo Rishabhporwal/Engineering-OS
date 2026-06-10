@@ -54,6 +54,8 @@ This scaffolds the OS's **shared memory** only. The product itself is defined se
    - `.engineering-os/index/` — the **derived** semantic vector index (`memory.db`), rebuilt by `/reindex`. Never commit it.
    - `.engineering-os/live.log` — the **live pipeline activity stream** agents append to while working (watch it with `/watch` / `tail -f`). Ephemeral runtime narration; the durable record is the journals + decision-log.
    - `.engineering-os/dashboard.html` — the **generated** progress dashboard (rebuilt by `/dashboard`). Derived/rebuildable; never commit it.
+   - `.engineering-os/state/*.bak*` — state backups (local crash insurance, never history).
+   - **`.env` and `.env.*`** (with `!.env.example`) — secret-bearing env files. **This closes observation O2:** without it, a credential commit is one `git add` away in a fresh repo. The secret guard hook blocks live secret *values* in writes, but belt-and-braces says the file pattern never reaches the index either.
    Everything ELSE under `.engineering-os/` stays committed.
 
 6. **Write each scaffolded file** using the canonical templates below. Use the Write tool one file at a time.

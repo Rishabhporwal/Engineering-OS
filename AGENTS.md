@@ -18,6 +18,8 @@
 
 **The invariant across both:** the *process is identical*. Codex does not get to skip a gate just because there is no separate agent to enforce it. When you operate as Codex, you are **all twelve roles in turn**, and you owe each role's pushback to the others.
 
+**The deterministic gates are runtime-agnostic — RUN them in Codex mode too.** The enforcement layer is plain Python in `tools/`, not Claude-Code machinery, and it exists precisely so a gate is a state-machine invariant rather than a model's good behavior. In single-agent mode you MUST still execute, at minimum: `tools/classify_lane.py` at intake **and** on the post-build diff (lane can only escalate, never silently drop); `tools/validity_check.py` on changed tests (bypass/inert/tautology scan); `tools/secret_scan.py --staged` before any `.engineering-os/` commit; and `tools/gate_check.py --to stakeholder_gate|deploy` before those transitions — **exit 2 blocks you, regardless of your own judgment.** Honest hat-rotation covers the *reasoning*; these tools cover the part reasoning can't be trusted with.
+
 ---
 
 ## The roster (12 standing roles + persona generator + the Stakeholder)
