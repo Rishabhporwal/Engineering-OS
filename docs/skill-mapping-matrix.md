@@ -171,8 +171,11 @@ This document is the **authoritative skill-to-role binding** for the Engineering
 | 79 | [`redpanda-apicurio-avro`](../skills/redpanda-apicurio-avro/SKILL.md) (reference impl) | STREAM + DATA | DE | BE, ARC, MLP | yes |
 | 80 | [`starrocks-olap`](../skills/starrocks-olap/SKILL.md) (reference impl) | DATA + SEARCH | DE | AIE, MLP, BE, OPS | yes |
 | 81 | [`stream-processing-consumers`](../skills/stream-processing-consumers/SKILL.md) (reference impl) | STREAM + DATA | DE | BE, AIE | yes |
+| 82 | [`lakehouse-query-trino`](../skills/lakehouse-query-trino/SKILL.md) (reference impl) | DATA + SEARCH | DE | AIE, OPS, BE | yes |
+| 83 | [`billing-and-metering`](../skills/billing-and-metering/SKILL.md) | BE + DATA + SEC | BE | DE, SEC | yes |
+| 84 | [`outbound-channels`](../skills/outbound-channels/SKILL.md) | BE + INTG | BE | AIE, SEC | yes |
 
-> `decision-log` covers the system-of-record audit log where the product's Canon requires one (condition → recommendation → approval/edit → execution → reversal → outcome). `metric-engine` covers the single-source metric registry (`METRICS.md`) with cross-runtime parity. Vendor-named skills (`backend-fastify-trpc-grpc`, `clickhouse-olap`, `data-layer`, `devops-aws`, `event-driven-kafka`, `frontend-web`, `grpc-buf`, `llm-gateway`, `mobile-surface`, `oauth-implementation`, `python-services`, `turborepo`, and the Phase 2 data/ML seams `stream-processing-flink`, `batch-processing-spark`, `lakehouse-iceberg`, `graph-identity-neo4j`, `search-opensearch`, `feature-store-feast`, `vector-search-pgvector`, `workflow-engine-temporal`, `agent-orchestration-langgraph`, `ml-lifecycle`, and the Phase 6 stack bindings `starrocks-olap`, `redpanda-apicurio-avro`, `stream-processing-consumers`, `pipeline-orchestration`, `local-dev-environment`) are **reference implementations** of a seam — the patterns transfer; the product's `STACK.md` may bind the seam to different technology.
+> `decision-log` covers the system-of-record audit log where the product's Canon requires one (condition → recommendation → approval/edit → execution → reversal → outcome). `metric-engine` covers the single-source metric registry (`METRICS.md`) with cross-runtime parity. Vendor-named skills (`backend-fastify-trpc-grpc`, `clickhouse-olap`, `data-layer`, `devops-aws`, `event-driven-kafka`, `frontend-web`, `grpc-buf`, `llm-gateway`, `mobile-surface`, `oauth-implementation`, `python-services`, `turborepo`, and the Phase 2 data/ML seams `stream-processing-flink`, `batch-processing-spark`, `lakehouse-iceberg`, `graph-identity-neo4j`, `search-opensearch`, `feature-store-feast`, `vector-search-pgvector`, `workflow-engine-temporal`, `agent-orchestration-langgraph`, `ml-lifecycle`, and the Phase 6 stack bindings `starrocks-olap`, `redpanda-apicurio-avro`, `stream-processing-consumers`, `pipeline-orchestration`, `local-dev-environment`, `lakehouse-query-trino`, `billing-and-metering`, `outbound-channels`) are **reference implementations** of a seam — the patterns transfer; the product's `STACK.md` may bind the seam to different technology.
 
 > The skill list above is generated from `skills/` — keep it in sync (CI: `knowledge_lint.py`). When a skill folder is added or removed from `skills/`, update this matrix.
 
@@ -223,6 +226,8 @@ This document is the **authoritative skill-to-role binding** for the Engineering
 - `caching-strategy`
 - `workflow-engine-temporal` (primary — durable workflows/sagas; shared with AIE, MLP, OPS)
 - `search-opensearch` (primary — query + mapping; DE owns the indexing pipeline)
+- `billing-and-metering` (primary — the metering→rating→invoicing pipeline; SEC gates PCI)
+- `outbound-channels` (primary — WhatsApp/email delivery; SEC gates consent, AIE the content)
 - `oauth-implementation` (shared with AIE)
 - `operational-readiness` (incl. health-check endpoints; shared with OPS)
 - `security-baseline` (shared with SEC)
@@ -289,7 +294,9 @@ This document is the **authoritative skill-to-role binding** for the Engineering
 - `lakehouse-iceberg` (primary — reference impl of the lakehouse seam)
 - `redpanda-apicurio-avro` (primary — the Redpanda+Apicurio backbone + Iceberg-Topics Bronze writer)
 - `starrocks-olap` (primary — sub-second analytics serving over the lakehouse)
+- `lakehouse-query-trino` (primary — interactive/federated SQL over Iceberg; Trino + Athena)
 - `pipeline-orchestration` (primary — Argo Workflows job/data DAGs; shared with OPS)
+- `billing-and-metering` (the high-volume usage-metering aggregation; shared with BE)
 - `graph-identity-neo4j` (primary — identity resolution)
 - `event-driven-kafka` (shared with BE — consumes/produces the backbone)
 - `clickhouse-olap` (builds the materializations AIE reads)

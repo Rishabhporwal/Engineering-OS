@@ -227,6 +227,9 @@ Every skill in [`skills/`](../skills/), its **primary owner**, **backup owner(s)
 | `stream-processing-consumers` | DE (Advanced) | BE, AIE |
 | `pipeline-orchestration` (Argo Workflows) | DE + OPS (Advanced) | ARC |
 | `local-dev-environment` | OPS (Advanced) | all builders |
+| `lakehouse-query-trino` (Trino/Athena) | DE (Advanced) | AIE, OPS, BE |
+| `billing-and-metering` | BE (Expert) | DE, SEC |
+| `outbound-channels` (WhatsApp/email) | BE (Advanced) | AIE, SEC |
 
 > Added from a deep audit of a concrete AI-native commerce stack (AWS/EKS/Terraform · Next.js · Authentik · Fastify · **Redpanda+Apicurio+Avro** · KafkaJS consumers · RDS/pgvector · **S3+Iceberg+Glue** · **StarRocks+dbt** · LiteLLM · Grafana LGTM · **Argo Workflows**). ~85% of the stack was already covered by existing skills (needing vendor-binding refreshes — applied to `event-driven-kafka`, `lakehouse-iceberg`, `data-transformation-dbt`, `multi-tenancy-isolation`, `devops-aws`, `auth-and-access`, `llm-gateway`, `observability`, `clickhouse-olap`, `stream-processing-flink`); the five seams above were genuine gaps. The product-specific binding (which vendor per seam, regions, per-brand KMS) still lives in `STACK.md` via `/foundation`.
 
