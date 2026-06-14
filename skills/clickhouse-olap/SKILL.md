@@ -122,4 +122,4 @@ Tenant key not first in `ORDER BY` · analytics batch job in a transactional ser
 
 ## 2026 market update
 
-- **Position the OLAP choice deliberately (it's no longer the only option):** **ClickHouse** for fastest single-table + best compression; **DuckDB** for embedded/in-process analytics + light ETL ("start every analytical project here, zero infra"); **StarRocks / Apache Doris** when joins + upserts + data-warehouse compatibility matter (MPP). Pick per workload, not by default — the tenant-first ORDER BY + query-gateway patterns transfer to all of them.
+- **Position the OLAP choice deliberately (it's no longer the only option):** **ClickHouse** for fastest single-table + best compression; **DuckDB** for embedded/in-process analytics + light ETL ("start every analytical project here, zero infra"); **StarRocks** (→ dedicated skill [`starrocks-olap`](../starrocks-olap/SKILL.md)) / **Apache Doris** when joins + upserts + sub-second-on-lakehouse serving matter (MPP, CBO, native Iceberg). Pick per workload, not by default — the tenant-first ORDER BY + query-gateway patterns transfer to all of them.

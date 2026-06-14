@@ -56,7 +56,8 @@ Direct driver calls that bypass the gateway are a security incident.
 
 ## Beyond the data path — same key everywhere
 
-- **Cache keys** are tenant-prefixed; **object-store paths** are tenant-scoped (`caching-strategy`).
+- **Cache keys** are tenant-prefixed; **object-store paths** are tenant-/brand-scoped — a per-tenant prefix (`s3://bucket/<brand>/…`) **plus, where the regime requires hard cryptographic separation, a per-tenant/per-brand KMS key** so one tenant's data is unreadable with another's key (and a leaked key blasts one tenant, not all). Bucket policies + IAM scope access to the prefix (`caching-strategy`, `security-baseline`).
+- **Lakehouse + warehouse governance:** on an Iceberg/Glue lakehouse, enforce row/column policies at the catalog with **AWS Lake Formation** (FGAC) so the *same* policy holds across every engine (Spark/Trino/Athena/StarRocks). On the OLAP serving engine, use its row-filter mechanism where it has one (**StarRocks via Apache Ranger / catalog-centric Lake Formation** — it has **no native row-policy DDL**), and make the **Analytics API the sole tenant path** (no tenant gets direct warehouse credentials; the API injects the tenant predicate, the catalog/Ranger filter is the backstop). See `starrocks-olap`, `lakehouse-iceberg`.
 - **Logs / metrics / traces** carry the tenant in the correlation ID (`observability`).
 - **Tool / RPC interceptors** reject requests missing the tenant header.
 - **Any semantic-retrieval / vector store** filters by tenant on every retrieval (see `examples/brain-instantiation/` for a worked example).

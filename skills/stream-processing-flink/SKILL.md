@@ -49,5 +49,8 @@ env.getCheckpointConfig().setTolerableCheckpointFailureNumber(3);
 ## Effort-tier note (`cost-routing-paradigms`)
 Stream processing is **deterministic/statistical compute** — the cheapest tier. Enrichment, attribution windows, and identity stitching belong here, NOT in a model call. Reaching for an LLM to do what a keyed window + rule can do is the wrong tier. Real-time **features** computed here land in the feature store (`feature-store-feast`) for online serving.
 
+## Framework vs consumer-based — when NOT to use Flink
+Flink is the right tier for **large keyed state, true event-time windows, and end-to-end exactly-once**. For **stateless-to-lightly-stateful per-tenant transforms** (validate / dedup / enrich / upsert) a team may deliberately skip the framework and run **app-level consumer groups** (`stream-processing-consumers` — KafkaJS/CJSK on Kubernetes), keeping everything in their service mesh with no Flink cluster to operate. The crossover is an ADR: reimplementing windowing + large state + EOS in app code is "a worse Flink," while a Flink cluster for a stateless upsert is overkill. `STACK.md` binds which.
+
 ## Anti-patterns
 Processing-time windows · unbounded state / regular joins · non-transactional sink claimed as exactly-once · a separate backfill codebase · per-record external lookups instead of a temporal-table join · ignoring backpressure · keying by anything but the tenant for tenant-scoped aggregates.
