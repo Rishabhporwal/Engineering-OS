@@ -133,6 +133,18 @@ A self-hosted gateway has real failure modes:
 - **Structured outputs / constrained decoding** (JSON-schema-constrained responses + tool-call validation) are table-stakes — pass them through the gateway rather than re-implementing per call site; validate the result before it's trusted downstream (`ai-llm-security` — insecure output handling).
 - **LiteLLM** is the de-facto OSS reference for this self-hosted-proxy pattern (already the assumption above); managed peers (OpenRouter, Cloudflare AI Gateway, Kong AI Gateway, Portkey) are valid `STACK.md` bindings of the same seam.
 
+## LiteLLM multi-provider hardening (2026)
+For the **LiteLLM → Claude/GPT/Gemini** binding specifically (the reference proxy for this seam):
+- **Supply chain is the new front-line risk.** LiteLLM **PyPI 1.82.7/1.82.8 were published by a threat actor** with a credential stealer (Mar 2026) — **pin a known-good version by digest, install from a vetted mirror, verify hashes, least-privilege the gateway ServiceAccount** (the payload abused K8s SA tokens). This is itself the argument *for* the gateway: one audited, pinned gateway is a smaller supply-chain surface than the provider SDK vendored into N services (`supply-chain-security`).
+- **Enforce "everything via the gateway" mechanically:** no provider SDK keys in app pods (keys live only in the gateway); apps get `OPENAI_BASE_URL=http://gateway:4000` + a virtual key; **an egress NetworkPolicy denies app namespaces direct egress to `api.openai.com`/`api.anthropic.com`/`generativelanguage.googleapis.com`**; a CI grep blocks direct provider-SDK imports.
+- **Budgets + state:** every virtual key carries a budget + rate limit (2025: **multiple concurrent budget windows** per key, e.g. `$10/day` AND `$100/month`); keep budget/rate counters in **shared Redis** (per-replica memory under-enforces, and budget races have shipped both false-exceed and under-enforcement — load-test it). Spend ledger in shared Postgres; stateless replicas.
+- **Observability:** emit **OTel GenAI semconv** (`gen_ai.*`) via the OTel **v2** integration (`LITELLM_OTEL_V2=true`), not bespoke callbacks → `ai-observability-tracing`.
+- **Cost-accounting caveat:** LiteLLM has a history of **double-counting Claude prompt-cache tokens (up to ~2× inflated cost)** — reconcile `response_cost` against provider billing before trusting dashboards (`finops-cost`). **Never semantic-cache numeric/financial answers** (a near-duplicate returns a wrong number); start the similarity threshold ≥0.9 and scope cache keys per tenant.
+- **Structured outputs:** pass `response_format`/`tools` through uniformly (LiteLLM translates to Gemini `response_schema`, Claude native `output_format`) but keep a **client-side validator + a content-policy fallback** — strict-schema parity breaks on deep/nested schemas first; Gemini silently drops some reasoning params on name-suffix mismatch.
+
+## Numbers are deterministic; the model only narrates
+A hard discipline for this stack: **an LLM never produces a business number.** A deterministic metric/semantic layer (`metric-engine`; dbt Semantic Layer / MetricFlow / Cube) computes every figure from certified definitions and passes it into the prompt as ground truth; the model only **narrates** it. Enforce with an output **guardrail** (LiteLLM `post_call` hook) that blocks/flags any numeral not in the supplied ground-truth set. (LLMs "read well, compute poorly" and their output is non-reproducible — semantic-layer-over-raw-text-to-SQL is the antidote.)
+
 ## Anti-patterns (code-review blockers)
 
 - **App code instantiates a provider SDK directly** → bypasses routing/fallback/budget/cache/cost-ledger.

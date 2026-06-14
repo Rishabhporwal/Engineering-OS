@@ -55,3 +55,15 @@ Run `dbt build` (run + test) in CI on PRs against changed models (`--select stat
 
 ## Anti-patterns
 Marts reading raw directly · a monolithic untested query · non-idempotent incremental (double-counts) · no freshness SLA · metrics redefined per dashboard (drift vs the semantic layer) · no column lineage (KPIs are tribal) · running full refreshes nightly when an incremental window suffices · transformation logic hidden in BI tools instead of the governed layer.
+
+## dbt-on-StarRocks + the medallion (a lakehouse binding)
+When the warehouse is **StarRocks over an Iceberg lakehouse** (`starrocks-olap`, `lakehouse-iceberg`), dbt is the governed **T** between Bronze and the serving marts, and the layering is the **medallion**:
+```
+S3+Iceberg(Glue) BRONZE (raw, immutable)
+   └─ dbt sources = iceberg_glue.bronze.* ─► SILVER (cleaned/conformed) ─► GOLD (marts) = StarRocks-native
+                                                                              └─► Analytics API (tenant predicate)
+```
+- **`source()` on the external Iceberg catalog reads Bronze; models materialize Silver/Gold as StarRocks-native tables** (Phase 1) — sub-second serving. Phase 3 may migrate Silver/Gold *into* Iceberg (Spark/Trino/dbt-written) for open, multi-engine marts.
+- **Directional rule: `Iceberg → dbt → StarRocks → API`, never StarRocks → Iceberg** — the lakehouse stays the rebuildable SSOT; the warehouse stays a derived, disposable serving copy.
+- **`dbt-starrocks` has NO `MERGE`:** upserts = `materialized='incremental'` + `table_type='PRIMARY'` + `keys=[...]` (the PK index does delete+insert); idempotent rebuilds = `incremental_strategy='dynamic_overwrite'` (partition replace), never blind append. Pin adapter + server versions (less battle-hardened than tier-1 adapters).
+- Same idempotency law as `batch-processing-spark`; freshness + tests are the gate (`data-quality`).
