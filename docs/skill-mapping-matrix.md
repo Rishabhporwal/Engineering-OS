@@ -160,7 +160,19 @@ This document is the **authoritative skill-to-role binding** for the Engineering
 | 75 | [`production-readiness-checklist`](../skills/production-readiness-checklist/SKILL.md) | OPS + DISC | CTOA, OPS | QA, all builders | yes |
 | 76 | [`release-notes-and-changelog`](../skills/release-notes-and-changelog/SKILL.md) | OPS + DISC | OPS, PM | CTOA | yes |
 
-> `decision-log` covers the system-of-record audit log where the product's Canon requires one (condition → recommendation → approval/edit → execution → reversal → outcome). `metric-engine` covers the single-source metric registry (`METRICS.md`) with cross-runtime parity. Vendor-named skills (`backend-fastify-trpc-grpc`, `clickhouse-olap`, `data-layer`, `devops-aws`, `event-driven-kafka`, `frontend-web`, `grpc-buf`, `llm-gateway`, `mobile-surface`, `oauth-implementation`, `python-services`, `turborepo`, and the Phase 2 data/ML seams `stream-processing-flink`, `batch-processing-spark`, `lakehouse-iceberg`, `graph-identity-neo4j`, `search-opensearch`, `feature-store-feast`, `vector-search-pgvector`, `workflow-engine-temporal`, `agent-orchestration-langgraph`, `ml-lifecycle`) are **reference implementations** of a seam — the patterns transfer; the product's `STACK.md` may bind the seam to different technology.
+### Product-stack seam bindings (Phase 6)
+
+> Five reference-impl skills binding seams a concrete AI-native commerce stack needs (StarRocks serving, the Redpanda→Iceberg backbone, KafkaJS consumer processing, Argo Workflows orchestration, and local-dev parity). Like every vendor-named skill, these are **reference implementations** — `STACK.md` binds the actual technology. Numbered continuation; alphabetical within the block.
+
+| # | Skill | Domain | Primary | Shared with | Exposed as command |
+|---|-------|--------|---------|-------------|---------------------|
+| 77 | [`local-dev-environment`](../skills/local-dev-environment/SKILL.md) | OPS + DISC | OPS | all builders | yes |
+| 78 | [`pipeline-orchestration`](../skills/pipeline-orchestration/SKILL.md) (reference impl; Argo Workflows) | OPS + DATA | DE, OPS | ARC, AIE | yes |
+| 79 | [`redpanda-apicurio-avro`](../skills/redpanda-apicurio-avro/SKILL.md) (reference impl) | STREAM + DATA | DE | BE, ARC, MLP | yes |
+| 80 | [`starrocks-olap`](../skills/starrocks-olap/SKILL.md) (reference impl) | DATA + SEARCH | DE | AIE, MLP, BE, OPS | yes |
+| 81 | [`stream-processing-consumers`](../skills/stream-processing-consumers/SKILL.md) (reference impl) | STREAM + DATA | DE | BE, AIE | yes |
+
+> `decision-log` covers the system-of-record audit log where the product's Canon requires one (condition → recommendation → approval/edit → execution → reversal → outcome). `metric-engine` covers the single-source metric registry (`METRICS.md`) with cross-runtime parity. Vendor-named skills (`backend-fastify-trpc-grpc`, `clickhouse-olap`, `data-layer`, `devops-aws`, `event-driven-kafka`, `frontend-web`, `grpc-buf`, `llm-gateway`, `mobile-surface`, `oauth-implementation`, `python-services`, `turborepo`, and the Phase 2 data/ML seams `stream-processing-flink`, `batch-processing-spark`, `lakehouse-iceberg`, `graph-identity-neo4j`, `search-opensearch`, `feature-store-feast`, `vector-search-pgvector`, `workflow-engine-temporal`, `agent-orchestration-langgraph`, `ml-lifecycle`, and the Phase 6 stack bindings `starrocks-olap`, `redpanda-apicurio-avro`, `stream-processing-consumers`, `pipeline-orchestration`, `local-dev-environment`) are **reference implementations** of a seam — the patterns transfer; the product's `STACK.md` may bind the seam to different technology.
 
 > The skill list above is generated from `skills/` — keep it in sync (CI: `knowledge_lint.py`). When a skill folder is added or removed from `skills/`, update this matrix.
 
@@ -272,8 +284,12 @@ This document is the **authoritative skill-to-role binding** for the Engineering
 ### Data Engineer (`data-engineer`)
 *Phase 2 expansion role. Owns the **data plane** — every dataset the other layers read. Two laws: tenant-keyed everywhere; every dataset replayable (live + backfill share one code path).*
 - `stream-processing-flink` (primary — reference impl of the stream seam)
+- `stream-processing-consumers` (primary — the KafkaJS/consumer-group alternative to a framework)
 - `batch-processing-spark` (primary — reference impl of the batch seam)
 - `lakehouse-iceberg` (primary — reference impl of the lakehouse seam)
+- `redpanda-apicurio-avro` (primary — the Redpanda+Apicurio backbone + Iceberg-Topics Bronze writer)
+- `starrocks-olap` (primary — sub-second analytics serving over the lakehouse)
+- `pipeline-orchestration` (primary — Argo Workflows job/data DAGs; shared with OPS)
 - `graph-identity-neo4j` (primary — identity resolution)
 - `event-driven-kafka` (shared with BE — consumes/produces the backbone)
 - `clickhouse-olap` (builds the materializations AIE reads)
@@ -343,6 +359,8 @@ This document is the **authoritative skill-to-role binding** for the Engineering
 - `finishing-a-development-branch` (Stage 8 commit/push discipline)
 - `production-readiness-checklist` (re-confirmed at Stage 8; shared with CTOA)
 - `release-notes-and-changelog` (Stage-8 output; shared with PM)
+- `local-dev-environment` (primary — owns the Compose/LocalStack parity stack; all builders consume)
+- `pipeline-orchestration` (the Argo Workflows cluster; shared with DE)
 - `engineering-discipline`
 - `verification-before-completion`
 
