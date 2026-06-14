@@ -5,14 +5,14 @@
   },
   "metadata": {
     "description": "Marketplace for the Engineering OS plugin — a universal, domain-agnostic AI engineering organization for any software product, on any stack.",
-    "version": "2.3.0"
+    "version": "2.3.1"
   },
   "plugins": [
     {
       "name": "engineering-os",
       "source": "./",
       "description": "A universal AI engineering organization delivered as a Claude Code plugin (Codex-compatible via AGENTS.md). A fixed roster of engineering roles (Engineering Advisor, Architect, Backend/Frontend/Mobile/AI-ML engineers, Data Engineer, ML Platform Engineer, Security, QA, Platform/SRE, Delivery Coordinator) drives any requirement from intake to release through a staged, lane-scaled, VETO-gated pipeline, grounded in a per-adoption Product Canon. Stack- and domain-agnostic.",
-      "version": "2.1.0"
+      "version": "2.3.1"
     }
   ]
 }
